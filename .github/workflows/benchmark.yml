@@ -1,0 +1,153 @@
+run-name: Benchmarking triggered by ${{ github.actor }}'s push
+name: Benchmarking
+on:
+  push:
+    branches:
+      - master
+      - benchmark
+    paths:
+      - ".github/workflows/benchmark.yml"
+      - "src/**"
+      - "tools/benchmark/**"
+      - "!src/cbmpc/tests/**"
+
+jobs:
+  All-Protocols:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      checks: write
+      contents: write
+    steps:
+      - name: record commit hash
+        run: |
+          echo "${{ github.sha }}" > /tmp/commit-sha.txt
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Download Git submodules
+        run: |
+          git submodule sync --recursive && git submodule update --init --recursive
+      - name: Install needed packages
+        run: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install libssl-dev cmake -y
+          wget https://go.dev/dl/go1.22.3.linux-amd64.tar.gz
+          echo "8920ea521bad8f6b7bc377b4824982e011c19af27df88a815e3586ea895f1b36 go1.22.3.linux-amd64.tar.gz" | sha256sum --check
+          sudo tar -C /usr/local -xzf go1.22.3.linux-amd64.tar.gz
+          rm -f go1.22.3.linux-amd64.tar.gz
+          sudo mkdir -p /usr/local/opt
+          sudo mkdir -p /usr/local/lib64
+          sudo chmod 777 -R /usr/local/opt
+          sudo chmod 777 -R /usr/local/lib64
+          cp scripts/openssl/build-static-openssl-linux.sh ./
+          ./build-static-openssl-linux.sh
+          sudo ln -sf /usr/local/lib /usr/local/lib64
+          pip install pyyaml
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+      - name: install cbmpc
+        run: |
+          make build && make install
+      - name: run all benchmark
+        run: |
+          make benchmark-build
+          make benchmark-all
+      - name: run benchmark for historical records
+        if: github.ref == 'refs/heads/master'
+        run: |
+          make benchmark-run unit=us filter="^Core/BN/.*/\(256\|4096\)" bmout=/tmp/core-bn.json
+          make benchmark-run unit=us filter="^Core/EC/" bmout=/tmp/core-ec.json
+          make benchmark-run unit=us filter="^Core/Hash" bmout=/tmp/core-hash.json
+          make benchmark-run unit=us filter="^BP/Paillier" bmout=/tmp/bp-paillier.json
+          make benchmark-run unit=us filter="^ZK/" bmout=/tmp/zk.json
+          make benchmark-run unit=us filter="^MPC/OT/BaseOT/.*/256" bmout=/tmp/ot.json
+      - name: Prepare github action benchmark release
+        run: |
+          cd ${{ github.workspace }}/vendors/github-action-benchmark
+          bash ${{ github.workspace }}/tools/benchmark/prepare_benchmark_action.sh v1
+      - name: github-action-benchmark core-bn
+        if: github.ref == 'refs/heads/master'
+        uses: ./vendors/github-action-benchmark
+        with:
+          tool: "googlecpp"
+          output-file-path: /tmp/core-bn.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          benchmark-data-dir-path: "docs/static/core-bn"
+      - name: github-action-benchmark core-ec
+        if: github.ref == 'refs/heads/master'
+        uses: ./vendors/github-action-benchmark
+        with:
+          tool: "googlecpp"
+          output-file-path: /tmp/core-ec.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          benchmark-data-dir-path: "docs/static/core-ec"
+      - name: github-action-benchmark core-hash
+        if: github.ref == 'refs/heads/master'
+        uses: ./vendors/github-action-benchmark
+        with:
+          tool: "googlecpp"
+          output-file-path: /tmp/core-hash.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          benchmark-data-dir-path: "docs/static/core-hash"
+      - name: github-action-benchmark bp-paillier
+        if: github.ref == 'refs/heads/master'
+        uses: ./vendors/github-action-benchmark
+        with:
+          tool: "googlecpp"
+          output-file-path: /tmp/bp-paillier.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          benchmark-data-dir-path: "docs/static/bp-paillier"
+      - name: github-action-benchmark zk
+        if: github.ref == 'refs/heads/master'
+        uses: ./vendors/github-action-benchmark
+        with:
+          tool: "googlecpp"
+          output-file-path: /tmp/zk.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          benchmark-data-dir-path: "docs/static/zk"
+      - name: github-action-benchmark OT - BaseOT
+        if: github.ref == 'refs/heads/master'
+        uses: ./vendors/github-action-benchmark
+        with:
+          tool: "googlecpp"
+          output-file-path: /tmp/ot.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          benchmark-data-dir-path: "docs/static/ot"
+      - name: github-action-benchmark all
+        if: github.ref == 'refs/heads/master'
+        uses: ./vendors/github-action-benchmark
+        with:
+          tool: "googlecpp"
+          output-file-path: /tmp/all.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: false
+          alert-threshold: "150%"
+          fail-on-alert: false
+          comment-on-alert: true
+      - name: push-benchmark-results
+        run: |
+          git fetch origin gh-pages
+          git checkout gh-pages
+          cp /tmp/all.json docsgen/data/raw_aggregated_benchmarks.json
+          python docsgen/clean_name.py
+          cp /tmp/commit-sha.txt docs/commit-sha.txt
+          make ci
+          cd ${{ github.workspace }}
+          python docsgen/replace_name.py
+          git add docs
+          git add docsgen
+          git commit -m "Auto-update benchmark results"
+          git push origin gh-pages
+        env:
+          GIT_AUTHOR_NAME: GitHub Actions
+          GIT_AUTHOR_EMAIL: actions@github.com
+          GIT_COMMITTER_NAME: GitHub Actions
+          GIT_COMMITTER_EMAIL: actions@github.com
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

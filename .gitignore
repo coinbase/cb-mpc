@@ -1,0 +1,13 @@
+# We generate the .a files here
+lib/
+
+# CMake generated files
+**build/
+
+# ctest files
+**Testing/
+
+# gh-pages files
+docsgen/
+node_modules/
+

@@ -1,0 +1,36 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "**/*.md"
+      - "dev/**"
+      - "docs/**"
+      - ".gitignore"
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "dev/**"
+      - "docs/**"
+      - ".gitignore"
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |-
+          echo "Run unit tests"
+          make submodules
+          make image
+          docker run --rm -v $(pwd):/code -t cb-mpc bash -c 'make full-test'
+  sanity-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |-
+          echo "Run sanity checks"
+          make submodules
+          make image
+          docker run --rm -v $(pwd):/code -t cb-mpc bash -c 'make lint'
+          docker run --rm -v $(pwd):/code -t cb-mpc bash -c 'make build && make install && make demos && make benchmark-build  && make dudect filter=NON_EXISTING_TEST'

@@ -1,0 +1,63 @@
+name: "CodeQL - Custom"
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '**/*.cpp'
+      - '**/*.h'
+      - '**/*.hpp'
+      - '**/*.c'
+      - '**/*.go'
+      - '**/*.py'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp', 'go', 'python' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.branch }}
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        queries: security-and-quality
+
+    - name: Install language dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake golang-go
+
+    - if: matrix.language == 'go' || matrix.language == 'python'
+      name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+    - if: matrix.language == 'cpp'
+      name: Build project
+      run: |
+        sudo mkdir -p /usr/local/opt
+        sudo mkdir -p /usr/local/lib64
+        sudo chmod 777 -R /usr/local/opt
+        sudo chmod 777 -R /usr/local/lib64
+        make
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
+        upload: false
+        output: sarif-results

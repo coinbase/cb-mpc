@@ -1,0 +1,12 @@
+[submodule "vendors/google-benchmark"]
+	path = vendors/google-benchmark
+	url = https://github.com/google/benchmark.git
+[submodule "vendors/github-action-benchmark"]
+	path = vendors/github-action-benchmark
+	url = https://github.com/benchmark-action/github-action-benchmark.git
+[submodule "vendors/googletest"]
+	path = vendors/googletest
+	url = https://github.com/google/googletest.git
+[submodule "vendors/secp256k1"]
+	path = vendors/secp256k1
+	url = https://github.com/coinbase/secp256k1

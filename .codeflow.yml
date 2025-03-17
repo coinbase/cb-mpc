@@ -1,0 +1,7 @@
+---
+secure:
+  required_reviews: 2
+  requires_mfa: true
+  codeowners_enabled: true
+  branches:
+    - master

@@ -1,0 +1,22 @@
+BasedOnStyle: Google
+IndentWidth: 2
+Language: Cpp
+Standard: c++17
+ColumnLimit: 120
+
+IncludeCategories:
+  - Regex: "<benchmark/benchmark.h>"
+    Priority: -2
+    SortPriority: -2
+  - Regex: "<cbmpc/core/precompiled.h>"
+    Priority: -1
+    SortPriority: -1
+  - Regex: "^<cbmpc/.*>$"
+    Priority: 2
+    SortPriority: 2
+  - Regex: '^".*"$'
+    Priority: 6
+    SortPriority: 6
+  - Regex: "^<.*>$"
+    Priority: 1
+    SortPriority: 1
