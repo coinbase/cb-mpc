@@ -137,7 +137,7 @@ jobs:
           git checkout gh-pages
           cp /tmp/all.json docsgen/data/raw_aggregated_benchmarks.json
           python docsgen/clean_name.py
-          cp /tmp/commit-sha.txt docs/commit-sha.txt
+          cp /tmp/commit-sha.txt docsgen/data/commit-sha.txt
           make ci
           cd ${{ github.workspace }}
           python docsgen/replace_name.py
