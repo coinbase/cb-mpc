@@ -58,7 +58,6 @@ error_t dkg_2p_t::step4_output_p2(ecc_point_t& Q) {
 error_t key_share_2p_t::dkg(job_2p_t& job, ecurve_t curve, key_share_2p_t& key, buf_t& sid) {
   error_t rv = UNINITIALIZED_ERROR;
   key.curve = curve;
-  const auto& G = curve.generator();
   const mod_t& q = curve.order();
   eckey::dkg_2p_t ec_dkg(curve, job.get_pid(party_t::p1));
   key.x_share = bn_t::rand(q);

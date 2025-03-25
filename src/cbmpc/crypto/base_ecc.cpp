@@ -1042,7 +1042,6 @@ error_t ecies_ciphertext_t::decrypt(const ecdh_t& ecdh, mem_t encrypted, mem_t a
 }
 
 error_t ecies_ciphertext_t::decrypt(const ecdh_t& ecdh, mem_t aad, buf_t& decrypted) {
-  const auto& G = curve_p256.generator();
   buf_t secret;
   error_t rv = ecdh.execute(E, secret);
   if (rv) return rv;

@@ -53,7 +53,6 @@ template <typename... ARGS>
 inline error_t committed_group_broadcast(job_mp_t& job, ARGS&... args) {
   error_t rv = UNINITIALIZED_ERROR;
 
-  int party_index = job.get_party_idx();
   const crypto::mpc_pid_t& pid = job.get_pid();
   coinbase::crypto::commitment_t com(pid);
   // effectively, it does com.gen(args.msg...)

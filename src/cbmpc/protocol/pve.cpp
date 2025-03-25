@@ -73,12 +73,9 @@ error_t ec_pve_t<PKI_T>::verify(const PK_T& key, const ecc_point_t& Q, mem_t lab
 
   const auto& G = curve.generator();
   const mod_t& q = curve.order();
-  int bin_size = curve.size();
 
   buf_t c0[kappa];
   buf_t c1[kappa];
-  bn_t x0[kappa];
-  bn_t x1[kappa];
   ecc_point_t X0[kappa];
   ecc_point_t X1[kappa];
 
@@ -136,8 +133,6 @@ error_t ec_pve_t<PKI_T>::decrypt(const SK_T& key, mem_t label, ecurve_t curve, b
   error_t rv = UNINITIALIZED_ERROR;
   if (!skip_verify && (rv = verify(key.pub(), Q, label))) return rv;
 
-  const auto& G = curve.generator();
-  const mod_t& q = curve.order();
   buf_t inner_label = generateLabelWithPoint(label, Q);
 
   for (int i = 0; i < kappa; i++) {

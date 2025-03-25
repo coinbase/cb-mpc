@@ -55,7 +55,6 @@ bn_t lagrange_basis(const bn_t& x, const std::vector<int>& pids, int current, co
   lagrange_basis(x, pids, current, q, numerator, denominator);
 
   auto bn_ctx = bn_t::thread_local_storage_bn_ctx();
-  auto mont_ctx = q.get_mont_ctx();
   const bn_t& mod = q.value();
   BN_mod_inverse(denominator, denominator, mod,
                  bn_ctx);  // denominator = 1/denominator mod q;

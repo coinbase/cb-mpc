@@ -247,8 +247,6 @@ void two_paillier_equal_t::prove(const mod_t& q, const crypto::paillier_t& P0, c
   cb_assert(N0.get_bits_count() >= std::max(2048, test_len));
   cb_assert(N1.get_bits_count() >= std::max(2048, test_len));
 
-  const mod_t& NN0 = P0.get_NN();
-  const mod_t& NN1 = P1.get_NN();
   bn_t q_with_slack = q << (param::log_alpha + SEC_P_STAT);
 
   bn_t tau[param::t];

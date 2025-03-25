@@ -71,7 +71,6 @@ error_t private_share_t::decrypt(const ciphertext_t& ciphertext, mem_t label,
   const auto& curve = pub_key.Q.get_curve();
   if (rv = ciphertext.verify(pub_key, label)) return rv;
   const ecc_point_t& R1 = ciphertext.R1;
-  const ecc_point_t& R2 = ciphertext.R2;
 
   const auto& G = curve.generator();
   const mod_t& q = curve.order();

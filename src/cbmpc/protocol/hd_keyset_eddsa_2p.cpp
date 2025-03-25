@@ -19,7 +19,6 @@ error_t key_share_eddsa_hdmpc_2p_t::dkg(job_2p_t& job, ecurve_t curve, key_share
   error_t rv = UNINITIALIZED_ERROR;
 
   key.curve = curve;
-  const auto& G = curve.generator();
   const mod_t& q = curve.order();
 
   key.root.x_share = bn_t::rand(q);
@@ -57,7 +56,7 @@ error_t key_share_eddsa_hdmpc_2p_t::dkg(job_2p_t& job, ecurve_t curve, key_share
   return SUCCESS;
 }
 
-error_t key_share_eddsa_hdmpc_2p_t::refresh(job_2p_t& job, key_share_eddsa_hdmpc_2p_t key,
+error_t key_share_eddsa_hdmpc_2p_t::refresh(job_2p_t& job, key_share_eddsa_hdmpc_2p_t& key,
                                             key_share_eddsa_hdmpc_2p_t& new_key) {
   error_t rv = UNINITIALIZED_ERROR;
   new_key.party_index = key.party_index;

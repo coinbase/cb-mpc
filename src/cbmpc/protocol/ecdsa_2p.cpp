@@ -88,7 +88,6 @@ error_t dkg(job_2p_t& job, ecurve_t curve, key_t& key) {
   error_t rv = UNINITIALIZED_ERROR;
 
   key.curve = curve;
-  const auto& G = curve.generator();
   const mod_t& q = curve.order();
 
   paillier_gen_interactive_t paillier_gen(job.get_pid(party_t::p1));
@@ -291,7 +290,6 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
   // This is the step 4, taken from the section in the spec called ZK Proof of Correctness for Message 4 from P2 to P1
   if (job.is_p2()) {
     const mod_t& N = key.paillier.get_N();
-    const mod_t& NN = key.paillier.get_NN();
 
     if (rv = com.open(msgs, R1, pi_1)) return rv;
 

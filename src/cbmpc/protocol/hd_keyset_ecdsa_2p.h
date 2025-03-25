@@ -36,7 +36,7 @@ struct key_share_ecdsa_hdmpc_2p_t {
    *   Its only deviation is generating "two" delta values instead of one so that it can be used
    *   for refreshing both x_share and k_share as opposed to refreshing a single x.
    */
-  static error_t refresh(job_2p_t& job, key_share_ecdsa_hdmpc_2p_t current_keyset,
+  static error_t refresh(job_2p_t& job, key_share_ecdsa_hdmpc_2p_t& current_keyset,
                          key_share_ecdsa_hdmpc_2p_t& new_keyset);
 };
 

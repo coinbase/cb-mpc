@@ -261,7 +261,6 @@ void paillier_pedersen_equal_t::prove(const crypto::paillier_t& paillier, const 
   const bn_t& h = params.h;
 
   const mod_t& N = paillier.get_N();
-  const mod_t& NN = paillier.get_NN();
 
   bn_t q_with_slack_N = q << (SEC_P_STAT + param::lambda + 2 * param::log_alpha + 1);
   cb_assert(N > q_with_slack_N);
@@ -454,7 +453,6 @@ error_t paillier_pedersen_equal_interactive_t::verify(const crypto::paillier_t& 
 
   const pedersen_commitment_params_t& params = pedersen_commitment_params_t::get();
   const mod_t& p = params.p;
-  const mod_t& p_tag = params.p_tag;
   const bn_t& g = params.g;
   const bn_t& h = params.h;
 

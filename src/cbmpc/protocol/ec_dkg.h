@@ -89,11 +89,13 @@ struct dkg_mp_threshold_t {
    * @specs:
    * - ec-dkg-spec | EC-DKG-Threshold-MP
    * @notes:
-   * - This threshold DKG is demo code. It is not optimal in the sense that all n parties need to be connected
+   * - This threshold DKG is not optimal in the sense that all n parties need to be connected
    * throughout, even though only t are active. In practice (and how we work in reality), it makes more sense for the t
    * parties to run the protocol, and then have the rest separately download the output message. This requires
    * additional infrastructure beyond what is in the scope of this library (like a PKI for the t parties to
    * encrypt-and-sign the output messages for the n parties), and therefore we implement this simpler demo DKG here.
+   * In the future, we are planning on adding a VSS implementation that will make it easier to implement a threshold DKG
+   * with only a subset of the parties online.
    */
   static error_t dkg(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t,
                      const party_set_t& quorum_party_set, key_share_mp_t& key);

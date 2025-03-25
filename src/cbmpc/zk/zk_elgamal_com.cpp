@@ -172,7 +172,6 @@ void uc_elgamal_com_mult_private_scalar_t::prove(const ecc_point_t& Q, const elg
   std::vector<bn_t> r1(params.rho);
   std::vector<bn_t> r2(params.rho);
   ecurve_t curve = Q.get_curve();
-  const auto& G = curve.generator();
   const mod_t& q = curve.order();
   int rho = params.rho;
 

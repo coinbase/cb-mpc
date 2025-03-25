@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cbmpc/crypto/base.h>
 #include <cbmpc/zk/zk_unknown_order.h>
 #include <cbmpc/zk/zk_util.h>

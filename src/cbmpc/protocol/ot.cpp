@@ -84,7 +84,6 @@ error_t base_ot_protocol_pvw_ctx_t::output_R(std::vector<buf_t>& x) {
   if (m != int(V0.size())) return coinbase::error(E_BADARG);
   if (m != int(V1.size())) return coinbase::error(E_BADARG);
 
-  const auto& G = curve.generator();
   x.resize(m);
 
   for (int i = 0; i < m; i++) {

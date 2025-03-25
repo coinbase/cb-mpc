@@ -18,7 +18,6 @@ error_t key_share_ecdsa_hdmpc_2p_t::dkg(job_2p_t& job, ecurve_t curve, key_share
   error_t rv = UNINITIALIZED_ERROR;
 
   key.curve = curve;
-  const auto& G = curve.generator();
   const mod_t& q = curve.order();
 
   key.root.x_share = bn_t::rand(q);
@@ -63,7 +62,7 @@ error_t key_share_ecdsa_hdmpc_2p_t::dkg(job_2p_t& job, ecurve_t curve, key_share
   return SUCCESS;
 }
 
-error_t key_share_ecdsa_hdmpc_2p_t::refresh(job_2p_t& job, key_share_ecdsa_hdmpc_2p_t key,
+error_t key_share_ecdsa_hdmpc_2p_t::refresh(job_2p_t& job, key_share_ecdsa_hdmpc_2p_t& key,
                                             key_share_ecdsa_hdmpc_2p_t& new_key) {
   // NOTE: this is not an optimized version of the refresh function and has twice as many rounds as needed since
   //       the refresh operations are performed sequentially. It can be made more optimized by copy-pasting the

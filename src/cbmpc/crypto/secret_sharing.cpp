@@ -251,6 +251,9 @@ bool node_t::enough_for_quorum(const std::set<pname_t> &names) const {
         if (count >= threshold) return true;
       }
       return false;
+    case node_e::NONE: {
+      return false;
+    } break;
   }
 
   cb_assert(false);
@@ -439,6 +442,10 @@ static error_t reconstruct_recursive(const mod_t &q, const node_t *node, const a
 
       x = lagrange_interpolate(0, node_shares, pids, q);
     } break;
+
+    case node_e::NONE: {
+      return coinbase::error(E_CRYPTO);
+    } break;
   }
 
   return SUCCESS;
@@ -510,6 +517,10 @@ static error_t reconstruct_exponent_recursive(const node_t *node, const ac_pub_s
       }
 
       P = lagrange_interpolate_exponent(0, node_shares, pids);
+    } break;
+
+    case node_e::NONE: {
+      return coinbase::error(E_CRYPTO);
     } break;
   }
 
