@@ -243,7 +243,7 @@ func (js *JobSessionMP) GetPartyIndex() int {
 
 type CMEM = C.cmem_t
 
-func (cmem CMEM) Get() []byte {
+func CMEMGet(cmem CMEM) []byte {
 	if cmem.data == nil {
 		return nil
 	}
@@ -259,5 +259,5 @@ func AgreeRandom(job JobSession2P, bitLen int) ([]byte, error) {
 	if cErr != 0 {
 		return nil, fmt.Errorf("mpc_agree_random failed, %v", cErr)
 	}
-	return out.Get(), nil
+	return CMEMGet(out), nil
 }

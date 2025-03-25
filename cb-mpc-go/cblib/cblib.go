@@ -59,7 +59,7 @@ func cmem(in []byte) CMEM {
 	return mem
 }
 
-func (cmem CMEM) Get() []byte {
+func CMEMGet(cmem CMEM) []byte {
 	if cmem.data == nil {
 		return nil
 	}
@@ -107,7 +107,7 @@ func arrGetIntC(arr unsafe.Pointer, index int) int {
 	return int(*ptr)
 }
 
-func (cmems CMEMS) Get() [][]byte {
+func CMEMSGet(cmems CMEMS) [][]byte {
 	if cmems.data == nil {
 		return nil
 	}
@@ -173,7 +173,7 @@ func Sign(job network.JobSession2P, sessionID []byte, key MPC_ECDSA2PC_KEY_PTR, 
 	if cErr != 0 {
 		return nil, fmt.Errorf("ECDSA-2p sign failed, %v", cErr)
 	}
-	return sigs.Get(), nil
+	return CMEMSGet(sigs), nil
 }
 
 // =========== ECDSAMPC =====================
@@ -192,7 +192,7 @@ func MPC_ecdsampc_sign(job network.JobSessionMP, key MPC_ECDSAMPC_KEY_PTR, msgMe
 	if cErr != 0 {
 		return nil, fmt.Errorf("ECDSA-mp sign failed, %v", cErr)
 	}
-	return sigMem.Get(), nil
+	return CMEMGet(sigMem), nil
 }
 
 // =========== ZKP =====================
@@ -219,7 +219,7 @@ func NewEncKeyPairs(count int) ([][]byte, [][]byte, error) {
 	if err != 0 {
 		return nil, nil, fmt.Errorf("generating key pairs failed, %v", err)
 	}
-	return privateKeys.Get(), publicKeys.Get(), nil
+	return CMEMSGet(privateKeys), CMEMSGet(publicKeys), nil
 }
 
 func NewECKeyPairs(count int) ([][]byte, [][]byte, error) {
@@ -229,7 +229,7 @@ func NewECKeyPairs(count int) ([][]byte, [][]byte, error) {
 	if err != 0 {
 		return nil, nil, fmt.Errorf("generating key pairs failed, %v", err)
 	}
-	return privateKeys.Get(), publicKeys.Get(), nil
+	return CMEMSGet(privateKeys), CMEMSGet(publicKeys), nil
 }
 
 func NewNode(nodeType NodeType, nodeName string, threshold int) CRYPTO_SS_NODE_PTR {
@@ -248,7 +248,7 @@ func PVE_quorum_encrypt(root CRYPTO_SS_NODE_PTR, publicKeys [][]byte, publicKeys
 		return nil, fmt.Errorf("pve quorum encrypt failed: %v", err)
 	}
 
-	return out.Get(), nil
+	return CMEMGet(out), nil
 }
 
 func PVE_quorum_decrypt(root CRYPTO_SS_NODE_PTR, privateKeys [][]byte, privateKeysCount int, publicKeys [][]byte, publicKeysCount int, pveBundle []byte, Xs [][]byte, xsCount int, label string) ([][]byte, error) {
@@ -258,7 +258,7 @@ func PVE_quorum_decrypt(root CRYPTO_SS_NODE_PTR, privateKeys [][]byte, privateKe
 		return nil, fmt.Errorf("pve quorum decrypt failed: %v", err)
 	}
 
-	return out.Get(), nil
+	return CMEMSGet(out), nil
 }
 
 func PVE_Test() error {
@@ -314,8 +314,8 @@ func SerializeECDSAShares(keyshares []MPC_ECDSAMPC_KEY_PTR) ([][]byte, [][]byte,
 		if err != 0 {
 			return nil, nil, fmt.Errorf("pve quorum decrypt failed: %v", err)
 		}
-		xs[i] = xMem.Get()
-		Qs[i] = QMem.Get()
+		xs[i] = CMEMGet(xMem)
+		Qs[i] = CMEMGet(QMem)
 	}
 	return xs, Qs, nil
 }
@@ -327,5 +327,5 @@ func MPC_ecdsa_mpc_public_key_to_string(key MPC_ECDSAMPC_KEY_PTR) ([]byte, []byt
 	if err != 0 {
 		return nil, nil, fmt.Errorf("getting ecdsa mpc public key failed, %v", err)
 	}
-	return xMem.Get(), yMem.Get(), nil
+	return CMEMGet(xMem), CMEMGet(yMem), nil
 }
