@@ -227,7 +227,7 @@ Please note that all cryptographic code has a specification (except for code lik
 
 # Design Principles and Secure Usage
 
-We have outlined our cryptographic design principles and some conventions regarding our documentation in our [design principles document](/docs/design-principles.pdf). Furthermore, our [secure usage document](/docs/secure-usage.pdf) describes important security guidelines that should be followed when using the library. Finally, we have strived to create a library that is constant-time to prevent side-channel attacks. This effort is highly dependent on the architecture of the CPU and the compiler used to build the library and therefore is not guaranteed on all platforms. We have outlined our efforts in the [constant-time document](/docs/constant-time.pdf).
+We have outlined our cryptographic design principles and some conventions regarding our documentation in our [design principles document](/docs/general-principles.pdf). Furthermore, our [secure usage document](/docs/secure-usage.pdf) describes important security guidelines that should be followed when using the library. Finally, we have strived to create a library that is constant-time to prevent side-channel attacks. This effort is highly dependent on the architecture of the CPU and the compiler used to build the library and therefore is not guaranteed on all platforms. We have outlined our efforts in the [constant-time document](/docs/constant-time.pdf).
 
 # External Dependencies
 
