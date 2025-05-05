@@ -243,8 +243,8 @@ struct edwards_projective_t {
 
   static void add(fe_t& rx, fe_t& ry, fe_t& rz, const fe_t& ax, const fe_t& ay, const fe_t& az, const fe_t& bx,
                   const fe_t& by, const fe_t& bz) {
-    bool a_is_inf = ax.is_zero();  // a.is_infinity();
-    bool b_is_inf = bx.is_zero();  // b.is_infinity();
+    bool a_is_inf = ax.is_zero();
+    bool b_is_inf = bx.is_zero();
 
     fe_t save_ax = ax;
     fe_t save_ay = ay;
