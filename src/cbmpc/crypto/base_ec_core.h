@@ -243,8 +243,8 @@ struct edwards_projective_t {
 
   static void add(fe_t& rx, fe_t& ry, fe_t& rz, const fe_t& ax, const fe_t& ay, const fe_t& az, const fe_t& bx,
                   const fe_t& by, const fe_t& bz) {
-    bool a_is_inf = ax.is_zero();
-    bool b_is_inf = bx.is_zero();
+    bool a_is_inf = ax.is_zero();  // a.is_infinity();
+    bool b_is_inf = bx.is_zero();  // b.is_infinity();
 
     fe_t save_ax = ax;
     fe_t save_ay = ay;
@@ -283,12 +283,10 @@ struct edwards_projective_t {
 
     fe_t::mul(rz, tf, te);  // Z_3 = F * G
 
-    // cnd_move(r, a_is_inf, b);
     rx.cnd_assign(a_is_inf, bx);
     ry.cnd_assign(a_is_inf, by);
     rz.cnd_assign(a_is_inf, bz);
 
-    // cnd_move(r, b_is_inf, aa);
     rx.cnd_assign(b_is_inf, save_ax);
     ry.cnd_assign(b_is_inf, save_ay);
     rz.cnd_assign(b_is_inf, save_az);
