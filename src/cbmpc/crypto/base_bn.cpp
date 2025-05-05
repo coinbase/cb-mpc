@@ -431,6 +431,15 @@ bn_t bn_t::neg() const {
   return result;
 }
 
+void bn_t::set_sign(int new_s) {
+  int s = sign();
+  if (s == new_s || s == 0) return;
+  if (new_s == 0)
+    *this = 0;
+  else
+    BN_set_negative(*this, new_s < 0);
+}
+
 bn_t bn_t::rand_bitlen(int bits, bool top_bit_set) {
   bn_t result;
   int top = top_bit_set ? 1 : -1;

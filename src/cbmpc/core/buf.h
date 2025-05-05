@@ -218,15 +218,11 @@ class bits_t {
     friend class bits_t;
 
    public:
-    bool operator=(bool value) {
+    ref_t& operator=(bool value) noexcept {
       set(value);
-      return value;
-    }
-    operator bool() const { return get(); }
-    ref_t& operator=(const ref_t& src) {
-      set(src.get());
       return *this;
     }
+    operator bool() const { return get(); }
 
    private:
     bool get() const;

@@ -1,3 +1,4 @@
+#include <cbmpc/core/extended_uint.h>
 #include <cbmpc/core/utils.h>
 #include <cbmpc/crypto/base.h>
 

@@ -4,29 +4,26 @@
 
 namespace coinbase::crypto::ec25519_core {
 
-class point_t;
-
-point_t* new_point(const point_t* src);
-point_t* new_point();
-void free_point(point_t* a);
-void copy(point_t* r, const point_t* a);
-bool equ(const point_t* a, const point_t* b);
-void add(point_t* r, const point_t* a, const point_t* b);
-void sub(point_t* r, const point_t* a, const point_t* b);
-void neg(point_t* r, const point_t* a);
-int to_bin(const point_t* r, uint8_t* out);
-error_t from_bin(point_t* r, mem_t in);
-void mul_to_generator(point_t* r, const bn_t& x);
-void mul(point_t* r, const point_t* a, const bn_t& x);
-void mul_add(point_t* r, const point_t* P, const bn_t& x, const bn_t& y);  // r = x * P + y * G
-void set_infinity(point_t* r);
-bool is_infinity(const point_t* a);
-void get_xy(const point_t* a, bn_t& x, bn_t& y);
-bool set_xy(point_t* r, const bn_t& x, const bn_t& y);
-bool is_on_curve(const point_t* a);
-bool is_in_subgroup(const point_t* a);
-const mod_t& get_order();
-const point_t& get_generator();
+crypto::ecp_storage_t* new_point(const crypto::ecp_storage_t* src);
+crypto::ecp_storage_t* new_point();
+void free_point(crypto::ecp_storage_t* a);
+void copy(crypto::ecp_storage_t* r, const crypto::ecp_storage_t* a);
+bool equ(const crypto::ecp_storage_t* a, const crypto::ecp_storage_t* b);
+void add(crypto::ecp_storage_t* r, const crypto::ecp_storage_t* a, const crypto::ecp_storage_t* b);
+void sub(crypto::ecp_storage_t* r, const crypto::ecp_storage_t* a, const crypto::ecp_storage_t* b);
+void neg(crypto::ecp_storage_t* r, const crypto::ecp_storage_t* a);
+int to_bin(const crypto::ecp_storage_t* r, uint8_t* out);
+error_t from_bin(crypto::ecp_storage_t* r, mem_t in);
+void mul_to_generator(crypto::ecp_storage_t* r, const bn_t& x);
+void mul_to_generator_vartime(crypto::ecp_storage_t* r, const bn_t& x);
+void mul(crypto::ecp_storage_t* r, const crypto::ecp_storage_t* a, const bn_t& x);
+void mul_vartime(crypto::ecp_storage_t* r, const crypto::ecp_storage_t* a, const bn_t& x);
+void set_infinity(crypto::ecp_storage_t* r);
+bool is_infinity(const crypto::ecp_storage_t* a);
+void get_xy(const crypto::ecp_storage_t* a, bn_t& x, bn_t& y);
+bool is_on_curve(const crypto::ecp_storage_t* a);
+bool is_in_subgroup(const crypto::ecp_storage_t* a);
+const crypto::ecp_storage_t& get_generator();
 
 }  // namespace coinbase::crypto::ec25519_core
 

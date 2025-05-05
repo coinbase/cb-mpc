@@ -106,30 +106,4 @@ static inline uint64_t constant_time_select_u64(bool flag, uint64_t y, uint64_t 
   return MASKED_SELECT(mask, y, z);
 }
 
-using uint128_t = unsigned __int128;
-
-static inline uint64_t addx(uint64_t x, uint64_t y, uint64_t& carry) {
-#ifdef __x86_64__
-  unsigned long long z;
-  carry = _addcarry_u64(uint8_t(carry), x, y, &z);
-  return z;
-#else
-  auto r = uint128_t(x) + y + carry;
-  carry = uint64_t(r >> 64);
-  return uint64_t(r);
-#endif
-}
-
-static inline uint64_t subx(uint64_t x, uint64_t y, uint64_t& borrow) {
-#ifdef __x86_64__
-  unsigned long long z;
-  borrow = _subborrow_u64(uint8_t(borrow), x, y, &z);
-  return z;
-#else
-  auto r = uint128_t(x) - y - borrow;
-  borrow = uint64_t(r >> 64) & 1;
-  return uint64_t(r);
-#endif
-}
-
 }  // namespace coinbase

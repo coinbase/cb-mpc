@@ -78,68 +78,65 @@ const mod_t& ecurve_ed_t::p() const {
 const mod_t& ecurve_ed_t::order() const { return ed25519::order(); }
 
 const ecc_generator_point_t& ecurve_ed_t::generator() const {
-  static const ecc_generator_point_t gen = ecc_point_t(ec25519_core::get_generator());
+  static const ecc_generator_point_t gen = ecc_point_t(curve_ed25519, ec25519_core::get_generator());
   return gen;
 }
 
-void ecurve_ed_t::mul_to_generator_vartime(const bn_t& val, ecc_point_t& P) const { mul_to_generator(val, P); }
+void ecurve_ed_t::mul_to_generator_vartime(const bn_t& val, ecc_point_t& P) const {
+  ec25519_core::mul_to_generator_vartime(P.storage, val % order());
+}
 
 void ecurve_ed_t::mul_to_generator(const bn_t& val, ecc_point_t& P) const {
-  ec25519_core::mul_to_generator(P.ed, val % order());
+  ec25519_core::mul_to_generator(P.storage, val % order());
 }
 
-void ecurve_ed_t::init_point(ecc_point_t& P) const { P.ed = ec25519_core::new_point(); }
+void ecurve_ed_t::init_point(ecc_point_t& P) const { P.storage = ec25519_core::new_point(); }
 
-void ecurve_ed_t::free_point(ecc_point_t& P) const { ec25519_core::free_point(P.ed); }
+void ecurve_ed_t::free_point(ecc_point_t& P) const { ec25519_core::free_point(P.storage); }
 
 void ecurve_ed_t::copy_point(ecc_point_t& Dst, const ecc_point_t& Src) const {
-  Dst.ed = ec25519_core::new_point(Src.ed);
+  Dst.storage = ec25519_core::new_point(Src.storage);
 }
 
-bool ecurve_ed_t::is_on_curve(const ecc_point_t& P) const { return ec25519_core::is_on_curve(P.ed); }
+bool ecurve_ed_t::is_on_curve(const ecc_point_t& P) const { return ec25519_core::is_on_curve(P.storage); }
 
 bool ecurve_ed_t::is_in_subgroup(const ecc_point_t& P) const {
   // NOTE: There is a more efficient way to check: https://eprint.iacr.org/2022/1164.pdf
   if (!is_on_curve(P)) return false;
-  return ec25519_core::is_in_subgroup(P.ed);
+  return ec25519_core::is_in_subgroup(P.storage);
 }
 
-bool ecurve_ed_t::is_infinity(const ecc_point_t& P) const { return ec25519_core::is_infinity(P.ed); }
+bool ecurve_ed_t::is_infinity(const ecc_point_t& P) const { return ec25519_core::is_infinity(P.storage); }
 
-void ecurve_ed_t::set_infinity(ecc_point_t& P) const { ec25519_core::set_infinity(P.ed); }
+void ecurve_ed_t::set_infinity(ecc_point_t& P) const { ec25519_core::set_infinity(P.storage); }
 
-void ecurve_ed_t::invert_point(ecc_point_t& P) const { ec25519_core::neg(P.ed, P.ed); }
+void ecurve_ed_t::invert_point(ecc_point_t& P) const { ec25519_core::neg(P.storage, P.storage); }
 
 bool ecurve_ed_t::equ_points(const ecc_point_t& P1, const ecc_point_t& P2) const {
-  return ec25519_core::equ(P1.ed, P2.ed);
+  return ec25519_core::equ(P1.storage, P2.storage);
 }
 
 void ecurve_ed_t::add(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const {
-  ec25519_core::add(R.ed, P1.ed, P2.ed);
+  ec25519_core::add(R.storage, P1.storage, P2.storage);
 }
 
 void ecurve_ed_t::add_consttime(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const {
-  ec25519_core::add(R.ed, P1.ed, P2.ed);
+  ec25519_core::add(R.storage, P1.storage, P2.storage);
 }
 
 void ecurve_ed_t::mul_vartime(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const { mul(P, x, R); }
 
-void ecurve_ed_t::mul(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const { ec25519_core::mul(R.ed, P.ed, x); }
-
-void ecurve_ed_t::mul_add(const bn_t& n, const ecc_point_t& P, const bn_t& m, ecc_point_t& R) const  // R = G*n + P*m
-{
-  ec25519_core::mul_add(R.ed, P.ed, m, n);
+void ecurve_ed_t::mul(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const {
+  ec25519_core::mul(R.storage, P.storage, x);
 }
 
 int ecurve_ed_t::to_compressed_bin(const ecc_point_t& P, byte_ptr out) const {
-  if (out) ec25519_core::to_bin(P.ed, out);
+  if (out) ec25519_core::to_bin(P.storage, out);
   return 32;
 }
 
-void ecurve_ed_t::get_coordinates(const ecc_point_t& P, bn_t& x, bn_t& y) const { ec25519_core::get_xy(P.ed, x, y); }
-
-void ecurve_ed_t::set_coordinates(ecc_point_t& P, const bn_t& x, const bn_t& y) const {
-  ec25519_core::set_xy(P.ed, x, y);
+void ecurve_ed_t::get_coordinates(const ecc_point_t& P, bn_t& x, bn_t& y) const {
+  ec25519_core::get_xy(P.storage, x, y);
 }
 
 bool ecurve_ed_t::hash_to_point(mem_t bin, ecc_point_t& P) const {
@@ -151,7 +148,7 @@ bool ecurve_ed_t::hash_to_point(mem_t bin, ecc_point_t& P) const {
 }
 
 error_t ecurve_ed_t::from_bin(ecc_point_t& P, mem_t bin) const {
-  error_t rv = ec25519_core::from_bin(P.ed, bin);
+  error_t rv = ec25519_core::from_bin(P.storage, bin);
   if (rv != 0) {
     set_infinity(P);
     return rv;

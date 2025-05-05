@@ -37,7 +37,6 @@ class ecurve_ossl_t final : public ecurve_interface_t {
   int to_bin(const ecc_point_t& P, byte_ptr out) const override;
   error_t from_bin(ecc_point_t& P, mem_t bin) const override;
   void get_coordinates(const ecc_point_t& P, bn_t& x, bn_t& y) const override;
-  void set_coordinates(ecc_point_t& P, const bn_t& x, const bn_t& y) const override;
   bool hash_to_point(mem_t bin, ecc_point_t& Q) const override;
   buf_t pub_to_der(const ecc_pub_key_t& P) const override;
   buf_t prv_to_der(const ecc_prv_key_t& K) const override;
@@ -272,11 +271,6 @@ void ecurve_ossl_t::mul(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) con
 
 void ecurve_ossl_t::get_coordinates(const ecc_point_t& P, bn_t& x, bn_t& y) const {
   int res = EC_POINT_get_affine_coordinates(group, P, x, y, bn_t::thread_local_storage_bn_ctx());
-  cb_assert(res);
-}
-
-void ecurve_ossl_t::set_coordinates(ecc_point_t& P, const bn_t& x, const bn_t& y) const {
-  int res = EC_POINT_set_affine_coordinates(group, P, x, y, bn_t::thread_local_storage_bn_ctx());
   cb_assert(res);
 }
 
@@ -650,10 +644,10 @@ ecc_point_t::ecc_point_t(ecurve_t _curve, const EC_POINT* _ptr)
   ptr = EC_POINT_dup(_ptr, curve.get_group());
 }
 
-ecc_point_t::ecc_point_t(const ec25519_core::point_t& ed_point)
-    : curve(curve_ed25519)  // NOLINT:cppcoreguidelines-pro-type-member-init
+ecc_point_t::ecc_point_t(ecurve_t _curve, const ecp_storage_t& p)
+    : curve(_curve)  // NOLINT:cppcoreguidelines-pro-type-member-init
 {
-  ed = ec25519_core::new_point(&ed_point);
+  storage = new ecp_storage_t(p);
 }
 
 namespace secp256k1 {
@@ -779,8 +773,6 @@ void ecc_point_t::get_y(bn_t& y) const {
   bn_t x;
   get_coordinates(x, y);
 }
-
-void ecc_point_t::set_coordinates(const bn_t& x, const bn_t& y) { curve.ptr->set_coordinates(*this, x, y); }
 
 bool ecc_point_t::is_on_curve() const {
   if (!curve) return false;

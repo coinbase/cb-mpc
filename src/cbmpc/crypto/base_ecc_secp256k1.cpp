@@ -284,14 +284,6 @@ void ecurve_secp256k1_t::get_coordinates(const ecc_point_t& P, bn_t& x, bn_t& y)
   y = bn_t::from_bin(buf.range(33, 32));
 }
 
-void ecurve_secp256k1_t::set_coordinates(ecc_point_t& P, const bn_t& x, const bn_t& y) const {
-  buf_t buf(65);
-  buf[0] = 4;
-  x.to_bin(buf.data() + 1, 32);
-  y.to_bin(buf.data() + 33, 32);
-  from_bin(P, buf);
-}
-
 bool ecurve_secp256k1_t::hash_to_point(mem_t bin, ecc_point_t& Q) const {
   if (bin.size != size()) return false;
   buf_t oct(1 + bin.size);

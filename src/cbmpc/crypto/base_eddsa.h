@@ -35,11 +35,9 @@ class ecurve_ed_t final : public ecurve_interface_t {
   void add_consttime(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const override;
   void mul(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const override;
   void mul_vartime(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const override;
-  void mul_add(const bn_t& n, const ecc_point_t& P, const bn_t& m, ecc_point_t& R) const override;  // R = G*n + P*m
   int to_compressed_bin(const ecc_point_t& P, byte_ptr out) const override;
   error_t from_bin(ecc_point_t& P, mem_t bin) const override;
   void get_coordinates(const ecc_point_t& P, bn_t& x, bn_t& y) const override;
-  void set_coordinates(ecc_point_t& P, const bn_t& x, const bn_t& y) const override;
   bool hash_to_point(mem_t bin, ecc_point_t& Q) const override;
   const mod_t& order() const override;
   const mod_t& p() const override;

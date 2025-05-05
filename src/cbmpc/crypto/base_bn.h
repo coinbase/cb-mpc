@@ -93,6 +93,7 @@ class bn_t {
   static bn_t rand_bitlen(int bits, bool top_bit_set = false);
 
   bn_t neg() const;
+  void set_sign(int sign);
   bool is_odd() const;
   bool is_zero() const;
   bn_t pow(const bn_t& exp) const;

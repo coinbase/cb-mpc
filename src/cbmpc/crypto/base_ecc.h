@@ -16,14 +16,16 @@ namespace secp256k1 {
 typedef struct point_t* point_ptr_t;
 }
 
-namespace ec25519_core {
-class point_t;
-}
-
 enum class ecurve_type_e {
   ossl = 1,
   ed25519 = 2,
   bitcoin = 4,
+};
+
+struct ecp_storage_t {
+  uint64_t x[4];
+  uint64_t y[4];
+  uint64_t z[4];
 };
 
 class ecurve_interface_t {
@@ -59,7 +61,6 @@ class ecurve_interface_t {
   virtual int to_bin(const ecc_point_t& P, byte_ptr out) const { return to_compressed_bin(P, out); }
   virtual error_t from_bin(ecc_point_t& P, mem_t bin) const = 0;
   virtual void get_coordinates(const ecc_point_t& P, bn_t& x, bn_t& y) const = 0;
-  virtual void set_coordinates(ecc_point_t& P, const bn_t& x, const bn_t& y) const = 0;
   virtual bool hash_to_point(mem_t bin, ecc_point_t& Q) const = 0;
   virtual const mod_t& order() const = 0;
   virtual const mod_t& p() const = 0;
@@ -151,7 +152,7 @@ class ecc_point_t {
   ecc_point_t() : curve(nullptr), ptr(nullptr) {}
   explicit ecc_point_t(ecurve_t curve);
   ecc_point_t(ecurve_t curve, const EC_POINT* ptr);
-  explicit ecc_point_t(const ec25519_core::point_t& ed);
+  explicit ecc_point_t(ecurve_t curve, const ecp_storage_t& storage);
   explicit ecc_point_t(const secp256k1::point_ptr_t p);
 
   ecc_point_t& operator=(const ecc_point_t& src);
@@ -184,7 +185,6 @@ class ecc_point_t {
   bn_t get_x() const;
   bn_t get_y() const;
 
-  void set_coordinates(const bn_t& x, const bn_t& y);
   bool is_on_curve() const;
   bool is_in_subgroup() const;
   bool is_infinity() const;
@@ -220,8 +220,8 @@ class ecc_point_t {
   ecurve_t curve;
   union {
     EC_POINT* ptr = nullptr;
-    ec25519_core::point_t* ed;
     secp256k1::point_ptr_t secp256k1;
+    ecp_storage_t* storage;
   };
 };
 
