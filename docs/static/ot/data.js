@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746541582974,
+  "lastUpdate": 1746544413331,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -168,6 +168,48 @@ window.BENCHMARK_DATA = {
             "value": 13817.080137262867,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13815.211078431374 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "225d67963edc510a9d3f83ce87fa780dbf256a25",
+          "message": "fix: Zeroize plaintext on AES-GCM decryption failure (#17)\n\nPreviously, the AES-GCM `decrypt_final` function did not zeroize the decrypted plaintext from memory when the authentication tag verification failed. This could lead to sensitive data remaining in memory. We emphasize that none of the higher level protocols are impacted by this as they already zeroize the value. We are making this change for good hygiene.\n\nThis commit leverages `EVP_CIPHER_CTX` to ensure proper cleanup and zeroization of the plaintext buffer in the event of a decryption failure.",
+          "timestamp": "2025-05-06T07:36:35-07:00",
+          "tree_id": "597d1a2940de34c5960ba368686aa44c64bf65d7",
+          "url": "https://github.com/coinbase/cb-mpc/commit/225d67963edc510a9d3f83ce87fa780dbf256a25"
+        },
+        "date": 1746544412902,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24375.38682758306,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24374.066689655174 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 98951.68285714005,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 98940.83085714285 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13791.27956862944,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13790.933686274508 us\nthreads: 1"
           }
         ]
       }
