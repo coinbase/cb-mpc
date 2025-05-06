@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746541577117,
+  "lastUpdate": 1746544406865,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -288,6 +288,78 @@ window.BENCHMARK_DATA = {
             "value": 78.60117100245883,
             "unit": "us/iter",
             "extra": "iterations: 8918\ncpu: 78.59288035433954 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "225d67963edc510a9d3f83ce87fa780dbf256a25",
+          "message": "fix: Zeroize plaintext on AES-GCM decryption failure (#17)\n\nPreviously, the AES-GCM `decrypt_final` function did not zeroize the decrypted plaintext from memory when the authentication tag verification failed. This could lead to sensitive data remaining in memory. We emphasize that none of the higher level protocols are impacted by this as they already zeroize the value. We are making this change for good hygiene.\n\nThis commit leverages `EVP_CIPHER_CTX` to ensure proper cleanup and zeroization of the plaintext buffer in the event of a decryption failure.",
+          "timestamp": "2025-05-06T07:36:35-07:00",
+          "tree_id": "597d1a2940de34c5960ba368686aa44c64bf65d7",
+          "url": "https://github.com/coinbase/cb-mpc/commit/225d67963edc510a9d3f83ce87fa780dbf256a25"
+        },
+        "date": 1746544406469,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.35881598824308625,
+            "unit": "us/iter",
+            "extra": "iterations: 1949495\ncpu: 0.3588006365751131 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.31181699984840366,
+            "unit": "us/iter",
+            "extra": "iterations: 2242020\ncpu: 0.3118153905852759 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.42955783317903,
+            "unit": "us/iter",
+            "extra": "iterations: 16928\ncpu: 41.428252894612456 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 63.95458845028939,
+            "unit": "us/iter",
+            "extra": "iterations: 10944\ncpu: 63.95322514619883 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 19.947376835561244,
+            "unit": "us/iter",
+            "extra": "iterations: 35071\ncpu: 19.944560434547057 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.541858203341516,
+            "unit": "us/iter",
+            "extra": "iterations: 49169\ncpu: 14.539804063535978 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61.57763698689941,
+            "unit": "us/iter",
+            "extra": "iterations: 11377\ncpu: 61.57040722510323 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 78.51862830866406,
+            "unit": "us/iter",
+            "extra": "iterations: 8916\ncpu: 78.51182133243597 us\nthreads: 1"
           }
         ]
       }
