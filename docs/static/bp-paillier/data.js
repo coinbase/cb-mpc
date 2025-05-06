@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746512430858,
+  "lastUpdate": 1746541580201,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -198,6 +198,72 @@ window.BENCHMARK_DATA = {
             "value": 8318.898964283844,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8318.350392857137 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d96fee319fd9dc0820d8995be86a2f23ed1093f3",
+          "message": "fix: RSA-OAEP MGF1 Misconfiguration (#16)\n\nPreviously, the RSA-OAEP implementation called the main hash setter twice instead of specifically setting the MGF1 hash. This caused MGF1 to incorrectly fall back to the default hash (SHA-1) instead of using the intended hash algorithm.",
+          "timestamp": "2025-05-06T06:48:03-07:00",
+          "tree_id": "d3ba2915cbb40e4c27ac2d51a315e7fb23cd2d17",
+          "url": "https://github.com/coinbase/cb-mpc/commit/d96fee319fd9dc0820d8995be86a2f23ed1093f3"
+        },
+        "date": 1746541579765,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 44971.63306250229,
+            "unit": "us/iter",
+            "extra": "iterations: 16\ncpu: 44965.390250000004 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4514.073954838281,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4513.4220774193545 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8574.59604878009,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8573.51118292683 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4507.924025806314,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4507.347587096777 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.122463114558974,
+            "unit": "us/iter",
+            "extra": "iterations: 63399\ncpu: 11.12076326125018 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.81618958413544,
+            "unit": "us/iter",
+            "extra": "iterations: 54609\ncpu: 12.814603087403174 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8374.6170119038,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8373.667238095237 us\nthreads: 1"
           }
         ]
       }
