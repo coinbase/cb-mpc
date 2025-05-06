@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742998242551,
+  "lastUpdate": 1746512427126,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -144,6 +144,78 @@ window.BENCHMARK_DATA = {
             "value": 57.54031508988265,
             "unit": "us/iter",
             "extra": "iterations: 12187\ncpu: 57.537597357840305 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d611643d608c17fadc7fa09793d00c84abfbaf94",
+          "message": "feat: optimize Ed25519 point storage (#15)\n\n- Optimize Ed25519 point storage and operations for clarity and preparation for adding other curves.\n- Removed unused `set_coordinates` from `ecurve_interface_t`",
+          "timestamp": "2025-05-05T22:41:02-07:00",
+          "tree_id": "f6bbdb3391c7b9f77c66ab9d6afe21b91054bec3",
+          "url": "https://github.com/coinbase/cb-mpc/commit/d611643d608c17fadc7fa09793d00c84abfbaf94"
+        },
+        "date": 1746512426404,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.3590930804775091,
+            "unit": "us/iter",
+            "extra": "iterations: 1948357\ncpu: 0.35905800887619665 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.31242825936092766,
+            "unit": "us/iter",
+            "extra": "iterations: 2242188\ncpu: 0.31239650689415877 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.389981993150734,
+            "unit": "us/iter",
+            "extra": "iterations: 16938\ncpu: 41.38704675876727 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 64.04800347158958,
+            "unit": "us/iter",
+            "extra": "iterations: 10946\ncpu: 64.0417280285036 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 20.012877776824645,
+            "unit": "us/iter",
+            "extra": "iterations: 35067\ncpu: 20.01097604585508 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.217622712484651,
+            "unit": "us/iter",
+            "extra": "iterations: 49180\ncpu: 14.216336376575848 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61.54081536565748,
+            "unit": "us/iter",
+            "extra": "iterations: 11363\ncpu: 61.53464340403058 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 78.47859452791319,
+            "unit": "us/iter",
+            "extra": "iterations: 8918\ncpu: 78.47068995290424 us\nthreads: 1"
           }
         ]
       }
