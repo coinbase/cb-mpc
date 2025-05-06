@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742998246391,
+  "lastUpdate": 1746512430858,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -132,6 +132,72 @@ window.BENCHMARK_DATA = {
             "value": 8323.063285713162,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8320.815785714292 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d611643d608c17fadc7fa09793d00c84abfbaf94",
+          "message": "feat: optimize Ed25519 point storage (#15)\n\n- Optimize Ed25519 point storage and operations for clarity and preparation for adding other curves.\n- Removed unused `set_coordinates` from `ecurve_interface_t`",
+          "timestamp": "2025-05-05T22:41:02-07:00",
+          "tree_id": "f6bbdb3391c7b9f77c66ab9d6afe21b91054bec3",
+          "url": "https://github.com/coinbase/cb-mpc/commit/d611643d608c17fadc7fa09793d00c84abfbaf94"
+        },
+        "date": 1746512430114,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 60140.76599999498,
+            "unit": "us/iter",
+            "extra": "iterations: 10\ncpu: 60136.13710000001 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4513.253161290308,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4512.994432258063 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8557.377414634662,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8556.884792682928 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4500.025677419128,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4499.731709677418 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.046545496240894,
+            "unit": "us/iter",
+            "extra": "iterations: 63225\ncpu: 11.045676615262959 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.78564396641748,
+            "unit": "us/iter",
+            "extra": "iterations: 54669\ncpu: 12.78454707421024 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8318.898964283844,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8318.350392857137 us\nthreads: 1"
           }
         ]
       }
