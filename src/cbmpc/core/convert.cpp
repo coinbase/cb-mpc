@@ -3,7 +3,7 @@
 namespace coinbase {
 
 void converter_t::convert(bool& value) {
-  uint8_t v = value ? 1 : 0;
+  uint8_t v = (write && value) ? 1 : 0;
   convert(v);
   if (!is_error() && !write) value = v != 0;
 }

@@ -275,7 +275,7 @@ TEST_F(ECDSA2PC, Integer_Commit) {
   crypto::paillier_t::elem_t c_key_tag = paillier.elem(c_key) + (q << SEC_P_STAT);
   crypto::paillier_t::elem_t pai_c = c_key_tag * (k2_inv * r) + c_tag;
 
-  mem_t sid = coinbase::crypto::gen_random_bitlen(SEC_P_COM);
+  buf_t sid = coinbase::crypto::gen_random_bitlen(SEC_P_COM);
 
   zk_ecdsa_sign_2pc_integer_commit_t zk;
   zk.prove(paillier, c_key_tag, pai_c, Q2, R2, m, r, k2, x2, rho, rc, sid, 0);

@@ -27,8 +27,9 @@ using BIP340_2PC = MPC_EC_2PC;
 
 TEST_F(EdDSA2PC, KeygenSignRefreshSign) {
   const int DATA_COUNT = 7;
+  std::vector<buf_t> data_bufs(DATA_COUNT);
   std::vector<mem_t> data(DATA_COUNT);
-  for (int i = 0; i < DATA_COUNT; i++) data[i] = crypto::gen_random(32);
+  for (int i = 0; i < DATA_COUNT; i++) data[i] = data_bufs[i] = crypto::gen_random(32);
   std::vector<eddsa2pc::key_t> keys(2);
   std::vector<eddsa2pc::key_t> new_keys(2);
 
@@ -66,8 +67,9 @@ TEST_F(EdDSA2PC, KeygenSignRefreshSign) {
 
 TEST_F(BIP340_2PC, KeygenSignRefreshSign) {
   const int DATA_COUNT = 7;
+  std::vector<buf_t> data_bufs(DATA_COUNT);
   std::vector<mem_t> data(DATA_COUNT);
-  for (int i = 0; i < DATA_COUNT; i++) data[i] = crypto::gen_random(32);
+  for (int i = 0; i < DATA_COUNT; i++) data[i] = data_bufs[i] = crypto::gen_random(32);
   std::vector<eddsa2pc::key_t> keys(2);
   std::vector<eddsa2pc::key_t> new_keys(2);
 
@@ -106,10 +108,12 @@ TEST_F(BIP340_2PC, KeygenSignRefreshSign) {
 TEST_F(EdDSA2PC, ParallelKSRS8) {
   int parallel_count = 8;
   std::vector<std::vector<mem_t>> data(30);
+  std::vector<std::vector<buf_t>> data_buf(30);
   for (int i = 0; i < parallel_count; i++) {
     int len = i + 1;
     data[i].resize(len);
-    for (int j = 0; j < len; j++) data[i][j] = crypto::gen_random(32);
+    data_buf[i].resize(len);
+    for (int j = 0; j < len; j++) data[i][j] = data_buf[i][j] = crypto::gen_random(32);
   }
   std::vector<std::vector<eddsa2pc::key_t>> keys(parallel_count, std::vector<eddsa2pc::key_t>(2));
   std::vector<std::vector<eddsa2pc::key_t>> new_keys(parallel_count, std::vector<eddsa2pc::key_t>(2));
