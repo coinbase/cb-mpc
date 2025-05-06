@@ -163,7 +163,7 @@ error_t rsa_prv_key_t::decrypt_oaep(mem_t in, hash_e hash_alg, hash_e mgf_alg, m
   if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0) return openssl_error("RSA decrypt OAEP error");
   if (EVP_PKEY_CTX_set_rsa_oaep_md(ctx, hash_alg_t::get(hash_alg).md) <= 0)
     return openssl_error("RSA decrypt OAEP error");
-  if (EVP_PKEY_CTX_set_rsa_oaep_md(ctx, hash_alg_t::get(mgf_alg).md) <= 0)
+  if (EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, hash_alg_t::get(mgf_alg).md) <= 0)
     return openssl_error("RSA decrypt OAEP error");
   if (EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, label.data, label.size) <= 0)
     return openssl_error("RSA decrypt OAEP error");
