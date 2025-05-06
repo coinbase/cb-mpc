@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746512434719,
+  "lastUpdate": 1746541582974,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -126,6 +126,48 @@ window.BENCHMARK_DATA = {
             "value": 13782.67821569263,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13780.601333333329 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d96fee319fd9dc0820d8995be86a2f23ed1093f3",
+          "message": "fix: RSA-OAEP MGF1 Misconfiguration (#16)\n\nPreviously, the RSA-OAEP implementation called the main hash setter twice instead of specifically setting the MGF1 hash. This caused MGF1 to incorrectly fall back to the default hash (SHA-1) instead of using the intended hash algorithm.",
+          "timestamp": "2025-05-06T06:48:03-07:00",
+          "tree_id": "d3ba2915cbb40e4c27ac2d51a315e7fb23cd2d17",
+          "url": "https://github.com/coinbase/cb-mpc/commit/d96fee319fd9dc0820d8995be86a2f23ed1093f3"
+        },
+        "date": 1746541582532,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24376.948379320875,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24375.263206896558 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 98937.16042857444,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 98928.55142857145 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13817.080137262867,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13815.211078431374 us\nthreads: 1"
           }
         ]
       }
