@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746541580201,
+  "lastUpdate": 1746544410504,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -264,6 +264,72 @@ window.BENCHMARK_DATA = {
             "value": 8374.6170119038,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8373.667238095237 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "225d67963edc510a9d3f83ce87fa780dbf256a25",
+          "message": "fix: Zeroize plaintext on AES-GCM decryption failure (#17)\n\nPreviously, the AES-GCM `decrypt_final` function did not zeroize the decrypted plaintext from memory when the authentication tag verification failed. This could lead to sensitive data remaining in memory. We emphasize that none of the higher level protocols are impacted by this as they already zeroize the value. We are making this change for good hygiene.\n\nThis commit leverages `EVP_CIPHER_CTX` to ensure proper cleanup and zeroization of the plaintext buffer in the event of a decryption failure.",
+          "timestamp": "2025-05-06T07:36:35-07:00",
+          "tree_id": "597d1a2940de34c5960ba368686aa44c64bf65d7",
+          "url": "https://github.com/coinbase/cb-mpc/commit/225d67963edc510a9d3f83ce87fa780dbf256a25"
+        },
+        "date": 1746544410014,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 49553.290352939846,
+            "unit": "us/iter",
+            "extra": "iterations: 17\ncpu: 49547.30300000001 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4514.022535947327,
+            "unit": "us/iter",
+            "extra": "iterations: 153\ncpu: 4513.76677124183 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8566.131036587183,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8564.867756097563 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4501.10781290248,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4501.053948387097 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.042495684962136,
+            "unit": "us/iter",
+            "extra": "iterations: 63383\ncpu: 11.041912089992591 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.795051484204667,
+            "unit": "us/iter",
+            "extra": "iterations: 54541\ncpu: 12.793535285381639 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8323.17454761605,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8322.434726190468 us\nthreads: 1"
           }
         ]
       }
