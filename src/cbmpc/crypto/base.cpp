@@ -223,7 +223,7 @@ static const EVP_CIPHER* cipher_aes_gcm(int key_size) {
 void aes_gcm_t::encrypt(mem_t key, mem_t iv, mem_t auth, int tag_size, mem_t in, buf_t& out) {
   aes_gcm_t gcm;
   gcm.encrypt_init(key, iv, auth);
-  gcm.update(in, out.alloc(in.size + tag_size));
+  gcm.cipher.update(in, out.alloc(in.size + tag_size));
   gcm.encrypt_final(mem_t(out.data() + in.size, tag_size));
 }
 
@@ -233,54 +233,54 @@ error_t aes_gcm_t::decrypt(mem_t key, mem_t iv, mem_t auth, int tag_size, mem_t 
   aes_gcm_t gcm;
   gcm.decrypt_init(key, iv, auth);
   int data_size = in.size - tag_size;
-  gcm.update(mem_t(in.data, data_size), out.alloc(data_size));
+  gcm.cipher.update(mem_t(in.data, data_size), out.alloc(data_size));
   return gcm.decrypt_final(mem_t(in.data + data_size, tag_size));
 }
 
 void aes_gcm_t::encrypt_init(mem_t key, mem_t iv, mem_t auth) {
-  cb_assert(0 < EVP_EncryptInit(ctx, cipher_aes_gcm(key.size), NULL, NULL));
-  cb_assert(0 < EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv.size, NULL));
-  cb_assert(0 < EVP_EncryptInit(ctx, NULL, key.data, iv.data));
-  cb_assert(0 < EVP_CIPHER_CTX_set_padding(ctx, 0));
+  cb_assert(0 < EVP_EncryptInit(cipher.ctx, cipher_aes_gcm(key.size), NULL, NULL));
+  cb_assert(0 < EVP_CIPHER_CTX_ctrl(cipher.ctx, EVP_CTRL_GCM_SET_IVLEN, iv.size, NULL));
+  cb_assert(0 < EVP_EncryptInit(cipher.ctx, NULL, key.data, iv.data));
+  cb_assert(0 < EVP_CIPHER_CTX_set_padding(cipher.ctx, 0));
   if (auth.size > 0) {
     int out_size = 0;
-    cb_assert(0 < EVP_CipherUpdate(ctx, NULL, &out_size, auth.data, auth.size));
+    cb_assert(0 < EVP_CipherUpdate(cipher.ctx, NULL, &out_size, auth.data, auth.size));
   }
 }
 
 // Note: Uses the same key but changes the iv and auth data. For example in use cases such as TLS where the same session
 // key is used but with different IVs.
 void aes_gcm_t::reinit(mem_t iv, mem_t auth) {
-  cb_assert(0 < EVP_CipherInit(ctx, NULL, NULL, iv.data, -1));
+  cb_assert(0 < EVP_CipherInit(cipher.ctx, NULL, NULL, iv.data, -1));
   if (auth.size > 0) {
     int out_size = 0;
-    cb_assert(0 < EVP_CipherUpdate(ctx, NULL, &out_size, auth.data, auth.size));
+    cb_assert(0 < EVP_CipherUpdate(cipher.ctx, NULL, &out_size, auth.data, auth.size));
   }
 }
 
 void aes_gcm_t::encrypt_final(mem_t tag)  // tag.data is output
 {
   int out_size = 0;
-  cb_assert(0 < EVP_EncryptFinal_ex(ctx, NULL, &out_size));
+  cb_assert(0 < EVP_EncryptFinal_ex(cipher.ctx, NULL, &out_size));
   cb_assert(out_size == 0);
-  cb_assert(0 < EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, tag.size, tag.data));
+  cb_assert(0 < EVP_CIPHER_CTX_ctrl(cipher.ctx, EVP_CTRL_GCM_GET_TAG, tag.size, tag.data));
 }
 
 void aes_gcm_t::decrypt_init(mem_t key, mem_t iv, mem_t auth) {
-  cb_assert(0 < EVP_DecryptInit(ctx, cipher_aes_gcm(key.size), NULL, NULL));
-  cb_assert(0 < EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv.size, NULL));
-  cb_assert(0 < EVP_DecryptInit(ctx, NULL, key.data, iv.data));
-  cb_assert(0 < EVP_CIPHER_CTX_set_padding(ctx, 0));
+  cb_assert(0 < EVP_DecryptInit(cipher.ctx, cipher_aes_gcm(key.size), NULL, NULL));
+  cb_assert(0 < EVP_CIPHER_CTX_ctrl(cipher.ctx, EVP_CTRL_GCM_SET_IVLEN, iv.size, NULL));
+  cb_assert(0 < EVP_DecryptInit(cipher.ctx, NULL, key.data, iv.data));
+  cb_assert(0 < EVP_CIPHER_CTX_set_padding(cipher.ctx, 0));
   if (auth.size > 0) {
     int out_size = 0;
-    cb_assert(0 < EVP_DecryptUpdate(ctx, NULL, &out_size, auth.data, auth.size));
+    cb_assert(0 < EVP_DecryptUpdate(cipher.ctx, NULL, &out_size, auth.data, auth.size));
   }
 }
 
 error_t aes_gcm_t::decrypt_final(mem_t tag) {
-  cb_assert(0 < EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, tag.size, tag.data));
+  cb_assert(0 < EVP_CIPHER_CTX_ctrl(cipher.ctx, EVP_CTRL_GCM_SET_TAG, tag.size, tag.data));
   int dummy = 0;
-  if (0 >= EVP_DecryptFinal_ex(ctx, NULL, &dummy)) return coinbase::error(E_CRYPTO);
+  if (0 >= EVP_DecryptFinal_ex(cipher.ctx, NULL, &dummy)) return coinbase::error(E_CRYPTO);
   return SUCCESS;
 }
 

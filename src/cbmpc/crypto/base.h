@@ -164,9 +164,11 @@ void random_shuffle(buf128_t key, T& v, int count) {
   }
 }
 
-class aes_gcm_t : public evp_cipher_ctx_t {
- public:
-  aes_gcm_t() : evp_cipher_ctx_t() {}
+class aes_gcm_t {
+ private:
+  evp_cipher_ctx_t cipher;
+
+  aes_gcm_t() = default;
   void encrypt_init(mem_t key, mem_t iv, mem_t auth);
   void encrypt_final(mem_t tag);  // tag.data is output
 
@@ -175,6 +177,7 @@ class aes_gcm_t : public evp_cipher_ctx_t {
 
   void reinit(mem_t iv, mem_t auth);
 
+ public:
   static void encrypt(mem_t key, mem_t iv, mem_t auth, int tag_size, mem_t in, buf_t& out);
   static error_t decrypt(mem_t key, mem_t iv, mem_t auth, int tag_size, mem_t in, buf_t& out);
 };
