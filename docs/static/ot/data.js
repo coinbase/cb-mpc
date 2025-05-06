@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742998250566,
+  "lastUpdate": 1746512434719,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -84,6 +84,48 @@ window.BENCHMARK_DATA = {
             "value": 13820.407823530724,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13819.068882352942 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d611643d608c17fadc7fa09793d00c84abfbaf94",
+          "message": "feat: optimize Ed25519 point storage (#15)\n\n- Optimize Ed25519 point storage and operations for clarity and preparation for adding other curves.\n- Removed unused `set_coordinates` from `ecurve_interface_t`",
+          "timestamp": "2025-05-05T22:41:02-07:00",
+          "tree_id": "f6bbdb3391c7b9f77c66ab9d6afe21b91054bec3",
+          "url": "https://github.com/coinbase/cb-mpc/commit/d611643d608c17fadc7fa09793d00c84abfbaf94"
+        },
+        "date": 1746512433952,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24442.108896562724,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24438.857103448274 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 98865.46857140794,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 98855.76185714288 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13782.67821569263,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13780.601333333329 us\nthreads: 1"
           }
         ]
       }
