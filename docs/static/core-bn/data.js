@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746632559782,
+  "lastUpdate": 1746638648180,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -960,6 +960,126 @@ window.BENCHMARK_DATA = {
             "value": 1363.3338070173982,
             "unit": "us/iter",
             "extra": "iterations: 513\ncpu: 1363.2869688109117 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9883f8dd9df8cae9d1c98c9dbee9fbecc9b61977",
+          "message": "build: Use clang20 and clang‑format (#22)\n\n- Switch default compiler to Clang/Clang++ 20 and install clang‑format v20 in Docker\n  - Note that the necessity of `-Wno-error=deprecated-declarations` is because newer Clang surface the warning. The warning only appears in using google-test.\n- Reformat the entire codebase with clang‑format v20 (normalize lambda arrows, loop bodies, remove stray includes).\n- Reinforce constant‑time guarantees by inlining mask logic and inserting small assembly barriers in core modules. Note that some added barriers are necessary when we switch the compiler to Clang. The barriers prevent some optimizations that breaks the constant-time property.\n- Other minor changes: tidy up CMake options, `.gitignore`, and README.",
+          "timestamp": "2025-05-07T09:46:19-07:00",
+          "tree_id": "f2eb86e4d51a7656f8c948616d9c1ea305637822",
+          "url": "https://github.com/coinbase/cb-mpc/commit/9883f8dd9df8cae9d1c98c9dbee9fbecc9b61977"
+        },
+        "date": 1746638647543,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.06587689825765052,
+            "unit": "us/iter",
+            "extra": "iterations: 10859432\ncpu: 0.06587006889494773 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.2735669216814623,
+            "unit": "us/iter",
+            "extra": "iterations: 2562204\ncpu: 0.27353761878445215 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.06538548826954513,
+            "unit": "us/iter",
+            "extra": "iterations: 10704292\ncpu: 0.06538156872028546 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.33790045398245544,
+            "unit": "us/iter",
+            "extra": "iterations: 2144576\ncpu: 0.33788704667029607 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.15348537353773756,
+            "unit": "us/iter",
+            "extra": "iterations: 4558040\ncpu: 0.153473769865995 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 11.494585220266405,
+            "unit": "us/iter",
+            "extra": "iterations: 60813\ncpu: 11.493724746353486 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 16.28734419253482,
+            "unit": "us/iter",
+            "extra": "iterations: 43005\ncpu: 16.286271480060325 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16534.85023809069,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16533.818357142343 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 19.137854097012042,
+            "unit": "us/iter",
+            "extra": "iterations: 36490\ncpu: 19.137527295148644 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 699.2491377245361,
+            "unit": "us/iter",
+            "extra": "iterations: 1002\ncpu: 699.2208532934088 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 22.48592913841338,
+            "unit": "us/iter",
+            "extra": "iterations: 31117\ncpu: 22.4853091236302 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1210.767740103338,
+            "unit": "us/iter",
+            "extra": "iterations: 581\ncpu: 1210.6833666093214 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 23.268269523967536,
+            "unit": "us/iter",
+            "extra": "iterations: 30565\ncpu: 23.267409716996447 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1205.9196883561146,
+            "unit": "us/iter",
+            "extra": "iterations: 584\ncpu: 1205.8647842466062 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 25.474187644758462,
+            "unit": "us/iter",
+            "extra": "iterations: 27632\ncpu: 25.472863021134906 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1369.8752834644854,
+            "unit": "us/iter",
+            "extra": "iterations: 508\ncpu: 1369.7870472440973 us\nthreads: 1"
           }
         ]
       }
