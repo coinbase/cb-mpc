@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746632565427,
+  "lastUpdate": 1746638653389,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -528,6 +528,72 @@ window.BENCHMARK_DATA = {
             "value": 8326.565607143537,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8326.29253571429 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9883f8dd9df8cae9d1c98c9dbee9fbecc9b61977",
+          "message": "build: Use clang20 and clang‑format (#22)\n\n- Switch default compiler to Clang/Clang++ 20 and install clang‑format v20 in Docker\n  - Note that the necessity of `-Wno-error=deprecated-declarations` is because newer Clang surface the warning. The warning only appears in using google-test.\n- Reformat the entire codebase with clang‑format v20 (normalize lambda arrows, loop bodies, remove stray includes).\n- Reinforce constant‑time guarantees by inlining mask logic and inserting small assembly barriers in core modules. Note that some added barriers are necessary when we switch the compiler to Clang. The barriers prevent some optimizations that breaks the constant-time property.\n- Other minor changes: tidy up CMake options, `.gitignore`, and README.",
+          "timestamp": "2025-05-07T09:46:19-07:00",
+          "tree_id": "f2eb86e4d51a7656f8c948616d9c1ea305637822",
+          "url": "https://github.com/coinbase/cb-mpc/commit/9883f8dd9df8cae9d1c98c9dbee9fbecc9b61977"
+        },
+        "date": 1746638652969,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 55144.30350001476,
+            "unit": "us/iter",
+            "extra": "iterations: 12\ncpu: 55138.673 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4517.251470968169,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4516.967690322582 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8574.949625000272,
+            "unit": "us/iter",
+            "extra": "iterations: 80\ncpu: 8574.485275 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4528.255651612492,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4527.751606451611 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.586435686982167,
+            "unit": "us/iter",
+            "extra": "iterations: 60431\ncpu: 11.585846469527224 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 13.416013134866756,
+            "unit": "us/iter",
+            "extra": "iterations: 51999\ncpu: 13.4147881497721 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8317.634654761583,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8317.308440476188 us\nthreads: 1"
           }
         ]
       }
