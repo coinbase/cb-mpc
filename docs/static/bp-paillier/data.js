@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746544410504,
+  "lastUpdate": 1746625697433,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -330,6 +330,72 @@ window.BENCHMARK_DATA = {
             "value": 8323.17454761605,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8322.434726190468 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4360c2097e506d7e51bd7a19c9a74b6344f254aa",
+          "message": "chore: Address ASan and UBSan findings (#18)",
+          "timestamp": "2025-05-07T07:11:09-06:00",
+          "tree_id": "6d9e4e2097e973523bb3492d6467dbdd02cff8de",
+          "url": "https://github.com/coinbase/cb-mpc/commit/4360c2097e506d7e51bd7a19c9a74b6344f254aa"
+        },
+        "date": 1746625696908,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 39363.290199995994,
+            "unit": "us/iter",
+            "extra": "iterations: 15\ncpu: 39360.849733333336 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4511.582109677375,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4510.954129032257 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8564.847804877456,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8564.55119512195 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4500.486897434724,
+            "unit": "us/iter",
+            "extra": "iterations: 156\ncpu: 4499.959621794873 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.01972305793887,
+            "unit": "us/iter",
+            "extra": "iterations: 63219\ncpu: 11.018196665559413 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.825125633770496,
+            "unit": "us/iter",
+            "extra": "iterations: 54436\ncpu: 12.824073774707912 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8319.172440478507,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8318.212035714283 us\nthreads: 1"
           }
         ]
       }
