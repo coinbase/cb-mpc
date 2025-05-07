@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746625697433,
+  "lastUpdate": 1746628455112,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -396,6 +396,72 @@ window.BENCHMARK_DATA = {
             "value": 8319.172440478507,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8318.212035714283 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "032abd771b188319cd4ee8c3e7663e8602132b97",
+          "message": "chore: Add usage notes to core functions (#20)\n\nThis PR adds informational comments and/or updates documentation to clarify that many core functions intentionally omit boundary and overflow checks. This design was a deliberate choice to maximize performance in critical code paths.\n\nDevelopers using these functions must be aware that the responsibility for input validation and preventing overflow or out-of-bounds errors lies with the calling code. While this approach benefits performance, misusing these functions without proper external checks could potentially lead to security vulnerabilities if input is not carefully managed by the caller.\n\nThese changes are for documentation and awareness purposes only and do not alter the functional behavior of the core functions. The goal is to prevent accidental misuse and ensure developers understand the intentional performance-security trade-off in these specific areas.",
+          "timestamp": "2025-05-07T06:55:07-07:00",
+          "tree_id": "49ea819c770c958ba2d2caaf61af1ed6d6303803",
+          "url": "https://github.com/coinbase/cb-mpc/commit/032abd771b188319cd4ee8c3e7663e8602132b97"
+        },
+        "date": 1746628454668,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 45570.44354545393,
+            "unit": "us/iter",
+            "extra": "iterations: 11\ncpu: 45567.12290909091 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4512.240451614132,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4511.707032258064 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8574.397109752194,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8573.558560975609 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4510.661380643269,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4510.360432258065 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.023678769942276,
+            "unit": "us/iter",
+            "extra": "iterations: 63509\ncpu: 11.022226456092834 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.831933150956843,
+            "unit": "us/iter",
+            "extra": "iterations: 54466\ncpu: 12.831045386112434 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8329.465916663788,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8328.269607142862 us\nthreads: 1"
           }
         ]
       }
