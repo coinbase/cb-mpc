@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746632562265,
+  "lastUpdate": 1746638650531,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -612,6 +612,114 @@ window.BENCHMARK_DATA = {
             "value": 78.9491835214382,
             "unit": "us/iter",
             "extra": "iterations: 8860\ncpu: 78.94563611738141 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9883f8dd9df8cae9d1c98c9dbee9fbecc9b61977",
+          "message": "build: Use clang20 and clang‑format (#22)\n\n- Switch default compiler to Clang/Clang++ 20 and install clang‑format v20 in Docker\n  - Note that the necessity of `-Wno-error=deprecated-declarations` is because newer Clang surface the warning. The warning only appears in using google-test.\n- Reformat the entire codebase with clang‑format v20 (normalize lambda arrows, loop bodies, remove stray includes).\n- Reinforce constant‑time guarantees by inlining mask logic and inserting small assembly barriers in core modules. Note that some added barriers are necessary when we switch the compiler to Clang. The barriers prevent some optimizations that breaks the constant-time property.\n- Other minor changes: tidy up CMake options, `.gitignore`, and README.",
+          "timestamp": "2025-05-07T09:46:19-07:00",
+          "tree_id": "f2eb86e4d51a7656f8c948616d9c1ea305637822",
+          "url": "https://github.com/coinbase/cb-mpc/commit/9883f8dd9df8cae9d1c98c9dbee9fbecc9b61977"
+        },
+        "date": 1746638650148,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.35720033502247067,
+            "unit": "us/iter",
+            "extra": "iterations: 1957481\ncpu: 0.35717767835294434 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.30733516848807985,
+            "unit": "us/iter",
+            "extra": "iterations: 2274286\ncpu: 0.30731176070204014 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 0.3458599299086729,
+            "unit": "us/iter",
+            "extra": "iterations: 2025643\ncpu: 0.3458307095574098 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.30746335237031,
+            "unit": "us/iter",
+            "extra": "iterations: 2161927\ncpu: 0.3074505998583673 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.370456725942006,
+            "unit": "us/iter",
+            "extra": "iterations: 16927\ncpu: 41.367861227624516 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 65.15788922934176,
+            "unit": "us/iter",
+            "extra": "iterations: 10770\ncpu: 65.15250167130917 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 32.4519914967509,
+            "unit": "us/iter",
+            "extra": "iterations: 21874\ncpu: 32.449615296699285 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 65.05501907153382,
+            "unit": "us/iter",
+            "extra": "iterations: 10749\ncpu: 65.04812196483387 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 19.986185142985146,
+            "unit": "us/iter",
+            "extra": "iterations: 35108\ncpu: 19.985175116782536 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.286585785855253,
+            "unit": "us/iter",
+            "extra": "iterations: 49303\ncpu: 14.286274222663923 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 20.073166895369727,
+            "unit": "us/iter",
+            "extra": "iterations: 34980\ncpu: 20.072131532304205 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.338101183234641,
+            "unit": "us/iter",
+            "extra": "iterations: 95332\ncpu: 7.337674925523443 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61.66619522929734,
+            "unit": "us/iter",
+            "extra": "iterations: 11361\ncpu: 61.66344828800295 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 79.73660282234948,
+            "unit": "us/iter",
+            "extra": "iterations: 8787\ncpu: 79.7269016729259 us\nthreads: 1"
           }
         ]
       }
