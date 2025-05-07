@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746625694121,
+  "lastUpdate": 1746628452246,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -432,6 +432,78 @@ window.BENCHMARK_DATA = {
             "value": 78.96647624423672,
             "unit": "us/iter",
             "extra": "iterations: 8861\ncpu: 78.9559749463943 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "032abd771b188319cd4ee8c3e7663e8602132b97",
+          "message": "chore: Add usage notes to core functions (#20)\n\nThis PR adds informational comments and/or updates documentation to clarify that many core functions intentionally omit boundary and overflow checks. This design was a deliberate choice to maximize performance in critical code paths.\n\nDevelopers using these functions must be aware that the responsibility for input validation and preventing overflow or out-of-bounds errors lies with the calling code. While this approach benefits performance, misusing these functions without proper external checks could potentially lead to security vulnerabilities if input is not carefully managed by the caller.\n\nThese changes are for documentation and awareness purposes only and do not alter the functional behavior of the core functions. The goal is to prevent accidental misuse and ensure developers understand the intentional performance-security trade-off in these specific areas.",
+          "timestamp": "2025-05-07T06:55:07-07:00",
+          "tree_id": "49ea819c770c958ba2d2caaf61af1ed6d6303803",
+          "url": "https://github.com/coinbase/cb-mpc/commit/032abd771b188319cd4ee8c3e7663e8602132b97"
+        },
+        "date": 1746628451867,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.35942039301781975,
+            "unit": "us/iter",
+            "extra": "iterations: 1946833\ncpu: 0.35936988175154205 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.3155555692305305,
+            "unit": "us/iter",
+            "extra": "iterations: 2218143\ncpu: 0.3155232187464921 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 42.468925783563925,
+            "unit": "us/iter",
+            "extra": "iterations: 16910\ncpu: 42.466733707865146 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 65.5988493074124,
+            "unit": "us/iter",
+            "extra": "iterations: 10757\ncpu: 65.59133178395463 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 19.96368800685594,
+            "unit": "us/iter",
+            "extra": "iterations: 35020\ncpu: 19.961354997144483 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.107878043866933,
+            "unit": "us/iter",
+            "extra": "iterations: 49608\ncpu: 14.106667876149013 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61.650142026441735,
+            "unit": "us/iter",
+            "extra": "iterations: 11350\ncpu: 61.643958502202636 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 78.77934213780394,
+            "unit": "us/iter",
+            "extra": "iterations: 8897\ncpu: 78.77394818478132 us\nthreads: 1"
           }
         ]
       }
