@@ -1,6 +1,18 @@
 # We generate the .a files here
 lib/
 
+# Object & binary blobs
+a.out
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.dSYM/
+*.sancov
+
 # CMake generated files
 **build/
 
@@ -10,4 +22,3 @@ lib/
 # gh-pages files
 docsgen/
 node_modules/
-

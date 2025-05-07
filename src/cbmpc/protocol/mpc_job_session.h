@@ -85,7 +85,7 @@ class job_session_mp_t : public job_mp_t {
  public:
   job_session_mp_t(party_idx_t index, std::vector<crypto::mpc_pid_t> pids, std::shared_ptr<network_t> _network_ptr,
                    jsid_t _jsid)
-      : job_mp_t(index, pids), network_ptr(_network_ptr), jsid(_jsid){};
+      : job_mp_t(index, pids), network_ptr(_network_ptr), jsid(_jsid) {};
   void set_network(party_idx_t party_idx, std::shared_ptr<network_t> ptr) {
     party_index = party_idx;
     network_ptr = ptr;
@@ -104,7 +104,7 @@ class job_session_2p_t : public job_2p_t {
  public:
   job_session_2p_t(party_t party, crypto::mpc_pid_t pid1, crypto::mpc_pid_t pid2, std::shared_ptr<network_t> ptr,
                    jsid_t id = 0)
-      : job_2p_t(party, pid1, pid2), network_ptr(ptr), jsid(id){};
+      : job_2p_t(party, pid1, pid2), network_ptr(ptr), jsid(id) {};
   void set_network(party_t party, std::shared_ptr<network_t> ptr) {
     party_index = party_idx_t(party);
     network_ptr = ptr;

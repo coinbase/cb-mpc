@@ -190,17 +190,14 @@ static BN_ULONG div_words_by_two(int n, BN_ULONG* r) {
 // Returns a mask of all bits set (0xFFFFFFFFF...) if flag == true,
 // or 0 if flag == false, with a small inline assembly barrier to keep
 // the compiler from optimizing it away under LTCG or at high -O levels.
-static inline BN_ULONG constant_time_mask_64(bool flag) {
+static inline BN_ULONG constant_time_mask_ulong(bool flag) {
   BN_ULONG mask = (BN_ULONG)0 - (BN_ULONG)flag;
-#if defined(__GNUC__) || defined(__clang__)
-  // A small barrier so the compiler can't trivially treat mask as a compile-time constant
-  __asm__("" : "+r"(mask) : :);
-#endif
+  mask = constant_time_value_barrier(mask);
   return mask;
 }
 
 static void cnd_swap(int n, bool flag, BN_ULONG a[], BN_ULONG b[]) {
-  BN_ULONG mask = constant_time_mask_64(flag);
+  BN_ULONG mask = constant_time_mask_ulong(flag);
   for (int i = 0; i < n; i++) {
     BN_ULONG delta = (a[i] ^ b[i]) & mask;
     a[i] ^= delta;
@@ -225,21 +222,21 @@ static BN_ULONG ct_bn_sub_words(BN_ULONG* r, const BN_ULONG* a, const BN_ULONG* 
 }
 
 static BN_ULONG cnd_add_words(int n, BN_ULONG r[], bool flag, const BN_ULONG a[]) {
-  BN_ULONG mask = constant_time_mask_64(flag);
+  BN_ULONG mask = constant_time_mask_ulong(flag);
   BN_ULONG temp[n];
   for (int i = 0; i < n; i++) temp[i] = a[i] & mask;
   return ct_bn_add_words(r, r, temp, n);
 }
 
 static BN_ULONG cnd_sub_words(int n, BN_ULONG r[], bool flag, const BN_ULONG a[]) {
-  BN_ULONG mask = constant_time_mask_64(flag);
+  BN_ULONG mask = constant_time_mask_ulong(flag);
   BN_ULONG temp[n];
   for (int i = 0; i < n; i++) temp[i] = a[i] & mask;
   return ct_bn_sub_words(r, r, temp, n);
 }
 
 static BN_ULONG cnd_neg_words(int n, BN_ULONG r[], bool flag) {
-  BN_ULONG mask = constant_time_mask_64(flag);
+  BN_ULONG mask = constant_time_mask_ulong(flag);
   for (int i = 0; i < n; i++) r[i] ^= mask;
   BN_ULONG temp[n];
   std::fill(temp, temp + n, 0);
@@ -451,7 +448,7 @@ void mod_t::_mod(BIGNUM& r, const BIGNUM& x) const {
   r2 = bn_buf(r2_buf, k);
   borrow = ct_bn_sub_words(r2.d, r1.d, mm.d, k);
   borrow &= (r1.d[k] == 0);
-  uint64_t mask = (uint64_t)0 - borrow;
+  uint64_t mask = constant_time_mask_64(borrow);
   for (int i = 0; i < k; i++) {
     r1.d[i] = MASKED_SELECT(mask, r1.d[i], r2.d[i]);
   }

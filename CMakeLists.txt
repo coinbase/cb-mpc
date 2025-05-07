@@ -10,8 +10,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ------------- Available options ---------------
 # * CMAKE_BUILD_TYPE (Release|Debug|RelWithDebInfo)
-# * CBMPC_PLATFORM_DEP_OUTPUT_DIR
-# * BUILD_TESTS
+option(CBMPC_PLATFORM_DEP_OUTPUT_DIR
+       "library output directory will be platform-dependent" OFF)
+
+option(BUILD_TESTS "Also build the unit and integration tests" ON)
+option(BUILD_DUDECT "Also build the dudect tests" OFF)
+
 
 # ------------- Setup pathes --------------------
 
@@ -67,8 +71,6 @@ message("BUILD_DUDECT:                   ${BUILD_DUDECT}")
 include(cmake/compilation_flags.cmake)
 include(cmake/openssl.cmake)
 
-option(CBMPC_PLATFORM_DEP_OUTPUT_DIR
-       "library output directory will be platform-dependent" OFF)
 if(CBMPC_PLATFORM_DEP_OUTPUT_DIR)
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
       ${LIB_DIR}/${CMAKE_BUILD_TYPE}/${CMAKE_OS}-${CMAKE_ARCH})
@@ -100,9 +102,6 @@ add_subdirectory(src/cbmpc/protocol)
 if(NOT IS_MACOS)
   set(USE_FETCH_CONTENT true)
 endif()
-
-option(BUILD_TESTS "Also build the unit and integration tests" ON)
-option(BUILD_DUDECT "Also build the dudect tests" OFF)
 
 if(BUILD_TESTS)
   enable_testing()

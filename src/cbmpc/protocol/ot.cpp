@@ -140,8 +140,8 @@ typedef generic_v128_t v128_t;
 
 template <typename T>
 static void matrix_transposition(uint8_t const* inp, uint8_t* out, int nrows, int ncols) {
-#define INP_BYTE(x, y) inp[(x)*ncols / 8 + (y) / 8]
-#define OUT_BYTE(x, y) out[(y)*nrows / 8 + (x) / 8]
+#define INP_BYTE(x, y) inp[(x) * ncols / 8 + (y) / 8]
+#define OUT_BYTE(x, y) out[(y) * nrows / 8 + (x) / 8]
 
   T tmp;
   cb_assert(nrows % 8 == 0 && ncols % 8 == 0);

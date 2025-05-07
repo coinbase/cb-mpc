@@ -58,3 +58,5 @@ class scoped_ptr_t {
 };
 
 }  // namespace coinbase::crypto
+
+#pragma GCC visibility pop

@@ -104,7 +104,7 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
   party_set_t ot_senders = ot_senders_for(i, n, ot_role_map);
   party_set_t ot_receivers = ot_receivers_for(i, n, ot_role_map);
 
-  auto ot_msg1 = job.inplace_msg<mpc::ot_protocol_pvw_ctx_t::msg1_t>([&ot](int j) -> auto{ return ot[j].msg1(); });
+  auto ot_msg1 = job.inplace_msg<mpc::ot_protocol_pvw_ctx_t::msg1_t>([&ot](int j) -> auto { return ot[j].msg1(); });
   if (rv = plain_broadcast_and_pairwise_message(job, ot_receivers, ot_msg1, h_gen, Ei_gen, rho, pi_s)) return rv;
 
   // ---------------------- Start of the 2nd round of the signing protocol
@@ -134,7 +134,7 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
     if (rv = ot[j].step2_R2S(R_bits_i[j], q.get_bits_count())) return rv;
   }
 
-  auto ot_msg2 = job.inplace_msg<mpc::ot_protocol_pvw_ctx_t::msg2_t>([&ot](int j) -> auto{ return ot[j].msg2(); });
+  auto ot_msg2 = job.inplace_msg<mpc::ot_protocol_pvw_ctx_t::msg2_t>([&ot](int j) -> auto { return ot[j].msg2(); });
   if (rv = plain_broadcast_and_pairwise_message(job, ot_senders, ot_msg2)) return rv;
 
   // ---------------------- Start of the 3rd round of the signing protocol
@@ -178,7 +178,7 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
   }
 
   auto ot_msg3 =
-      job.inplace_msg<mpc::ot_protocol_pvw_ctx_t::msg3_delta_t>([&ot](int j) -> auto{ return ot[j].msg3_delta(); });
+      job.inplace_msg<mpc::ot_protocol_pvw_ctx_t::msg3_delta_t>([&ot](int j) -> auto { return ot[j].msg3_delta(); });
   if (rv = plain_broadcast_and_pairwise_message(job, ot_receivers, ot_msg3, eK_i, eRHO_i, pi_eK, pi_eRHO)) return rv;
 
   // ---------------------- Start of the 4th round of the signing protocol

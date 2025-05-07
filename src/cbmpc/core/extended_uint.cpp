@@ -37,11 +37,7 @@ bool uint256_t::operator==(const uint256_t& b) const {
 }
 
 void uint256_t::cnd_assign(bool flag, const uint256_t& a) {
-  uint64_t mask = (uint64_t)0 - ((uint64_t)flag);
-#if defined(__GNUC__) || defined(__clang__)
-  // A small barrier so the compiler can't trivially treat mask as a compile-time constant
-  __asm__("" : "+r"(mask) : :);
-#endif
+  uint64_t mask = constant_time_mask_64(flag);
   w0 = ((a.w0 ^ w0) & mask) ^ w0;
   w1 = ((a.w1 ^ w1) & mask) ^ w1;
   w2 = ((a.w2 ^ w2) & mask) ^ w2;

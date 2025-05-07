@@ -48,11 +48,11 @@ struct commitment_t {
   static constexpr size_t HASH_SIZE = 32;
   static constexpr size_t LOCAL_SID_SIZE = SEC_P_COM / 8;
 
-  explicit commitment_t(const mpc_pid_t& pid) : pid(pid){};
-  explicit commitment_t(const mpc_pid_t& pid, const mpc_pid_t& receiver_pid) : pid(pid), receiver_pid(receiver_pid){};
-  explicit commitment_t(const mem_t sid, const mpc_pid_t& pid) : external_sid(sid), pid(pid){};
+  explicit commitment_t(const mpc_pid_t& pid) : pid(pid) {};
+  explicit commitment_t(const mpc_pid_t& pid, const mpc_pid_t& receiver_pid) : pid(pid), receiver_pid(receiver_pid) {};
+  explicit commitment_t(const mem_t sid, const mpc_pid_t& pid) : external_sid(sid), pid(pid) {};
   explicit commitment_t(const mem_t sid, const mpc_pid_t& pid, const mpc_pid_t& receiver_pid)
-      : external_sid(sid), pid(pid), receiver_pid(receiver_pid){};
+      : external_sid(sid), pid(pid), receiver_pid(receiver_pid) {};
   commitment_t() {}
 
   /**

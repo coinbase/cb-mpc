@@ -76,11 +76,7 @@ extern "C" {
 #define GCC_VER ((__GNUC__ << 8) | __GNUC_MINOR__)
 #endif
 
-#if defined(__GNUC__) && (GCC_VER < 0x0406)
-#include <stdatomic.h>
-#else
 #include <atomic>
-#endif
 
 #if defined(__linux__) && !defined(_GLIBCXX_USE_SCHED_YIELD)
 #define _GLIBCXX_USE_SCHED_YIELD

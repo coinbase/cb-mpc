@@ -141,8 +141,7 @@ void ac_owned_t::convert(coinbase::converter_t &c)  // static
 
 std::vector<node_t *> node_t::get_sorted_children() const {
   std::vector<node_t *> sorted = children;
-  std::sort(
-      sorted.begin(), sorted.end(), [](node_t * n1, node_t * n2) -> auto{ return n1->name < n2->name; });
+  std::sort(sorted.begin(), sorted.end(), [](node_t *n1, node_t *n2) -> auto { return n1->name < n2->name; });
   return sorted;
 }
 

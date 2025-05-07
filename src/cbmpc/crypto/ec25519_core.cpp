@@ -26,11 +26,7 @@ static void fe_freeze(uint256_t& r) {
   t1 = addx(t1, 0, c);
   t2 = addx(t2, 0, c);
   t3 = addx(t3, hi, c);
-  uint64_t mask = (uint64_t)0 - ((uint64_t)c);
-#if defined(__GNUC__) || defined(__clang__)
-  // A small barrier so the compiler can't trivially treat mask as a compile-time constant
-  __asm__("" : "+r"(mask) : :);
-#endif
+  uint64_t mask = constant_time_mask_64(c);
   t0 = r0 = MASKED_SELECT(mask, t0, r0);
   t1 = r1 = MASKED_SELECT(mask, t1, r1);
   t2 = r2 = MASKED_SELECT(mask, t2, r2);
@@ -41,11 +37,7 @@ static void fe_freeze(uint256_t& r) {
   t1 = addx(t1, 0, c);
   t2 = addx(t2, 0, c);
   t3 = addx(t3, hi, c);
-  mask = (uint64_t)0 - ((uint64_t)c);
-#if defined(__GNUC__) || defined(__clang__)
-  // A small barrier so the compiler can't trivially treat mask as a compile-time constant
-  __asm__("" : "+r"(mask) : :);
-#endif
+  mask = constant_time_mask_64(c);
   r.w0 = MASKED_SELECT(mask, t0, r0);
   r.w1 = MASKED_SELECT(mask, t1, r1);
   r.w2 = MASKED_SELECT(mask, t2, r2);
@@ -716,31 +708,52 @@ struct fe_t {
     /* 2^5 - 2^0 = 31 */ mul(z2_5_0, t, z9);
 
     /* 2^6 - 2^1 */ sqr(t, z2_5_0);
-    /* 2^20 - 2^10 */ for (i = 1; i < 5; i++) { sqr(t, t); }
+    /* 2^20 - 2^10 */
+    for (i = 1; i < 5; i++) {
+      sqr(t, t);
+    }
     /* 2^10 - 2^0 */ mul(z2_10_0, t, z2_5_0);
 
     /* 2^11 - 2^1 */ sqr(t, z2_10_0);
-    /* 2^20 - 2^10 */ for (i = 1; i < 10; i++) { sqr(t, t); }
+    /* 2^20 - 2^10 */
+    for (i = 1; i < 10; i++) {
+      sqr(t, t);
+    }
     /* 2^20 - 2^0 */ mul(z2_20_0, t, z2_10_0);
 
     /* 2^21 - 2^1 */ sqr(t, z2_20_0);
-    /* 2^40 - 2^20 */ for (i = 1; i < 20; i++) { sqr(t, t); }
+    /* 2^40 - 2^20 */
+    for (i = 1; i < 20; i++) {
+      sqr(t, t);
+    }
     /* 2^40 - 2^0 */ mul(t, t, z2_20_0);
 
     /* 2^41 - 2^1 */ sqr(t, t);
-    /* 2^50 - 2^10 */ for (i = 1; i < 10; i++) { sqr(t, t); }
+    /* 2^50 - 2^10 */
+    for (i = 1; i < 10; i++) {
+      sqr(t, t);
+    }
     /* 2^50 - 2^0 */ mul(z2_50_0, t, z2_10_0);
 
     /* 2^51 - 2^1 */ sqr(t, z2_50_0);
-    /* 2^100 - 2^50 */ for (i = 1; i < 50; i++) { sqr(t, t); }
+    /* 2^100 - 2^50 */
+    for (i = 1; i < 50; i++) {
+      sqr(t, t);
+    }
     /* 2^100 - 2^0 */ mul(z2_100_0, t, z2_50_0);
 
     /* 2^101 - 2^1 */ sqr(t, z2_100_0);
-    /* 2^200 - 2^100 */ for (i = 1; i < 100; i++) { sqr(t, t); }
+    /* 2^200 - 2^100 */
+    for (i = 1; i < 100; i++) {
+      sqr(t, t);
+    }
     /* 2^200 - 2^0 */ mul(t, t, z2_100_0);
 
     /* 2^201 - 2^1 */ sqr(t, t);
-    /* 2^250 - 2^50 */ for (i = 1; i < 50; i++) { sqr(t, t); }
+    /* 2^250 - 2^50 */
+    for (i = 1; i < 50; i++) {
+      sqr(t, t);
+    }
     /* 2^250 - 2^0 */ mul(t, t, z2_50_0);
 
     /* 2^251 - 2^1 */ sqr(t, t);

@@ -117,7 +117,7 @@ TEST_P(NetworkMPC, PairwiseAndBroadcast) {
     auto party_index = job.get_party_idx();
     auto data = job.uniform_msg<buf_t>(buf_t("test_data:" + std::to_string(party_index)));
     party_set_t ot_receivers = ecdsampc::ot_receivers_for(party_index, m, ot_role_map);
-    auto ot_msg = job.inplace_msg<buf_t>([&party_index](int j) -> auto{
+    auto ot_msg = job.inplace_msg<buf_t>([&party_index](int j) -> auto {
       return buf_t("test_data:" + std::to_string(party_index) + std::to_string(j));
     });
     rv = ecdsampc::plain_broadcast_and_pairwise_message(job, ot_receivers, ot_msg, data);

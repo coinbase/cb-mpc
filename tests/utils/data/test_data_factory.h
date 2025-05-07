@@ -31,7 +31,7 @@ class test_data_factory_t {
 
  public:
   test_data_factory_t() = default;
-  test_data_factory_t(config_map_t c) : configs(c){};
+  test_data_factory_t(config_map_t c) : configs(c) {};
   ~test_data_factory_t() = default;
   data_map_t generate_one();
   std::vector<data_map_t> generate(int repeats);

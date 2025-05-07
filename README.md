@@ -86,7 +86,9 @@ There are three build modes available:
 - **Test**: This mode enables security checks and validations to ensure the code is robust and secure.
 - **Release**: This mode applies the highest level of optimization for maximum performance and disables checks to improve runtime efficiency.
 
-## On Mac
+## On macOS
+
+### OpenSSL
 
 The library depends on OpenSSL. Therefore, the first step is to build the proper version of OpenSSL. The write permission to the `/usr/local/opt` may be required
 
@@ -96,6 +98,20 @@ or
 scripts/openssl/build-static-openssl-macos-m1.sh
 ```
 
+### Compilers
+
+This project requires a C++17 compliant compiler. We strongly recommend using **Clang version 20** or newer. This recommendation is based on our testing, including verification of constant-time properties, which is primarily performed using Clang v20. While we strive for consistent behavior, achieving constant-time properties can be influenced by various factors beyond the compiler, such as hardware and operating system. Consequently, the behavior of the project, including its constant-time characteristics, when compiled with other compilers is not guaranteed to be identical.
+
+- **Primary Environment:** The provided Docker development environment uses Clang 20 by default, ensuring a consistent build setup.
+- **Linux:** Please install Clang 20 or newer using your distribution's package manager (e.g., `apt`, `yum`).
+- **macOS:**
+  - While the default AppleClang (via Xcode Command Line Tools) might compile the code, we recommend using **upstream Clang** (version 20+) for better consistency with the primary Docker environment and to avoid potential differences (e.g., different underlying LLVM versions or feature support like OpenMP).
+  - To install and use upstream Clang:
+    1.  Install LLVM (which includes Clang) via Homebrew: `brew install llvm`
+    2.  Configure CMake to use it by setting flags during the _initial_ configuration. Alternatively, you can `export CC=... CXX=...` _before_ running CMake in a _clean_ build directory.
+
+### Makefile
+
 Build the library by running
 
 `make build`
@@ -103,7 +119,6 @@ Build the library by running
 To test the library, run
 
 `make test`
-
 
 To run the demos and benchmarks, you first need to install the library:
 

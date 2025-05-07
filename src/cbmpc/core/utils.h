@@ -97,12 +97,18 @@ void for_tuple(const std::tuple<ARGS&...>& tuple, Func&& f) {
   for_tuple_impl(tuple, std::forward<Func>(f), std::make_index_sequence<sizeof...(ARGS)>{});
 }
 
-static inline uint64_t constant_time_select_u64(bool flag, uint64_t y, uint64_t z) {
-  uint64_t mask = (uint64_t)0 - ((uint64_t)flag);
+static inline uint64_t constant_time_value_barrier(uint64_t value) {
 #if defined(__GNUC__) || defined(__clang__)
   // A small barrier so the compiler can't trivially treat mask as a compile-time constant
-  __asm__("" : "+r"(mask) : :);
+  __asm__("" : "+r"(value) : :);
 #endif
+  return value;
+}
+
+static inline uint64_t constant_time_mask_64(uint64_t flag) { return constant_time_value_barrier((uint64_t)0 - flag); }
+
+static inline uint64_t constant_time_select_u64(bool flag, uint64_t y, uint64_t z) {
+  uint64_t mask = constant_time_mask_64(flag);
   return MASKED_SELECT(mask, y, z);
 }
 
