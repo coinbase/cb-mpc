@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746625701154,
+  "lastUpdate": 1746628458128,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -252,6 +252,48 @@ window.BENCHMARK_DATA = {
             "value": 13770.792921569213,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13768.312823529415 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "032abd771b188319cd4ee8c3e7663e8602132b97",
+          "message": "chore: Add usage notes to core functions (#20)\n\nThis PR adds informational comments and/or updates documentation to clarify that many core functions intentionally omit boundary and overflow checks. This design was a deliberate choice to maximize performance in critical code paths.\n\nDevelopers using these functions must be aware that the responsibility for input validation and preventing overflow or out-of-bounds errors lies with the calling code. While this approach benefits performance, misusing these functions without proper external checks could potentially lead to security vulnerabilities if input is not carefully managed by the caller.\n\nThese changes are for documentation and awareness purposes only and do not alter the functional behavior of the core functions. The goal is to prevent accidental misuse and ensure developers understand the intentional performance-security trade-off in these specific areas.",
+          "timestamp": "2025-05-07T06:55:07-07:00",
+          "tree_id": "49ea819c770c958ba2d2caaf61af1ed6d6303803",
+          "url": "https://github.com/coinbase/cb-mpc/commit/032abd771b188319cd4ee8c3e7663e8602132b97"
+        },
+        "date": 1746628457680,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24437.686517244558,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24434.66313793104 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 98936.84357140436,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 98921.182 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13822.155137252897,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13820.351529411762 us\nthreads: 1"
           }
         ]
       }
