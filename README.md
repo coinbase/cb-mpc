@@ -86,7 +86,7 @@ There are three build modes available:
 - **Test**: This mode enables security checks and validations to ensure the code is robust and secure.
 - **Release**: This mode applies the highest level of optimization for maximum performance and disables checks to improve runtime efficiency.
 
-## On Mac
+## On macOS
 
 The library depends on OpenSSL. Therefore, the first step is to build the proper version of OpenSSL. The write permission to the `/usr/local/opt` may be required
 
