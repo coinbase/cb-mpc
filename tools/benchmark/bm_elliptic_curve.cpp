@@ -3,18 +3,25 @@
 #include <cbmpc/crypto/base.h>
 #include <cbmpc/crypto/ro.h>
 
-#define bit_len_lb 1 << 8
-#define bit_len_ub 1 << 12
-
 using namespace coinbase::crypto;
 
 static void BM_ECAdd(benchmark::State& state, const ecurve_t curve) {
   ecc_point_t P1 = ro::hash_curve(gen_random(8)).curve(curve);
   ecc_point_t P2 = ro::hash_curve(gen_random(8)).curve(curve);
 
+  ecc_point_t R;
   for (auto _ : state) {
-    vartime_scope_t vartime_scope;
-    auto _dummy = P1 + P2;
+    auto _dummy = ecc_point_t::add(P1, P2);
+  }
+}
+
+static void BM_ECAdd_CT(benchmark::State& state, const ecurve_t curve) {
+  ecc_point_t P1 = ro::hash_curve(gen_random(8)).curve(curve);
+  ecc_point_t P2 = ro::hash_curve(gen_random(8)).curve(curve);
+
+  ecc_point_t R;
+  for (auto _ : state) {
+    auto _dummy = ecc_point_t::add_consttime(P1, P2);
   }
 }
 
@@ -23,16 +30,34 @@ static void BM_ECMul(benchmark::State& state, const ecurve_t curve) {
   ecc_point_t P = ro::hash_curve(gen_random(8)).curve(curve);
 
   for (auto _ : state) {
-    auto _dummy = x * P;
+    auto _dummy = ecc_point_t::mul(P, x);
+  }
+}
+
+static void BM_ECMul_VT(benchmark::State& state, const ecurve_t curve) {
+  vartime_scope_t vartime_scope;
+  bn_t x = bn_t::rand(curve.order());
+  ecc_point_t P = ro::hash_curve(gen_random(8)).curve(curve);
+
+  for (auto _ : state) {
+    auto _dummy = ecc_point_t::mul(P, x);
   }
 }
 
 static void BM_ECMulG(benchmark::State& state, const ecurve_t curve) {
   bn_t x = bn_t::rand(curve.order());
-  auto G = curve.generator();
 
   for (auto _ : state) {
-    auto _dummy = x * G;
+    auto _dummy = curve.mul_to_generator(x);
+  }
+}
+
+static void BM_ECMulG_VT(benchmark::State& state, const ecurve_t curve) {
+  vartime_scope_t vartime_scope;
+  bn_t x = bn_t::rand(curve.order());
+
+  for (auto _ : state) {
+    auto _dummy = curve.mul_to_generator(x);
   }
 }
 
@@ -57,12 +82,18 @@ static void BM_ECMulAdd(benchmark::State& state, const ecurve_t curve) {
 // clang-format off
 BM_CURVE(Core/EC/Add/secp256k1, BM_ECAdd, curve_secp256k1);
 BM_CURVE(Core/EC/Add/Ed25519, BM_ECAdd, curve_ed25519);
+BM_CURVE(Core/EC/Add_CT/secp256k1, BM_ECAdd_CT, curve_secp256k1);
+BM_CURVE(Core/EC/Add_CT/Ed25519, BM_ECAdd_CT, curve_ed25519);
 
 BM_CURVE(Core/EC/Multiply/secp256k1, BM_ECMul, curve_secp256k1);
 BM_CURVE(Core/EC/Multiply/Ed25519, BM_ECMul, curve_ed25519);
+BM_CURVE(Core/EC/Multiply_VT/secp256k1, BM_ECMul_VT, curve_secp256k1);
+BM_CURVE(Core/EC/Multiply_VT/Ed25519, BM_ECMul_VT, curve_ed25519);
 
 BM_CURVE(Core/EC/Multiply_G/secp256k1, BM_ECMulG, curve_secp256k1);
 BM_CURVE(Core/EC/Multiply_G/Ed25519, BM_ECMulG, curve_ed25519);
+BM_CURVE(Core/EC/Multiply_G_VT/secp256k1, BM_ECMulG_VT, curve_secp256k1);
+BM_CURVE(Core/EC/Multiply_G_VT/Ed25519, BM_ECMulG_VT, curve_ed25519);
 
 BM_CURVE(Core/EC/MulAdd/secp256k1, BM_ECMulAdd, curve_secp256k1);
 BM_CURVE(Core/EC/MulAdd/Ed25519, BM_ECMulAdd, curve_ed25519);
