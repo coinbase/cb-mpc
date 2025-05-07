@@ -106,12 +106,22 @@ buf128_t buf128_t::from_bit_index(int bit_index) {
   return make(0, uint64_t(1) << (bit_index - 64));
 }
 
+/**
+ * @notes:
+ * - The caller *must* ensure that 0 ≤ index < 128.
+ * - This function intentionally does not perform this check to increase performance.
+ */
 bool buf128_t::get_bit(int index) const {
   int n = index / 64;
   index %= 64;
   return ((((const uint64_t*)(this))[n] >> index) & 1) != 0;
 }
 
+/**
+ * @notes:
+ * - The caller *must* ensure that 0 ≤ index < 128.
+ * - This function intentionally does not perform this check to increase performance.
+ */
 void buf128_t::set_bit(int index, bool bit) {
   uint64_t l = lo();
   uint64_t h = hi();

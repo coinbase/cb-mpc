@@ -114,6 +114,11 @@ class bufs128_ref_t {
   void bzero() { coinbase::bzero((byte_ptr)data, size * sizeof(buf128_t)); }
   void secure_bzero() { coinbase::secure_bzero((byte_ptr)data, size * sizeof(buf128_t)); }
 
+  /**
+   * @notes:
+   * - The caller *must* ensure that 0 ≤ index < size.
+   * - This function intentionally does not perform this check to increase performance.
+   */
   buf128_t operator[](int index) const { return data[index]; }
   buf128_t& operator[](int index) { return data[index]; }
 
@@ -143,6 +148,11 @@ class bufs128_t {
   buf128_t* allocate(int size);
   buf128_t* resize(int size);
 
+  /**
+   * @notes:
+   * - The caller *must* ensure that 0 ≤ index < size.
+   * - This function intentionally does not perform this check to increase performance.
+   */
   const buf128_t& operator[](int index) const { return b[index]; }
   buf128_t& operator[](int index) { return b[index]; }
   mem_t mem() const { return mem_t(const_byte_ptr(data()), int(s * sizeof(buf128_t))); }

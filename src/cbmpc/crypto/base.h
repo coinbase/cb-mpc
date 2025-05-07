@@ -90,7 +90,10 @@ class drbg_aes_ctr_t {
   drbg_aes_ctr_t(mem_t seed);
   ~drbg_aes_ctr_t() {}
 
-  // Note: this must be followed by a call to seed
+  /**
+   * @notes:
+   * - Note: this must be followed by a call to seed
+   */
   void init();
   /**
    * @specs:

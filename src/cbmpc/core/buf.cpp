@@ -207,16 +207,32 @@ void buf_t::bzero() { coinbase::bzero(data(), s); }
 
 void buf_t::secure_bzero() { coinbase::secure_bzero(data(), s); }
 
-bool buf_t::operator==(const buf_t& src) const {
-  // This comparison is NOT constant-time. Do NOT use for private values.
-  return s == src.s && 0 == memcmp(data(), src.data(), s);
-}
+/**
+ * @notes:
+ * - This comparison is NOT constant-time. Do NOT use for private values.
+ */
+bool buf_t::operator==(const buf_t& src) const { return s == src.s && 0 == memcmp(data(), src.data(), s); }
 
+/**
+ * @notes:
+ * - This comparison is NOT constant-time. Do NOT use for private values.
+ */
 bool buf_t::operator!=(const buf_t& src) const { return s != src.s || 0 != memcmp(data(), src.data(), s); }
 
 buf_t::operator mem_t() const { return mem_t(data(), s); }
 
+/**
+ * @notes:
+ * - The caller *must* ensure that 0 ≤ index < size()
+ * - This function intentionally does not perform this check to increase performance.
+ */
 uint8_t buf_t::operator[](int index) const { return data()[index]; }
+
+/**
+ * @notes:
+ * - The caller *must* ensure that 0 ≤ index < size()
+ * - This function intentionally does not perform this check to increase performance.
+ */
 uint8_t& buf_t::operator[](int index) { return data()[index]; }
 
 buf_t operator^(mem_t src1, mem_t src2) {
@@ -237,6 +253,11 @@ buf_t& buf_t::operator^=(mem_t src2) {
   return *this;
 }
 
+/**
+ * @notes:
+ * - The caller *must* ensure that the sum of the sizes does not overflow.
+ * - This function intentionally does not perform this check to increase performance.
+ */
 buf_t operator+(mem_t src1, mem_t src2) {
   buf_t out(src1.size + src2.size);
   memmove(out.data(), src1.data, src1.size);
@@ -244,6 +265,11 @@ buf_t operator+(mem_t src1, mem_t src2) {
   return out;
 }
 
+/**
+ * @notes:
+ * - The caller *must* ensure that the sum of the sizes does not overflow.
+ * - This function intentionally does not perform this check to increase performance.
+ */
 buf_t& buf_t::operator+=(mem_t src) {
   int old_size = s;
   byte_ptr new_ptr = resize(old_size + src.size);
@@ -264,6 +290,11 @@ void buf_t::assign_short(const_byte_ptr src, int src_size) {
   s = src_size;
 }
 
+/**
+ * @notes:
+ * - Even though the size of m is 36, the next 4 bytes is used to store the size of the buffer (`s`).
+ * - Therefore, override ((uint64_t*)m)[4] is safe, even though it is seemingly out of bounds.
+ */
 void buf_t::assign_short(const buf_t& src) {
   for (int i = 0; i < 5; i++) ((uint64_t*)m)[i] = ((uint64_t*)src.m)[i];
 }
@@ -376,10 +407,28 @@ buf_t mem_t::rev() const {
 
 bool mem_t::equal(mem_t m1, mem_t m2) { return m1.size == m2.size && 0 == memcmp(m1.data, m2.data, m1.size); }
 
+/**
+ * @notes:
+ * - This comparison is NOT constant-time. Do NOT use for private values.
+ */
 bool mem_t::operator==(const mem_t& m2) const { return mem_t::equal(*this, m2); }
+
+/**
+ * @notes:
+ * - This comparison is NOT constant-time. Do NOT use for private values.
+ */
 bool mem_t::operator!=(const mem_t& m2) const { return !mem_t::equal(*this, m2); }
 
+/**
+ * @notes:
+ * - This comparison is NOT constant-time. Do NOT use for private values.
+ */
 bool mem_t::operator==(const buf_t& m2) const { return mem_t::equal(*this, mem_t(m2)); }
+
+/**
+ * @notes:
+ * - This comparison is NOT constant-time. Do NOT use for private values.
+ */
 bool mem_t::operator!=(const buf_t& m2) const { return !mem_t::equal(*this, mem_t(m2)); }
 
 size_t mem_t::non_crypto_hash() const {
@@ -592,6 +641,11 @@ void bits_t::ref_t::set(bool value) {
 
 bool bits_t::ref_t::get() const { return 0 != ((*data >> offset) & 1); }
 
+/**
+ * @notes:
+ * - The caller *must* ensure that 0 ≤ index < size()
+ * - This function intentionally does not perform this check to increase performance.
+ */
 bits_t::ref_t bits_t::operator[](int index) { return ref_t(data, index); }
 
 bool bits_t::equ(const bits_t& src1, const bits_t& src2) {

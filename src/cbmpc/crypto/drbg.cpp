@@ -2,6 +2,10 @@
 
 namespace coinbase::crypto {
 
+/**
+ * @notes:
+ * - Note: this must be followed by a call to seed
+ */
 void drbg_aes_ctr_t::init() {
   byte_t k[16] = {0};
   byte_t iv[16] = {0};

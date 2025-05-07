@@ -44,12 +44,22 @@ void buf256_t::save(byte_ptr dst) const {
   hi.save(dst + 16);
 }
 
+/**
+ * @notes:
+ * - The caller *must* ensure that 0 ≤ index < 256.
+ * - This function intentionally does not perform this check to increase performance.
+ */
 bool buf256_t::get_bit(int index) const {
   int n = index / 64;
   index %= 64;
   return ((((const uint64_t*)(this))[n] >> index) & 1) != 0;
 }
 
+/**
+ * @notes:
+ * - The caller *must* ensure that 0 ≤ index < 256.
+ * - This function intentionally does not perform this check to increase performance.
+ */
 void buf256_t::set_bit(int index, bool value) {
   int n = index / 64;
   index %= 64;

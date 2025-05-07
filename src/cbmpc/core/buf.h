@@ -58,6 +58,12 @@ struct mem_t {
   bool operator!=(const mem_t& b2) const;
   bool operator==(const buf_t& b2) const;
   bool operator!=(const buf_t& b2) const;
+
+  /**
+   * @notes:
+   * - The caller *must* ensure that 0 ≤ index < size().
+   * - This function intentionally does not perform this check to increase performance.
+   */
   uint8_t operator[](int index) const { return data[index]; }
   uint8_t& operator[](int index) { return data[index]; }
 
@@ -149,6 +155,11 @@ class buf_t {
  private:
   enum { short_size = 36 };
 
+  /**
+   * @notes:
+   * - The order of `m` and `s` is important.
+   * - The safety of `buf_t::assign_short` relies on this. (See notes in`buf_t::assign_short` for more details.)
+   */
   byte_t m[short_size];
   int s = 0;
 
@@ -190,7 +201,16 @@ class bits_t {
 
   void convert(converter_t& converter);
 
+  /**
+   * @notes:
+   * - This comparison is NOT constant-time. Do NOT use for private values.
+   */
   bool operator==(const bits_t& src2) const { return equ(*this, src2); }
+
+  /**
+   * @notes:
+   * - This comparison is NOT constant-time. Do NOT use for private values.
+   */
   bool operator!=(const bits_t& src2) const { return !equ(*this, src2); }
 
   static bool get(const_byte_ptr data, int bit_index);
@@ -235,6 +255,11 @@ class bits_t {
   };
 
  public:
+  /**
+   * @notes:
+   * - The caller *must* ensure that 0 ≤ index < size().
+   * - This function intentionally does not perform this check to increase performance.
+   */
   bool operator[](int index) const { return get(index); }
   ref_t operator[](int index);
 
