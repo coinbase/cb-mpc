@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746625691210,
+  "lastUpdate": 1746628450014,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -720,6 +720,126 @@ window.BENCHMARK_DATA = {
             "value": 1324.2251730038397,
             "unit": "us/iter",
             "extra": "iterations: 526\ncpu: 1324.1454657794616 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "032abd771b188319cd4ee8c3e7663e8602132b97",
+          "message": "chore: Add usage notes to core functions (#20)\n\nThis PR adds informational comments and/or updates documentation to clarify that many core functions intentionally omit boundary and overflow checks. This design was a deliberate choice to maximize performance in critical code paths.\n\nDevelopers using these functions must be aware that the responsibility for input validation and preventing overflow or out-of-bounds errors lies with the calling code. While this approach benefits performance, misusing these functions without proper external checks could potentially lead to security vulnerabilities if input is not carefully managed by the caller.\n\nThese changes are for documentation and awareness purposes only and do not alter the functional behavior of the core functions. The goal is to prevent accidental misuse and ensure developers understand the intentional performance-security trade-off in these specific areas.",
+          "timestamp": "2025-05-07T06:55:07-07:00",
+          "tree_id": "49ea819c770c958ba2d2caaf61af1ed6d6303803",
+          "url": "https://github.com/coinbase/cb-mpc/commit/032abd771b188319cd4ee8c3e7663e8602132b97"
+        },
+        "date": 1746628449370,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.06809098601608299,
+            "unit": "us/iter",
+            "extra": "iterations: 10411534\ncpu: 0.06808597023262854 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.2680365103797892,
+            "unit": "us/iter",
+            "extra": "iterations: 2539497\ncpu: 0.26802913962883224 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.06403904035363095,
+            "unit": "us/iter",
+            "extra": "iterations: 11003845\ncpu: 0.06403619343965665 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.32542037859195033,
+            "unit": "us/iter",
+            "extra": "iterations: 2172682\ncpu: 0.32539967100569633 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.1592505905942341,
+            "unit": "us/iter",
+            "extra": "iterations: 4411235\ncpu: 0.1592380596363598 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 10.9252629626716,
+            "unit": "us/iter",
+            "extra": "iterations: 64165\ncpu: 10.92455787423042 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 16.357744682334637,
+            "unit": "us/iter",
+            "extra": "iterations: 42970\ncpu: 16.356927065394633 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16541.441738094625,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16540.634238095226 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 16.97885254938414,
+            "unit": "us/iter",
+            "extra": "iterations: 41363\ncpu: 16.977488963566305 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 670.7864482756311,
+            "unit": "us/iter",
+            "extra": "iterations: 1044\ncpu: 670.711344827593 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 22.791102239604427,
+            "unit": "us/iter",
+            "extra": "iterations: 30184\ncpu: 22.788687185263743 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1253.3051766664964,
+            "unit": "us/iter",
+            "extra": "iterations: 600\ncpu: 1253.1842583333248 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 22.954974689824596,
+            "unit": "us/iter",
+            "extra": "iterations: 30225\ncpu: 22.952437253929023 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1168.246745424304,
+            "unit": "us/iter",
+            "extra": "iterations: 601\ncpu: 1168.2170083194303 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 25.77239212378883,
+            "unit": "us/iter",
+            "extra": "iterations: 27272\ncpu: 25.771325755353473 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1332.314742857783,
+            "unit": "us/iter",
+            "extra": "iterations: 525\ncpu: 1332.2346609524109 us\nthreads: 1"
           }
         ]
       }
