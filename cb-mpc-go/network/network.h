@@ -31,8 +31,8 @@ typedef struct JOB_SESSION_MP_PTR
   void* opaque;  // Opaque pointer to the C++ class instance
 } JOB_SESSION_MP_PTR;
 
-inline void free_job_session_2p(JOB_SESSION_2P_PTR* ptr) { free(ptr->opaque); }
-inline void free_job_session_mp(JOB_SESSION_MP_PTR* ptr) { free(ptr->opaque); }
+inline void free_job_session_2p(JOB_SESSION_2P_PTR* ptr) { delete ptr->opaque; }
+inline void free_job_session_mp(JOB_SESSION_MP_PTR* ptr) { delete ptr->opaque; }
 
 // ---------------- JOB_SESSION_2P_PTR ------------
 JOB_SESSION_2P_PTR* new_job_session_2p(data_transport_callbacks_t* callbacks, void* go_impl_ptr, int party_index);
