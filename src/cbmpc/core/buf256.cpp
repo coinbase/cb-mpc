@@ -134,15 +134,6 @@ buf256_t& buf256_t::operator&=(bool src) {
   return *this;
 }
 
-void buf256_t::be_inc() {
-  byte_ptr p = byte_ptr(this) + 32;
-  for (int i = 0; i < 32; i++) {
-    byte_t x = *--p;
-    *p = ++x;
-    if (x) break;
-  }
-}
-
 buf256_t buf256_t::reverse_bytes() const {
   buf256_t out{};
   byte_ptr dst = byte_ptr(&out);
@@ -165,6 +156,7 @@ void buf256_t::convert(coinbase::converter_t& converter) {
 }
 
 buf256_t buf256_t::operator<<(unsigned n) const {
+  cb_assert(n < 256);
   buf128_t l = lo;
   buf128_t r = hi;
   if (n == 128) {
@@ -182,9 +174,10 @@ buf256_t buf256_t::operator<<(unsigned n) const {
 }
 
 buf256_t buf256_t::operator>>(unsigned n) const {
+  cb_assert(n < 256);
   buf128_t l = lo;
   buf128_t r = hi;
-  if (n == 64) {
+  if (n == 128) {
     l = r;
     r = ZERO128;
   } else if (n > 128) {
@@ -259,70 +252,4 @@ buf256_t::caryless_mul(buf128_t a, buf128_t b) {
 #endif
 }
 
-buf128_t buf256_t::binary_galois_field_reduce(buf256_t x) {
-  buf128_t res{};
-
-#ifdef __x86_64__
-  __m128i tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9;
-  tmp3 = x.lo.value;
-  tmp6 = x.hi.value;
-
-  tmp7 = _mm_srli_epi32(tmp3, 31);
-  tmp8 = _mm_srli_epi32(tmp6, 31);
-  tmp3 = _mm_slli_epi32(tmp3, 1);
-  tmp6 = _mm_slli_epi32(tmp6, 1);
-  tmp9 = _mm_srli_si128(tmp7, 12);
-  tmp8 = _mm_slli_si128(tmp8, 4);
-  tmp7 = _mm_slli_si128(tmp7, 4);
-  tmp3 = _mm_or_si128(tmp3, tmp7);
-  tmp6 = _mm_or_si128(tmp6, tmp8);
-  tmp6 = _mm_or_si128(tmp6, tmp9);
-  tmp7 = _mm_slli_epi32(tmp3, 31);
-  tmp8 = _mm_slli_epi32(tmp3, 30);
-  tmp9 = _mm_slli_epi32(tmp3, 25);
-  tmp7 = _mm_xor_si128(tmp7, tmp8);
-  tmp7 = _mm_xor_si128(tmp7, tmp9);
-  tmp8 = _mm_srli_si128(tmp7, 4);
-  tmp7 = _mm_slli_si128(tmp7, 12);
-  tmp3 = _mm_xor_si128(tmp3, tmp7);
-  tmp2 = _mm_srli_epi32(tmp3, 1);
-  tmp4 = _mm_srli_epi32(tmp3, 2);
-  tmp5 = _mm_srli_epi32(tmp3, 7);
-  tmp2 = _mm_xor_si128(tmp2, tmp4);
-  tmp2 = _mm_xor_si128(tmp2, tmp5);
-  tmp2 = _mm_xor_si128(tmp2, tmp8);
-  tmp3 = _mm_xor_si128(tmp3, tmp2);
-  tmp6 = _mm_xor_si128(tmp6, tmp3);
-  res.value = tmp6;
-
-#else
-
-  x <<= 1;
-
-  uint64_t x0 = x.lo.lo();
-  uint64_t x1 = x.lo.hi();
-  uint64_t x2 = x.hi.lo();
-  uint64_t x3 = x.hi.hi();
-
-  uint64_t a = x0 << 63;
-  uint64_t b = x0 << 62;
-  uint64_t c = x0 << 57;
-  uint64_t d = x1 ^ a ^ b ^ c;
-  buf128_t temp = buf128_t::make(x0, d);
-  temp >>= 1;
-  uint64_t e0 = temp.lo();
-  uint64_t e1 = temp.hi();
-  temp >>= 1;
-  uint64_t f0 = temp.lo();
-  uint64_t f1 = temp.hi();
-  temp >>= 5;
-  uint64_t g0 = temp.lo();
-  uint64_t g1 = temp.hi();
-
-  uint64_t h0 = x0 ^ e0 ^ f0 ^ g0;
-  uint64_t h1 = d ^ e1 ^ f1 ^ g1;
-  res = buf128_t::make(x2 ^ h0, x3 ^ h1);
-#endif
-  return res;
-}
 }  // namespace coinbase

@@ -149,22 +149,6 @@ TEST(Buf256Test, Shifts) {
   EXPECT_NE(c.lo.hi(), 0ULL);  // part of the original hi might shift into lo
 }
 
-TEST(Buf256Test, BigEndianIncrement) {
-  auto b = buf256_t::zero();
-  // Big-endian increment
-  b.be_inc();
-  // The very last byte (index 31) becomes 0x01
-  EXPECT_TRUE(b.get_bit(248));  // The 248th bit corresponds to that last byte's LSB if everything else is zero.
-
-  // Increment 0xFF times
-  for (int i = 0; i < 0xFF; ++i) {
-    b.be_inc();
-  }
-  // We expect that last byte to have wrapped around
-  EXPECT_FALSE(b.get_bit(248));
-  EXPECT_TRUE(b.get_bit(240));  // it should increment the next bits
-}
-
 TEST(Buf256Test, ReverseBytes) {
   buf128_t lo = buf128_t::make(0x1122334455667788ULL, 0x99AABBCCDDEEFF00ULL);
   buf128_t hi = buf128_t::make(0x0001020304050607ULL, 0x08090A0B0C0D0E0FULL);
@@ -206,22 +190,4 @@ TEST(Buf256Test, CarrylessMul) {
   // Not trivial to hand-check, but ensure we do not crash and we get a consistent result
   // We can simply verify it's not zero
   EXPECT_FALSE(r2 == buf256_t::zero());
-}
-
-TEST(Buf256Test, BinaryGaloisFieldReduce) {
-  // We can do a multiply, then reduce
-  auto a = buf128_t::make(0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL);
-  auto b = buf128_t::make(0x1111111111111111ULL, 0x8888888888888888ULL);
-  auto product = buf256_t::caryless_mul(a, b);
-  // reduce
-  auto reduced = buf256_t::binary_galois_field_reduce(product);
-
-  // Quick sanity check that we get a 128-bit result
-  EXPECT_NE(reduced.lo(), 0ULL);
-  // We can't easily guess the exact answer, but let's ensure it's not all zero
-  // unless it's a real property for these bits.
-  auto is_zero = (reduced.lo() == 0ULL && reduced.hi() == 0ULL);
-  // Not guaranteed to be non-zero, but let's at least confirm we got something
-  // in typical cases:
-  EXPECT_FALSE(is_zero);
 }

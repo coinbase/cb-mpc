@@ -142,24 +142,6 @@ TEST(Buf128, ReverseBytes) {
   EXPECT_EQ(b_out.lo(), 0x00FFEEDDCCBBAA99ULL);
 }
 
-TEST(Buf128, BigEndianIncrement) {
-  auto b = buf128_t::make(0ULL, 0ULL);
-
-  // be_inc should interpret b as big-endian bytes and increment
-  // For a zeroed buffer, after one increment, the last byte should become 0x01
-  b.be_inc();
-  EXPECT_TRUE(b.get_bit(120));  // LSB should be 1
-  std::cout << b.lo() << std::endl;
-  std::cout << b.hi() << std::endl;
-
-  // Enough times to flip the last few bytes
-  for (int i = 0; i < 0xFF; i++) {
-    b.be_inc();
-  }
-  EXPECT_FALSE(b.get_bit(120));
-  EXPECT_TRUE(b.get_bit(112));  // LSB should be 1
-}
-
 TEST(Buf128, FromBitIndex) {
   // from_bit_index sets single bit
   auto b = buf128_t::from_bit_index(63);

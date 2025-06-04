@@ -43,9 +43,7 @@ struct buf256_t {
   buf256_t operator>>(unsigned n) const;
   buf256_t& operator>>=(unsigned n) { return *this = *this >> n; }
 
-  void be_inc();
   static buf256_t caryless_mul(buf128_t a, buf128_t b);
-  static buf128_t binary_galois_field_reduce(buf256_t x);
 
   buf256_t reverse_bytes() const;
 
