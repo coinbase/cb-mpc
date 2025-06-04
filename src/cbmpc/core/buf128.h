@@ -78,8 +78,6 @@ struct buf128_t {
   static buf128_t from_bit_index(int bit_index);
   static buf128_t mask(bool x);
 
-  void be_inc();
-
   buf128_t reverse_bytes() const;
 
   buf128_t operator<<(unsigned n) const;
@@ -91,7 +89,6 @@ struct buf128_t {
   byte_t& operator[](int index) { return (byte_ptr(this))[index]; }
 
   void convert(coinbase::converter_t& converter);
-  static buf128_t galois_field_mult(const buf128_t& a, const buf128_t& b);
 
  private:
   static buf128_t u128(u128_t val) {
@@ -100,6 +97,11 @@ struct buf128_t {
     return r;
   }
 };
+
+inline std::ostream& operator<<(std::ostream& os, const buf128_t& buf) {
+  os << "buf128_t(hi: 0x" << std::hex << buf.hi() << ", lo: 0x" << std::hex << buf.lo() << std::dec << ")";
+  return os;
+}
 
 class bufs128_ref_t {
  public:

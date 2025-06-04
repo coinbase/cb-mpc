@@ -146,15 +146,6 @@ buf128_t& buf128_t::operator^=(const buf128_t& src) { return *this = *this ^ src
 buf128_t& buf128_t::operator|=(const buf128_t& src) { return *this = *this | src; }
 buf128_t& buf128_t::operator&=(const buf128_t& src) { return *this = *this & src; }
 
-void buf128_t::be_inc() {
-  byte_ptr p = byte_ptr(this) + 16;
-  for (int i = 0; i < 16; i++) {
-    byte_t x = *--p;
-    *p = ++x;
-    if (x) break;
-  }
-}
-
 void buf128_t::convert(coinbase::converter_t& converter) {
   if (converter.is_write()) {
     if (!converter.is_calc_size()) save(converter.current());
@@ -166,10 +157,6 @@ void buf128_t::convert(coinbase::converter_t& converter) {
     *this = load(converter.current());
   }
   converter.forward(16);
-}
-
-buf128_t buf128_t::galois_field_mult(const buf128_t& a, const buf128_t& b) {
-  return buf256_t::binary_galois_field_reduce(buf256_t::caryless_mul(a, b));
 }
 
 #if defined(__x86_64__)
@@ -200,6 +187,7 @@ buf128_t::reverse_bytes() const {
 }
 
 buf128_t buf128_t::operator<<(unsigned n) const {
+  cb_assert(n < 128);
   uint64_t l = lo();
   uint64_t r = hi();
   if (n == 64) {
@@ -217,6 +205,7 @@ buf128_t buf128_t::operator<<(unsigned n) const {
 }
 
 buf128_t buf128_t::operator>>(unsigned n) const {
+  cb_assert(n < 128);
   uint64_t l = lo();
   uint64_t r = hi();
   if (n == 64) {
