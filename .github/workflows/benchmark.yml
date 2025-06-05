@@ -11,6 +11,9 @@ on:
       - "tools/benchmark/**"
       - "!src/cbmpc/tests/**"
 
+permissions:
+  contents: read
+
 jobs:
   All-Protocols:
     runs-on: ubuntu-latest
@@ -19,11 +22,16 @@ jobs:
       checks: write
       contents: write
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: audit
+
       - name: record commit hash
         run: |
           echo "${{ github.sha }}" > /tmp/commit-sha.txt
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Download Git submodules
         run: |
           git submodule sync --recursive && git submodule update --init --recursive
@@ -45,7 +53,7 @@ jobs:
           sudo ln -sf /usr/local/lib /usr/local/lib64
           pip install pyyaml
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       - name: install cbmpc
         run: |
           make build && make install
