@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746638653389,
+  "lastUpdate": 1749827761120,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -594,6 +594,72 @@ window.BENCHMARK_DATA = {
             "value": 8317.634654761583,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8317.308440476188 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "188008098+stepsecurity-app[bot]@users.noreply.github.com",
+            "name": "stepsecurity-app[bot]",
+            "username": "stepsecurity-app[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "245fe04db8aa92cfd13c5d9143d3380af40f5adc",
+          "message": "[StepSecurity] Apply security best practices (#27)\n\nSigned-off-by: StepSecurity Bot <bot@stepsecurity.io>\nCo-authored-by: stepsecurity-app[bot] <188008098+stepsecurity-app[bot]@users.noreply.github.com>",
+          "timestamp": "2025-06-13T07:35:38-07:00",
+          "tree_id": "df9a8bf7fb70e122e8a652ea168a71ba0f89f859",
+          "url": "https://github.com/coinbase/cb-mpc/commit/245fe04db8aa92cfd13c5d9143d3380af40f5adc"
+        },
+        "date": 1749827760604,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 57691.18068752732,
+            "unit": "us/iter",
+            "extra": "iterations: 16\ncpu: 57688.532 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4519.8814387086095,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4519.590941935484 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8568.689060977216,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8568.522707317074 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4618.674664514754,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4618.280922580648 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.579555172817198,
+            "unit": "us/iter",
+            "extra": "iterations: 60383\ncpu: 11.579317556265837 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 13.398695787118603,
+            "unit": "us/iter",
+            "extra": "iterations: 52197\ncpu: 13.397940667088161 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8346.721719512638,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8346.399231707323 us\nthreads: 1"
           }
         ]
       }
