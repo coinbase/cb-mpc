@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746638656401,
+  "lastUpdate": 1749827764986,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -378,6 +378,48 @@ window.BENCHMARK_DATA = {
             "value": 13777.948960782227,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13776.380019607845 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "188008098+stepsecurity-app[bot]@users.noreply.github.com",
+            "name": "stepsecurity-app[bot]",
+            "username": "stepsecurity-app[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "245fe04db8aa92cfd13c5d9143d3380af40f5adc",
+          "message": "[StepSecurity] Apply security best practices (#27)\n\nSigned-off-by: StepSecurity Bot <bot@stepsecurity.io>\nCo-authored-by: stepsecurity-app[bot] <188008098+stepsecurity-app[bot]@users.noreply.github.com>",
+          "timestamp": "2025-06-13T07:35:38-07:00",
+          "tree_id": "df9a8bf7fb70e122e8a652ea168a71ba0f89f859",
+          "url": "https://github.com/coinbase/cb-mpc/commit/245fe04db8aa92cfd13c5d9143d3380af40f5adc"
+        },
+        "date": 1749827764382,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24631.514392857363,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24573.621821428573 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 100022.70214285351,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 100015.8732857143 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13773.373686276233,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13771.425901960782 us\nthreads: 1"
           }
         ]
       }
