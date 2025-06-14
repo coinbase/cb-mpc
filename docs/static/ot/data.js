@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749827764986,
+  "lastUpdate": 1749921463412,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -420,6 +420,48 @@ window.BENCHMARK_DATA = {
             "value": 13773.373686276233,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13771.425901960782 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "047a698ada9a5dc4671ea9b63a767d43aa276725",
+          "message": "chore: cleanup unused codes in buf128_t and buf256_t (#26)",
+          "timestamp": "2025-06-14T09:38:51-07:00",
+          "tree_id": "99a4ea4ac8f2945d771597aa4c902a6e9d6ce726",
+          "url": "https://github.com/coinbase/cb-mpc/commit/047a698ada9a5dc4671ea9b63a767d43aa276725"
+        },
+        "date": 1749921462951,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24608.003103445484,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24607.513827586205 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 99493.65257144954,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 99483.22914285715 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13789.813339999455,
+            "unit": "us/iter",
+            "extra": "iterations: 50\ncpu: 13789.061740000008 us\nthreads: 1"
           }
         ]
       }
