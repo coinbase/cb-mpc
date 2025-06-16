@@ -56,9 +56,9 @@ struct key_share_2p_t {
 struct key_share_mp_t {
   bn_t x_share;
   ecc_point_t Q;
-  std::vector<crypto::ecc_point_t> Qis;
+  crypto::ss::party_map_t<crypto::ecc_point_t> Qis;
   ecurve_t curve;
-  party_idx_t party_index;
+  crypto::pname_t party_name;
 
   /**
    * @specs:
@@ -72,16 +72,16 @@ struct key_share_mp_t {
    */
   static error_t refresh(job_mp_t& job, buf_t& sid, const key_share_mp_t& current_key, key_share_mp_t& new_key);
 
-  error_t to_additive_share(const party_idx_t& party_new_index, const crypto::ss::ac_t ac, const int active_party_count,
-                            const crypto::ss::party_map_t<party_idx_t>& name_to_idx, key_share_mp_t& additive_share);
+  error_t to_additive_share(const crypto::ss::ac_t ac, const std::set<crypto::pname_t>& quorum_names,
+                            key_share_mp_t& additive_share);
 
  private:
   error_t reconstruct_additive_share(const mod_t& q, const crypto::ss::node_t* node,
-                                     const crypto::ss::party_map_t<party_idx_t>& name_to_idx,
-                                     bn_t& additive_share) const;
-  error_t reconstruct_pub_additive_shares(const crypto::ss::node_t* node,
-                                          const crypto::ss::party_map_t<party_idx_t>& name_to_idx, party_idx_t target,
-                                          ecc_point_t& pub_additive_shares) const;
+                                     const std::set<crypto::pname_t>& quorum_names, bn_t& additive_share,
+                                     bool& is_in_quorum) const;
+  error_t reconstruct_pub_additive_shares(const crypto::ss::node_t* node, const std::set<crypto::pname_t>& quorum_names,
+                                          crypto::pname_t target, ecc_point_t& pub_additive_shares,
+                                          bool& is_in_quorum) const;
 };
 
 struct dkg_mp_threshold_t {

@@ -100,7 +100,7 @@ func main() {
 	// run PVE many to many to restore each of the key shares
 	decryptedShares, err := cblib.PVE_quorum_decrypt(root, privKeys, leafCount, pubKeys, leafCount, pveBundle, Xs, dataCount, inputLabel)
 	if err != nil {
-		log.Fatal(fmt.Errorf("PVE encrypt failed, %v", err))
+		log.Fatal(fmt.Errorf("PVE decrypt failed, %v", err))
 	}
 	// convert the data back to the proper type
 	// As described in Step 6 above, this is not a complete backup solution. Therefore, we simply assert that the decrypted

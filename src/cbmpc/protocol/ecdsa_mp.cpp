@@ -41,7 +41,7 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
   const auto& G = curve.generator();
   int theta = q.get_bits_count() + kappa;
 
-  if (key.x_share * G != key.Qis[i]) return coinbase::error(E_BADARG, "x_share does not match Qi");
+  if (key.x_share * G != key.Qis.at(job.get_name(i))) return coinbase::error(E_BADARG, "x_share does not match Qi");
   if (SUM(key.Qis) != key.Q) return coinbase::error(E_BADARG, "Q does not match the sum of Qis");
   auto h_consistency = job.uniform_msg<buf256_t>();
   h_consistency._i = crypto::sha256_t::hash(msg, key.Q, key.Qis);

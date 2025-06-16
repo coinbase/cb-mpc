@@ -35,7 +35,7 @@ class bm_job_2p_t : public mpc::job_session_2p_t {
   // constructor that takes extra parameter -- target_round, then call the parent constructor
   bm_job_2p_t(mpc::party_t bm_party, int bm_round, mpc::party_t party, std::shared_ptr<mpc::network_t> _network_ptr,
               std::shared_ptr<abort_channel_t> abort_channel)
-      : job_session_2p_t(party, testutils::mpc_runner_t::test_pids[0], testutils::mpc_runner_t::test_pids[1],
+      : job_session_2p_t(party, testutils::mpc_runner_t::test_pnames[0], testutils::mpc_runner_t::test_pnames[1],
                          _network_ptr, 0),
         bm_party(bm_party),
         bm_round(bm_round),
@@ -233,8 +233,8 @@ class bm_job_mp_t : public mpc::job_session_mp_t {
               mpc::party_idx_t index, std::shared_ptr<mpc::network_t> _network_ptr,
               std::shared_ptr<abort_channel_mp_t> abort_channel)
       : job_session_mp_t(index,
-                         std::vector<crypto::mpc_pid_t>(testutils::mpc_runner_t::test_pids.begin(),
-                                                        testutils::mpc_runner_t::test_pids.begin() + _parties),
+                         std::vector<crypto::pname_t>(testutils::mpc_runner_t::test_pnames.begin(),
+                                                      testutils::mpc_runner_t::test_pnames.begin() + _parties),
                          _network_ptr, 0),
         bm_party(bm_party),
         bm_round(bm_round),

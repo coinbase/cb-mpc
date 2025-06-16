@@ -83,16 +83,17 @@ class job_session_mp_t : public job_mp_t {
   }
 
  public:
-  job_session_mp_t(party_idx_t index, std::vector<crypto::mpc_pid_t> pids, std::shared_ptr<network_t> _network_ptr,
+  job_session_mp_t(party_idx_t index, std::vector<crypto::pname_t> pnames, std::shared_ptr<network_t> _network_ptr,
                    jsid_t _jsid)
-      : job_mp_t(index, pids), network_ptr(_network_ptr), jsid(_jsid) {};
+      : job_mp_t(index, pnames), network_ptr(_network_ptr), jsid(_jsid) {};
+
   void set_network(party_idx_t party_idx, std::shared_ptr<network_t> ptr) {
     party_index = party_idx;
     network_ptr = ptr;
   }
 
   job_session_mp_t get_parallel_job(int parallel_count, jsid_t jsid) {
-    return job_session_mp_t(party_index, pids, network_ptr, jsid);
+    return job_session_mp_t(party_index, names, network_ptr, jsid);
   }
 
  protected:
@@ -102,16 +103,17 @@ class job_session_mp_t : public job_mp_t {
 
 class job_session_2p_t : public job_2p_t {
  public:
-  job_session_2p_t(party_t party, crypto::mpc_pid_t pid1, crypto::mpc_pid_t pid2, std::shared_ptr<network_t> ptr,
+  job_session_2p_t(party_t party, crypto::pname_t pname1, crypto::pname_t pname2, std::shared_ptr<network_t> ptr,
                    jsid_t id = 0)
-      : job_2p_t(party, pid1, pid2), network_ptr(ptr), jsid(id) {};
+      : job_2p_t(party, pname1, pname2), network_ptr(ptr), jsid(id) {};
+
   void set_network(party_t party, std::shared_ptr<network_t> ptr) {
     party_index = party_idx_t(party);
     network_ptr = ptr;
   }
 
   job_session_2p_t get_parallel_job(int parallel_count, jsid_t jsid) {
-    return job_session_2p_t(party_t(party_index), pids[0], pids[1], network_ptr, jsid);
+    return job_session_2p_t(party_t(party_index), names[0], names[1], network_ptr, jsid);
   }
 
   void set_parallel_count(int parallel_count) { network_ptr->set_parallel(parallel_count); }

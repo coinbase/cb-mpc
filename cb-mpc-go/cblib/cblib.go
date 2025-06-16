@@ -141,10 +141,33 @@ func CMEMSGet(cmems CMEMS) [][]byte {
 type MPC_ECDSA2PC_KEY_PTR C.MPC_ECDSA2PC_KEY_PTR
 type MPC_ECDSAMPC_KEY_PTR C.MPC_ECDSAMPC_KEY_PTR
 type CRYPTO_SS_NODE_PTR C.CRYPTO_SS_NODE_PTR
+type CRYPTO_SS_AC_PTR C.CRYPTO_SS_AC_PTR
+type PARTY_SET_PTR C.PARTY_SET_PTR
+type PARTY_MAP_PTR C.PARTY_MAP_PTR
 type CRYPTO_PRV_KEY_PTR C.CRYPTO_PRV_KEY_PTR
 
 func (k *MPC_ECDSA2PC_KEY_PTR) Free() {
 	C.free_mpc_ecdsa2p_key(C.MPC_ECDSA2PC_KEY_PTR(*k))
+}
+
+func (k *MPC_ECDSAMPC_KEY_PTR) Free() {
+	C.free_mpc_ecdsamp_key(C.MPC_ECDSAMPC_KEY_PTR(*k))
+}
+
+func (n *CRYPTO_SS_NODE_PTR) Free() {
+	C.free_crypto_ss_node(C.CRYPTO_SS_NODE_PTR(*n))
+}
+
+func (ac *CRYPTO_SS_AC_PTR) Free() {
+	C.free_crypto_ss_ac(C.CRYPTO_SS_AC_PTR(*ac))
+}
+
+func (ps *PARTY_SET_PTR) Free() {
+	C.free_party_set(C.PARTY_SET_PTR(*ps))
+}
+
+func (pm *PARTY_MAP_PTR) Free() {
+	C.free_party_map(C.PARTY_MAP_PTR(*pm))
 }
 
 // =========== ECDSA2PC =====================
@@ -191,6 +214,103 @@ func MPC_ecdsampc_sign(job network.JobSessionMP, key MPC_ECDSAMPC_KEY_PTR, msgMe
 	cErr := C.mpc_ecdsampc_sign(cjobmp(job), (*C.MPC_ECDSAMPC_KEY_PTR)(&key), cmem(msgMem), C.int(sigReceiver), &sigMem)
 	if cErr != 0 {
 		return nil, fmt.Errorf("ECDSA-mp sign failed, %v", cErr)
+	}
+	return CMEMGet(sigMem), nil
+}
+
+// =========== ECDSAMPC THRESHOLD ==================
+func NewAccessControl(root CRYPTO_SS_NODE_PTR) CRYPTO_SS_AC_PTR {
+	ac := C.new_access_control((*C.CRYPTO_SS_NODE_PTR)(&root))
+	return CRYPTO_SS_AC_PTR(ac)
+}
+
+func NewPartySet() PARTY_SET_PTR {
+	set := C.new_party_set()
+	return PARTY_SET_PTR(set)
+}
+
+func (ps *PARTY_SET_PTR) Add(partyIdx int) {
+	C.party_set_add((*C.PARTY_SET_PTR)(ps), C.int(partyIdx))
+}
+
+func NewPartyMap() PARTY_MAP_PTR {
+	partyMap := C.new_party_map()
+	return PARTY_MAP_PTR(partyMap)
+}
+
+func (pm *PARTY_MAP_PTR) Add(partyName string, partyIdx int) {
+	C.party_map_add((*C.PARTY_MAP_PTR)(pm), cmem([]byte(partyName)), C.int(partyIdx))
+}
+
+func ThresholdDKG(job network.JobSessionMP, curve int, sid []byte, ac CRYPTO_SS_AC_PTR, partyCount int) (MPC_ECDSAMPC_KEY_PTR, error) {
+	if sid == nil {
+		sid = make([]byte, 0)
+	}
+
+	quorum := NewPartySet()
+	defer quorum.Free()
+	for i := 0; i < partyCount; i++ {
+		quorum.Add(i)
+	}
+	var key MPC_ECDSAMPC_KEY_PTR
+	cErr := C.eckey_dkg_mp_threshold_dkg(
+		cjobmp(job),
+		C.int(curve),
+		cmem(sid),
+		(*C.CRYPTO_SS_AC_PTR)(&ac),
+		(*C.PARTY_SET_PTR)(&quorum),
+		(*C.MPC_ECDSAMPC_KEY_PTR)(&key))
+	if cErr != 0 {
+		return key, fmt.Errorf("threshold DKG failed, %v", cErr)
+	}
+	return key, nil
+}
+
+func (key *MPC_ECDSAMPC_KEY_PTR) ToAdditiveShare(ac CRYPTO_SS_AC_PTR, quorumPartyNames []string) (MPC_ECDSAMPC_KEY_PTR, error) {
+	var additiveKey MPC_ECDSAMPC_KEY_PTR
+
+	nameBytes := make([][]byte, len(quorumPartyNames))
+	for i, name := range quorumPartyNames {
+		nameBytes[i] = []byte(name)
+	}
+
+	cErr := C.eckey_key_share_mp_to_additive_share(
+		(*C.MPC_ECDSAMPC_KEY_PTR)(key),
+		(*C.CRYPTO_SS_AC_PTR)(&ac),
+		cmems(nameBytes),
+		(*C.MPC_ECDSAMPC_KEY_PTR)(&additiveKey))
+	if cErr != 0 {
+		return additiveKey, fmt.Errorf("to_additive_share failed, %v", cErr)
+	}
+	return additiveKey, nil
+}
+
+func MPC_ecdsampc_sign_with_ot_roles(job network.JobSessionMP, key MPC_ECDSAMPC_KEY_PTR, msgMem []byte, sigReceiver int, otRoleMap [][]int) ([]byte, error) {
+	// Convert OT role map to the required format
+	nParties := len(otRoleMap)
+	roleData := make([][]byte, nParties)
+	for i := 0; i < nParties; i++ {
+		roleData[i] = make([]byte, nParties*4) // 4 bytes per int
+		for j := 0; j < nParties && j < len(otRoleMap[i]); j++ {
+			role := otRoleMap[i][j]
+			roleData[i][j*4+0] = byte(role)
+			roleData[i][j*4+1] = byte(role >> 8)
+			roleData[i][j*4+2] = byte(role >> 16)
+			roleData[i][j*4+3] = byte(role >> 24)
+		}
+	}
+
+	var sigMem CMEM
+	cErr := C.mpc_ecdsampc_sign_with_ot_roles(
+		cjobmp(job),
+		(*C.MPC_ECDSAMPC_KEY_PTR)(&key),
+		cmem(msgMem),
+		C.int(sigReceiver),
+		cmems(roleData),
+		C.int(nParties),
+		&sigMem)
+	if cErr != 0 {
+		return nil, fmt.Errorf("ECDSA-mp sign with OT roles failed, %v", cErr)
 	}
 	return CMEMGet(sigMem), nil
 }
@@ -304,6 +424,24 @@ func PVE_Test() error {
 }
 
 // =========== Utilities =====================
+func SerializeECDSAShare(keyshare MPC_ECDSAMPC_KEY_PTR) ([][]byte, error) {
+	var ser CMEMS
+	err := C.serialize_ecdsa_mpc_key((*C.MPC_ECDSAMPC_KEY_PTR)(&keyshare), &ser)
+	if err != 0 {
+		return nil, fmt.Errorf("serialize_ecdsa_mpc_key failed: %v", err)
+	}
+	return CMEMSGet(ser), nil
+}
+
+func DeserializeECDSAShare(ser [][]byte) (MPC_ECDSAMPC_KEY_PTR, error) {
+	var keyshare MPC_ECDSAMPC_KEY_PTR
+	err := C.deserialize_ecdsa_mpc_key(cmems(ser), (*C.MPC_ECDSAMPC_KEY_PTR)(&keyshare))
+	if err != 0 {
+		return MPC_ECDSAMPC_KEY_PTR{}, fmt.Errorf("deserialize_ecdsa_mpc_key failed: %v", err)
+	}
+	return keyshare, nil
+}
+
 func SerializeECDSAShares(keyshares []MPC_ECDSAMPC_KEY_PTR) ([][]byte, [][]byte, error) {
 	xs := make([][]byte, len(keyshares))
 	Qs := make([][]byte, len(keyshares))
@@ -312,7 +450,7 @@ func SerializeECDSAShares(keyshares []MPC_ECDSAMPC_KEY_PTR) ([][]byte, [][]byte,
 		var QMem CMEM
 		err := C.convert_ecdsa_share_to_bn_t_share((*C.MPC_ECDSAMPC_KEY_PTR)(&keyshares[i]), &xMem, &QMem)
 		if err != 0 {
-			return nil, nil, fmt.Errorf("pve quorum decrypt failed: %v", err)
+			return nil, nil, fmt.Errorf("convert_ecdsa_share_to_bn_t_share failed: %v", err)
 		}
 		xs[i] = CMEMGet(xMem)
 		Qs[i] = CMEMGet(QMem)
@@ -328,4 +466,13 @@ func MPC_ecdsa_mpc_public_key_to_string(key MPC_ECDSAMPC_KEY_PTR) ([]byte, []byt
 		return nil, nil, fmt.Errorf("getting ecdsa mpc public key failed, %v", err)
 	}
 	return CMEMGet(xMem), CMEMGet(yMem), nil
+}
+
+func MPC_ecdsa_mpc_private_key_to_string(key MPC_ECDSAMPC_KEY_PTR) ([]byte, error) {
+	var xShareMem CMEM
+	err := C.ecdsa_mpc_private_key_to_string((*C.MPC_ECDSAMPC_KEY_PTR)(&key), &xShareMem)
+	if err != 0 {
+		return nil, fmt.Errorf("getting ecdsa mpc private key failed, %v", err)
+	}
+	return CMEMGet(xShareMem), nil
 }

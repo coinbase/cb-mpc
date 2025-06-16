@@ -45,7 +45,7 @@ class mpc_runner_t {
   void run_mpc_parallel(int n_threads, lambda_mp_parallel_t f);
 
   // In-class declaration (no initializer):
-  static const std::vector<crypto::bn_t> test_pids;
+  static const std::vector<crypto::pname_t> test_pnames;
 
  private:
   lambda_role_t protocol_f;

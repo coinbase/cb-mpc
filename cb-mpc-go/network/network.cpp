@@ -42,13 +42,16 @@ class callback_data_transport_t : public data_transport_interface_t {
 };
 
 // ---------------- JOB_SESSION_2P_PTR ------------
-JOB_SESSION_2P_PTR* new_job_session_2p(data_transport_callbacks_t* callbacks, void* go_impl_ptr, int index) {
+JOB_SESSION_2P_PTR* new_job_session_2p(data_transport_callbacks_t* callbacks, void* go_impl_ptr, int index, char** pnames, int pname_count) {
+  if (pname_count != 2) {
+    std::cerr << "Error: expected exactly 2 pnames, got " << pname_count << std::endl;
+    return nullptr;
+  }
+  
   std::shared_ptr<callback_data_transport_t> data_transport_ptr =
       std::make_shared<callback_data_transport_t>(callbacks, go_impl_ptr);
   std::shared_ptr<network_t> network = std::make_shared<network_t>(data_transport_ptr);
-  crypto::mpc_pid_t pid1 = crypto::pid_from_name("p1");
-  crypto::mpc_pid_t pid2 = crypto::pid_from_name("p2");
-  return new JOB_SESSION_2P_PTR{new job_session_2p_t(party_t(index), pid1, pid2, network)};
+  return new JOB_SESSION_2P_PTR{new job_session_2p_t(party_t(index), std::string(pnames[0]), std::string(pnames[1]), network)};
 }
 
 int is_peer1(JOB_SESSION_2P_PTR* job) {
@@ -91,17 +94,23 @@ int mpc_2p_receive(JOB_SESSION_2P_PTR* job, int sender, uint8_t** msg, int* msg_
 }
 
 // ---------------- JOB_SESSION_MP_PTR ------------
+
 JOB_SESSION_MP_PTR* new_job_session_mp(data_transport_callbacks_t* callbacks, void* go_impl_ptr, int party_count,
-                                       int index, int job_session_id) {
+                                       int index, int job_session_id, char** pnames, int pname_count) {
+  if (pname_count != party_count) {
+    std::cerr << "Error: pname_count does not match party_count" << std::endl;
+    return nullptr;
+  }
   std::shared_ptr<callback_data_transport_t> data_transport_ptr =
       std::make_shared<callback_data_transport_t>(callbacks, go_impl_ptr);
   std::shared_ptr<network_t> network = std::make_shared<network_t>(data_transport_ptr);
-  std::vector<crypto::mpc_pid_t> pids(party_count);
+  std::vector<crypto::pname_t> pnames_vec(party_count);
   for (int i = 0; i < party_count; i++) {
-    pids[i] = crypto::pid_from_name(std::string("p") + std::to_string(i));
+    pnames_vec[i] = std::string(pnames[i]);
   }
-  return new JOB_SESSION_MP_PTR{new job_session_mp_t(party_idx_t(index), pids, network, jsid_t(job_session_id))};
+  return new JOB_SESSION_MP_PTR{new job_session_mp_t(party_idx_t(index), pnames_vec, network, jsid_t(job_session_id))};
 }
+
 
 int is_party(JOB_SESSION_MP_PTR* job, int party_index) {
   job_session_mp_t* j = static_cast<job_session_mp_t*>(job->opaque);

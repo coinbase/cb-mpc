@@ -30,7 +30,7 @@ class party_set_t {
 };
 
 class job_mp_t {
-  /* Helper funcitons for serializing/deserializing messages for multi parties */
+  /* Helper functions for serializing/deserializing messages for multi parties */
 
   template <typename... MSGS>
   std::vector<buf_t> pack_msgs(party_set_t set, MSGS&... msgs) {
@@ -163,12 +163,16 @@ class job_mp_t {
   party_idx_t party_index;
   int n_parties;
   std::vector<crypto::mpc_pid_t> pids;
+  std::vector<crypto::pname_t> names;
 
-  job_mp_t(int index, std::vector<crypto::mpc_pid_t> pids) : party_index(index), n_parties(pids.size()) {
+  job_mp_t(int index, std::vector<crypto::pname_t> pnames) : party_index(index), n_parties(pnames.size()) {
     if (party_index < 0 || party_index >= n_parties) coinbase::error(E_BADARG, "invalid party_index");
+    this->names = pnames;
+    for (const auto& name : pnames) {
+      pids.push_back(crypto::pid_from_name(name));
+    }
     cb_assert(pids.size() >= 2 && "at least 2 parties are required");
     cb_assert(pids.size() <= 64 && "at most 64 parties are supported");
-    this->pids = pids;
   }
 
   virtual error_t send_impl(party_idx_t to, mem_t msg) = 0;
@@ -185,6 +189,10 @@ class job_mp_t {
   const crypto::mpc_pid_t& get_pid() const { return pids[get_party_idx()]; }
   const crypto::mpc_pid_t& get_pid(party_idx_t index) const { return pids[index]; }
   const std::vector<crypto::mpc_pid_t>& get_pids() const { return pids; }
+
+  const crypto::pname_t& get_name() const { return names[get_party_idx()]; }
+  const crypto::pname_t& get_name(party_idx_t index) const { return names[index]; }
+  const std::vector<crypto::pname_t>& get_names() const { return names; }
 
   /* MPC messaging */
 
@@ -406,8 +414,8 @@ class job_mp_t {
 
 class job_2p_t : public job_mp_t {
  public:
-  job_2p_t(party_t index, crypto::mpc_pid_t pid1, crypto::mpc_pid_t pid2)
-      : job_mp_t(party_idx_t(index), {pid1, pid2}) {}
+  job_2p_t(party_t index, crypto::pname_t pname1, crypto::pname_t pname2)
+      : job_mp_t(party_idx_t(index), {pname1, pname2}) {}
 
   bool is_p1() const { return is_party_idx(party_idx_t(party_t::p1)); }
   bool is_p2() const { return is_party_idx(party_idx_t(party_t::p2)); }
@@ -416,6 +424,8 @@ class job_2p_t : public job_mp_t {
 
   const crypto::mpc_pid_t& get_pid() const { return job_mp_t::get_pid(); }
   const crypto::mpc_pid_t& get_pid(party_t party) const { return job_mp_t::get_pid(party_idx_t(party)); }
+  const crypto::pname_t& get_name() const { return job_mp_t::get_name(); }
+  const crypto::pname_t& get_name(party_t party) const { return job_mp_t::get_name(party_idx_t(party)); }
 
   template <typename... ARGS>
   error_t p1_to_p2(ARGS&... args) {

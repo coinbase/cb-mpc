@@ -39,15 +39,16 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
 
   int n = job.get_n_parties();
   int i = job.get_party_idx();
+  crypto::pname_t pname = job.get_name();
   sigs.resize(msgs.size());
 
   ecurve_t curve = key.curve;
   const mod_t& q = curve.order();
   const auto& G = curve.generator();
 
-  if (key.party_index != i) return coinbase::error(E_BADARG, "Wrong role");
+  if (key.party_name != pname) return coinbase::error(E_BADARG, "Wrong role");
   if (key.Qis.size() != n) return coinbase::error(E_BADARG, "Wrong number of peers");
-  if (key.x_share * G != key.Qis[i]) return coinbase::error(E_BADARG, "x_share does not match Qi");
+  if (key.x_share * G != key.Qis.at(pname)) return coinbase::error(E_BADARG, "x_share does not match Qi");
   if (SUM(key.Qis) != key.Q) return coinbase::error(E_BADARG, "Q does not match the sum of Qis");
   auto h_consistency = job.uniform_msg<buf256_t>();
   h_consistency._i = crypto::sha256_t::hash(msgs, key.Q, key.Qis);

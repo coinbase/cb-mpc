@@ -62,7 +62,8 @@ func (runner *MPCRunner) MPCRun2P(f MPCFunction2P, inputs []*MPCIO) ([]*MPCIO, e
 	wg.Add(runner.nParties)
 	for i := 0; i < runner.nParties; i++ {
 		go func(i int) {
-			job := network.NewJobSession2P(runner.peers[i].dataTransport, i)
+			pids := []string{"party_0", "party_1"}
+			job := network.NewJobSession2P(runner.peers[i].dataTransport, i, pids)
 			defer job.Free()
 			outs[i], errs[i] = f(job, inputs[i])
 			if errs[i] != nil { // abort job
@@ -105,7 +106,12 @@ func (runner *MPCRunner) MPCRunMP(f MPCFunctionMP, inputs []*MPCIO) ([]*MPCIO, e
 	jobSessionId := 0
 	for i := 0; i < runner.nParties; i++ {
 		go func(i int) {
-			job := network.NewJobSessionMP(runner.peers[i].dataTransport, runner.nParties, i, jobSessionId)
+			// Generate pid array for multi-party
+			pids := make([]string, runner.nParties)
+			for j := 0; j < runner.nParties; j++ {
+				pids[j] = fmt.Sprintf("party_%d", j)
+			}
+			job := network.NewJobSessionMP(runner.peers[i].dataTransport, runner.nParties, i, jobSessionId, pids)
 			defer job.Free()
 			outs[i], errs[i] = f(job, inputs[i])
 			if errs[i] != nil { // abort job

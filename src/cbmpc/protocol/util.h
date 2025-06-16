@@ -30,6 +30,13 @@ static T SUM(const std::vector<std::reference_wrapper<T>>& v) {
   return s;
 }
 
+template <typename T>
+static T SUM(const std::map<coinbase::crypto::pname_t, T>& m) {
+  T s = m.begin()->second;
+  for (auto it = std::next(m.begin()); it != m.end(); ++it) s += it->second;
+  return s;
+}
+
 static bn_t SUM(const std::vector<bn_t>& v, const mod_t& q) {
   bn_t s = 0;
   for (int i = 0; i < int(v.size()); i++) MODULO(q) s += v[i];

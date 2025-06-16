@@ -163,9 +163,28 @@ func (js *JobSession2P) GetCJob() *C.JOB_SESSION_2P_PTR {
 	return js.cJob
 }
 
-func NewJobSession2P(dt IDataTransport, roleIndex int) JobSession2P {
+func NewJobSession2P(dt IDataTransport, roleIndex int, pnames []string) JobSession2P {
+	if len(pnames) != 2 {
+		panic("NewJobSession2P requires exactly 2 pnames")
+	}
+
 	ptr := SetDTImpl(&dt)
-	return JobSession2P{ptr.(unsafe.Pointer), C.new_job_session_2p(&callbacks, ptr.(unsafe.Pointer), C.int(roleIndex))}
+
+	// Create C string array manually using C.malloc
+	cPidsArray := C.malloc(C.size_t(len(pnames)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cPidsArray)
+
+	// Convert to slice of unsafe.Pointer
+	cPidsSlice := (*[1 << 30]unsafe.Pointer)(cPidsArray)[:len(pnames):len(pnames)]
+
+	// Convert each string and store pointer
+	for i, pid := range pnames {
+		cStr := C.CString(pid)
+		defer C.free(unsafe.Pointer(cStr))
+		cPidsSlice[i] = unsafe.Pointer(cStr)
+	}
+
+	return JobSession2P{ptr.(unsafe.Pointer), C.new_job_session_2p(&callbacks, ptr.(unsafe.Pointer), C.int(roleIndex), (**C.char)(cPidsArray), C.int(len(pnames)))}
 }
 
 func (js *JobSession2P) Free() {
@@ -223,9 +242,28 @@ func (js *JobSessionMP) GetCJob() *C.JOB_SESSION_MP_PTR {
 	return js.cJob
 }
 
-func NewJobSessionMP(dt IDataTransport, partyCount int, roleIndex int, jobSessionId int) JobSessionMP {
+func NewJobSessionMP(dt IDataTransport, partyCount int, roleIndex int, jobSessionId int, pnames []string) JobSessionMP {
+	if len(pnames) != partyCount {
+		panic("NewJobSessionMP requires pnames array length to match partyCount")
+	}
+
 	ptr := SetDTImpl(&dt)
-	return JobSessionMP{ptr.(unsafe.Pointer), C.new_job_session_mp(&callbacks, ptr.(unsafe.Pointer), C.int(partyCount), C.int(roleIndex), C.int(jobSessionId))}
+
+	// Create C string array manually using C.malloc
+	cPnamesArray := C.malloc(C.size_t(len(pnames)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cPnamesArray)
+
+	// Convert to slice of unsafe.Pointer
+	cPnamesSlice := (*[1 << 30]unsafe.Pointer)(cPnamesArray)[:len(pnames):len(pnames)]
+
+	// Convert each string and store pointer
+	for i, pname := range pnames {
+		cStr := C.CString(pname)
+		defer C.free(unsafe.Pointer(cStr))
+		cPnamesSlice[i] = unsafe.Pointer(cStr)
+	}
+
+	return JobSessionMP{ptr.(unsafe.Pointer), C.new_job_session_mp(&callbacks, ptr.(unsafe.Pointer), C.int(partyCount), C.int(roleIndex), C.int(jobSessionId), (**C.char)(cPnamesArray), C.int(len(pnames)))}
 }
 
 func (js *JobSessionMP) Free() {
@@ -255,7 +293,7 @@ func CMEMGet(cmem CMEM) []byte {
 
 func AgreeRandom(job JobSession2P, bitLen int) ([]byte, error) {
 	var out CMEM
-	cErr := C.mpc_agree_random(job.cJob, C.int(bitLen), &out)
+	cErr := C.mpc_agree_random(job.GetCJob(), C.int(bitLen), &out)
 	if cErr != 0 {
 		return nil, fmt.Errorf("mpc_agree_random failed, %v", cErr)
 	}

@@ -200,20 +200,18 @@ TEST_P(ECDSAMPCTHRESHOLD, DKG) {
   mod_t q = curve.order();
   std::vector<eckey::key_share_mp_t> keyshares(n);
   std::vector<eckey::key_share_mp_t> new_keyshares(n);
-  std::vector<crypto::mpc_pid_t> all_pids(n);
-  std::vector<crypto::mpc_pid_t> active_pids(t);
-  crypto::ss::party_map_t<party_idx_t> name_to_idx;
+  std::vector<crypto::pname_t> all_names(n);
+  std::set<crypto::pname_t> quorum1;
   party_set_t quorum_party_set;
 
   quorum_party_set.add(0);
   quorum_party_set.add(1);
   quorum_party_set.add(2);
   for (int i = 0; i < n; i++) {
-    all_pids[i] = mpc_runner_t::test_pids[i];
+    all_names[i] = mpc_runner_t::test_pnames[i];
   }
   for (int i = 0; i < t; i++) {
-    active_pids[i] = all_pids[i];
-    name_to_idx[all_pids[i].to_string()] = i;
+    quorum1.insert(all_names[i]);
   }
 
   buf_t sid_dkg = crypto::gen_random(16);
@@ -223,14 +221,14 @@ TEST_P(ECDSAMPCTHRESHOLD, DKG) {
       crypto::ss::node_e::AND, "", 0,
       {new crypto::ss::node_t(crypto::ss::node_e::THRESHOLD, "threshold-node", 2,
                               {
-                                  new crypto::ss::node_t(crypto::ss::node_e::LEAF, all_pids[0].to_string()),  // active
-                                  new crypto::ss::node_t(crypto::ss::node_e::LEAF, all_pids[1].to_string()),  // active
-                                  new crypto::ss::node_t(crypto::ss::node_e::LEAF, all_pids[3].to_string()),
+                                  new crypto::ss::node_t(crypto::ss::node_e::LEAF, all_names[0]),  // active
+                                  new crypto::ss::node_t(crypto::ss::node_e::LEAF, all_names[1]),  // active
+                                  new crypto::ss::node_t(crypto::ss::node_e::LEAF, all_names[3]),
                               }),
        new crypto::ss::node_t(crypto::ss::node_e::OR, "or-node", 0,
                               {
-                                  new crypto::ss::node_t(crypto::ss::node_e::LEAF, all_pids[2].to_string()),  // active
-                                  new crypto::ss::node_t(crypto::ss::node_e::LEAF, all_pids[4].to_string()),
+                                  new crypto::ss::node_t(crypto::ss::node_e::LEAF, all_names[2]),  // active
+                                  new crypto::ss::node_t(crypto::ss::node_e::LEAF, all_names[4]),
                               })});
   crypto::ss::ac_t ac;
   ac.G = G;
@@ -249,10 +247,9 @@ TEST_P(ECDSAMPCTHRESHOLD, DKG) {
   mpc_runner = std::make_unique<mpc_runner_t>(t);
   buf_t data = crypto::gen_random(32);
   std::vector<std::vector<int>> ot_role_map = test_ot_role(t);
-  mpc_runner->run_mpc([&curve, &keyshares, &ac, &name_to_idx, &q, &t, &n, &data, &ot_role_map](mpc::job_mp_t& job) {
+  mpc_runner->run_mpc([&curve, &keyshares, &ac, &quorum1, &q, &t, &n, &data, &ot_role_map](mpc::job_mp_t& job) {
     eckey::key_share_mp_t additive_share;
-    EXPECT_OK(
-        keyshares[job.get_party_idx()].to_additive_share(job.get_party_idx(), ac, t, name_to_idx, additive_share));
+    EXPECT_OK(keyshares[job.get_party_idx()].to_additive_share(ac, quorum1, additive_share));
     buf_t sig;
     error_t rv = sign(job, additive_share, data, party_idx_t(0), ot_role_map, sig);
     ASSERT_EQ(rv, 0);
@@ -279,10 +276,9 @@ TEST_P(ECDSAMPCTHRESHOLD, DKG) {
   // Signing is a t-party protocol: for simplicity of testing, we assume the first t parties
   mpc_runner = std::make_unique<mpc_runner_t>(t);
   data = crypto::gen_random(32);
-  mpc_runner->run_mpc([&curve, &new_keyshares, &ac, &name_to_idx, &q, &t, &n, &data, &ot_role_map](mpc::job_mp_t& job) {
+  mpc_runner->run_mpc([&curve, &new_keyshares, &ac, &quorum1, &q, &t, &n, &data, &ot_role_map](mpc::job_mp_t& job) {
     eckey::key_share_mp_t additive_share;
-    EXPECT_OK(
-        new_keyshares[job.get_party_idx()].to_additive_share(job.get_party_idx(), ac, t, name_to_idx, additive_share));
+    EXPECT_OK(new_keyshares[job.get_party_idx()].to_additive_share(ac, quorum1, additive_share));
     buf_t sig;
     error_t rv = sign(job, additive_share, data, party_idx_t(0), ot_role_map, sig);
     ASSERT_EQ(rv, 0);
@@ -293,19 +289,19 @@ TEST_P(ECDSAMPCTHRESHOLD, DKG) {
     }
   });
 
-  ASSERT_EQ(keyshares[0].x_share * G, keyshares[0].Qis[0]);
-  ASSERT_EQ(keyshares[1].x_share * G, keyshares[1].Qis[1]);
-  ASSERT_EQ(keyshares[2].x_share * G, keyshares[2].Qis[2]);
+  ASSERT_EQ(keyshares[0].x_share * G, keyshares[0].Qis[all_names[0]]);
+  ASSERT_EQ(keyshares[1].x_share * G, keyshares[1].Qis[all_names[1]]);
+  ASSERT_EQ(keyshares[2].x_share * G, keyshares[2].Qis[all_names[2]]);
 
   for (int i = 1; i < n; i++) {
-    EXPECT_EQ(keyshares[i].Qis[0], keyshares[0].Qis[0]);
-    EXPECT_EQ(keyshares[i].Qis[1], keyshares[0].Qis[1]);
-    EXPECT_EQ(keyshares[i].Qis[2], keyshares[0].Qis[2]);
+    EXPECT_EQ(keyshares[i].Qis[all_names[0]], keyshares[0].Qis[all_names[0]]);
+    EXPECT_EQ(keyshares[i].Qis[all_names[1]], keyshares[0].Qis[all_names[1]]);
+    EXPECT_EQ(keyshares[i].Qis[all_names[2]], keyshares[0].Qis[all_names[2]]);
   }
 
   std::vector<eckey::key_share_mp_t> new_additive_shares(n);
   for (int i = 0; i < n; i++) {
-    EXPECT_OK(new_keyshares[i].to_additive_share(i, ac, t, name_to_idx, new_additive_shares[i]));
+    EXPECT_OK(new_keyshares[i].to_additive_share(ac, quorum1, new_additive_shares[i]));
   }
   EXPECT_EQ(
       ((new_additive_shares[0].x_share + new_additive_shares[1].x_share + new_additive_shares[2].x_share) % q) * G,

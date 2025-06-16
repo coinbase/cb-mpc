@@ -7,6 +7,7 @@
 #include <cbmpc/crypto/secret_sharing.h>
 #include <cbmpc/protocol/ecdsa_2p.h>
 #include <cbmpc/protocol/ecdsa_mp.h>
+#include <cbmpc/protocol/ec_dkg.h>
 #include <cbmpc/protocol/mpc_job_session.h>
 #include <cbmpc/protocol/pve.h>
 #include <cbmpc/protocol/pve_ac.h>
@@ -87,6 +88,121 @@ int mpc_ecdsampc_sign(JOB_SESSION_MP_PTR* j, MPC_ECDSAMPC_KEY_PTR* k, cmem_t msg
   if (err) return err;
   *sig_mem = sig.to_cmem();
 
+  return 0;
+}
+
+// ============ ECDSA MPC THRESHOLD ============
+CRYPTO_SS_AC_PTR new_access_control(CRYPTO_SS_NODE_PTR* root) {
+  crypto::ss::node_t* root_node = static_cast<crypto::ss::node_t*>(root->opaque);
+  crypto::ss::ac_t* ac = new crypto::ss::ac_t();
+  ac->G = crypto::curve_secp256k1.generator();
+  ac->root = root_node;
+  return CRYPTO_SS_AC_PTR{ac};
+}
+
+PARTY_SET_PTR new_party_set() {
+  party_set_t* set = new party_set_t();
+  return PARTY_SET_PTR{set};
+}
+
+void party_set_add(PARTY_SET_PTR* set, int party_idx) {
+  party_set_t* party_set = static_cast<party_set_t*>(set->opaque);
+  party_set->add(party_idx);
+}
+
+PARTY_MAP_PTR new_party_map() {
+  auto* map = new crypto::ss::party_map_t<party_idx_t>();
+  return PARTY_MAP_PTR{map};
+}
+
+void party_map_add(PARTY_MAP_PTR* map, cmem_t party_name, int party_idx) {
+  auto* party_map = static_cast<crypto::ss::party_map_t<party_idx_t>*>(map->opaque);
+  std::string name = mem_t(party_name).to_string();
+  (*party_map)[name] = party_idx_t(party_idx);
+}
+
+int eckey_dkg_mp_threshold_dkg(
+    JOB_SESSION_MP_PTR* job, 
+    int curve, 
+    cmem_t sid, 
+    CRYPTO_SS_AC_PTR* ac, 
+    PARTY_SET_PTR* quorum, 
+    MPC_ECDSAMPC_KEY_PTR* key) {
+  
+  job_session_mp_t* job_session = static_cast<job_session_mp_t*>(job->opaque);
+  ecurve_t curve_obj = ecurve_t::find(curve);
+  buf_t sid_buf = mem_t(sid);
+  crypto::ss::ac_t* ac_obj = static_cast<crypto::ss::ac_t*>(ac->opaque);
+  party_set_t* quorum_set = static_cast<party_set_t*>(quorum->opaque);
+  
+  eckey::key_share_mp_t* key_share = new eckey::key_share_mp_t();
+  
+  eckey::dkg_mp_threshold_t dkg_threshold;
+  error_t err = dkg_threshold.dkg(*job_session, curve_obj, sid_buf, *ac_obj, *quorum_set, *key_share);
+  if (err) return err;
+  
+  *key = MPC_ECDSAMPC_KEY_PTR{key_share};
+  return 0;
+}
+
+int eckey_key_share_mp_to_additive_share(
+    MPC_ECDSAMPC_KEY_PTR* key, 
+    CRYPTO_SS_AC_PTR* ac, 
+    cmems_t quorum_party_names,
+    MPC_ECDSAMPC_KEY_PTR* additive_key) {
+  
+  eckey::key_share_mp_t* key_share = static_cast<eckey::key_share_mp_t*>(key->opaque);
+  crypto::ss::ac_t* ac_obj = static_cast<crypto::ss::ac_t*>(ac->opaque);
+  
+  std::vector<buf_t> name_bufs = coinbase::mems_t(quorum_party_names).bufs();
+  std::set<crypto::pname_t> quorum_names;
+  for (const auto& name_buf : name_bufs) {
+    std::string name = name_buf.to_string();
+    quorum_names.insert(name);
+  }
+  
+  eckey::key_share_mp_t* additive_share = new eckey::key_share_mp_t();
+
+  
+  error_t err = key_share->to_additive_share(*ac_obj, quorum_names, *additive_share);
+  if (err) return err;
+
+  *additive_key = MPC_ECDSAMPC_KEY_PTR{additive_share};
+  return 0;
+}
+
+int mpc_ecdsampc_sign_with_ot_roles(
+    JOB_SESSION_MP_PTR* j,
+    MPC_ECDSAMPC_KEY_PTR* k,
+    cmem_t msg_mem,
+    int sig_receiver,
+    cmems_t ot_role_map,
+    int n_parties,
+    cmem_t* sig_mem) {
+  
+  job_session_mp_t* job = static_cast<job_session_mp_t*>(j->opaque);
+  eckey::key_share_mp_t* key = static_cast<eckey::key_share_mp_t*>(k->opaque);
+  
+  buf_t msg = coinbase::mem_t(msg_mem);
+  
+  // Convert OT role map from cmems_t to std::vector<std::vector<int>>
+  std::vector<buf_t> role_bufs = coinbase::mems_t(ot_role_map).bufs();
+  std::vector<std::vector<int>> ot_roles(n_parties, std::vector<int>(n_parties));
+  
+  for (int i = 0; i < n_parties; i++) {
+    if (i < role_bufs.size()) {
+      const uint8_t* data = role_bufs[i].data();
+      for (int j = 0; j < n_parties && j * sizeof(int) < role_bufs[i].size(); j++) {
+        memcpy(&ot_roles[i][j], data + j * sizeof(int), sizeof(int));
+      }
+    }
+  }
+  
+  buf_t sig;
+  error_t err = ecdsampc::sign(*job, *key, msg, party_idx_t(sig_receiver), ot_roles, sig);
+  if (err) return err;
+  
+  *sig_mem = sig.to_cmem();
   return 0;
 }
 
@@ -284,9 +400,45 @@ int convert_ecdsa_share_to_bn_t_share(MPC_ECDSAMPC_KEY_PTR* k, cmem_t* x_ptr, cm
   return 0;
 }
 
+int serialize_ecdsa_mpc_key(MPC_ECDSAMPC_KEY_PTR* k, cmems_t* ser) {
+  ecdsampc::key_t* key = static_cast<ecdsampc::key_t*>(k->opaque);
+
+  auto x = coinbase::ser(key->x_share);
+  auto Q = coinbase::ser(key->Q);
+  auto Qis = coinbase::ser(key->Qis);
+  auto curve = coinbase::ser(key->curve);
+  auto party_name = coinbase::ser(key->party_name);
+
+  auto out = std::vector<mem_t>{x, Q, Qis, curve, party_name};
+  *ser = coinbase::mems_t(out).to_cmems();
+
+  return 0;
+}
+
+int deserialize_ecdsa_mpc_key(cmems_t sers, MPC_ECDSAMPC_KEY_PTR* k) {
+  ecdsampc::key_t* key = new ecdsampc::key_t();
+
+  std::vector<buf_t> sers_vec = coinbase::mems_t(sers).bufs();
+
+  if (coinbase::deser(sers_vec[0], key->x_share)) return 1;
+  if (coinbase::deser(sers_vec[1], key->Q)) return 1;
+  if (coinbase::deser(sers_vec[2], key->Qis)) return 1;
+  if (coinbase::deser(sers_vec[3], key->curve)) return 1;
+  if (coinbase::deser(sers_vec[4], key->party_name)) return 1;
+
+  *k = MPC_ECDSAMPC_KEY_PTR{key};
+  return 0;
+}
+
 int ecdsa_mpc_public_key_to_string(MPC_ECDSAMPC_KEY_PTR* k, cmem_t* x_str, cmem_t* y_str) {
   ecdsampc::key_t* key = static_cast<ecdsampc::key_t*>(k->opaque);
   *x_str = key->Q.get_x().to_bin().to_cmem();
   *y_str = key->Q.get_y().to_bin().to_cmem();
+  return 0;
+}
+
+int ecdsa_mpc_private_key_to_string(MPC_ECDSAMPC_KEY_PTR* k, cmem_t* x_share_str) {
+  ecdsampc::key_t* key = static_cast<ecdsampc::key_t*>(k->opaque);
+  *x_share_str = key->x_share.to_bin().to_cmem();
   return 0;
 }

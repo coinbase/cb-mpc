@@ -35,7 +35,7 @@ inline void free_job_session_2p(JOB_SESSION_2P_PTR* ptr) { free(ptr->opaque); }
 inline void free_job_session_mp(JOB_SESSION_MP_PTR* ptr) { free(ptr->opaque); }
 
 // ---------------- JOB_SESSION_2P_PTR ------------
-JOB_SESSION_2P_PTR* new_job_session_2p(data_transport_callbacks_t* callbacks, void* go_impl_ptr, int party_index);
+JOB_SESSION_2P_PTR* new_job_session_2p(data_transport_callbacks_t* callbacks, void* go_impl_ptr, int party_index, char** pnames, int pname_count);
 int is_peer1(JOB_SESSION_2P_PTR* job);
 int is_peer2(JOB_SESSION_2P_PTR* job);
 int is_role_index(JOB_SESSION_2P_PTR* job, int party_index);
@@ -44,7 +44,7 @@ int mpc_2p_send(JOB_SESSION_2P_PTR* job, int receiver, const uint8_t* msg, const
 int mpc_2p_receive(JOB_SESSION_2P_PTR* job, int sender, uint8_t** msg, int* msg_len);
 
 // ---------------- JOB_SESSION_MP_PTR ------------
-JOB_SESSION_MP_PTR* new_job_session_mp(data_transport_callbacks_t* callbacks, void* go_impl_ptr, int party_count, int party_index, int job_session_id);
+JOB_SESSION_MP_PTR* new_job_session_mp(data_transport_callbacks_t* callbacks, void* go_impl_ptr, int party_count, int party_index, int job_session_id, char** pnames, int pname_count);
 int is_party(JOB_SESSION_MP_PTR* job, int party_index);
 int get_party_idx(JOB_SESSION_MP_PTR* job);
 
