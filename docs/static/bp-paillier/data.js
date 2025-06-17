@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749921460019,
+  "lastUpdate": 1750176292563,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -726,6 +726,72 @@ window.BENCHMARK_DATA = {
             "value": 8329.374535714167,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8328.026738095237 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ee61f1f2ceb91985da7ff5f69d002b9cd8fdc6e8",
+          "message": "fix: enable flexible t-of-n cryptogrpahic operations (#29)\n\n- Adds a missing feature in threshold dkg, where only parties 0-t could participate and no one else\n- Changes the job to accept party names (pname_t) as opposed to pids\n- Changes the go wrappers accordingly",
+          "timestamp": "2025-06-17T09:27:04-06:00",
+          "tree_id": "aaa6f62b84e3a69cb3441c51a2fa9979416abc5d",
+          "url": "https://github.com/coinbase/cb-mpc/commit/ee61f1f2ceb91985da7ff5f69d002b9cd8fdc6e8"
+        },
+        "date": 1750176292125,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 44687.29235713909,
+            "unit": "us/iter",
+            "extra": "iterations: 14\ncpu: 44682.55471428572 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4511.142574196011,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4510.774161290324 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8577.591926828838,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8576.86074390244 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4505.112735484046,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4504.98069032258 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.041194142667242,
+            "unit": "us/iter",
+            "extra": "iterations: 63237\ncpu: 11.040466467416236 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.89370993450973,
+            "unit": "us/iter",
+            "extra": "iterations: 54205\ncpu: 12.892964523567928 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8322.761084340285,
+            "unit": "us/iter",
+            "extra": "iterations: 83\ncpu: 8322.320903614447 us\nthreads: 1"
           }
         ]
       }
