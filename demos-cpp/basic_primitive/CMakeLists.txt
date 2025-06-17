@@ -5,7 +5,7 @@ project(mpc-demo-basic_primitive LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(REPO_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../cmake)
+set(REPO_CMAKE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../cmake)
 
 include(${REPO_CMAKE_DIR}/macros.cmake)
 include(${REPO_CMAKE_DIR}/arch.cmake)

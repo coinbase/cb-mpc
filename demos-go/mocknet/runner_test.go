@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/coinbase/cb-mpc/cb-mpc-go/network"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/network"
 	"github.com/stretchr/testify/assert"
 )
 

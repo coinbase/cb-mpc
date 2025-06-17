@@ -34,7 +34,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/coinbase/cb-mpc/cb-mpc-go/network"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/network"
 )
 
 // CGO generates separate C types for each Go package, so we need the conversion functions.

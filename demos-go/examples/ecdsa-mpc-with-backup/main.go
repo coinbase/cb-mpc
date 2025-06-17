@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/coinbase/cb-mpc/cb-mpc-go/cblib"
-	"github.com/coinbase/cb-mpc/cb-mpc-go/network"
-	"github.com/coinbase/cb-mpc/demos/mocknet"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/cblib"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/network"
+	"github.com/coinbase/cb-mpc/demos-go/mocknet"
 )
 
 type SignMPInput struct {

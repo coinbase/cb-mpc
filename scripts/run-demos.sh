@@ -8,8 +8,8 @@ SCRIPT_PATH="$(
 )"
 
 ROOT_PATH="${SCRIPT_PATH}/.."
-DEMOS_CPP_DIR="${ROOT_PATH}/demos/demos-cpp"
-DEMOS_GO_DIR="${ROOT_PATH}/demos/demos-go"
+DEMOS_CPP_DIR="${ROOT_PATH}/demos-cpp"
+DEMOS_GO_DIR="${ROOT_PATH}/demos-go/examples"
 
 CPP_DEMOS=("basic_primitive"  "zk")
 GO_DEMOS=("agreerandom" "ecdsa-2pc" "ecdsa-mpc-with-backup" "zk" )

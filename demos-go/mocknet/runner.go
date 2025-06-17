@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/coinbase/cb-mpc/cb-mpc-go/network"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/network"
 )
 
 type MPCIO struct {

@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/coinbase/cb-mpc/cb-mpc-go/network"
-	"github.com/coinbase/cb-mpc/demos/mocknet"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/network"
+	"github.com/coinbase/cb-mpc/demos-go/mocknet"
 )
 
 func AgreeRandomWrapper(job network.JobSession2P, input *mocknet.MPCIO) (*mocknet.MPCIO, error) {

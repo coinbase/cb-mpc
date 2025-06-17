@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.3
 
 require (
-	github.com/coinbase/cb-mpc/cb-mpc-go v0.0.0-20240501131245-1eee31b51009
+	github.com/coinbase/cb-mpc/demos-go/cb-mpc-go v0.0.0-20240501131245-1eee31b51009
 	github.com/stretchr/testify v1.10.0
 )
 
@@ -15,4 +15,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/coinbase/cb-mpc/cb-mpc-go => ../../cb-mpc-go
+replace github.com/coinbase/cb-mpc/demos-go/cb-mpc-go => ../cb-mpc-go

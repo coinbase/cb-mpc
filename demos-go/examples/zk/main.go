@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/coinbase/cb-mpc/cb-mpc-go/cblib"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/cblib"
 )
 
 func main() {
