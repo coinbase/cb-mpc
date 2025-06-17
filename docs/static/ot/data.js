@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749921463412,
+  "lastUpdate": 1750176296072,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -462,6 +462,48 @@ window.BENCHMARK_DATA = {
             "value": 13789.813339999455,
             "unit": "us/iter",
             "extra": "iterations: 50\ncpu: 13789.061740000008 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ee61f1f2ceb91985da7ff5f69d002b9cd8fdc6e8",
+          "message": "fix: enable flexible t-of-n cryptogrpahic operations (#29)\n\n- Adds a missing feature in threshold dkg, where only parties 0-t could participate and no one else\n- Changes the job to accept party names (pname_t) as opposed to pids\n- Changes the go wrappers accordingly",
+          "timestamp": "2025-06-17T09:27:04-06:00",
+          "tree_id": "aaa6f62b84e3a69cb3441c51a2fa9979416abc5d",
+          "url": "https://github.com/coinbase/cb-mpc/commit/ee61f1f2ceb91985da7ff5f69d002b9cd8fdc6e8"
+        },
+        "date": 1750176295515,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24500.77417857496,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24499.334857142854 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 99268.2334285746,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 99262.42142857143 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13802.508839999065,
+            "unit": "us/iter",
+            "extra": "iterations: 50\ncpu: 13802.416900000002 us\nthreads: 1"
           }
         ]
       }
