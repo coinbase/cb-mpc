@@ -163,6 +163,9 @@ func setupTransport(config Config, partyIndex int, participantsIndices map[int]b
 		SelfIndex:   myNetworkPartyIndex,
 		NameToIndex: nameToIndex,
 	})
+	if err != nil {
+		return 0, "", nil, nil, nil, fmt.Errorf("failed to create transport: %v", err)
+	}
 	fmt.Printf("transport:\n")
 	fmt.Printf("   - myPname: %s\n", myPname)
 	fmt.Printf("   - myIndex: %d\n", myNetworkPartyIndex)

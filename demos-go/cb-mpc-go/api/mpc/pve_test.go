@@ -65,7 +65,7 @@ func TestPVEEncryptDecrypt(t *testing.T) {
 	require.Greater(t, len(encResp.EncryptedBundle), 0, "ciphertext should not be empty")
 
 	// Verify ciphertext prior to decryption
-	ok, err := PVEVerify(&PVEVerifyRequest{
+	verifyResp, err := PVEVerify(&PVEVerifyRequest{
 		AccessStructure: ac,
 		PublicKeys:      pubMap,
 		EncryptedBundle: encResp.EncryptedBundle,
@@ -73,7 +73,8 @@ func TestPVEEncryptDecrypt(t *testing.T) {
 		Label:           "unit-test-backup",
 	})
 	require.NoError(t, err)
-	require.True(t, ok, "verification should succeed on authentic ciphertext")
+	require.NotNil(t, verifyResp)
+	require.True(t, verifyResp.Valid, "verification should succeed on authentic ciphertext")
 
 	// Tamper with ciphertext
 	tampered := make([]byte, len(encResp.EncryptedBundle))
@@ -82,7 +83,7 @@ func TestPVEEncryptDecrypt(t *testing.T) {
 		tampered[0] ^= 0xFF // flip first byte
 	}
 
-	ok, err = PVEVerify(&PVEVerifyRequest{
+	verifyResp, err = PVEVerify(&PVEVerifyRequest{
 		AccessStructure: ac,
 		PublicKeys:      pubMap,
 		EncryptedBundle: PVECiphertext(tampered),
@@ -90,7 +91,8 @@ func TestPVEEncryptDecrypt(t *testing.T) {
 		Label:           "unit-test-backup",
 	})
 	require.Error(t, err)
-	require.False(t, ok, "verification should fail on tampered ciphertext")
+	require.NotNil(t, verifyResp)
+	require.False(t, verifyResp.Valid, "verification should fail on tampered ciphertext")
 
 	// Decrypt
 	decResp, err := PVEDecrypt(&PVEDecryptRequest{

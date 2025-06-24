@@ -134,6 +134,9 @@ func main() {
 		PrivateValues:   xs,
 		Label:           inputLabel,
 	})
+	if err != nil {
+		log.Fatal(fmt.Errorf("failed to encrypt: %v", err))
+	}
 
 	// Step 2.6: verify the backup
 	verifyResp, err := mpc.PVEVerify(&mpc.PVEVerifyRequest{
@@ -146,7 +149,7 @@ func main() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("failed to verify: %v", err))
 	}
-	if !verifyResp {
+	if !verifyResp.Valid {
 		log.Fatal(fmt.Errorf("PVE verification failed"))
 	}
 	fmt.Printf("✅ PVE verification passed\n")

@@ -249,24 +249,30 @@ type PVEVerifyRequest struct {
 	Label           string                      // Label used during encryption
 }
 
+// PVEVerifyResponse represents the response from PVE verification.
+// It wraps the boolean result indicating whether the ciphertext is valid.
+type PVEVerifyResponse struct {
+	Valid bool // true if the ciphertext passes verification
+}
+
 // PVEVerify checks whether the provided PVE ciphertext is valid with respect to the
 // given public information (access-structure, public keys, public shares and label).
-// It returns true if the verification succeeds; false otherwise alongside an error.
-func PVEVerify(req *PVEVerifyRequest) (bool, error) {
+// It returns a PVEVerifyResponse containing the boolean result.
+func PVEVerify(req *PVEVerifyRequest) (*PVEVerifyResponse, error) {
 	if req == nil {
-		return false, fmt.Errorf("request cannot be nil")
+		return nil, fmt.Errorf("request cannot be nil")
 	}
 	if req.AccessStructure == nil {
-		return false, fmt.Errorf("access structure cannot be nil")
+		return nil, fmt.Errorf("access structure cannot be nil")
 	}
 	if len(req.PublicKeys) == 0 {
-		return false, fmt.Errorf("public keys cannot be empty")
+		return nil, fmt.Errorf("public keys cannot be empty")
 	}
 	if len(req.PublicShares) == 0 {
-		return false, fmt.Errorf("public shares cannot be empty")
+		return nil, fmt.Errorf("public shares cannot be empty")
 	}
 	if req.Label == "" {
-		return false, fmt.Errorf("label cannot be empty")
+		return nil, fmt.Errorf("label cannot be empty")
 	}
 
 	// Convert the Go-level access-structure to its native representation.
@@ -281,7 +287,7 @@ func PVEVerify(req *PVEVerifyRequest) (bool, error) {
 	for i, name := range leafNames {
 		pk, ok := req.PublicKeys[name]
 		if !ok {
-			return false, fmt.Errorf("missing public key for leaf %s", name)
+			return nil, fmt.Errorf("missing public key for leaf %s", name)
 		}
 		names[i] = []byte(name)
 		pubBytes[i] = []byte(pk)
@@ -291,7 +297,7 @@ func PVEVerify(req *PVEVerifyRequest) (bool, error) {
 	xsBytes := make([][]byte, len(req.PublicShares))
 	for i, pt := range req.PublicShares {
 		if pt == nil {
-			return false, fmt.Errorf("public share %d is nil", i)
+			return nil, fmt.Errorf("public share %d is nil", i)
 		}
 		xsBytes[i] = pt.Bytes()
 	}
@@ -308,9 +314,9 @@ func PVEVerify(req *PVEVerifyRequest) (bool, error) {
 		req.Label,
 	)
 	if err != nil {
-		return false, err
+		return &PVEVerifyResponse{Valid: false}, err
 	}
-	return true, nil
+	return &PVEVerifyResponse{Valid: true}, nil
 }
 
 // collectLeafNames performs a DFS traversal to return leaf names in deterministic order.
