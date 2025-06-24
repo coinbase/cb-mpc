@@ -20,7 +20,7 @@
 //	kp, _ := zk.ZKDLGenerateKeyPair(&zk.ZKDLKeyGenRequest{})
 //
 //	// 2. Produce a proof that we know the private key.
-//	proveResp, _ := zk.ZKDLProve(&zk.ZKDLProveRequest{
+//	proveResp, _ := zk.ZKUCDLProve(&zk.ZKUCDLProveRequest{
 //	    PublicKey: kp.PublicKey,
 //	    Witness:   kp.PrivateKey,
 //	    SessionID: []byte("session-1"),
@@ -28,7 +28,7 @@
 //	})
 //
 //	// 3. Verify the proof.
-//	verifyResp, _ := zk.ZKDLVerify(&zk.ZKDLVerifyRequest{
+//	verifyResp, _ := zk.ZKUCDLVerify(&zk.ZKUCDLVerifyRequest{
 //	    PublicKey: kp.PublicKey,
 //	    Proof:     proveResp.Proof,
 //	    SessionID: []byte("session-1"),

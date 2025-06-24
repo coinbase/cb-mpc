@@ -24,8 +24,8 @@ func curvesUnderTest(t *testing.T) []curve.Curve {
 	return []curve.Curve{secp, p256, ed}
 }
 
-// TestProveAndVerifySuccess ensures that a proof created with ZKDLProve can be
-// verified with ZKDLVerify for every supported curve.
+// TestProveAndVerifySuccess ensures that a proof created with ZKUCDLProve can be
+// verified with ZKUCDLVerify for every supported curve.
 func TestProveAndVerifySuccess(t *testing.T) {
 	for _, c := range curvesUnderTest(t) {
 		c := c // capture for parallel sub-test safety
@@ -38,7 +38,7 @@ func TestProveAndVerifySuccess(t *testing.T) {
 			sessionID := []byte("session-" + c.String())
 			auxiliary := uint64(42)
 
-			pr, err := ZKDLProve(&ZKDLProveRequest{
+			pr, err := ZKUCDLProve(&ZKUCDLProveRequest{
 				PublicKey: W,
 				Witness:   w,
 				SessionID: sessionID,
@@ -47,7 +47,7 @@ func TestProveAndVerifySuccess(t *testing.T) {
 			require.NoError(t, err)
 			require.NotEmpty(t, pr.Proof)
 
-			vr, err := ZKDLVerify(&ZKDLVerifyRequest{
+			vr, err := ZKUCDLVerify(&ZKUCDLVerifyRequest{
 				PublicKey: W,
 				Proof:     pr.Proof,
 				SessionID: sessionID,
@@ -72,7 +72,7 @@ func TestVerifyRejectsTamperedProof(t *testing.T) {
 	sessionID := []byte("tamper")
 	auxiliary := uint64(1)
 
-	pr, err := ZKDLProve(&ZKDLProveRequest{PublicKey: W, Witness: w, SessionID: sessionID, Auxiliary: auxiliary})
+	pr, err := ZKUCDLProve(&ZKUCDLProveRequest{PublicKey: W, Witness: w, SessionID: sessionID, Auxiliary: auxiliary})
 	require.NoError(t, err)
 
 	// Flip first byte to invalidate the proof.
@@ -81,7 +81,7 @@ func TestVerifyRejectsTamperedProof(t *testing.T) {
 		corrupted[0] ^= 0xFF
 	}
 
-	vr, err := ZKDLVerify(&ZKDLVerifyRequest{PublicKey: W, Proof: corrupted, SessionID: sessionID, Auxiliary: auxiliary})
+	vr, err := ZKUCDLVerify(&ZKUCDLVerifyRequest{PublicKey: W, Proof: corrupted, SessionID: sessionID, Auxiliary: auxiliary})
 	require.NoError(t, err)
 	assert.False(t, vr.Valid)
 }

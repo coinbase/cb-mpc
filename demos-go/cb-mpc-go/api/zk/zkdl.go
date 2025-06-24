@@ -8,7 +8,7 @@ import (
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 )
 
-// ZKDLProveRequest represents the input parameters for generating a
+// ZKUCDLProveRequest represents the input parameters for generating a
 // zero-knowledge discrete logarithm proof.
 //
 //   - PublicKey is the point Q = w·G. It MUST be non-nil.
@@ -22,41 +22,26 @@ import (
 // The request mirrors the native C++ CB-MPC interface but uses the Go
 // curve package types so that call-sites cannot accidentally confuse point
 // and scalar byte slices.
-type ZKDLProveRequest struct {
+type ZKUCDLProveRequest struct {
 	PublicKey *curve.Point
 	Witness   *curve.Scalar
 	SessionID []byte
 	Auxiliary uint64
 }
 
-// ZKDLProveResponse is returned by ZKDLProve.
+// ZKUCDLProveResponse is returned by ZKUCDLProve.
 //
 // Proof holds an opaque, serialised representation of the zero-knowledge
 // proof. Until the cgobinding for the real protocol is available the proof is
 // a simple, deterministic mock value.
-type ZKDLProveResponse struct {
+type ZKUCDLProveResponse struct {
 	Proof []byte
 }
 
-// ZKDLVerifyRequest represents the verifier input.
-// The PublicKey, Proof, SessionID and Auxiliary fields must match the values
-// used at prove time.
-type ZKDLVerifyRequest struct {
-	PublicKey *curve.Point
-	Proof     []byte
-	SessionID []byte
-	Auxiliary uint64
-}
-
-// ZKDLVerifyResponse indicates whether the proof could be validated.
-type ZKDLVerifyResponse struct {
-	Valid bool
-}
-
-// ZKDLProve is the Go wrapper around the native CB-MPC ZK DL prover.
+// ZKUCDLProve is the Go wrapper around the native CB-MPC ZK DL prover.
 // It delegates the heavy lifting to the C++ implementation exposed through
 // the cgobinding package.
-func ZKDLProve(req *ZKDLProveRequest) (*ZKDLProveResponse, error) {
+func ZKUCDLProve(req *ZKUCDLProveRequest) (*ZKUCDLProveResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("nil request")
 	}
@@ -75,12 +60,27 @@ func ZKDLProve(req *ZKDLProveRequest) (*ZKDLProveResponse, error) {
 		return nil, err
 	}
 
-	return &ZKDLProveResponse{Proof: proof}, nil
+	return &ZKUCDLProveResponse{Proof: proof}, nil
 }
 
-// ZKDLVerify validates a proof produced by ZKDLProve using the native
+// ZKUCDLVerifyRequest represents the verifier input.
+// The PublicKey, Proof, SessionID and Auxiliary fields must match the values
+// used at prove time.
+type ZKUCDLVerifyRequest struct {
+	PublicKey *curve.Point
+	Proof     []byte
+	SessionID []byte
+	Auxiliary uint64
+}
+
+// ZKUCDLVerifyResponse indicates whether the proof could be validated.
+type ZKUCDLVerifyResponse struct {
+	Valid bool
+}
+
+// ZKUCDLVerify validates a proof produced by ZKUCDLProve using the native
 // implementation.
-func ZKDLVerify(req *ZKDLVerifyRequest) (*ZKDLVerifyResponse, error) {
+func ZKUCDLVerify(req *ZKUCDLVerifyRequest) (*ZKUCDLVerifyResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("nil request")
 	}
@@ -99,5 +99,5 @@ func ZKDLVerify(req *ZKDLVerifyRequest) (*ZKDLVerifyResponse, error) {
 		return nil, err
 	}
 
-	return &ZKDLVerifyResponse{Valid: valid}, nil
+	return &ZKUCDLVerifyResponse{Valid: valid}, nil
 }

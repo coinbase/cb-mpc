@@ -29,14 +29,14 @@ func main() {
 	sessionID := []byte("example-session")
 	auxiliary := uint64(2025)
 
-	pr, err := zk.ZKDLProve(&zk.ZKDLProveRequest{PublicKey: W, Witness: w, SessionID: sessionID, Auxiliary: auxiliary})
+	pr, err := zk.ZKUCDLProve(&zk.ZKUCDLProveRequest{PublicKey: W, Witness: w, SessionID: sessionID, Auxiliary: auxiliary})
 	if err != nil {
 		log.Fatalf("proof generation failed: %v", err)
 	}
 	fmt.Printf("Proof generated – %d bytes\n", len(pr.Proof))
 
 	// Verify the proof
-	vr, err := zk.ZKDLVerify(&zk.ZKDLVerifyRequest{PublicKey: W, Proof: pr.Proof, SessionID: sessionID, Auxiliary: auxiliary})
+	vr, err := zk.ZKUCDLVerify(&zk.ZKUCDLVerifyRequest{PublicKey: W, Proof: pr.Proof, SessionID: sessionID, Auxiliary: auxiliary})
 	if err != nil {
 		log.Fatalf("verification failed: %v", err)
 	}
