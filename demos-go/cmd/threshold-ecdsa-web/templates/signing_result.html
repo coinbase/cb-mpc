@@ -1,0 +1,33 @@
+{{if eq .PartyIndex 0}}
+<div class="notification is-success mb-4">
+<div class="box mb-4">
+    <h5 class="title is-6 mb-3">Signature (DER Format)</h5>
+    <div class="field">
+        <div class="control">
+            <textarea class="textarea" rows="4" readonly>{{.SignatureBase64}}</textarea>
+        </div>
+        <p class="help">Base64-encoded DER signature compatible with OpenSSL</p>
+    </div>
+</div>
+
+<div class="box mb-4">
+    <h5 class="title is-6 mb-3">Public Key (PEM Format)</h5>
+    <div class="field">
+        <div class="control">
+            <textarea class="textarea" rows="8" readonly>{{.PublicKey}}</textarea>
+        </div>
+        <p class="help">PEM-formatted public key for signature verification</p>
+    </div>
+</div>
+</div>
+
+{{else}}
+<div class="notification is-success">
+    <h4 class="title is-5 mb-2">
+        <i class="fas fa-info-circle mr-2"></i>Signing Complete
+    </h4>
+    <p><strong>Execution Time:</strong> {{.ConnectionTime}}</p>
+    <p>This party participated in the threshold signing process.</p>
+    <p>Signature and public key details are only displayed for Party 0.</p>
+</div>
+{{end}} 

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <title>{{.Title}}</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator {
+            display: block;
+        }
+        .htmx-request.htmx-indicator {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tabs is-boxed mt-4 mb-4">
+            <ul>
+                <li>
+                    <a href="/page/dkg">
+                        <span class="icon is-small"><i class="fas fa-key" aria-hidden="true"></i></span>
+                        <span>Threshold DKG</span>
+                    </a>
+                </li>
+                <li class="is-active">
+                    <a href="/page/sign">
+                        <span class="icon is-small"><i class="fas fa-signature" aria-hidden="true"></i></span>
+                        <span>Threshold Signing</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="box">
+            <div class="mb-4">
+                <p class="subtitle">Configure and initiate threshold signature generation</p>
+            </div>
+
+            <div class="notification is-info mb-4">
+                <h4 class="title is-5 mb-2">
+                    <i class="fas fa-crown mr-2"></i>You are Party 0 (Leader)
+                </h4>
+                <p>Configure the signing parameters and initiate the process. Other parties are waiting for your decisions.</p>
+            </div>
+
+            <div class="box mb-4">
+                <h2 class="title is-5 mb-2">Available Parties ({{len .Parties}})</h2>
+                <div class="tags mb-1">
+                    {{range $index, $party := .Parties}}
+                    <span class="tag is-info mr-2 mb-1">
+                        <span class="has-text-weight-bold">Party {{$index}}:</span>&nbsp;{{$party.Address}}
+                    </span>
+                    {{end}}
+                </div>
+            </div>
+
+            <div class="box">
+                <div class="field">
+                    <label class="label">Threshold</label>
+                    <div class="control">
+                        <input id="threshold-input" class="input" type="number" placeholder="Enter threshold value" value="{{.Threshold}}" disabled required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Select Parties to Participate</label>
+                    <div class="control">
+                        <div class="checkboxes" id="party-selection">
+                            <label class="checkbox is-disabled mb-2 mr-4">
+                                <input type="checkbox" value="0" checked disabled>
+                                <span class="has-text-weight-bold">Party 0 (You)</span>
+                            </label>
+                            <label class="checkbox mb-2 mr-4">
+                                <input type="checkbox" value="1" class="party-checkbox">
+                                Party 1
+                            </label>
+                            <label class="checkbox mb-2 mr-4">
+                                <input type="checkbox" value="2" class="party-checkbox">
+                                Party 2
+                            </label>
+                            <label class="checkbox mb-2 mr-4">
+                                <input type="checkbox" value="3" class="party-checkbox">
+                                Party 3
+                            </label>
+                        </div>
+                    </div>
+                    <div id="selection-feedback" class="notification is-info mt-2" style="display: none;">
+                        <span id="selected-count">1</span> parties selected. Please select <span id="needed-count">{{.MaxOtherParties}}</span> more to match the threshold.
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <label class="label">Message to Sign</label>
+                    <div class="control">
+                        <textarea id="message-input" class="textarea" rows="4" placeholder="Enter the message you want to sign..." required>Signing Threshold ECDSA with cb-mpc library</textarea>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <div class="control">
+                        <button id="sign-button" class="button is-primary" onclick="initiateSigningCoordination()">
+                            <span class="icon">
+                                <i class="fas fa-signature"></i>
+                            </span>
+                            <span>Establish Connections & Sign</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sign-spinner" class="htmx-indicator">
+                <div class="box has-text-centered mt-4">
+                    <div class="is-size-4 mb-4">
+                        <span class="icon is-large">
+                            <i class="fas fa-spinner fa-pulse"></i>
+                        </span>
+                    </div>
+                    <p class="title is-5">Establishing Connections & Signing...</p>
+                    <p class="subtitle is-6">Setting up secure connections with selected parties and executing threshold signature</p>
+                    <progress class="progress is-primary" max="100">Processing</progress>
+                </div>
+            </div>
+
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+    // Update selection feedback when threshold or parties change
+    function updateSelectionFeedback() {
+        const thresholdInput = document.getElementById('threshold-input');
+        const checkboxes = document.querySelectorAll('.party-checkbox:checked');
+        const selectedCount = checkboxes.length + 1; // +1 for party 0
+        const threshold = parseInt(thresholdInput.value) || 0;
+        const needed = threshold - selectedCount;
+        
+        const feedback = document.getElementById('selection-feedback');
+        const selectedCountSpan = document.getElementById('selected-count');
+        const neededCountSpan = document.getElementById('needed-count');
+        
+        selectedCountSpan.textContent = selectedCount;
+        
+        if (needed > 0) {
+            feedback.className = 'notification is-warning mt-2';
+            feedback.style.display = 'block';
+            neededCountSpan.textContent = needed;
+            feedback.querySelector('span:last-child').textContent = needed + ' more to match the threshold.';
+        } else if (needed < 0) {
+            feedback.className = 'notification is-danger mt-2';
+            feedback.style.display = 'block';
+            feedback.innerHTML = 'Too many parties selected! Please unselect ' + Math.abs(needed) + ' parties.';
+        } else {
+            feedback.className = 'notification is-success mt-2';
+            feedback.style.display = 'block';
+            feedback.innerHTML = 'Perfect! ' + selectedCount + ' parties selected matching the threshold.';
+        }
+    }
+
+    // Add event listeners
+    document.getElementById('threshold-input').addEventListener('input', updateSelectionFeedback);
+    document.querySelectorAll('.party-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectionFeedback);
+    });
+
+    // Initialize feedback
+    updateSelectionFeedback();
+
+    function initiateSigningCoordination() {
+        const thresholdInput = document.getElementById('threshold-input');
+        const messageInput = document.getElementById('message-input');
+        const checkboxes = document.querySelectorAll('.party-checkbox:checked');
+        const button = document.getElementById('sign-button');
+        const spinner = document.getElementById('sign-spinner');
+        const resultDiv = document.getElementById('result');
+        
+        const threshold = parseInt(thresholdInput.value);
+        const message = messageInput.value.trim();
+        const selectedParties = Array.from(checkboxes).map(cb => cb.value);
+        
+        // Validation
+        if (!threshold || threshold < 1 || threshold > 4) {
+            alert('Please enter a valid threshold between 1 and 4');
+            return;
+        }
+        
+        if (!message) {
+            alert('Please enter a message to sign');
+            return;
+        }
+        
+        if (selectedParties.length + 1 !== threshold) {
+            alert('Please select exactly ' + (threshold - 1) + ' additional parties to match the threshold');
+            return;
+        }
+        
+        // Show spinner and disable button
+        button.disabled = true;
+        spinner.style.display = 'block';
+        
+        // Build query parameters
+        const params = new URLSearchParams();
+        params.append('threshold', threshold);
+        params.append('message', message);
+        selectedParties.forEach(party => {
+            params.append('parties', party);
+        });
+        
+        // Make the request
+        fetch('/api/sign/execute?' + params.toString())
+            .then(response => {
+                return response.text();
+            })
+            .then(html => {
+                if (resultDiv) {
+                    resultDiv.innerHTML = html;
+                } else {
+                    document.body.innerHTML = html;
+                }
+                spinner.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Signing failed:', error);
+                if (resultDiv) {
+                    resultDiv.innerHTML = '<div class="notification is-danger"><strong>Error:</strong> ' + error.message + '</div>';
+                }
+                spinner.style.display = 'none';
+                button.disabled = false;
+            });
+    }
+    </script>
+</body>
+</html> 

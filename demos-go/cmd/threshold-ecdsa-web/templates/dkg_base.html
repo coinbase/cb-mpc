@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <title>{{.Title}}</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator {
+            display: block;
+        }
+        .htmx-request.htmx-indicator {
+            display: block;
+        }
+        #dkg-spinner.htmx-indicator {
+            display: none;
+        }
+        .htmx-request #dkg-spinner.htmx-indicator {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation Tabs -->
+        <div class="tabs is-boxed mt-4 mb-4">
+            <ul>
+                <li class="is-active">
+                    <a href="/page/dkg">
+                        <span class="icon is-small"><i class="fas fa-key" aria-hidden="true"></i></span>
+                        <span>Threshold DKG</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/page/sign">
+                        <span class="icon is-small"><i class="fas fa-signature" aria-hidden="true"></i></span>
+                        <span>Threshold Signing</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="box">
+            <div class="mb-4">
+                <p class="subtitle">Distributed Key Generation with configurable threshold</p>
+            </div>
+
+            <div class="box mb-4">
+                <h2 class="title is-5 mb-2">Participating Parties ({{len .Parties}})</h2>
+                <div class="tags mb-1">
+                    {{range $index, $party := .Parties}}
+                    <span class="tag is-info mr-2 mb-1">
+                        <span class="has-text-weight-bold">Party {{$index}}:</span>&nbsp;{{$party.Address}}
+                    </span>
+                    {{end}}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-info" 
+                                hx-get="/api/dkg/connect" 
+                                hx-target="#result" 
+                                hx-indicator="#spinner">
+                            <span class="icon">
+                                <i class="fas fa-plug"></i>
+                            </span>
+                            <span>Connect</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div id="spinner" class="htmx-indicator">
+                    <div class="box has-text-centered">
+                        <div class="is-size-4 mb-4">
+                            <span class="icon is-large">
+                                <i class="fas fa-spinner fa-pulse"></i>
+                            </span>
+                        </div>
+                        <p class="title is-5">Connecting...</p>
+                        <p class="subtitle is-6">Establishing MTLS connections with all parties</p>
+                        <progress class="progress is-info" max="100">Connecting</progress>
+                    </div>
+                </div>
+                <div id="result"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

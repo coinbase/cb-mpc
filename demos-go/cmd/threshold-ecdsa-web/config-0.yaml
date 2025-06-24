@@ -1,0 +1,18 @@
+# The CA certificate
+caFile: "certs/ca.pem"
+
+# The certificate key and index of the current party
+certFile: "certs/party-0/cert-0.pem"
+keyFile: "certs/party-0/key-0.pem"
+webAddress: "127.0.0.1:7080"
+
+# The list of parties and their certificates
+parties:
+  - address: "127.0.0.1:8080"
+    cert: "certs/party-0/cert-0.der"
+  - address: "127.0.0.1:8081"
+    cert: "certs/party-1/cert-1.der"
+  - address: "127.0.0.1:8082"
+    cert: "certs/party-2/cert-2.der"
+  - address: "127.0.0.1:8083"
+    cert: "certs/party-3/cert-3.der"

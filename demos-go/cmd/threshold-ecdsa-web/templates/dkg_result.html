@@ -1,0 +1,14 @@
+<div class="notification is-success">
+    <strong>Success!</strong> DKG completed
+    <br><br>
+    {{if not .IsParty0}}
+    <strong>Execution Time:</strong>
+    <pre>{{.ConnectionTime}}</pre>
+    <br><br>
+    {{end}}
+    <strong>X Share:</strong>
+    <pre>{{.XShare}}</pre>
+    <br><br>
+    <strong>PEM Key:</strong>
+    <pre>{{.PemKey}}</pre>
+</div> 

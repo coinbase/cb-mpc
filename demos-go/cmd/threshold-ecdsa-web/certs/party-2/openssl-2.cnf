@@ -1,0 +1,23 @@
+   [ req ]
+   default_bits       = 2048
+   distinguished_name = peer2
+   req_extensions     = req_ext
+   x509_extensions    = v3_req
+   prompt             = no
+
+   [ peer2 ]
+   countryName                = US
+   stateOrProvinceName        = California
+   localityName               = San Francisco
+   organizationName           = My Company
+   commonName                 = peerindex2
+
+   [ req_ext ]
+   subjectAltName = @alt_names
+
+   [ v3_req ]
+   subjectAltName = @alt_names
+
+   [ alt_names ]
+   DNS.1 = peerindex2
+   IP.1   = 127.0.0.1

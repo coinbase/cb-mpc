@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <title>Threshold Signing</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator {
+            display: block;
+        }
+        .htmx-request.htmx-indicator {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tabs is-boxed mt-4 mb-4">
+            <ul>
+                <li>
+                    <a href="/page/dkg">
+                        <span class="icon is-small"><i class="fas fa-key" aria-hidden="true"></i></span>
+                        <span>Threshold DKG</span>
+                    </a>
+                </li>
+                <li class="is-active">
+                    <a href="/page/sign">
+                        <span class="icon is-small"><i class="fas fa-signature" aria-hidden="true"></i></span>
+                        <span>Threshold Signing</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="box">
+            <div class="notification is-info mb-4">
+                <h4 class="title is-5 mb-2">
+                    <i class="fas fa-user mr-2"></i>You are Party {{.CurrentParty}}
+                </h4>
+                <p>Party 0 will configure the signing parameters and select participants. Please wait...</p>
+            </div>
+
+            <div id="waiting-state" class="box">
+                <div class="has-text-centered">
+                    <div class="is-size-4 mb-4">
+                        <span class="icon is-large">
+                            <i class="fas fa-clock fa-pulse"></i>
+                        </span>
+                    </div>
+                    <p class="title is-5">Waiting for Party 0</p>
+                    <p class="subtitle is-6">Party 0 will select participants, configure threshold, and provide a message to sign.</p>
+                    <progress class="progress is-info" max="100">Waiting</progress>
+                    
+                    <div class="mt-4">
+                        <p class="has-text-grey">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            You will be notified if you're selected to participate in the signing process.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="not-selected-state" class="box has-text-centered" style="display: none;">
+                <div class="notification is-info">
+                    <h4 class="title is-5 mb-2">
+                        <i class="fas fa-info-circle mr-2"></i>Not Selected for This Signing
+                    </h4>
+                    <p>Party 0 has initiated signing, but you were not selected to participate in this round.</p>
+                    <div class="mt-3">
+                        <p><strong>Selected parties:</strong> <span id="selected-parties-list"></span></p>
+                        <p><strong>Message:</strong> <span id="signing-message"></span></p>
+                        <p><strong>Threshold:</strong> <span id="signing-threshold"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="auto-execution" class="htmx-indicator">
+                <div class="box has-text-centered mt-4">
+                    <div class="is-size-4 mb-4">
+                        <span class="icon is-large">
+                            <i class="fas fa-spinner fa-pulse"></i>
+                        </span>
+                    </div>
+                    <p class="title is-5">Signing Started!</p>
+                    <p class="subtitle is-6">Establishing connections and participating in threshold signing...</p>
+                    <progress class="progress is-primary" max="100">Processing</progress>
+                </div>
+            </div>
+
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Poll every 2 seconds to check if signing has been initiated
+        function pollForSigningStart() {
+            // Poll party 0's endpoint directly since each party runs their own server
+            const party0BaseUrl = '{{.Party0BaseUrl}}';
+            const pollUrl = party0BaseUrl + '/api/sign/poll?party={{.CurrentParty}}';
+            
+            fetch(pollUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Poll request failed with status: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.initiated) {
+                        // Hide waiting state
+                        const waitingState = document.getElementById('waiting-state');
+                        if (waitingState) {
+                            waitingState.style.display = 'none';
+                        }
+                        
+                        if (data.shouldParticipate) {
+                            // Show execution state
+                            const autoExecution = document.getElementById('auto-execution');
+                            if (autoExecution) {
+                                autoExecution.classList.remove('htmx-indicator');
+                                autoExecution.style.display = 'block';
+                            }
+                            
+                            // Trigger auto-execution
+                            const selectedPartiesStr = data.selectedParties.join(',');
+                            const executeUrl = '/api/sign/auto-execute?threshold=' + data.threshold + 
+                                             '&selectedParties=' + encodeURIComponent(selectedPartiesStr) + 
+                                             '&message=' + encodeURIComponent(data.message) + 
+                                             '&party=' + encodeURIComponent(data.party);
+                                             
+                            fetch(executeUrl)
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('Auto-execute failed with status: ' + response.status);
+                                    }
+                                    return response.text();
+                                })
+                                .then(html => {
+                                    // Hide the auto-execution state
+                                    const autoExecution = document.getElementById('auto-execution');
+                                    if (autoExecution) {
+                                        autoExecution.style.display = 'none';
+                                    }
+                                    
+                                    const resultDiv = document.getElementById('result');
+                                    if (resultDiv) {
+                                        resultDiv.innerHTML = html;
+                                    } else {
+                                        const waitingContainer = document.getElementById('waiting-state');
+                                        if (waitingContainer && waitingContainer.parentElement) {
+                                            waitingContainer.parentElement.innerHTML = html;
+                                        } else {
+                                            console.warn('Could not find proper container, using document write');
+                                            document.open();
+                                            document.write(html);
+                                            document.close();
+                                        }
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Auto-execution failed:', error);
+                                    
+                                    // Hide the auto-execution state
+                                    const autoExecution = document.getElementById('auto-execution');
+                                    if (autoExecution) {
+                                        autoExecution.style.display = 'none';
+                                    }
+                                    
+                                    const errorHtml = '<div class="notification is-danger"><strong>Auto-execution failed:</strong> ' + error.message + '</div>';
+                                    
+                                    const resultDiv = document.getElementById('result');
+                                    if (resultDiv) {
+                                        resultDiv.innerHTML = errorHtml;
+                                    } else {
+                                        const waitingContainer = document.getElementById('waiting-state');
+                                        if (waitingContainer && waitingContainer.parentElement) {
+                                            waitingContainer.parentElement.innerHTML = errorHtml;
+                                        }
+                                    }
+                                });
+                        } else {
+                            // Show not-selected state
+                            const notSelectedState = document.getElementById('not-selected-state');
+                            if (notSelectedState) {
+                                notSelectedState.style.display = 'block';
+                                
+                                const selectedPartiesList = document.getElementById('selected-parties-list');
+                                const signingMessage = document.getElementById('signing-message');
+                                const signingThreshold = document.getElementById('signing-threshold');
+                                
+                                if (selectedPartiesList) {
+                                    selectedPartiesList.textContent = data.selectedParties.join(', ');
+                                }
+                                if (signingMessage) {
+                                    signingMessage.textContent = data.message;
+                                }
+                                if (signingThreshold) {
+                                    signingThreshold.textContent = data.threshold;
+                                }
+                            }
+                        }
+                    } else {
+                        setTimeout(pollForSigningStart, 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Polling failed:', error);
+                    const waitingState = document.getElementById('waiting-state');
+                    if (waitingState) {
+                        const errorMsg = waitingState.querySelector('.error-message');
+                        if (!errorMsg) {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'error-message notification is-warning mt-2';
+                            errorDiv.innerHTML = '<strong>Polling error:</strong> ' + error.message + ' (retrying...)';
+                            waitingState.appendChild(errorDiv);
+                        }
+                    }
+                    setTimeout(pollForSigningStart, 3000);
+                });
+        }
+        setTimeout(pollForSigningStart, 1000);
+    </script>
+</body>
+</html> 

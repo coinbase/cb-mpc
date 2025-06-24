@@ -1,0 +1,47 @@
+<div class="notification is-success mb-4">
+    <h4 class="title is-5 mb-2">
+        <i class="fas fa-check-circle mr-2"></i>Connection Established
+    </h4>
+    <p><strong>Connection time:</strong> {{.ConnectionTime}}</p>
+</div>
+
+<div class="box">
+    <h5 class="title is-6 mb-3">DKG Configuration</h5>
+    <div class="field">
+        <label class="label">Threshold</label>
+        <div class="control">
+            <input id="dkg-threshold-input" name="threshold" class="input" type="number" placeholder="Enter threshold value" min="2" max="{{.MaxThreshold}}" value="3" required>
+        </div>
+        <p class="help">Number of parties required to reconstruct the key (max: {{.MaxThreshold}})</p>
+    </div>
+    
+    <div class="field">
+        <div class="control">
+            <button id="dkg-run-button" 
+                    class="button is-primary"
+                    hx-get="/api/dkg/execute"
+                    hx-include="#dkg-threshold-input"
+                    hx-target="#result"
+                    hx-indicator="#dkg-spinner"
+                    hx-disabled-elt="this">
+                <span class="icon">
+                    <i class="fas fa-play"></i>
+                </span>
+                <span>Run DKG</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="dkg-spinner" class="htmx-indicator">
+    <div class="box has-text-centered mt-4">
+        <div class="is-size-4 mb-4">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse"></i>
+            </span>
+        </div>
+        <p class="title is-5">Running DKG...</p>
+        <p class="subtitle is-6">Generating distributed keys, this may take a few moments</p>
+        <progress class="progress is-primary" max="100">Processing</progress>
+    </div>
+</div> 
