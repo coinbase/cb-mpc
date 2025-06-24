@@ -146,3 +146,20 @@ sanity-check:
 	$(MAKE) test
 	$(MAKE) benchmark-build
 	$(MAKE) dudect filter=NON_EXISTING_TEST
+
+### For Go wrappers
+.PHONY: test-go
+test-go:
+	${RUN_CMD} 'cd demos-go/cb-mpc-go && go test -v $(if $(filter),-run $(filter)) ./...'
+
+.PHONY: test-go-short
+test-go-short:
+	${RUN_CMD} 'cd demos-go/cb-mpc-go && go test -short ./...'
+
+.PHONY: test-go-race
+test-go-race:
+	${RUN_CMD} 'cd demos-go/cb-mpc-go && go test -race -v ./...'
+
+.PHONY: godoc
+godoc:
+	${RUN_CMD} 'cd demos-go/cb-mpc-go && godoc -http=:6060'

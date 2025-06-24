@@ -28,11 +28,11 @@ jobs:
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: |-
-          echo "Run unit tests"
+          echo "Run tests"
           make submodules
           make image
-          docker run --rm -v $(pwd):/code -t cb-mpc bash -c 'make full-test'
-  sanity-check:
+          docker run --rm -v $(pwd):/code -t cb-mpc bash -c 'make lint && make full-test'
+  lib-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -42,8 +42,7 @@ jobs:
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: |-
-          echo "Run sanity checks"
+          echo "Test on installed library"
           make submodules
           make image
-          docker run --rm -v $(pwd):/code -t cb-mpc bash -c 'make lint'
-          docker run --rm -v $(pwd):/code -t cb-mpc bash -c 'make build && make install && make demos && make benchmark-build  && make dudect filter=NON_EXISTING_TEST'
+          docker run --rm -v $(pwd):/code -t cb-mpc bash -c 'make build && make install && make benchmark-build && make demos && export CGO_ENABLED=1 && make test-go && make test-go-race'

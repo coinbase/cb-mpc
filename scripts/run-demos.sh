@@ -12,7 +12,7 @@ DEMOS_CPP_DIR="${ROOT_PATH}/demos-cpp"
 DEMOS_GO_DIR="${ROOT_PATH}/demos-go/examples"
 
 CPP_DEMOS=("basic_primitive"  "zk")
-GO_DEMOS=("agreerandom" "ecdsa-2pc" "ecdsa-mpc-with-backup" "zk" )
+GO_DEMOS=("access-structure" "agreerandom" "ecdsa-2pc" "ecdsa-mpc-with-backup" "zk")
 
 clean() {
   for proj in ${CPP_DEMOS[@]}; do
