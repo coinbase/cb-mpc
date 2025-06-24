@@ -465,7 +465,10 @@ bn_t bn_t::inv() const {  // only valid for modulo
 
 int bn_t::get_bit(int n) const { return BN_is_bit_set(*this, n); }
 
-int bn_t::get_bin_size() const { return BN_num_bytes(*this); }
+int bn_t::get_bin_size() const {
+  correct_top();
+  return BN_num_bytes(*this);
+}
 
 int bn_t::get_bits_count() const { return BN_num_bits(*this); }
 
@@ -478,8 +481,6 @@ void bn_t::to_bin(byte_ptr dst, int size) const {
 }
 
 buf_t bn_t::to_bin() const {
-  correct_top();
-
   buf_t out(get_bin_size());
   to_bin(out.data());
   return out;

@@ -180,7 +180,7 @@ TEST_F(HDMPC_EdDSA_2P, SignParallel) {
   for (int i = 0; i < data.size(); i++) data[i] = coinbase::crypto::gen_random(32);
   buf_t session_id = coinbase::crypto::gen_random(32);
 
-  mpc_runner->run_2pc_parallel(1, [&data, &session_id, &DATA_COUNT](job_session_2p_t& job, int dummy) {
+  mpc_runner->run_2pc_parallel(1, [&data, &session_id, &DATA_COUNT](job_parallel_2p_t& job, int dummy) {
     error_t rv = UNINITIALIZED_ERROR;
     auto role = job.get_party();
     ecurve_t curve = coinbase::crypto::curve_ed25519;
@@ -218,8 +218,8 @@ TEST_F(HDMPC_EdDSA_2P, SignParallel) {
         auto _derived_key = derived_keys[i];
         auto _data = data[i];
         int parallel_count = sigs.size();
-        job_session_2p_t parallel_job =
-            job.get_parallel_job(parallel_count, jsid_t(i));  // create a new job from network
+        job_parallel_2p_t parallel_job =
+            job.get_parallel_job(parallel_count, parallel_id_t(i));  // create a new job from network
         buf_t _sig;
 
         error_t rv = eddsa2pc::sign(parallel_job, _derived_key, _data, _sig);

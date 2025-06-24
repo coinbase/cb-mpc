@@ -2,7 +2,7 @@
 
 namespace coinbase::mpc {
 
-error_t network_t::send(const party_idx_t receiver, const jsid_t jsid, const mem_t msg) {
+error_t parallel_data_transport_t::send(const party_idx_t receiver, const parallel_id_t parallel_id, const mem_t msg) {
   {  // Wait for senders to finish sending the previous message
     std::unique_lock<std::mutex> lk(is_send_active_mtx);
     send_active_cv.wait(lk, [this] { return is_send_active == 0; });
@@ -11,16 +11,16 @@ error_t network_t::send(const party_idx_t receiver, const jsid_t jsid, const mem
   error_t rv = UNINITIALIZED_ERROR;
   {  // store the messages to be sent
     std::lock_guard<std::mutex> lk(send_msg_mutex);
-    send_msg[jsid] = msg;
+    send_msg[parallel_id] = msg;
   }
 
-  {  // Notify the master (jsid == 0) to start once we have all messages from threads.
+  {  // Notify the master (parallel_id == 0) to start once we have all messages from threads.
     std::lock_guard<std::mutex> lk(send_ready_mtx);
     send_ready++;
     if (send_ready >= parallel_count) send_start_cv.notify_all();
   }
 
-  if (jsid == 0) {
+  if (parallel_id == 0) {
     {  // Wait for all threads joining
       std::unique_lock<std::mutex> lk(send_ready_mtx);
       send_start_cv.wait(lk, [this] { return send_ready >= parallel_count; });
@@ -55,21 +55,21 @@ error_t network_t::send(const party_idx_t receiver, const jsid_t jsid, const mem
   return SUCCESS;
 }
 
-error_t network_t::receive(const party_idx_t sender, const jsid_t jsid, mem_t& msg) {
+error_t parallel_data_transport_t::receive(const party_idx_t sender, const parallel_id_t parallel_id, mem_t& msg) {
   {  // Wait for receivers to finish receiving the previous message
     std::unique_lock<std::mutex> lk(is_receive_active_mtx);
     receive_active_cv.wait(lk, [this] { return is_receive_active == 0; });
   }
 
   error_t rv = UNINITIALIZED_ERROR;
-  {  // Notify the master (jsid == 0) to start once all receivers are ready
+  {  // Notify the master (parallel_id == 0) to start once all receivers are ready
      // TODO(optimization): master thread should not have to wait for this. Following the same paradigm as send.
     std::lock_guard<std::mutex> lk(receive_ready_mtx);
     receive_ready++;
     if (receive_ready >= parallel_count) receive_start_cv.notify_all();
   }
 
-  if (jsid == 0) {
+  if (parallel_id == 0) {
     {  // Wait for all threads joining
       std::unique_lock<std::mutex> lk(receive_ready_mtx);
       receive_start_cv.wait(lk, [this] { return receive_ready >= parallel_count; });
@@ -98,7 +98,7 @@ error_t network_t::receive(const party_idx_t sender, const jsid_t jsid, mem_t& m
 
   {  // Getting the received message for each thread
     std::lock_guard<std::mutex> lk(receive_msg_mutex);
-    msg = receive_msg[jsid];
+    msg = receive_msg[parallel_id];
   }
 
   {  // Reset is_receive_active to notify the next message receiving
@@ -109,8 +109,8 @@ error_t network_t::receive(const party_idx_t sender, const jsid_t jsid, mem_t& m
   return SUCCESS;
 }
 
-error_t network_t::receive_all(const std::vector<party_idx_t>& senders, const jsid_t jsid,
-                               std::vector<mem_t>& out_msgs) {
+error_t parallel_data_transport_t::receive_all(const std::vector<party_idx_t>& senders, const parallel_id_t parallel_id,
+                                               std::vector<mem_t>& out_msgs) {
   error_t rv = UNINITIALIZED_ERROR;
 
   {
@@ -124,7 +124,7 @@ error_t network_t::receive_all(const std::vector<party_idx_t>& senders, const js
     if (receive_all_ready >= parallel_count) receive_all_start_cv.notify_all();
   }
 
-  if (jsid == 0) {
+  if (parallel_id == 0) {
     {
       std::unique_lock<std::mutex> lk(receive_all_ready_mtx);
       receive_all_start_cv.wait(lk, [this] { return receive_all_ready >= parallel_count; });
@@ -155,7 +155,7 @@ error_t network_t::receive_all(const std::vector<party_idx_t>& senders, const js
   {
     std::lock_guard<std::mutex> lk(receive_all_msgs_mutex);
     for (int i = 0; i < out_msgs.size(); i++) {
-      out_msgs[i] = receive_all_msgs[senders[i]][jsid];
+      out_msgs[i] = receive_all_msgs[senders[i]][parallel_id];
     }
   }
 
@@ -167,7 +167,7 @@ error_t network_t::receive_all(const std::vector<party_idx_t>& senders, const js
   return SUCCESS;
 }
 
-void network_t::set_parallel(int _parallel_count) {
+void parallel_data_transport_t::set_parallel(int _parallel_count) {
   {
     std::unique_lock<std::mutex> lk1(is_send_active_mtx, std::defer_lock);
     std::unique_lock<std::mutex> lk2(is_receive_active_mtx, std::defer_lock);

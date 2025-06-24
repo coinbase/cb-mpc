@@ -195,7 +195,7 @@ TEST_F(ECDSA2PC, ParallelKSRS8) {
   std::vector<std::vector<ecdsa2pc::key_t>> new_keys(parallel_count, std::vector<ecdsa2pc::key_t>(2));
   buf_t sid = coinbase::crypto::gen_random_bitlen(SEC_P_COM);
 
-  mpc_runner->run_2pc_parallel(parallel_count, [&data, &keys, &new_keys, &sid](job_session_2p_t& job, int th_i) {
+  mpc_runner->run_2pc_parallel(parallel_count, [&data, &keys, &new_keys, &sid](job_parallel_2p_t& job, int th_i) {
     error_t rv = UNINITIALIZED_ERROR;
     auto party_index = job.get_party_idx();
     ecurve_t curve = coinbase::crypto::curve_secp256k1;

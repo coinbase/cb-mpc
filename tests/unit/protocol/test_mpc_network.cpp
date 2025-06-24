@@ -38,14 +38,14 @@ TEST_F(Network2PC, BasicMessaging) {
   });
 }
 
-typedef std::function<void(job_session_2p_t& job)> lambda_2p_t;
+typedef std::function<void(job_parallel_2p_t& job)> lambda_2p_t;
 
 TEST_F(Network2PC, ParallelMessaging) {
   int parallel_count = 50;
   std::atomic<int> finished(0);
   std::mutex send_cond_mutex;
 
-  mpc_runner->run_2pc_parallel(parallel_count, [&finished](job_session_2p_t& job, int th_i) {
+  mpc_runner->run_2pc_parallel(parallel_count, [&finished](job_parallel_2p_t& job, int th_i) {
     error_t rv = UNINITIALIZED_ERROR;
     buf_t data;
     buf_t want(mem_t("test_data:" + std::to_string(th_i * 10000)));
@@ -175,7 +175,7 @@ TEST_F(Network2PC, SequentialThenParallel) {
   std::vector<buf_t> data(PARALLEL_COUNT);
   for (int i = 0; i < data.size(); i++) data[i] = crypto::gen_random_bitlen(128);
 
-  mpc_runner->run_2pc_parallel(1, [&data, PARALLEL_COUNT](job_session_2p_t& job, int dummy) {
+  mpc_runner->run_2pc_parallel(1, [&data, PARALLEL_COUNT](job_parallel_2p_t& job, int dummy) {
     error_t rv = UNINITIALIZED_ERROR;
     auto role = job.get_party();
 
@@ -186,7 +186,7 @@ TEST_F(Network2PC, SequentialThenParallel) {
 
     for (int i = 0; i < PARALLEL_COUNT; i++) {
       threads.emplace_back([&data, &job, PARALLEL_COUNT, i]() {
-        job_session_2p_t parallel_job = job.get_parallel_job(PARALLEL_COUNT, jsid_t(i));
+        job_parallel_2p_t parallel_job = job.get_parallel_job(PARALLEL_COUNT, parallel_id_t(i));
 
         error_t rv = parallel_job.p1_to_p2(data[i]);
         ASSERT_EQ(rv, 0);

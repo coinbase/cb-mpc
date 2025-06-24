@@ -482,7 +482,7 @@ error_t key_share_mp_t::reconstruct_additive_share(const mod_t& q, const node_t*
     case node_e::OR:
       for (int i = 0; i < n; i++) {
         bn_t additive_share_from_child;
-        bool child_is_in_quorum;
+        bool child_is_in_quorum = false;
         rv = reconstruct_additive_share(q, node->children[i], quorum_names, additive_share_from_child,
                                         child_is_in_quorum);
         is_in_quorum = is_in_quorum || child_is_in_quorum;
@@ -491,6 +491,9 @@ error_t key_share_mp_t::reconstruct_additive_share(const mod_t& q, const node_t*
           continue;
         }
         if (rv) return rv;
+        if (!is_in_quorum) {
+          continue;
+        }
         additive_share = additive_share_from_child;
         break;
       }
@@ -502,7 +505,7 @@ error_t key_share_mp_t::reconstruct_additive_share(const mod_t& q, const node_t*
       is_in_quorum = true;
       for (int i = 0; i < n; i++) {
         bn_t additive_share_from_child;
-        bool child_is_in_quorum;
+        bool child_is_in_quorum = false;
         rv = reconstruct_additive_share(q, node->children[i], quorum_names, additive_share_from_child,
                                         child_is_in_quorum);
         is_in_quorum = is_in_quorum && child_is_in_quorum;
@@ -524,7 +527,7 @@ error_t key_share_mp_t::reconstruct_additive_share(const mod_t& q, const node_t*
 
       for (int i = 0; i < n; i++) {
         bn_t share_from_child;
-        bool child_is_in_quorum;
+        bool child_is_in_quorum = false;
         rv = reconstruct_additive_share(q, node->children[i], quorum_names, share_from_child, child_is_in_quorum);
         if (rv == E_INSUFFICIENT) {
           continue;
@@ -561,7 +564,7 @@ error_t key_share_mp_t::reconstruct_additive_share(const mod_t& q, const node_t*
 
 error_t key_share_mp_t::reconstruct_pub_additive_shares(const crypto::ss::node_t* node,
                                                         const std::set<crypto::pname_t>& quorum_names,
-                                                        crypto::pname_t target, ecc_point_t& pub_additive_shares,
+                                                        const crypto::pname_t target, ecc_point_t& pub_additive_shares,
                                                         bool& is_in_quorum) const {
   error_t rv = UNINITIALIZED_ERROR;
   int n = node->get_n();
@@ -578,7 +581,7 @@ error_t key_share_mp_t::reconstruct_pub_additive_shares(const crypto::ss::node_t
     case node_e::OR:
       for (int i = 0; i < n; i++) {
         ecc_point_t additive_share_from_child;
-        bool child_is_in_quorum;
+        bool child_is_in_quorum = false;
         rv = reconstruct_pub_additive_shares(node->children[i], quorum_names, target, additive_share_from_child,
                                              child_is_in_quorum);
         is_in_quorum = is_in_quorum || child_is_in_quorum;
@@ -587,6 +590,9 @@ error_t key_share_mp_t::reconstruct_pub_additive_shares(const crypto::ss::node_t
           continue;
         }
         if (rv) return rv;
+        if (!is_in_quorum) {
+          continue;
+        }
         pub_additive_shares = additive_share_from_child;
         break;
       }
@@ -598,7 +604,7 @@ error_t key_share_mp_t::reconstruct_pub_additive_shares(const crypto::ss::node_t
       is_in_quorum = true;
       for (int i = 0; i < n; i++) {
         ecc_point_t additive_share_from_child;
-        bool child_is_in_quorum;
+        bool child_is_in_quorum = false;
         rv = reconstruct_pub_additive_shares(node->children[i], quorum_names, target, additive_share_from_child,
                                              child_is_in_quorum);
         is_in_quorum = is_in_quorum && child_is_in_quorum;
@@ -621,7 +627,7 @@ error_t key_share_mp_t::reconstruct_pub_additive_shares(const crypto::ss::node_t
 
       for (int i = 0; i < n; i++) {
         ecc_point_t share_from_child;
-        bool child_is_in_quorum;
+        bool child_is_in_quorum = false;
         rv = reconstruct_pub_additive_shares(node->children[i], quorum_names, target, share_from_child,
                                              child_is_in_quorum);
         if (rv == E_INSUFFICIENT) {
@@ -665,7 +671,7 @@ error_t key_share_mp_t::to_additive_share(const crypto::ss::ac_t ac, const std::
   error_t rv = UNINITIALIZED_ERROR;
   const mod_t& q = curve.order();
   bn_t new_x_share;
-  bool _ignore_is_in_quorum;
+  bool _ignore_is_in_quorum = false;
   if (rv = reconstruct_additive_share(q, ac.root, quorum_names, new_x_share, _ignore_is_in_quorum)) return rv;
 
   party_map_t<ecc_point_t> new_Qis;
@@ -673,7 +679,7 @@ error_t key_share_mp_t::to_additive_share(const crypto::ss::ac_t ac, const std::
 
   for (int j = 0; j < quorum_names_vec.size(); j++) {
     crypto::vartime_scope_t vartime_scope;
-    bool _ignore_is_in_quorum;
+    bool _ignore_is_in_quorum = false;
     ecc_point_t new_Qi;
     if (rv = reconstruct_pub_additive_shares(ac.root, quorum_names, quorum_names_vec[j], new_Qi, _ignore_is_in_quorum))
       return rv;

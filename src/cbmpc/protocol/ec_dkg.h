@@ -80,7 +80,7 @@ struct key_share_mp_t {
                                      const std::set<crypto::pname_t>& quorum_names, bn_t& additive_share,
                                      bool& is_in_quorum) const;
   error_t reconstruct_pub_additive_shares(const crypto::ss::node_t* node, const std::set<crypto::pname_t>& quorum_names,
-                                          crypto::pname_t target, ecc_point_t& pub_additive_shares,
+                                          const crypto::pname_t target, ecc_point_t& pub_additive_shares,
                                           bool& is_in_quorum) const;
 };
 

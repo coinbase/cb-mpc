@@ -118,7 +118,7 @@ TEST_F(EdDSA2PC, ParallelKSRS8) {
   std::vector<std::vector<eddsa2pc::key_t>> keys(parallel_count, std::vector<eddsa2pc::key_t>(2));
   std::vector<std::vector<eddsa2pc::key_t>> new_keys(parallel_count, std::vector<eddsa2pc::key_t>(2));
 
-  mpc_runner->run_2pc_parallel(parallel_count, [&data, &keys, &new_keys](job_session_2p_t& job, int th_i) {
+  mpc_runner->run_2pc_parallel(parallel_count, [&data, &keys, &new_keys](job_parallel_2p_t& job, int th_i) {
     error_t rv = UNINITIALIZED_ERROR;
     auto party_index = job.get_party_idx();
     ecurve_t curve = crypto::curve_ed25519;

@@ -30,13 +30,13 @@ struct abort_channel_t {
   bool another_job_abort = false;
 };
 
-class bm_job_2p_t : public mpc::job_session_2p_t {
+class bm_job_2p_t : public mpc::job_2p_t {
  public:
   // constructor that takes extra parameter -- target_round, then call the parent constructor
-  bm_job_2p_t(mpc::party_t bm_party, int bm_round, mpc::party_t party, std::shared_ptr<mpc::network_t> _network_ptr,
+  bm_job_2p_t(mpc::party_t bm_party, int bm_round, mpc::party_t party,
+              std::shared_ptr<mpc::parallel_data_transport_t> _network_ptr,
               std::shared_ptr<abort_channel_t> abort_channel)
-      : job_session_2p_t(party, testutils::mpc_runner_t::test_pnames[0], testutils::mpc_runner_t::test_pnames[1],
-                         _network_ptr, 0),
+      : job_2p_t(party, testutils::mpc_runner_t::test_pnames[0], testutils::mpc_runner_t::test_pnames[1], _network_ptr),
         bm_party(bm_party),
         bm_round(bm_round),
         abort_channel(abort_channel) {
@@ -71,7 +71,7 @@ class bm_job_2p_t : public mpc::job_session_2p_t {
   /* override messaging implementation in order to control the timers and abort according the benchmarking goal */
   error_t mpc_abort(error_t rv, const std::string& message = "") {
     if (get_party_idx() != mpc::party_idx_t(bm_party)) reset();
-    return mpc::job_session_2p_t::mpc_abort(rv, message);
+    return mpc::job_2p_t::mpc_abort(rv, message);
   }
 
   error_t send_impl(mpc::party_idx_t to, mem_t msg) override {
@@ -84,7 +84,7 @@ class bm_job_2p_t : public mpc::job_session_2p_t {
       return mpc_abort(error(E_CF_MPC_BENCHMARK));
     }
 
-    if (rv = job_session_2p_t::send_impl(to, msg)) return rv;
+    if (rv = job_2p_t::send_impl(to, msg)) return rv;
 
     current_round++;
     if (current_round == bm_round) {
@@ -118,7 +118,7 @@ class bm_job_2p_t : public mpc::job_session_2p_t {
       return mpc_abort(error(E_CF_MPC_BENCHMARK));
     }
 
-    if (rv = job_session_2p_t::receive_impl(from, msg)) return rv;
+    if (rv = job_2p_t::receive_impl(from, msg)) return rv;
 
     current_round++;
     if (current_round == bm_round) {
@@ -226,16 +226,16 @@ struct abort_channel_mp_t {
   int aborted_count = 0;
 };
 
-class bm_job_mp_t : public mpc::job_session_mp_t {
+class bm_job_mp_t : public mpc::job_mp_t {
  public:
   // constructor that takes extra parameter -- target_round, then call the parent constructor
   bm_job_mp_t(int bm_party, int bm_round, std::vector<std::vector<msg_count_t>> msg_counts, int _parties,
-              mpc::party_idx_t index, std::shared_ptr<mpc::network_t> _network_ptr,
+              mpc::party_idx_t index, std::shared_ptr<mpc::parallel_data_transport_t> _network_ptr,
               std::shared_ptr<abort_channel_mp_t> abort_channel)
-      : job_session_mp_t(index,
-                         std::vector<crypto::pname_t>(testutils::mpc_runner_t::test_pnames.begin(),
-                                                      testutils::mpc_runner_t::test_pnames.begin() + _parties),
-                         _network_ptr, 0),
+      : job_mp_t(index,
+                 std::vector<crypto::pname_t>(testutils::mpc_runner_t::test_pnames.begin(),
+                                              testutils::mpc_runner_t::test_pnames.begin() + _parties),
+                 _network_ptr),
         bm_party(bm_party),
         bm_round(bm_round),
         msg_counts(msg_counts),
@@ -275,7 +275,7 @@ class bm_job_mp_t : public mpc::job_session_mp_t {
   /* override messaging implementation in order to control the timers and abort according the benchmarking goal */
   error_t mpc_abort(error_t rv, const std::string& message = "") {
     if (get_party_idx() != bm_party) reset();
-    return mpc::job_session_mp_t::mpc_abort(rv, message);
+    return mpc::job_mp_t::mpc_abort(rv, message);
   }
 
   error_t send_impl(mpc::party_idx_t to, mem_t msg) override {
@@ -288,7 +288,7 @@ class bm_job_mp_t : public mpc::job_session_mp_t {
       return mpc_abort(error(E_CF_MPC_BENCHMARK));
     }
 
-    if (rv = job_session_mp_t::send_impl(to, msg)) return rv;
+    if (rv = job_mp_t::send_impl(to, msg)) return rv;
 
     if (bm_party == get_party_idx() && bm_round == current_round + 1) {
       // THREAD_SAFE_LOG(get_party_idx() << " #################### send " << msg.size);
@@ -320,7 +320,7 @@ class bm_job_mp_t : public mpc::job_session_mp_t {
       return mpc_abort(error(E_CF_MPC_BENCHMARK));
     }
 
-    if (rv = job_session_mp_t::receive_impl(from, msg)) return rv;
+    if (rv = job_mp_t::receive_impl(from, msg)) return rv;
 
     if (bm_party == get_party_idx() && bm_round == current_round + 1) {
       // THREAD_SAFE_LOG("#################### receive " << msg.size);
@@ -350,7 +350,7 @@ class bm_job_mp_t : public mpc::job_session_mp_t {
       return mpc_abort(error(E_CF_MPC_BENCHMARK));
     }
 
-    if (rv = job_session_mp_t::receive_many_impl(from_set, outs)) return rv;
+    if (rv = job_mp_t::receive_many_impl(from_set, outs)) return rv;
 
     if (bm_party == get_party_idx() && bm_round == current_round + 1) {
       for (auto& msg : outs) {
@@ -437,7 +437,7 @@ static bm_mpc_runner_t init_mpc_benchmarking(benchmark::State& state,
 
   /* create mpc jobs and a runner for them */
   auto abort_channel = std::make_shared<abort_channel_mp_t>();
-  std::vector<std::shared_ptr<mpc::job_session_mp_t>> jobs(n_parties);
+  std::vector<std::shared_ptr<mpc::job_mp_t>> jobs(n_parties);
   std::shared_ptr<bm_job_mp_t> main_job;
   main_job = std::make_shared<bm_job_mp_t>(bm_party, bm_round, msg_counts, n_parties, bm_party, nullptr, abort_channel);
   jobs[bm_party] = main_job;

@@ -121,7 +121,7 @@ TEST_F(EdDSA_4PC, ParallelKSRS8) {
   std::vector<std::vector<eddsampc::key_t>> keys(parallel_count, std::vector<eddsampc::key_t>(4));
   std::vector<std::vector<eddsampc::key_t>> new_keys(parallel_count, std::vector<eddsampc::key_t>(4));
 
-  mpc_runner->run_mpc_parallel(parallel_count, [&keys, &new_keys, &data](job_session_mp_t& job, int th_i) {
+  mpc_runner->run_mpc_parallel(parallel_count, [&keys, &new_keys, &data](job_parallel_mp_t& job, int th_i) {
     error_t rv = UNINITIALIZED_ERROR;
     auto party_index = job.get_party_idx();
     eddsampc::key_t& key = keys[th_i][party_index];

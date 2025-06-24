@@ -10,8 +10,8 @@ class partner_t;
 typedef std::function<void(mpc::party_idx_t role)> lambda_role_t;
 typedef std::function<void(mpc::job_2p_t& job)> lambda_2p_t;
 typedef std::function<void(mpc::job_mp_t& job)> lambda_mp_t;
-typedef std::function<void(mpc::job_session_2p_t& job, int th_i)> lambda_2p_parallel_t;
-typedef std::function<void(mpc::job_session_mp_t& job, int th_i)> lambda_mp_parallel_t;
+typedef std::function<void(mpc::job_parallel_2p_t& job, int th_i)> lambda_2p_parallel_t;
+typedef std::function<void(mpc::job_parallel_mp_t& job, int th_i)> lambda_mp_parallel_t;
 
 class local_data_transport_t : public mpc::data_transport_interface_t {
  public:
@@ -26,8 +26,9 @@ class local_data_transport_t : public mpc::data_transport_interface_t {
 class mpc_runner_t {
  public:
   mpc_runner_t(int n_parties);
-  mpc_runner_t(std::shared_ptr<mpc::job_session_2p_t> job1, std::shared_ptr<mpc::job_session_2p_t> job2);
-  mpc_runner_t(std::vector<std::shared_ptr<mpc::job_session_mp_t>> jobs);
+  mpc_runner_t(std::shared_ptr<mpc::job_2p_t> job1, std::shared_ptr<mpc::job_2p_t> job2);
+  mpc_runner_t(std::vector<std::shared_ptr<mpc::job_mp_t>> jobs);
+  mpc_runner_t(const std::vector<crypto::pname_t>& pnames);
 
   void start_partners();
   void stop_partners();
@@ -53,8 +54,8 @@ class mpc_runner_t {
   std::condition_variable cond;
   int finished_parties = 0;
   int n;
-  std::array<std::shared_ptr<mpc::job_session_2p_t>, 2> job_2ps;
-  std::array<std::shared_ptr<mpc::job_session_mp_t>, 64> job_mps;
+  std::array<std::shared_ptr<mpc::job_2p_t>, 2> job_2ps;
+  std::array<std::shared_ptr<mpc::job_mp_t>, 64> job_mps;
   std::vector<std::shared_ptr<partner_t>> partners;
   std::vector<std::shared_ptr<local_data_transport_t>> data_transports;
   std::vector<std::shared_ptr<mpc_net_context_t>> net_contexts;
@@ -64,10 +65,10 @@ class mpc_runner_t {
   void set_new_network_mp();
 
   void run_mpc_role(lambda_role_t f);
-  static void run_2pc_parallel_helper(std::shared_ptr<mpc::network_t> network, mpc::party_t role, int th_i,
-                                      lambda_2p_parallel_t f);
-  static void run_mpc_parallel_helper(int n, std::shared_ptr<mpc::network_t> network, mpc::party_idx_t party_index,
-                                      int th_i, lambda_mp_parallel_t f);
+  static void run_2pc_parallel_helper(std::shared_ptr<mpc::parallel_data_transport_t> network, mpc::party_t role,
+                                      int th_i, lambda_2p_parallel_t f);
+  static void run_mpc_parallel_helper(int n, std::shared_ptr<mpc::parallel_data_transport_t> network,
+                                      mpc::party_idx_t party_index, int th_i, lambda_mp_parallel_t f);
 };  // namespace coinbase::testutils
 
 }  // namespace coinbase::testutils

@@ -129,4 +129,26 @@ TEST(BigNumber, RangeCheck) {
   EXPECT_OK(check_open_range(bn_t(3), bn_t(4), bn_t(5)));
   EXPECT_ER_MSG(check_open_range(bn_t(3), bn_t(5), bn_t(5)), "check_open_range failed");
 }
+
+TEST(BigNumber, GetBinSize) {
+  // Test basic cases
+  EXPECT_EQ(bn_t(0).get_bin_size(), 0);  // Zero takes 0 bytes in binary representation
+  EXPECT_EQ(bn_t(1).get_bin_size(), 1);
+  EXPECT_EQ(bn_t(127).get_bin_size(), 1);
+  EXPECT_EQ(bn_t(255).get_bin_size(), 1);    // Maximum 1-byte value
+  EXPECT_EQ(bn_t(256).get_bin_size(), 2);    // Minimum 2-byte value
+  EXPECT_EQ(bn_t(65535).get_bin_size(), 2);  // Maximum 2-byte value
+  EXPECT_EQ(bn_t(65536).get_bin_size(), 3);  // Minimum 3-byte value
+
+  // Test negative numbers
+  EXPECT_EQ(bn_t(-1).get_bin_size(), 1);
+  EXPECT_EQ(bn_t(-255).get_bin_size(), 1);
+  EXPECT_EQ(bn_t(-256).get_bin_size(), 2);
+
+  // Test that the leading zero will not be considered
+  bn_t a(1);
+  MODULO(crypto::curve_ed25519.order()) { a += 0; };
+  EXPECT_EQ(a, 1);
+  EXPECT_EQ(a.get_bin_size(), 1);
+}
 }  // namespace

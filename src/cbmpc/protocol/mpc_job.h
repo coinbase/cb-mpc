@@ -1,10 +1,13 @@
 #pragma once
 
+#include <memory>
+
 #include <cbmpc/core/convert.h>
 #include <cbmpc/core/log.h>
 #include <cbmpc/crypto/base_pki.h>
 #include <cbmpc/crypto/ro.h>
 
+#include "data_transport.h"
 #include "util.h"
 
 namespace coinbase::mpc {
@@ -164,8 +167,11 @@ class job_mp_t {
   int n_parties;
   std::vector<crypto::mpc_pid_t> pids;
   std::vector<crypto::pname_t> names;
+  std::shared_ptr<data_transport_interface_t> transport_ptr;
 
-  job_mp_t(int index, std::vector<crypto::pname_t> pnames) : party_index(index), n_parties(pnames.size()) {
+ public:
+  job_mp_t(int index, std::vector<crypto::pname_t> pnames, std::shared_ptr<data_transport_interface_t> tptr = nullptr)
+      : party_index(index), n_parties(pnames.size()), transport_ptr(tptr) {
     if (party_index < 0 || party_index >= n_parties) coinbase::error(E_BADARG, "invalid party_index");
     this->names = pnames;
     for (const auto& name : pnames) {
@@ -175,11 +181,21 @@ class job_mp_t {
     cb_assert(pids.size() <= 64 && "at most 64 parties are supported");
   }
 
-  virtual error_t send_impl(party_idx_t to, mem_t msg) = 0;
-  virtual error_t receive_impl(party_idx_t from, mem_t& msg) = 0;
+  virtual error_t send_impl(party_idx_t to, mem_t msg) {
+    if (!transport_ptr) return E_NET_GENERAL;
+    return transport_ptr->send(to, msg);
+  }
+  virtual error_t receive_impl(party_idx_t from, mem_t& msg) {
+    if (!transport_ptr) return E_NET_GENERAL;
+    return transport_ptr->receive(from, msg);
+  }
   virtual error_t receive_many_impl(std::vector<party_idx_t> from_set, std::vector<mem_t>& outs);
 
- public:
+  void set_transport(party_idx_t idx, std::shared_ptr<data_transport_interface_t> ptr) {
+    party_index = idx;
+    transport_ptr = ptr;
+  }
+
   /* MPC Properties */
 
   int get_n_parties() const { return n_parties; }
@@ -414,8 +430,9 @@ class job_mp_t {
 
 class job_2p_t : public job_mp_t {
  public:
-  job_2p_t(party_t index, crypto::pname_t pname1, crypto::pname_t pname2)
-      : job_mp_t(party_idx_t(index), {pname1, pname2}) {}
+  job_2p_t(party_t index, crypto::pname_t pname1, crypto::pname_t pname2,
+           std::shared_ptr<data_transport_interface_t> tptr = nullptr)
+      : job_mp_t(party_idx_t(index), {pname1, pname2}, tptr) {}
 
   bool is_p1() const { return is_party_idx(party_idx_t(party_t::p1)); }
   bool is_p2() const { return is_party_idx(party_idx_t(party_t::p2)); }

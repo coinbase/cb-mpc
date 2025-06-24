@@ -14,12 +14,8 @@ error_t job_mp_t::send_to_parties(party_set_t set, const std::vector<buf_t>& in)
 
 // default implementation simply by receiving one by one
 error_t job_mp_t::receive_many_impl(std::vector<party_idx_t> from_set, std::vector<mem_t>& outs) {
-  error_t rv = UNINITIALIZED_ERROR;
-  outs.resize(from_set.size());
-  for (int i = 0; i < from_set.size(); i++) {
-    if (rv = receive_impl(from_set[i], outs[i])) return rv;
-  }
-  return SUCCESS;
+  if (!transport_ptr) return E_NET_GENERAL;
+  return transport_ptr->receive_all(from_set, outs);
 }
 
 error_t job_mp_t::receive_from_parties(party_set_t set, std::vector<buf_t>& v) {
