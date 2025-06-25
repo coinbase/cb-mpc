@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750176296072,
+  "lastUpdate": 1750863423446,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -504,6 +504,48 @@ window.BENCHMARK_DATA = {
             "value": 13802.508839999065,
             "unit": "us/iter",
             "extra": "iterations: 50\ncpu: 13802.416900000002 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c7b470ad4d0d4cc313931317d202ffa5abe033b5",
+          "message": "feat: Revamp Go wrapper (#31)\n\nAlso, we refactor the job_t's to facilitate the MPC protocol testing. In particular, it includes\n- introduces a data_transport_interface_t to decouple the MPC protocol logic from the underlying data transport mechanism. (Previously done in `job_session_t`, which is suboptimal)\n- The base job_mp_t class is refactored to use this interface, making it agnostic to the specific network implementation.\n- job_session_mp_t and its subclasses are simplified, bridging the generic job_mp_t with the parallel network_t.\n- Tests have been updated to reflect this new, more modular design.\n- Rename `job_session_t` to `job_parallel_t`\n\n* refactor: revamp Go wrapper\n\nNow the go wrapper conform with the standard Go convention,\nwith api, internal directories, etc.\nWe also introduce more wrappers as APIs around\n- curve\n- curve points\n- scalar\n- ECDSA-MP protocols\n- ECDSA-2P protocols\n- EdDSA-MP Protocols\n- ZK-DL Protocols",
+          "timestamp": "2025-06-25T07:19:39-07:00",
+          "tree_id": "1aae96b441550c242fe91717805c5fad5b547dc7",
+          "url": "https://github.com/coinbase/cb-mpc/commit/c7b470ad4d0d4cc313931317d202ffa5abe033b5"
+        },
+        "date": 1750863422999,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24538.080678569586,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24537.82275 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 99449.07485714795,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 99445.00785714287 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13804.269686279084,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13803.859196078429 us\nthreads: 1"
           }
         ]
       }
