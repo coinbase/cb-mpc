@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750176286360,
+  "lastUpdate": 1750863413099,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1440,6 +1440,126 @@ window.BENCHMARK_DATA = {
             "value": 1364.3056616258075,
             "unit": "us/iter",
             "extra": "iterations: 529\ncpu: 1364.1958752362752 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c7b470ad4d0d4cc313931317d202ffa5abe033b5",
+          "message": "feat: Revamp Go wrapper (#31)\n\nAlso, we refactor the job_t's to facilitate the MPC protocol testing. In particular, it includes\n- introduces a data_transport_interface_t to decouple the MPC protocol logic from the underlying data transport mechanism. (Previously done in `job_session_t`, which is suboptimal)\n- The base job_mp_t class is refactored to use this interface, making it agnostic to the specific network implementation.\n- job_session_mp_t and its subclasses are simplified, bridging the generic job_mp_t with the parallel network_t.\n- Tests have been updated to reflect this new, more modular design.\n- Rename `job_session_t` to `job_parallel_t`\n\n* refactor: revamp Go wrapper\n\nNow the go wrapper conform with the standard Go convention,\nwith api, internal directories, etc.\nWe also introduce more wrappers as APIs around\n- curve\n- curve points\n- scalar\n- ECDSA-MP protocols\n- ECDSA-2P protocols\n- EdDSA-MP Protocols\n- ZK-DL Protocols",
+          "timestamp": "2025-06-25T07:19:39-07:00",
+          "tree_id": "1aae96b441550c242fe91717805c5fad5b547dc7",
+          "url": "https://github.com/coinbase/cb-mpc/commit/c7b470ad4d0d4cc313931317d202ffa5abe033b5"
+        },
+        "date": 1750863412380,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.07573786000996457,
+            "unit": "us/iter",
+            "extra": "iterations: 9869345\ncpu: 0.07572805794102852 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.2726749945790388,
+            "unit": "us/iter",
+            "extra": "iterations: 2587243\ncpu: 0.27267489795121597 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.06845309586773982,
+            "unit": "us/iter",
+            "extra": "iterations: 10271579\ncpu: 0.0684459933570099 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.32336179226542267,
+            "unit": "us/iter",
+            "extra": "iterations: 2164300\ncpu: 0.3233539989835042 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.15100406768745261,
+            "unit": "us/iter",
+            "extra": "iterations: 4628920\ncpu: 0.15100126789834248 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 11.504686855374294,
+            "unit": "us/iter",
+            "extra": "iterations: 60694\ncpu: 11.50438666095497 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 16.378050134857002,
+            "unit": "us/iter",
+            "extra": "iterations: 42266\ncpu: 16.37775128945261 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16515.281500005585,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16513.848904761882 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 16.88058759885885,
+            "unit": "us/iter",
+            "extra": "iterations: 41222\ncpu: 16.87921260491943 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 662.8788875235969,
+            "unit": "us/iter",
+            "extra": "iterations: 1058\ncpu: 662.8275727788242 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 23.174317761039934,
+            "unit": "us/iter",
+            "extra": "iterations: 30139\ncpu: 23.171787152858045 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1136.5177918035397,
+            "unit": "us/iter",
+            "extra": "iterations: 610\ncpu: 1136.443521311433 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 23.9126948107874,
+            "unit": "us/iter",
+            "extra": "iterations: 29041\ncpu: 23.911478668090076 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1133.4793030788262,
+            "unit": "us/iter",
+            "extra": "iterations: 617\ncpu: 1133.3613128039015 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 26.023603230590382,
+            "unit": "us/iter",
+            "extra": "iterations: 26930\ncpu: 26.021423431118013 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1312.2413780260597,
+            "unit": "us/iter",
+            "extra": "iterations: 537\ncpu: 1312.1538435753766 us\nthreads: 1"
           }
         ]
       }
