@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750176289164,
+  "lastUpdate": 1750863415720,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1044,6 +1044,114 @@ window.BENCHMARK_DATA = {
             "value": 78.5716844051256,
             "unit": "us/iter",
             "extra": "iterations: 8926\ncpu: 78.56717902755993 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c7b470ad4d0d4cc313931317d202ffa5abe033b5",
+          "message": "feat: Revamp Go wrapper (#31)\n\nAlso, we refactor the job_t's to facilitate the MPC protocol testing. In particular, it includes\n- introduces a data_transport_interface_t to decouple the MPC protocol logic from the underlying data transport mechanism. (Previously done in `job_session_t`, which is suboptimal)\n- The base job_mp_t class is refactored to use this interface, making it agnostic to the specific network implementation.\n- job_session_mp_t and its subclasses are simplified, bridging the generic job_mp_t with the parallel network_t.\n- Tests have been updated to reflect this new, more modular design.\n- Rename `job_session_t` to `job_parallel_t`\n\n* refactor: revamp Go wrapper\n\nNow the go wrapper conform with the standard Go convention,\nwith api, internal directories, etc.\nWe also introduce more wrappers as APIs around\n- curve\n- curve points\n- scalar\n- ECDSA-MP protocols\n- ECDSA-2P protocols\n- EdDSA-MP Protocols\n- ZK-DL Protocols",
+          "timestamp": "2025-06-25T07:19:39-07:00",
+          "tree_id": "1aae96b441550c242fe91717805c5fad5b547dc7",
+          "url": "https://github.com/coinbase/cb-mpc/commit/c7b470ad4d0d4cc313931317d202ffa5abe033b5"
+        },
+        "date": 1750863415288,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.35725776735257786,
+            "unit": "us/iter",
+            "extra": "iterations: 1952113\ncpu: 0.3572557731032988 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.3132127507607672,
+            "unit": "us/iter",
+            "extra": "iterations: 2237341\ncpu: 0.31317985725019115 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 0.34549501994704745,
+            "unit": "us/iter",
+            "extra": "iterations: 2018854\ncpu: 0.34547769774337317 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.31275722106863546,
+            "unit": "us/iter",
+            "extra": "iterations: 2244647\ncpu: 0.31273218060568114 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.332841267030375,
+            "unit": "us/iter",
+            "extra": "iterations: 16890\ncpu: 41.33100254588514 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 63.35695469723043,
+            "unit": "us/iter",
+            "extra": "iterations: 11081\ncpu: 63.34631621694792 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 32.83169524064538,
+            "unit": "us/iter",
+            "extra": "iterations: 22503\ncpu: 32.82892512109499 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 63.39972231780198,
+            "unit": "us/iter",
+            "extra": "iterations: 11045\ncpu: 63.39453309189679 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 20.086116770504624,
+            "unit": "us/iter",
+            "extra": "iterations: 34829\ncpu: 20.085396795773626 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.337530313814689,
+            "unit": "us/iter",
+            "extra": "iterations: 49169\ncpu: 14.335134556326121 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 20.085425106216327,
+            "unit": "us/iter",
+            "extra": "iterations: 34836\ncpu: 20.084391261912966 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.293013325986428,
+            "unit": "us/iter",
+            "extra": "iterations: 96203\ncpu: 7.292496086400639 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61.790936763402875,
+            "unit": "us/iter",
+            "extra": "iterations: 11370\ncpu: 61.78435540897098 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 78.07285486568679,
+            "unit": "us/iter",
+            "extra": "iterations: 8971\ncpu: 78.06616709396953 us\nthreads: 1"
           }
         ]
       }
