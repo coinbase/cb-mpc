@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750176292563,
+  "lastUpdate": 1750863419192,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -792,6 +792,72 @@ window.BENCHMARK_DATA = {
             "value": 8322.761084340285,
             "unit": "us/iter",
             "extra": "iterations: 83\ncpu: 8322.320903614447 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c7b470ad4d0d4cc313931317d202ffa5abe033b5",
+          "message": "feat: Revamp Go wrapper (#31)\n\nAlso, we refactor the job_t's to facilitate the MPC protocol testing. In particular, it includes\n- introduces a data_transport_interface_t to decouple the MPC protocol logic from the underlying data transport mechanism. (Previously done in `job_session_t`, which is suboptimal)\n- The base job_mp_t class is refactored to use this interface, making it agnostic to the specific network implementation.\n- job_session_mp_t and its subclasses are simplified, bridging the generic job_mp_t with the parallel network_t.\n- Tests have been updated to reflect this new, more modular design.\n- Rename `job_session_t` to `job_parallel_t`\n\n* refactor: revamp Go wrapper\n\nNow the go wrapper conform with the standard Go convention,\nwith api, internal directories, etc.\nWe also introduce more wrappers as APIs around\n- curve\n- curve points\n- scalar\n- ECDSA-MP protocols\n- ECDSA-2P protocols\n- EdDSA-MP Protocols\n- ZK-DL Protocols",
+          "timestamp": "2025-06-25T07:19:39-07:00",
+          "tree_id": "1aae96b441550c242fe91717805c5fad5b547dc7",
+          "url": "https://github.com/coinbase/cb-mpc/commit/c7b470ad4d0d4cc313931317d202ffa5abe033b5"
+        },
+        "date": 1750863418711,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 60341.758374988785,
+            "unit": "us/iter",
+            "extra": "iterations: 16\ncpu: 60336.51775 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4511.030219354354,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4510.535535483871 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8564.077170731474,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8563.731743902443 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4507.022993549336,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4506.793587096775 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.572580948434783,
+            "unit": "us/iter",
+            "extra": "iterations: 60310\ncpu: 11.572097347040286 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 13.425945784746624,
+            "unit": "us/iter",
+            "extra": "iterations: 52144\ncpu: 13.425365986498923 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8324.878156627274,
+            "unit": "us/iter",
+            "extra": "iterations: 83\ncpu: 8324.734662650604 us\nthreads: 1"
           }
         ]
       }
