@@ -129,80 +129,83 @@ BENCHMARK_DEFINE_F(FullOT2PBenchmark, BM_FullOT2P_Step1)(benchmark::State& state
 // Step 2 Benchmark
 //------------------------------------
 BENCHMARK_DEFINE_F(FullOT2PBenchmark, BM_FullOT2P_Step2)(benchmark::State& state) {
+  // Must do step1 first
+  if (ot->step1_S2R()) {
+    throw std::runtime_error("Full OT step1_S2R failed");
+  }
   for (auto _ : state) {
-    // Must do step1 first
-    if (ot->step1_S2R()) {
-      throw std::runtime_error("Full OT step1_S2R failed");
-    }
     // Benchmark step2
     if (ot->step2_R2S(r, l)) {
       throw std::runtime_error("Full OT step2_R2S failed");
     }
   }
+  state.counters["size"] = coinbase::converter_t::convert_write(ot->msg1(), 0);
 }
 
 //------------------------------------
 // Step 3 Benchmark
 //------------------------------------
 BENCHMARK_DEFINE_F(FullOT2PBenchmark, BM_FullOT2P_Step3)(benchmark::State& state) {
+  // Must do step1, step2 first
+  if (ot->step1_S2R()) {
+    throw std::runtime_error("Full OT step1_S2R failed");
+  }
+  if (ot->step2_R2S(r, l)) {
+    throw std::runtime_error("Full OT step2_R2S failed");
+  }
   for (auto _ : state) {
-    // Must do step1, step2 first
-    if (ot->step1_S2R()) {
-      throw std::runtime_error("Full OT step1_S2R failed");
-    }
-    if (ot->step2_R2S(r, l)) {
-      throw std::runtime_error("Full OT step2_R2S failed");
-    }
     // Benchmark step3
     if (ot->step3_S2R(x0, x1, l)) {
       throw std::runtime_error("Full OT step3_S2R failed");
     }
   }
+  state.counters["size"] = coinbase::converter_t::convert_write(ot->msg2(), 0);
 }
 
 //------------------------------------
 // Output Benchmark
 //------------------------------------
 BENCHMARK_DEFINE_F(FullOT2PBenchmark, BM_FullOT2P_Output)(benchmark::State& state) {
+  // Must do step1, step2, step3 first
+  if (ot->step1_S2R()) {
+    throw std::runtime_error("Full OT step1_S2R failed");
+  }
+  if (ot->step2_R2S(r, l)) {
+    throw std::runtime_error("Full OT step2_R2S failed");
+  }
+  if (ot->step3_S2R(x0, x1, l)) {
+    throw std::runtime_error("Full OT step3_S2R failed");
+  }
   for (auto _ : state) {
-    // Must do step1, step2, step3 first
-    if (ot->step1_S2R()) {
-      throw std::runtime_error("Full OT step1_S2R failed");
-    }
-    if (ot->step2_R2S(r, l)) {
-      throw std::runtime_error("Full OT step2_R2S failed");
-    }
-    if (ot->step3_S2R(x0, x1, l)) {
-      throw std::runtime_error("Full OT step3_S2R failed");
-    }
     // Benchmark output step
     std::vector<buf_t> x_bin;
     if (ot->output_R(m, x_bin)) {
       throw std::runtime_error("Full OT output_R failed");
     }
   }
+  state.counters["size"] = coinbase::converter_t::convert_write(ot->msg3(), 0);
 }
 
 BENCHMARK(BM_BaseOT_Step1)->Name("MPC/OT/BaseOT/Step1_R2S")->RangeMultiplier(2)->Range(base_ot_m_lb, base_ot_m_ub);
 BENCHMARK(BM_BaseOT_Step2)->Name("MPC/OT/BaseOT/Step2_S2R")->RangeMultiplier(2)->Range(base_ot_m_lb, base_ot_m_ub);
 BENCHMARK(BM_BaseOT_OutputR)->Name("MPC/OT/BaseOT/OutputR")->RangeMultiplier(2)->Range(base_ot_m_lb, base_ot_m_ub);
 BENCHMARK_REGISTER_F(FullOT2PBenchmark, BM_FullOT2P_Step1)
-    ->Name("MPC/OT/FullOT/Step1_S2R")
+    ->Name("Full-OT-2P/1/1")
     ->Args({1 << 11})
     ->Args({1 << 12})
     ->Args({1 << 16});
 BENCHMARK_REGISTER_F(FullOT2PBenchmark, BM_FullOT2P_Step2)
-    ->Name("MPC/OT/FullOT/Step2_R2S")
+    ->Name("Full-OT-2P/2/2")
     ->Args({1 << 11})
     ->Args({1 << 12})
     ->Args({1 << 16});
 BENCHMARK_REGISTER_F(FullOT2PBenchmark, BM_FullOT2P_Step3)
-    ->Name("MPC/OT/FullOT/Step3_S2R")
+    ->Name("Full-OT-2P/3/1")
     ->Args({1 << 11})
     ->Args({1 << 12})
     ->Args({1 << 16});
 BENCHMARK_REGISTER_F(FullOT2PBenchmark, BM_FullOT2P_Output)
-    ->Name("MPC/OT/FullOT/OutputR")
+    ->Name("Full-OT-2P/4/2")
     ->Args({1 << 11})
     ->Args({1 << 12})
     ->Args({1 << 16});
