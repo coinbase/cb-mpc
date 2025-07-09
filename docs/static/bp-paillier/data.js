@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750863419192,
+  "lastUpdate": 1752071928643,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -858,6 +858,72 @@ window.BENCHMARK_DATA = {
             "value": 8324.878156627274,
             "unit": "us/iter",
             "extra": "iterations: 83\ncpu: 8324.734662650604 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "056e00cc1daba5e7bd6b4655a11920a9c4fd1cb9",
+          "message": "feat: Add msg size to Full-OT bench (#34)\n\nAlso fixed the bug where Full-OT time benches were accmulative.",
+          "timestamp": "2025-07-09T07:00:00-07:00",
+          "tree_id": "3e652f80af54ea162f520ddc683fea75111ce6e0",
+          "url": "https://github.com/coinbase/cb-mpc/commit/056e00cc1daba5e7bd6b4655a11920a9c4fd1cb9"
+        },
+        "date": 1752071928183,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 72881.78312498417,
+            "unit": "us/iter",
+            "extra": "iterations: 8\ncpu: 72880.14600000001 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4515.407954838133,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4515.091516129031 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8565.272768292722,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8564.981414634145 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4504.869870967717,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4504.730238709674 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 10.998039081545143,
+            "unit": "us/iter",
+            "extra": "iterations: 63585\ncpu: 10.996983124950841 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.818252424504424,
+            "unit": "us/iter",
+            "extra": "iterations: 54341\ncpu: 12.817521190261488 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8320.895285713787,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8320.114023809516 us\nthreads: 1"
           }
         ]
       }
