@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750863423446,
+  "lastUpdate": 1752071932286,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -546,6 +546,48 @@ window.BENCHMARK_DATA = {
             "value": 13804.269686279084,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13803.859196078429 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "056e00cc1daba5e7bd6b4655a11920a9c4fd1cb9",
+          "message": "feat: Add msg size to Full-OT bench (#34)\n\nAlso fixed the bug where Full-OT time benches were accmulative.",
+          "timestamp": "2025-07-09T07:00:00-07:00",
+          "tree_id": "3e652f80af54ea162f520ddc683fea75111ce6e0",
+          "url": "https://github.com/coinbase/cb-mpc/commit/056e00cc1daba5e7bd6b4655a11920a9c4fd1cb9"
+        },
+        "date": 1752071931704,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24691.169392862583,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24690.50192857143 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 101379.3114285753,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 101372.15457142856 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13810.09496078025,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13809.47062745098 us\nthreads: 1"
           }
         ]
       }
