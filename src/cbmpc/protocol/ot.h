@@ -259,7 +259,6 @@ struct ot_protocol_pvw_ctx_t {
 };
 
 }  // namespace coinbase::mpc
-
 namespace coinbase::crypto {
 template <>
 inline int get_bin_size(const mpc::h_matrix_256rows_t& matrix) {

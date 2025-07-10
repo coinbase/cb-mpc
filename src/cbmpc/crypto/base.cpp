@@ -9,7 +9,7 @@ namespace coinbase::crypto {
 template<> void scoped_ptr_t<EVP_MD_CTX>                ::free(EVP_MD_CTX* ptr)                    { EVP_MD_CTX_destroy(ptr);                    }
 template<> void scoped_ptr_t<BIO>                       ::free(BIO* ptr)                           { BIO_free(ptr);                              }
 template<> void scoped_ptr_t<BIGNUM>                    ::free(BIGNUM* ptr)                        { BN_clear_free(ptr);                         }
-template<> void scoped_ptr_t<BN_CTX>                    ::free(BN_CTX* ptr)                        { BN_CTX_end(ptr); BN_CTX_free(ptr);          }
+template<> void scoped_ptr_t<BN_CTX>                    ::free(BN_CTX* ptr)                        { BN_CTX_free(ptr);          }
 template<> void scoped_ptr_t<EVP_CIPHER_CTX>            ::free(EVP_CIPHER_CTX* ptr)                { EVP_CIPHER_CTX_free(ptr);                   }
 template<> void scoped_ptr_t<EC_POINT>                  ::free(EC_POINT* ptr)                      { EC_POINT_clear_free(ptr);                   }
 template<> void scoped_ptr_t<EC_GROUP>                  ::free(EC_GROUP* ptr)                      { EC_GROUP_free(ptr);                         }
@@ -242,16 +242,6 @@ void aes_gcm_t::encrypt_init(mem_t key, mem_t iv, mem_t auth) {
   cb_assert(0 < EVP_CIPHER_CTX_ctrl(cipher.ctx, EVP_CTRL_GCM_SET_IVLEN, iv.size, NULL));
   cb_assert(0 < EVP_EncryptInit(cipher.ctx, NULL, key.data, iv.data));
   cb_assert(0 < EVP_CIPHER_CTX_set_padding(cipher.ctx, 0));
-  if (auth.size > 0) {
-    int out_size = 0;
-    cb_assert(0 < EVP_CipherUpdate(cipher.ctx, NULL, &out_size, auth.data, auth.size));
-  }
-}
-
-// Note: Uses the same key but changes the iv and auth data. For example in use cases such as TLS where the same session
-// key is used but with different IVs.
-void aes_gcm_t::reinit(mem_t iv, mem_t auth) {
-  cb_assert(0 < EVP_CipherInit(cipher.ctx, NULL, NULL, iv.data, -1));
   if (auth.size > 0) {
     int out_size = 0;
     cb_assert(0 < EVP_CipherUpdate(cipher.ctx, NULL, &out_size, auth.data, auth.size));

@@ -244,6 +244,10 @@ Please note that all cryptographic code has a specification (except for code lik
 
 # Design Principles and Secure Usage
 
+> **Thread-Safety Warning**
+>
+> This library is **not** inherently thread-safe. Unless explicitly documented otherwise, all data structures and functions assume **single-threaded** access. If you need to use the library from multiple threads, you **must** protect every shared object with your own synchronization primitives (e.g., `std::mutex`, channel-based message passing, etc.) to avoid data races.
+
 We have outlined our cryptographic design principles and some conventions regarding our documentation in our [design principles document](/docs/general-principles.pdf). Furthermore, our [secure usage document](/docs/secure-usage.pdf) describes important security guidelines that should be followed when using the library. Finally, we have strived to create a library that is constant-time to prevent side-channel attacks. This effort is highly dependent on the architecture of the CPU and the compiler used to build the library and therefore is not guaranteed on all platforms. We have outlined our efforts in the [constant-time document](/docs/constant-time.pdf).
 
 # External Dependencies
@@ -252,6 +256,10 @@ We have outlined our cryptographic design principles and some conventions regard
 ### Internal Header Files
 
 We have included copies of certain OpenSSL internal header files that are not exposed through OpenSSL's public API but are necessary for our implementation. These files can be found in our codebase and are used to access specific OpenSSL functionality that we require. This approach ensures we can maintain compatibility while accessing needed internal features.
+
+Note that we change the curve25519.c of the OpenSSL code to remove the static modifier to make the functions externally visible. Given access to these functions, our Curve25519 code implements a constant-time version of the curve. Therefore, we strip the leading 'static' keyword from every line in curve25519.c as follows.
+
+```sed -i -e 's/^static//' crypto/ec/curve25519.c```
 
 ### RSA OAEP Padding Modification
 

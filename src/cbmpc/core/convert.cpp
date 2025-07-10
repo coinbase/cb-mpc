@@ -205,7 +205,13 @@ void converter_t::convert(std::vector<bool>& value) {
   short count = (short)value.size();
   convert(count);
 
-  if (!write) value.resize(count);
+  if (!write) {
+    if (count < 0 || static_cast<uint32_t>(count) > MAX_CONTAINER_ELEMENTS) {
+      set_error();
+      return;
+    }
+    value.resize(count);
+  }
   for (short i = 0; i < count && !is_error(); i++) {
     bool v = value[i];
     convert(v);

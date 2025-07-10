@@ -20,23 +20,6 @@ enum {
   part_qinv = 1 << 7,
 };
 
-static void_ptr *find_ptr(void_ptr buffer, void_ptr pointer) {
-  byte_ptr buf = byte_ptr(buffer);
-  for (;;) {
-    void_ptr *b = (void_ptr *)buf++;
-    if (pointer == *b) return b;
-  }
-  return nullptr;
-}
-
-static buf_t prepend_oid(hash_e hash_alg, mem_t data) {
-  mem_t oid = hash_alg_t::get(hash_alg).oid;
-  buf_t out(oid.size + data.size);
-  memmove(out.data(), oid.data, oid.size);
-  memmove(out.data() + oid.size, data.data, data.size);
-  return out;
-}
-
 // ------------------------------ rsa_pub_key_t -------------------------
 
 error_t rsa_pub_key_t::encrypt_raw(mem_t in, buf_t &out) const {

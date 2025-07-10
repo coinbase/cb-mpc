@@ -4,7 +4,7 @@ extern "C" void bn_correct_top(BIGNUM* a);
 
 namespace coinbase::crypto {
 
-static thread_local BN_CTX* g_tls_bn_ctx = nullptr;
+static thread_local scoped_ptr_t<BN_CTX> g_tls_bn_ctx = nullptr;
 
 static thread_local const mod_t* g_thread_local_storage_modo = nullptr;
 static const mod_t* thread_local_storage_mod() { return g_thread_local_storage_modo; }
@@ -16,13 +16,6 @@ static const mod_t* thread_local_storage_mod() { return g_thread_local_storage_m
  *     we exit the scope of the MODULE.
  */
 static void thread_local_storage_set_mod(const mod_t* ptr) { g_thread_local_storage_modo = ptr; }
-
-static void thread_local_storage_bn_ctx_free(void* dummy) {
-  if (g_tls_bn_ctx) {
-    BN_CTX_free(g_tls_bn_ctx);
-    g_tls_bn_ctx = nullptr;
-  }
-}
 
 BN_CTX* bn_t::thread_local_storage_bn_ctx() {  // static
   BN_CTX* ctx = g_tls_bn_ctx;
@@ -46,13 +39,6 @@ buf_t bn_to_buf(const BIGNUM* bn) {
   buf_t result(size);
   BN_bn2bin(bn, result.data());
   return result;
-}
-
-void bn_to_mem(const BIGNUM* bn, mem_t mem) {
-  int size = BN_num_bytes(bn);
-  cb_assert(size <= mem.size);
-  memset(mem.data, 0, mem.size);
-  BN_bn2bin(bn, mem.data + mem.size - size);
 }
 
 void bn_t::init() {

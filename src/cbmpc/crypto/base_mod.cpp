@@ -270,9 +270,11 @@ void mod_t::scr_inv(bn_t& res, const bn_t& in) const {
   u[0] = 1;  // u = 1
   BN_ULONG* v = r->d;
   std::fill(v, v + n, 0);  // v = 0
-  BN_ULONG mp1o2[n];       // (m+1)/2
-  ct_bn_add_words(mp1o2, m, u, n);
+  // (m+1)/2, assuming m is odd, computed as (m >> 1) + 1 to avoid overflow when m = 2^k − 1
+  BN_ULONG mp1o2[n];
+  std::copy(m, m + n, mp1o2);
   div_words_by_two(n, mp1o2);
+  ct_bn_add_words(mp1o2, mp1o2, u /*u == 1*/, n);
 
   for (int i = 0; i < n * BN_ULONG_BITS * 2; i++) {
     bool a_is_odd = bool(a[0] & 1);
@@ -485,8 +487,13 @@ bool mod_t::coprime(const bn_t& a, const mod_t& m) {
     return bn_t::gcd(a, m.m) == 1;
   }
   bn_t a_mod = m.mod(a);
-  bn_t a_inv = m.inv(a_mod);
-  return m.mul(a_inv, a_mod) == 1;
+  try {
+    bn_t a_inv = m.inv(a_mod);  // may cb_assert if not invertible
+    return m.mul(a_inv, a_mod) == 1;
+  } catch (const coinbase::assertion_failed_t&) {
+    // Inversion failed => not coprime
+    return false;
+  }
 }
 
 // static

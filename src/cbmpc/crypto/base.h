@@ -178,8 +178,6 @@ class aes_gcm_t {
   void decrypt_init(mem_t key, mem_t iv, mem_t auth);
   error_t decrypt_final(mem_t tag);
 
-  void reinit(mem_t iv, mem_t auth);
-
  public:
   static void encrypt(mem_t key, mem_t iv, mem_t auth, int tag_size, mem_t in, buf_t& out);
   static error_t decrypt(mem_t key, mem_t iv, mem_t auth, int tag_size, mem_t in, buf_t& out);

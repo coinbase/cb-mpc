@@ -306,7 +306,13 @@ bufs128_t& bufs128_t::operator=(const bufs128_t& src) {
 
 void bufs128_t::convert(coinbase::converter_t& converter) {
   uint32_t count = size();
+
+  if (count > converter_t::MAX_CONTAINER_ELEMENTS) {
+    converter.set_error();
+    return;
+  }
   converter.convert_len(count);
+
   if (!converter.is_write()) {
     converter.set_error();
     return;
@@ -333,6 +339,10 @@ void bufs128_t::convert(coinbase::converter_t& converter) {
 
 void bufs128_ref_t::convert(converter_t& converter) {
   cb_assert(converter.is_write());
+  if (size > converter_t::MAX_CONTAINER_ELEMENTS) {
+    converter.set_error();
+    return;
+  }
   converter.convert(size);
   int data_size = size * int(sizeof(buf128_t));
   if (!converter.is_calc_size()) memmove(converter.current(), data, data_size);

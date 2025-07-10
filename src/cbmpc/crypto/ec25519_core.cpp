@@ -1009,28 +1009,6 @@ extern "C" int ED25519_sign_with_scalar(uint8_t* out_sig, const uint8_t* message
   return 1;
 }
 
-extern "C" void ED25519_scalar_to_public(uint8_t out_public_key[32], const uint8_t scalar_bin[32]) {
-  uint8_t az[32];
-  for (int i = 0; i < 32; i++) az[i] = scalar_bin[31 - i];
-
-  bn_t az_bn = from_le_mod_q(mem_t(az, 32));
-  point_t A;
-  curve_t::mul_to_generator(az_bn, A);
-  to_bin(A, out_public_key);
-
-  OPENSSL_cleanse(az, sizeof(az));
-}
-
-extern "C" void ED25519_private_to_scalar(uint8_t out_scalar_bin[32], const uint8_t private_key[32]) {
-  uint8_t az[64];
-  hash_az(az, private_key);
-
-  bn_t scalar = from_le_mod_q(mem_t(az, 32));
-  scalar.to_bin(out_scalar_bin, 32);
-
-  OPENSSL_cleanse(az, sizeof(az));
-}
-
 }  // namespace coinbase::crypto::ec25519_core
 
 #if OPENSSL_VERSION_NUMBER >= 0x30000000

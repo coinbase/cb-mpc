@@ -57,23 +57,6 @@ bool booth_wnaf_t::get(unsigned& value, bool& neg) {
 }
 
 #ifdef __x86_64__
-void ct_get2(__m128i* dst, const __m128i* precomp, int line_size, unsigned index) {
-  __m128i lo1, hi1, lo2, hi2;
-  lo1 = hi1 = lo2 = hi2 = _mm_setzero_si128();
-  for (unsigned i = 0; i < line_size; i++) {
-    __m128i mask = _mm_set1_epi32(-(index == i));
-    lo1 = _mm_or_si128(lo1, _mm_and_si128(mask, _mm_load_si128(precomp + 0)));
-    hi1 = _mm_or_si128(hi1, _mm_and_si128(mask, _mm_load_si128(precomp + 1)));
-    lo2 = _mm_or_si128(lo2, _mm_and_si128(mask, _mm_load_si128(precomp + 2)));
-    hi2 = _mm_or_si128(hi2, _mm_and_si128(mask, _mm_load_si128(precomp + 3)));
-    precomp += 2 * 2;
-  }
-  _mm_storeu_si128(dst + 0, lo1);
-  _mm_storeu_si128(dst + 1, hi1);
-  _mm_storeu_si128(dst + 2, lo2);
-  _mm_storeu_si128(dst + 3, hi2);
-}
-
 void ct_get3(__m128i* dst, const __m128i* precomp, int line_size, unsigned index) {
   __m128i lo1, hi1, lo2, hi2, lo3, hi3;
   lo1 = hi1 = lo2 = hi2 = lo3 = hi3 = _mm_setzero_si128();

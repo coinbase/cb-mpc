@@ -35,6 +35,4 @@ int ED25519_sign(uint8_t* out_sig, const uint8_t* message, size_t message_len, c
                  const uint8_t private_key[32]);
 int ED25519_sign_with_scalar(uint8_t* out_sig, const uint8_t* message, size_t message_len, const uint8_t public_key[32],
                              const uint8_t private_key[32]);
-void ED25519_private_to_scalar(uint8_t out_scalar_bin[32], const uint8_t private_key[32]);
-void ED25519_scalar_to_public(uint8_t out_public_key[32], const uint8_t scalar_bin[32]);
 }

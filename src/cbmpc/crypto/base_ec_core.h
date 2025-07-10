@@ -20,7 +20,6 @@ class booth_wnaf_t {
 };
 
 #ifdef __x86_64__
-void ct_get2(__m128i* dst, const __m128i* precomp, int line_size, unsigned index);
 void ct_get3(__m128i* dst, const __m128i* precomp, int line_size, unsigned index);
 #endif
 

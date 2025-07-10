@@ -160,4 +160,72 @@ TEST(Mod, InvNPhiN) {
   }
 }
 
+TEST(Mod, Coprime) {
+  {
+    // 128-bit odd number (2^128 - 173)
+    mod_t prime_m = bn_t::from_string("340282366920938463463374607431768211283");
+    auto test_coprime_prime = [](const mod_t& prime_m) {
+      EXPECT_TRUE(mod_t::coprime(bn_t(5), prime_m));
+      EXPECT_TRUE(mod_t::coprime(prime_m - 1, prime_m));
+      EXPECT_TRUE(mod_t::coprime(bn_t(1), prime_m));
+      EXPECT_FALSE(mod_t::coprime(bn_t(0), prime_m));
+      for (int i = 0; i < 10; i++) {
+        bn_t rnd = bn_t::rand(prime_m);
+        EXPECT_TRUE(mod_t::coprime(rnd, prime_m));
+      }
+    };
+
+    test_coprime_prime(prime_m);
+    {
+      crypto::vartime_scope_t v;
+      test_coprime_prime(prime_m);
+    }
+  }
+  {
+    // 128-bit composite odd number (2^128 - 1)
+    mod_t comp_m = {bn_t::from_string("340282366920938463463374607431768211455"), false};
+    auto test_coprime_composite = [](const mod_t& comp_m) {
+      EXPECT_TRUE(mod_t::coprime(comp_m - 1, comp_m));
+      EXPECT_TRUE(mod_t::coprime(bn_t(14), comp_m));
+      EXPECT_FALSE(mod_t::coprime(bn_t(9), comp_m));
+      EXPECT_TRUE(mod_t::coprime(1, comp_m));
+      EXPECT_FALSE(mod_t::coprime(0, comp_m));
+    };
+    test_coprime_composite(comp_m);
+    {
+      crypto::vartime_scope_t v;
+      test_coprime_composite(comp_m);
+    }
+  }
+}
+
+TEST(Mod, SCRInverse) {
+  {
+    // Use a well-known prime modulus (order of Ed25519) and explicitly ask for the SCR algorithm.
+    mod_t q = crypto::curve_ed25519.order();
+
+    // Deterministic small operand
+    bn_t a = 5;
+    bn_t inv_a = q.inv(a, mod_t::inv_algo_e::SCR);
+    EXPECT_EQ(q.mul(inv_a, a), 1);
+
+    // Randomised operands – repeat a few times to increase coverage.
+    for (int i = 0; i < 5; i++) {
+      bn_t rnd = bn_t::rand(q);
+      if (rnd == 0) rnd = 1;  // Ensure non-zero so that inverse exists.
+      bn_t inv_rnd = q.inv(rnd, mod_t::inv_algo_e::SCR);
+      EXPECT_EQ(q.mul(inv_rnd, rnd), 1);
+    }
+  }
+  {
+    // Test against 2^128 - 1 to make sure the implementation does not suffer from overflows.
+    // Also note that 2^128 - 1 is not a prime number.
+    mod_t comp_m = {bn_t::from_string("340282366920938463463374607431768211455"), false};
+    bn_t a = 7;
+    bn_t inv_a = comp_m.inv(a, mod_t::inv_algo_e::SCR);
+    std::cout << "inv_a = " << inv_a << std::endl;
+    EXPECT_EQ(comp_m.mul(inv_a, a), 1);
+  }
+}
+
 }  // namespace

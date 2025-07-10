@@ -72,6 +72,9 @@ class converter_t {
   int get_size() const { return (int)(write ? offset : size); }
   int get_offset() const { return (int)offset; }
 
+  // Maximum number of elements allowed when (de)serializing a std::vector.
+  static constexpr uint32_t MAX_CONTAINER_ELEMENTS = 1 << 20;
+
   void convert(bool& value);
   void convert(uint8_t& value);
   void convert(uint16_t& value);
@@ -133,7 +136,13 @@ class converter_t {
     uint32_t count = (uint32_t)value.size();
     convert_len(count);
 
-    if (!write) value.resize(count);
+    if (!write) {
+      if (count > MAX_CONTAINER_ELEMENTS) {
+        set_error();
+        return;
+      }
+      value.resize(count);
+    }
     for (uint32_t i = 0; i < count && !is_error(); i++) {
       convert(value[i]);
     }

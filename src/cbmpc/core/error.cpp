@@ -386,7 +386,6 @@ dylog_disable_scope_t::dylog_disable_scope_t(bool enabled) {
   if (!enabled) thread_local_storage_log_disabled++;
 }
 dylog_disable_scope_t::~dylog_disable_scope_t() { thread_local_storage_log_disabled = ref_counter; }
-void disable_thread_local_storage_log() { thread_local_storage_log_disabled = 1; }
 
 void log_string_buf_t::put(const_char_ptr ptr) {
   int len = strlen(ptr);

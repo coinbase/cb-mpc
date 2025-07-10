@@ -17,7 +17,6 @@ static const int BN_FLG_FIXED_TOP = 0x10000;
 
 buf_t bn_to_buf(const BIGNUM* bn);
 buf_t bn_to_buf(const BIGNUM* bn, int size);
-void bn_to_mem(const BIGNUM* bn, mem_t mem);
 
 class mod_t;
 class paillier_t;

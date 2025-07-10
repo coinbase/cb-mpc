@@ -95,7 +95,7 @@ class FullOT2PBenchmark : public benchmark::Fixture {
   void SetUp(const ::benchmark::State& st) override {
     // Fix u = 256 (unused in these steps, but matching the prior test logic)
     m = static_cast<int>(st.range(0));
-    ot = std::make_unique<ot_protocol_pvw_ctx_t>(crypto::curve_secp256k1);
+    ot = std::make_unique<ot_protocol_pvw_ctx_t>();
     ot->base.sid = crypto::gen_random(16);
     curve = ot->base.curve;
     q = curve.order();
