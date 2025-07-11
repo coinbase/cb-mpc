@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752071930432,
+  "lastUpdate": 1752241167555,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -6468,6 +6468,468 @@ window.BENCHMARK_DATA = {
             "value": 297573.6519999828,
             "unit": "us/iter",
             "extra": "iterations: 2\ncpu: 297569.02099998685 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "87906c7fd12c82d5fd999036dbe8610743f2c8aa",
+          "message": "refactor: Crypto hardening and code cleanup (#36)\n\n- Removes numerous unused functions and code paths across the crypto modules (base, rsa, ec, ed25519).\n- Introduces input validation for deserializing containers (std::vector, bufs128_t) to guard against large allocation attacks.\n- Fixes an integer overflow vulnerability in the scr_inv modular inverse implementation.\n- Improves BN_CTX thread-local storage management by switching to scoped_ptr_t.\n- Strengthens the mod_t::coprime check by catching exceptions for non-invertible elements.\n- Adds a clear thread-safety warning to the main README.md.\n- Adds comprehensive unit tests for the coprime and scr_inv logic.",
+          "timestamp": "2025-07-11T06:00:50-07:00",
+          "tree_id": "8110280b666e0e9c1efc842ce35e49dbfa20eee5",
+          "url": "https://github.com/coinbase/cb-mpc/commit/87906c7fd12c82d5fd999036dbe8610743f2c8aa"
+        },
+        "date": 1752241166692,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "ZK/Batch-DL/Prover/3/1",
+            "value": 1380.834061386183,
+            "unit": "us/iter",
+            "extra": "iterations: 505\ncpu: 1380.8051920792082 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/4/1",
+            "value": 1276.4823599999627,
+            "unit": "us/iter",
+            "extra": "iterations: 550\ncpu: 1276.251750909091 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/3/4",
+            "value": 1776.0620773196465,
+            "unit": "us/iter",
+            "extra": "iterations: 388\ncpu: 1775.9241984536077 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/4/4",
+            "value": 1668.3353723154246,
+            "unit": "us/iter",
+            "extra": "iterations: 419\ncpu: 1668.0156467780432 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/3/16",
+            "value": 4167.362875000164,
+            "unit": "us/iter",
+            "extra": "iterations: 168\ncpu: 4167.070333333332 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/4/16",
+            "value": 4131.1422215574585,
+            "unit": "us/iter",
+            "extra": "iterations: 167\ncpu: 4130.5035748503 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/3/64",
+            "value": 12833.157280702406,
+            "unit": "us/iter",
+            "extra": "iterations: 57\ncpu: 12832.876403508775 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/4/64",
+            "value": 13172.079018869346,
+            "unit": "us/iter",
+            "extra": "iterations: 53\ncpu: 13170.422245283016 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/3/1",
+            "value": 1475.3057157676196,
+            "unit": "us/iter",
+            "extra": "iterations: 482\ncpu: 1475.2516307053963 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/4/1",
+            "value": 6651.483633928836,
+            "unit": "us/iter",
+            "extra": "iterations: 112\ncpu: 6650.978401785714 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/3/4",
+            "value": 2230.823025723483,
+            "unit": "us/iter",
+            "extra": "iterations: 311\ncpu: 2230.5623151125415 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/4/4",
+            "value": 14784.295829790704,
+            "unit": "us/iter",
+            "extra": "iterations: 47\ncpu: 14782.586723404265 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/3/16",
+            "value": 5609.164562500268,
+            "unit": "us/iter",
+            "extra": "iterations: 128\ncpu: 5608.364343749991 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/4/16",
+            "value": 49026.41442856748,
+            "unit": "us/iter",
+            "extra": "iterations: 14\ncpu: 49025.35664285715 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/3/64",
+            "value": 28348.458159998703,
+            "unit": "us/iter",
+            "extra": "iterations: 25\ncpu: 28345.751519999994 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/4/64",
+            "value": 274834.2623332671,
+            "unit": "us/iter",
+            "extra": "iterations: 3\ncpu: 274802.66599999997 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/ValidPaillier-Int/V1",
+            "value": 0.7665532819141212,
+            "unit": "us/iter",
+            "extra": "iterations: 912242\ncpu: 0.7664614247096705 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/ValidPaillier-Int/P2",
+            "value": 9743.093444443375,
+            "unit": "us/iter",
+            "extra": "iterations: 72\ncpu: 9742.395416666659 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/ValidPaillier-Int/Verify",
+            "value": 9238.883200002118,
+            "unit": "us/iter",
+            "extra": "iterations: 75\ncpu: 9238.306213333279 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero-Int/P1",
+            "value": 33305.000809529396,
+            "unit": "us/iter",
+            "extra": "iterations: 21\ncpu: 33303.23047619051 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero-Int/V2",
+            "value": 3.048810948076546,
+            "unit": "us/iter",
+            "extra": "iterations: 230762\ncpu: 3.0482576117385083 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero-Int/P3",
+            "value": 352.1254724171981,
+            "unit": "us/iter",
+            "extra": "iterations: 1994\ncpu: 352.0724563691106 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero-Int/Verify",
+            "value": 35151.483599997846,
+            "unit": "us/iter",
+            "extra": "iterations: 20\ncpu: 35150.52109999956 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual-Int/P1",
+            "value": 35635.04264999438,
+            "unit": "us/iter",
+            "extra": "iterations: 20\ncpu: 35633.61300000025 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual-Int/V2",
+            "value": 0.8538700517015592,
+            "unit": "us/iter",
+            "extra": "iterations: 828214\ncpu: 0.8537604169936912 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual-Int/P3",
+            "value": 704.6408732391649,
+            "unit": "us/iter",
+            "extra": "iterations: 994\ncpu: 704.6119466800852 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual-Int/Verify",
+            "value": 73801.62555556226,
+            "unit": "us/iter",
+            "extra": "iterations: 9\ncpu: 73789.54522222457 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/P1/3",
+            "value": 129859.6978000205,
+            "unit": "us/iter",
+            "extra": "iterations: 5\ncpu: 129835.9784000013 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/P1/4",
+            "value": 129777.65999994517,
+            "unit": "us/iter",
+            "extra": "iterations: 5\ncpu: 129774.17939999895 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/V2/3",
+            "value": 0.7696908597450285,
+            "unit": "us/iter",
+            "extra": "iterations: 908979\ncpu: 0.7696467586159895 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/V2/4",
+            "value": 0.7704230016616812,
+            "unit": "us/iter",
+            "extra": "iterations: 908630\ncpu: 0.7703645246139608 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/P3/3",
+            "value": 5.709087795404327,
+            "unit": "us/iter",
+            "extra": "iterations: 131852\ncpu: 5.70843218912118 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/P3/4",
+            "value": 6.742356299335683,
+            "unit": "us/iter",
+            "extra": "iterations: 97550\ncpu: 6.741356801640164 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/Verify/3",
+            "value": 5.130498673697222,
+            "unit": "us/iter",
+            "extra": "iterations: 123652\ncpu: 5.130128271277537 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/Verify/4",
+            "value": 7.458470007557916,
+            "unit": "us/iter",
+            "extra": "iterations: 123081\ncpu: 7.458040794273692 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/P1/3",
+            "value": 20485.488264699492,
+            "unit": "us/iter",
+            "extra": "iterations: 34\ncpu: 20483.674411765078 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/P1/4",
+            "value": 20505.059441173966,
+            "unit": "us/iter",
+            "extra": "iterations: 34\ncpu: 20501.057764706125 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/V2/3",
+            "value": 0.9046341099954842,
+            "unit": "us/iter",
+            "extra": "iterations: 777086\ncpu: 0.9044774413642845 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/V2/4",
+            "value": 0.9030877874761494,
+            "unit": "us/iter",
+            "extra": "iterations: 771978\ncpu: 0.9030228542782288 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/P3/3",
+            "value": 353.13357416757583,
+            "unit": "us/iter",
+            "extra": "iterations: 1982\ncpu: 353.0988567103963 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/P3/4",
+            "value": 354.24187967646,
+            "unit": "us/iter",
+            "extra": "iterations: 1978\ncpu: 354.0764504550319 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/Verifier/3",
+            "value": 43834.125312514516,
+            "unit": "us/iter",
+            "extra": "iterations: 16\ncpu: 43829.95143749824 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/Verifier/4",
+            "value": 43808.58037498569,
+            "unit": "us/iter",
+            "extra": "iterations: 16\ncpu: 43803.55049999807 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/DL/Prover/3",
+            "value": 1013.7353909880043,
+            "unit": "us/iter",
+            "extra": "iterations: 688\ncpu: 1013.6484549417975 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/DL/Prover/4",
+            "value": 934.4509156630281,
+            "unit": "us/iter",
+            "extra": "iterations: 747\ncpu: 934.2664658634466 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/DL/Verify/3",
+            "value": 772.9872929512727,
+            "unit": "us/iter",
+            "extra": "iterations: 908\ncpu: 772.9150198237685 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/DL/Verify/4",
+            "value": 4509.8782645166675,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4509.12287741953 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/DH/Prove/3",
+            "value": 77.71895783998674,
+            "unit": "us/iter",
+            "extra": "iterations: 9037\ncpu: 77.70917837777613 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/DH/Verify/3",
+            "value": 139.36635994424637,
+            "unit": "us/iter",
+            "extra": "iterations: 5023\ncpu: 139.35276727054955 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalCom/Prover/3",
+            "value": 2782.724374502645,
+            "unit": "us/iter",
+            "extra": "iterations: 251\ncpu: 2782.305430278745 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalCom/Verify/3",
+            "value": 1081.2459383665268,
+            "unit": "us/iter",
+            "extra": "iterations: 649\ncpu: 1081.2239845916426 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalPubShareEqual/Prover/3",
+            "value": 78.40881170711924,
+            "unit": "us/iter",
+            "extra": "iterations: 8986\ncpu: 78.40374872022723 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalPubShareEqual/Verify/3",
+            "value": 143.08327601069007,
+            "unit": "us/iter",
+            "extra": "iterations: 4873\ncpu: 143.07798727683578 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalComMult/Prover/3",
+            "value": 256.21118676460407,
+            "unit": "us/iter",
+            "extra": "iterations: 2720\ncpu: 256.17247867647063 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalComMult/Verify/3",
+            "value": 369.36551519906885,
+            "unit": "us/iter",
+            "extra": "iterations: 1908\ncpu: 369.357976415093 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/UCElGamalComMultPrivScalar/Prover/3",
+            "value": 4302.176087500698,
+            "unit": "us/iter",
+            "extra": "iterations: 160\ncpu: 4301.618775000194 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/UCElGamalComMultPrivScalar/Verify/3",
+            "value": 1004.5223419538893,
+            "unit": "us/iter",
+            "extra": "iterations: 696\ncpu: 1004.4518060344698 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/ValidPaillier/Prover",
+            "value": 23458.483866670576,
+            "unit": "us/iter",
+            "extra": "iterations: 30\ncpu: 23456.73510000097 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/ValidPaillier/Verify",
+            "value": 22644.99309677053,
+            "unit": "us/iter",
+            "extra": "iterations: 31\ncpu: 22643.87058064512 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero/Prover",
+            "value": 92717.23575000124,
+            "unit": "us/iter",
+            "extra": "iterations: 8\ncpu: 92708.25849999653 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero/Verify",
+            "value": 87896.13800001916,
+            "unit": "us/iter",
+            "extra": "iterations: 8\ncpu: 87891.02637500434 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual/Prover",
+            "value": 90875.64374999602,
+            "unit": "us/iter",
+            "extra": "iterations: 8\ncpu: 90858.98400000048 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual/Verify",
+            "value": 184251.46525009949,
+            "unit": "us/iter",
+            "extra": "iterations: 4\ncpu: 184243.53275000272 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersen/Prover/3",
+            "value": 331738.44349994394,
+            "unit": "us/iter",
+            "extra": "iterations: 2\ncpu: 331725.9609999894 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersen/Verify/3",
+            "value": 17442.287724998096,
+            "unit": "us/iter",
+            "extra": "iterations: 40\ncpu: 17440.736474999598 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq/Prover/3",
+            "value": 48062.484599995514,
+            "unit": "us/iter",
+            "extra": "iterations: 15\ncpu: 48058.09880000046 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq/Verify/3",
+            "value": 98833.403000039,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 98821.4168571387 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierRangeExpSlack/Prover/3",
+            "value": 382563.0689998434,
+            "unit": "us/iter",
+            "extra": "iterations: 2\ncpu: 382507.3120000013 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierRangeExpSlack/Verify/3",
+            "value": 117126.24749998213,
+            "unit": "us/iter",
+            "extra": "iterations: 6\ncpu: 117113.22599999601 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PDL/Prover",
+            "value": 387219.9254999487,
+            "unit": "us/iter",
+            "extra": "iterations: 2\ncpu: 387171.5859999938 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/PDL/Verify",
+            "value": 127610.34159993869,
+            "unit": "us/iter",
+            "extra": "iterations: 5\ncpu: 127599.47399999874 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/UnknownOrderDL/Prove",
+            "value": 296738.56649992557,
+            "unit": "us/iter",
+            "extra": "iterations: 2\ncpu: 296729.9314999821 us\nthreads: 1"
+          },
+          {
+            "name": "ZK/UnknownOrderDL/Verify",
+            "value": 297374.0835000172,
+            "unit": "us/iter",
+            "extra": "iterations: 2\ncpu: 297366.45799999905 us\nthreads: 1"
           }
         ]
       }
