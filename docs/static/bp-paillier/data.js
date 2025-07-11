@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752071928643,
+  "lastUpdate": 1752241165297,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -924,6 +924,72 @@ window.BENCHMARK_DATA = {
             "value": 8320.895285713787,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8320.114023809516 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "87906c7fd12c82d5fd999036dbe8610743f2c8aa",
+          "message": "refactor: Crypto hardening and code cleanup (#36)\n\n- Removes numerous unused functions and code paths across the crypto modules (base, rsa, ec, ed25519).\n- Introduces input validation for deserializing containers (std::vector, bufs128_t) to guard against large allocation attacks.\n- Fixes an integer overflow vulnerability in the scr_inv modular inverse implementation.\n- Improves BN_CTX thread-local storage management by switching to scoped_ptr_t.\n- Strengthens the mod_t::coprime check by catching exceptions for non-invertible elements.\n- Adds a clear thread-safety warning to the main README.md.\n- Adds comprehensive unit tests for the coprime and scr_inv logic.",
+          "timestamp": "2025-07-11T06:00:50-07:00",
+          "tree_id": "8110280b666e0e9c1efc842ce35e49dbfa20eee5",
+          "url": "https://github.com/coinbase/cb-mpc/commit/87906c7fd12c82d5fd999036dbe8610743f2c8aa"
+        },
+        "date": 1752241164448,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 62199.445600003855,
+            "unit": "us/iter",
+            "extra": "iterations: 10\ncpu: 62197.76250000001 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4510.910638710782,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4510.764703225806 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8575.980914634429,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8575.016109756098 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4513.576200000193,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4513.554290322583 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.125948061621774,
+            "unit": "us/iter",
+            "extra": "iterations: 63094\ncpu: 11.12464784290106 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.874430180180338,
+            "unit": "us/iter",
+            "extra": "iterations: 54168\ncpu: 12.87335893885689 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8318.606166667343,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8317.422797619045 us\nthreads: 1"
           }
         ]
       }
