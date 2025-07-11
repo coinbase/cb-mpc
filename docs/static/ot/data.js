@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752071932286,
+  "lastUpdate": 1752241169778,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -588,6 +588,48 @@ window.BENCHMARK_DATA = {
             "value": 13810.09496078025,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13809.47062745098 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "87906c7fd12c82d5fd999036dbe8610743f2c8aa",
+          "message": "refactor: Crypto hardening and code cleanup (#36)\n\n- Removes numerous unused functions and code paths across the crypto modules (base, rsa, ec, ed25519).\n- Introduces input validation for deserializing containers (std::vector, bufs128_t) to guard against large allocation attacks.\n- Fixes an integer overflow vulnerability in the scr_inv modular inverse implementation.\n- Improves BN_CTX thread-local storage management by switching to scoped_ptr_t.\n- Strengthens the mod_t::coprime check by catching exceptions for non-invertible elements.\n- Adds a clear thread-safety warning to the main README.md.\n- Adds comprehensive unit tests for the coprime and scr_inv logic.",
+          "timestamp": "2025-07-11T06:00:50-07:00",
+          "tree_id": "8110280b666e0e9c1efc842ce35e49dbfa20eee5",
+          "url": "https://github.com/coinbase/cb-mpc/commit/87906c7fd12c82d5fd999036dbe8610743f2c8aa"
+        },
+        "date": 1752241168945,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24505.776000004127,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24503.125000000004 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 99270.55114284095,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 99267.31857142856 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13848.423509800483,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13846.580705882352 us\nthreads: 1"
           }
         ]
       }
