@@ -257,9 +257,17 @@ func expandBenchmarkExpansions(b *Benchmark, allBenches map[string]BenchmarkData
 			}
 			p1OutputRoundBench := processCell(allBenches, &t.P1OutputRound)
 			p2OutputRoundBench := processCell(allBenches, &t.P2OutputRound)
-			p1Total := p1OutputRoundBench.RealTime
-			p2Total := p2OutputRoundBench.RealTime
-			rawUnit := p1OutputRoundBench.TimeUnit
+			p1Total := 0.0
+			p2Total := 0.0
+			rawUnit := ""
+			if p1OutputRoundBench != nil {
+				p1Total = p1OutputRoundBench.RealTime
+				rawUnit = p1OutputRoundBench.TimeUnit
+			}
+			if p2OutputRoundBench != nil {
+				p2Total = p2OutputRoundBench.RealTime
+				rawUnit = p2OutputRoundBench.TimeUnit
+			}
 			for i := 1; i <= nRounds; i++ {
 				t.P1Times[i-1] = Cell{Source: fmt.Sprintf("%s/%d/1%s", exp2pc.ProtocolName, i, exp2pc.Variants[varI]), ValueType: exp2pc.Unit}
 				t.P2Times[i-1] = Cell{Source: fmt.Sprintf("%s/%d/2%s", exp2pc.ProtocolName, i, exp2pc.Variants[varI]), ValueType: exp2pc.Unit}
@@ -272,8 +280,12 @@ func expandBenchmarkExpansions(b *Benchmark, allBenches map[string]BenchmarkData
 				} else {
 					t.Msgs[i-1].Value = "→" + t.Msgs[i-1].Value
 				}
-				p1Total += p1bench.RealTime
-				p2Total += p2bench.RealTime
+				if p1bench != nil {
+					p1Total += p1bench.RealTime
+				}
+				if p2bench != nil {
+					p2Total += p2bench.RealTime
+				}
 			}
 			convertedP1Total, err := convertTime(rawUnit, exp2pc.Unit, p1Total)
 			if err != nil {

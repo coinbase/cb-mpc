@@ -12,8 +12,8 @@ benchmarks:
         key_prefix: "Core/EC"
         header_row_strings: ["Operation \\ Curve", "secp256k1", "Ed25519"]
         column_keys: ["secp256k1", "Ed25519"]
-        header_column_strings: ["Add", "Multiply", "Multiply Generator", "MulAdd"]
-        row_keys: ["Add", "Multiply", "Multiply_G", "MulAdd"]
+        header_column_strings: ["Add", "Add (Constant Time)", "Multiply", "Multiply (Variable Time)", "Multiply Generator", "Multipliply Generator (Variable Time)", "MulAdd"]
+        row_keys: ["Add", "Add_CT", "Multiply", "Multiply_VT", "Multiply_G", "Multiply_G_VT", "MulAdd"]
         unit: "us"
   - category: "Crypto -- Symmetric"
     expansions:
@@ -534,7 +534,7 @@ benchmarks:
         row_keys: ["vencrypt", "vencrypt-batch", "vencrypt-batch", "vencrypt", "vencrypt-batch", "vencrypt-batch", "vencrypt-batch-many"]
         row_keys2: ["0", "0/4", "0/16", "1", "1/4", "1/16", ""]
         unit: "ms"
-  - category: "OT (Oblivious Transfer)"
+  - category: "Base OT (Oblivious Transfer)"
     expansions:
       - name: "Base OT"
         key_prefix: "MPC/OT/BaseOT"
@@ -543,13 +543,15 @@ benchmarks:
         header_column_strings: ["Step 1 (R → S)", "Step 2 (S → R)", "Step 3 (R output)"]
         row_keys: ["Step1_R2S", "Step2_S2R", "OutputR"]
         unit: "ms"
-      - name: "Full OT (Base OT + OT Extension), 256 Base OTs"
-        key_prefix: "MPC/OT/FullOT"
-        header_row_strings: ["Number of OTs", "2048", "4096", "65536"]
-        column_keys: ["2048", "4096", "65536"]
-        header_column_strings: ["Step 1 (S → R)", "Step 2 (R → S)", "Step 3 (S → R)", "Step 4 (R output)"]
-        row_keys: ["Step1_S2R", "Step2_R2S", "Step3_S2R", "OutputR"]
+  - category: "Full OT (Oblivious Transfer)"
+    expansions2pc:
+      - name: "Starts with 256 Base OTs, then extends"
+        protocol_name: "Full-OT-2P"
+        n_rounds: 3
         unit: "ms"
+        msg_unit: "MB"
+        variants: ["/2048", "/4096", "/65536"]
+        variant_names: ["2048 OTs ", "4096 OTs ", "65536 OTs "]
   - category: "2PC - Agree Random / Sid Generation"
     expansions2pc:
       - name: "Agree Random"
