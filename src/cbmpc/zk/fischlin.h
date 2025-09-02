@@ -35,6 +35,7 @@ uint32_t hash32bit_for_zk_fischlin(mem_t common_hash, int i, int j, BN_TS&... zs
 
   unsigned int hash_len = 0;
   EVP_DigestFinal(ctx, temp, &hash_len);
+  EVP_MD_CTX_free(ctx);
   return coinbase::be_get_4(temp);
 }
 
