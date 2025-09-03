@@ -100,6 +100,7 @@ class callback_data_transport_t : public data_transport_interface_t {
   }
 
   error_t receive(const party_idx_t sender, mem_t& msg) override {
+    msg.owned = true;
     return error_t(callbacks.receive_fun(go_impl_ptr, sender, &msg.data, &msg.size));
   }
 
@@ -132,7 +133,7 @@ class callback_data_transport_t : public data_transport_interface_t {
     msgs.clear();
     msgs.reserve(n);
     for (int i = 0; i < n; ++i) {
-      msgs.emplace_back(c_messages[i], c_sizes[i]);
+      msgs.emplace_back(c_messages[i], c_sizes[i], true);
     }
 
     return SUCCESS;

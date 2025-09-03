@@ -39,6 +39,8 @@ error_t job_mp_t::receive_from_parties(party_set_t set, std::vector<buf_t>& v) {
   for (int i = 0; i < n_parties; i++) {
     if (!set.has(i)) continue;
     v[i] = outs[n];
+    // free external allocated memory
+    outs[n].free_ext_allocation();
     n++;
   }
   return SUCCESS;

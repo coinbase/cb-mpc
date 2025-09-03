@@ -229,6 +229,9 @@ class job_mp_t {
 
     if (rv = deser(mem, msgs...)) return rv;
 
+    // free external allocated memory
+    mem.free_ext_allocation();
+
     return SUCCESS;
   }
 

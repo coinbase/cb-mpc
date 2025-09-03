@@ -37,13 +37,17 @@ class converter_t;
 struct mem_t {
   byte_ptr data;
   int size;
-  mem_t() noexcept(true) : data(0), size(0) {}
-  mem_t(const_byte_ptr the_data, int the_size) noexcept(true) : data(byte_ptr(the_data)), size(the_size) {}
-  mem_t(cmem_t cmem) noexcept(true) : data(cmem.data), size(cmem.size) {}
+  bool owned;
+  mem_t() noexcept(true) : data(0), size(0), owned(false) {}
+  mem_t(const_byte_ptr the_data, int the_size) noexcept(true)
+      : data(byte_ptr(the_data)), size(the_size), owned(false) {}
+  mem_t(const_byte_ptr the_data, int the_size, bool the_owned) noexcept(true)
+      : data(byte_ptr(the_data)), size(the_size), owned(the_owned) {}
+  mem_t(cmem_t cmem) noexcept(true) : data(cmem.data), size(cmem.size), owned(false) {}
 
-  mem_t(const std::string& s) noexcept(true) : data(byte_ptr(s.data())), size(int(s.size())) {}
+  mem_t(const std::string& s) noexcept(true) : data(byte_ptr(s.data())), size(int(s.size())), owned(false) {}
   template <size_t N>
-  mem_t(const char (&s)[N]) : data(byte_ptr(s)), size(N) {
+  mem_t(const char (&s)[N]) : data(byte_ptr(s)), size(N), owned(false) {
     if (N > 0 && s[N - 1] == '\0') size--;  // zero-terminated
   }
 
@@ -74,6 +78,16 @@ struct mem_t {
 
   size_t non_crypto_hash() const;
   std::string to_string() const;
+
+  // helper function for freeing external memory allocations
+  void free_ext_allocation() {
+    if (owned && data) {
+      free(data);
+      size = 0;
+      owned = false;
+      data = nullptr;
+    }
+  }
 
  private:
   static bool equal(mem_t m1, mem_t m2);
