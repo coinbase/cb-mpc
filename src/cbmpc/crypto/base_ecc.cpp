@@ -5,6 +5,7 @@
 
 #include "base_ecc_secp256k1.h"
 #include "base_eddsa.h"
+#include "base_pki.h"
 #include "ec25519_core.h"
 
 namespace coinbase::crypto {
@@ -980,76 +981,6 @@ error_t ecdsa_signature_t::recover_pub_key(mem_t in, int recovery_code, ecc_poin
   bn_t r_inv = q.inv(r);
   pub_key = r_inv * (s * R - e * G);
   return SUCCESS;
-}
-
-// --------------------------- ecies -----------------------
-void ecies_ciphertext_t::convert(coinbase::converter_t& converter) {
-  E.convert_fixed_curve(converter, curve_p256);
-  converter.convert(iv);
-  converter.convert(encrypted);
-}
-
-error_t ecies_ciphertext_t::from_bin(mem_t mem) const {
-  error_t rv = UNINITIALIZED_ERROR;
-  coinbase::converter_t converter(mem);
-  const_cast<ecies_ciphertext_t*>(this)->convert(converter);
-  if (rv = converter.get_rv()) return rv;
-  if (converter.get_offset() != mem.size) {
-    return coinbase::error(E_FORMAT);
-  }
-  return SUCCESS;
-}
-
-int ecies_ciphertext_t::get_bin_size(int plaintext_size)  // static
-{
-  return curve_p256.compressed_point_bin_size() + iv_size + buf_t::get_convert_size(plaintext_size + tag_size);
-}
-
-error_t ecies_ciphertext_t::encrypt(const ecc_point_t& pub_key, mem_t aad, mem_t plain, drbg_aes_ctr_t* drbg) {
-  const mod_t& q = curve_p256.order();
-  bn_t e = drbg ? drbg->gen_bn(curve_p256.order()) : bn_t::rand(q);
-  buf_t iv = drbg ? drbg->gen(ecies_ciphertext_t::iv_size) : gen_random(iv_size);
-  return encrypt(pub_key, aad, e, iv, plain);
-}
-
-error_t ecies_ciphertext_t::encrypt(const ecc_point_t& pub_key, mem_t aad, const bn_t& e, mem_t _iv, mem_t plain) {
-  cb_assert(_iv.size == iv_size);
-  memmove(iv, _iv.data, iv_size);
-
-  const auto& G = curve_p256.generator();
-  E = e * G;
-
-  buf_t secret = (e * pub_key).get_x().to_bin(32);
-  buf_t aes_key = crypto::sha256_t::hash(secret);
-  aes_gcm_t::encrypt(aes_key, _iv, aad, tag_size, plain, encrypted);
-  return SUCCESS;
-}
-
-error_t ecies_ciphertext_t::decrypt(const ecdh_t& ecdh, mem_t encrypted, mem_t aad, buf_t& decrypted)  // static
-{
-  error_t rv = UNINITIALIZED_ERROR;
-  ecies_ciphertext_t ecies;
-  if (rv = coinbase::convert(ecies, encrypted)) return rv;
-  return ecies.decrypt(ecdh, aad, decrypted);
-}
-
-error_t ecies_ciphertext_t::decrypt(const ecdh_t& ecdh, mem_t aad, buf_t& decrypted) {
-  buf_t secret;
-  error_t rv = ecdh.execute(E, secret);
-  if (rv) return rv;
-  if (rv = decrypt_end(aad, secret, decrypted)) return rv;
-  return SUCCESS;
-}
-
-error_t ecies_ciphertext_t::decrypt_begin(buf_t& enc_info) const {
-  enc_info = E.to_oct();
-  return SUCCESS;
-}
-
-error_t ecies_ciphertext_t::decrypt_end(mem_t aad, mem_t shared_secret, buf_t& out) const {
-  if (shared_secret.size != 32) return coinbase::error(E_BADARG);
-  buf_t aes_key = crypto::sha256_t::hash(shared_secret);
-  return aes_gcm_t::decrypt(aes_key, mem_t(iv, iv_size), aad, tag_size, encrypted, out);
 }
 
 // -------------------------------- ecdh_t ----------------------

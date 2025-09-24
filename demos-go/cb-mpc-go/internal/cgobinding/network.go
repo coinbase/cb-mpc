@@ -16,9 +16,9 @@ import (
 #include <string.h>
 #include "network.h"
 
-extern int callback_send(void*, int, uint8_t*, int);
-extern int callback_receive(void*, int, uint8_t**, int*);
-extern int callback_receive_all(void*, int*, int, uint8_t**, int*);
+extern int callback_send(void*, int, cmem_t);
+extern int callback_receive(void*, int, cmem_t*);
+extern int callback_receive_all(void*, int*, int, cmems_t*);
 
 static void set_callbacks(data_transport_callbacks_t* dt_callbacks)
 {
@@ -107,7 +107,7 @@ func GetDTImpl(ptr unsafe.Pointer) (any, error) {
 var callbacks C.data_transport_callbacks_t
 
 //export callback_send
-func callback_send(ptr unsafe.Pointer, receiver C.int, message *C.uint8_t, message_size C.int) C.int {
+func callback_send(ptr unsafe.Pointer, receiver C.int, message C.cmem_t) C.int {
 	dtImpl, err := GetDTImpl(ptr)
 	if err != nil {
 		return C.int(NetworkError)
@@ -119,8 +119,8 @@ func callback_send(ptr unsafe.Pointer, receiver C.int, message *C.uint8_t, messa
 	}
 
 	var goBytes []byte
-	if message_size > 0 && message != nil {
-		goBytes = C.GoBytes(unsafe.Pointer(message), message_size)
+	if message.size > 0 && message.data != nil {
+		goBytes = C.GoBytes(unsafe.Pointer(message.data), message.size)
 	}
 
 	if err := (*transport).MessageSend(context.Background(), int(receiver), goBytes); err != nil {
@@ -131,7 +131,7 @@ func callback_send(ptr unsafe.Pointer, receiver C.int, message *C.uint8_t, messa
 }
 
 //export callback_receive
-func callback_receive(ptr unsafe.Pointer, sender C.int, message **C.uint8_t, messageSize *C.int) C.int {
+func callback_receive(ptr unsafe.Pointer, sender C.int, message *C.cmem_t) C.int {
 	dtImpl, err := GetDTImpl(ptr)
 	if err != nil {
 		return C.int(NetworkError)
@@ -147,16 +147,16 @@ func callback_receive(ptr unsafe.Pointer, sender C.int, message **C.uint8_t, mes
 		return C.int(NetworkError)
 	}
 
-	*messageSize = C.int(len(received))
+	message.size = C.int(len(received))
 	if len(received) > 0 {
 		buf := C.malloc(C.size_t(len(received)))
 		if buf == nil {
 			return C.int(NetworkMemoryError)
 		}
 		C.memcpy(buf, unsafe.Pointer(&received[0]), C.size_t(len(received)))
-		*message = (*C.uint8_t)(buf)
+		message.data = (*C.uint8_t)(buf)
 	} else {
-		*message = nil
+		message.data = nil
 	}
 
 	return C.int(NetworkSuccess)
@@ -184,7 +184,7 @@ func arrSetBytePtrC(arr unsafe.Pointer, index int, value unsafe.Pointer) {
 }
 
 //export callback_receive_all
-func callback_receive_all(ptr unsafe.Pointer, senders *C.int, senderCount C.int, messages **C.uint8_t, messageSizes *C.int) C.int {
+func callback_receive_all(ptr unsafe.Pointer, senders *C.int, senderCount C.int, messages *C.cmems_t) C.int {
 	dtImpl, err := GetDTImpl(ptr)
 	if err != nil {
 		return C.int(NetworkError)
@@ -197,6 +197,9 @@ func callback_receive_all(ptr unsafe.Pointer, senders *C.int, senderCount C.int,
 
 	count := int(senderCount)
 	if count == 0 {
+		messages.count = 0
+		messages.data = nil
+		messages.sizes = nil
 		return C.int(NetworkSuccess)
 	}
 
@@ -214,19 +217,40 @@ func callback_receive_all(ptr unsafe.Pointer, senders *C.int, senderCount C.int,
 		return C.int(NetworkError)
 	}
 
+	// Build flattened cmems_t
+	total := 0
 	for i := 0; i < count; i++ {
-		arrSetIntC(unsafe.Pointer(messageSizes), i, len(received[i]))
-		if len(received[i]) > 0 {
-			buf := C.malloc(C.size_t(len(received[i])))
-			if buf == nil {
-				return C.int(NetworkMemoryError)
-			}
-			C.memcpy(buf, unsafe.Pointer(&received[i][0]), C.size_t(len(received[i])))
-			arrSetBytePtrC(unsafe.Pointer(messages), i, buf)
-		} else {
-			arrSetBytePtrC(unsafe.Pointer(messages), i, nil)
+		total += len(received[i])
+	}
+
+	var dataPtr unsafe.Pointer
+	if total > 0 {
+		dataPtr = C.malloc(C.size_t(total))
+		if dataPtr == nil {
+			return C.int(NetworkMemoryError)
 		}
 	}
+
+	sizesPtr := C.malloc(C.size_t(count) * C.size_t(cIntSize))
+	if sizesPtr == nil && count > 0 {
+		if dataPtr != nil {
+			C.free(dataPtr)
+		}
+		return C.int(NetworkMemoryError)
+	}
+
+	offset := 0
+	for i := 0; i < count; i++ {
+		arrSetIntC(sizesPtr, i, len(received[i]))
+		if len(received[i]) > 0 {
+			C.memcpy(unsafe.Pointer(uintptr(dataPtr)+uintptr(offset)), unsafe.Pointer(&received[i][0]), C.size_t(len(received[i])))
+			offset += len(received[i])
+		}
+	}
+
+	messages.count = C.int(count)
+	messages.data = (*C.uint8_t)(dataPtr)
+	messages.sizes = (*C.int)(sizesPtr)
 
 	return C.int(NetworkSuccess)
 }
@@ -347,29 +371,32 @@ func (j *Job2P) Message(sender, receiver int, msg []byte) ([]byte, error) {
 	}
 
 	if j.IsRoleIndex(sender) {
-		var message *C.uint8_t
+		var cmsg C.cmem_t
 		if len(msg) > 0 {
-			message = (*C.uint8_t)(&msg[0])
+			cmsg.data = (*C.uint8_t)(&msg[0])
+			cmsg.size = C.int(len(msg))
+		} else {
+			cmsg.data = nil
+			cmsg.size = 0
 		}
-		cErr := C.mpc_2p_send(j.cJob, C.int(receiver), message, C.int(len(msg)))
+		cErr := C.mpc_2p_send(j.cJob, C.int(receiver), cmsg)
 		if cErr != NetworkSuccess {
 			return nil, fmt.Errorf("2p send failed: error code %d", cErr)
 		}
 		return msg, nil
 	} else if j.IsRoleIndex(receiver) {
-		var message *C.uint8_t
-		var messageSize C.int
-		cErr := C.mpc_2p_receive(j.cJob, C.int(sender), &message, &messageSize)
+		var cmsg C.cmem_t
+		cErr := C.mpc_2p_receive(j.cJob, C.int(sender), &cmsg)
 		if cErr != NetworkSuccess {
 			return nil, fmt.Errorf("2p receive failed: error code %d", cErr)
 		}
 
-		if message == nil || messageSize == 0 {
+		if cmsg.data == nil || cmsg.size == 0 {
 			return []byte{}, nil
 		}
 
-		result := C.GoBytes(unsafe.Pointer(message), messageSize)
-		C.free(unsafe.Pointer(message))
+		result := C.GoBytes(unsafe.Pointer(cmsg.data), cmsg.size)
+		C.free(unsafe.Pointer(cmsg.data))
 		return result, nil
 	}
 

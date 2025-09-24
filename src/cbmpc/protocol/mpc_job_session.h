@@ -16,15 +16,17 @@ class parallel_data_transport_t : public data_transport_interface_t {
   }
 
   error_t send(const party_idx_t receiver, const parallel_id_t parallel_id, const mem_t msg);
-  error_t receive(const party_idx_t sender, const parallel_id_t parallel_id, mem_t& msg);
-  error_t receive_all(const std::vector<party_idx_t>& senders, parallel_id_t parallel_id, std::vector<mem_t>& msgs);
+  error_t receive(const party_idx_t sender, const parallel_id_t parallel_id, buf_t& msg);
+  error_t receive_all(const std::vector<party_idx_t>& senders, parallel_id_t parallel_id, std::vector<buf_t>& msgs);
 
   // data_transport_interface_t overrides using jsid 0
-  error_t send(const party_idx_t receiver, const mem_t& msg) override { return send(receiver, 0, msg); }
-  error_t receive(const party_idx_t sender, mem_t& msg) override { return receive(sender, 0, msg); }
-  error_t receive_all(const std::vector<party_idx_t>& senders, std::vector<mem_t>& msgs) override {
+  error_t send(const party_idx_t receiver, mem_t msg) override { return send(receiver, 0, msg); }
+  error_t receive(const party_idx_t sender, buf_t& msg) override { return receive(sender, 0, msg); }
+  error_t receive_all(const std::vector<party_idx_t>& senders, std::vector<buf_t>& msgs) override {
     return receive_all(senders, 0, msgs);
   }
+
+  // (legacy mem_t interface removed)
 
   void set_parallel(int _parallel_count);
 
@@ -80,13 +82,13 @@ class job_parallel_mp_t : public job_mp_t {
     return network->send(to, parallel_id, msg);
   }
 
-  error_t receive_impl(party_idx_t from, mem_t& mem) override {
+  error_t receive_impl(party_idx_t from, buf_t& mem) override {
     auto network = std::static_pointer_cast<parallel_data_transport_t>(transport_ptr);
     if (!network) return E_NET_GENERAL;
     return network->receive(from, parallel_id, mem);
   }
 
-  error_t receive_many_impl(std::vector<party_idx_t> from_set, std::vector<mem_t>& outs) override {
+  error_t receive_many_impl(std::vector<party_idx_t> from_set, std::vector<buf_t>& outs) override {
     auto network = std::static_pointer_cast<parallel_data_transport_t>(transport_ptr);
     if (!network) return E_NET_GENERAL;
     return network->receive_all(from_set, parallel_id, outs);
@@ -135,7 +137,7 @@ class job_parallel_2p_t : public job_2p_t {
     if (!network) return E_NET_GENERAL;
     return network->send(to, parallel_id, msg);
   }
-  error_t receive_impl(party_idx_t from, mem_t& mem) override {
+  error_t receive_impl(party_idx_t from, buf_t& mem) override {
     auto network = std::static_pointer_cast<parallel_data_transport_t>(transport_ptr);
     if (!network) return E_NET_GENERAL;
     return network->receive(from, parallel_id, mem);

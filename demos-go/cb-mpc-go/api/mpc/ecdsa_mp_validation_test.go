@@ -7,10 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	curvepkg "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
-	curveref "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/internal/curveref"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/transport/mocknet"
-	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 )
 
 // ------------------------------------------------------------
@@ -25,7 +23,7 @@ type partyResult[T any] struct {
 
 // keyGenWithMockNet spins up `n` in-memory parties and runs ECDSAMPCKeyGen
 // via the public API, returning the per-party responses.
-func keyGenWithMockNet(n int, cv curvepkg.Curve) ([]*ECDSAMPCKeyGenResponse, error) {
+func keyGenWithMockNet(n int, cv curve.Curve) ([]*ECDSAMPCKeyGenResponse, error) {
 	pnames := mocknet.GeneratePartyNames(n)
 	messengers := mocknet.NewMockNetwork(n)
 
@@ -138,7 +136,7 @@ func TestECDSAMPC_DKG_Validation(t *testing.T) {
 
 	for _, n := range partyCounts {
 		t.Run(fmt.Sprintf("dkg_%d_parties", n), func(t *testing.T) {
-			cv, err := curvepkg.NewSecp256k1()
+			cv, err := curve.NewSecp256k1()
 			require.NoError(t, err)
 			defer cv.Free()
 
@@ -156,7 +154,7 @@ func TestECDSAMPC_DKG_Validation(t *testing.T) {
 			QiMap, err := firstKey.Qis()
 			require.NoError(t, err)
 
-			expectedCode := cgobinding.ECurveGetCurveCode(curveref.Ref(cv))
+			expectedCode := curve.Code(cv)
 
 			// --- per-party validations ---
 			pnames := mocknet.GeneratePartyNames(n)
@@ -171,7 +169,7 @@ func TestECDSAMPC_DKG_Validation(t *testing.T) {
 				// curve matches
 				c, err := ks.Curve()
 				require.NoError(t, err)
-				actualCode := cgobinding.ECurveGetCurveCode(curveref.Ref(c))
+				actualCode := curve.Code(c)
 				assert.Equal(t, expectedCode, actualCode)
 				c.Free()
 
@@ -202,7 +200,7 @@ func TestECDSAMPC_DKG_Validation(t *testing.T) {
 			}
 
 			// --- Sum(Qi) == Q ---
-			var sumPt *curvepkg.Point
+			var sumPt *curve.Point
 			// We need a stable iteration order; use pnames slice
 			for i, name := range pnames {
 				pt := QiMap[name]
@@ -238,7 +236,7 @@ func TestECDSAMPC_DKG_Validation(t *testing.T) {
 
 func TestECDSAMPC_Refresh(t *testing.T) {
 	const nParties = 3
-	cv, err := curvepkg.NewSecp256k1()
+	cv, err := curve.NewSecp256k1()
 	require.NoError(t, err)
 	defer cv.Free()
 
@@ -247,7 +245,7 @@ func TestECDSAMPC_Refresh(t *testing.T) {
 	require.NoError(t, err)
 
 	// capture original x_shares & Q
-	origX := make([]*curvepkg.Scalar, nParties)
+	origX := make([]*curve.Scalar, nParties)
 	for i, ks := range keyGenRes {
 		x, err := ks.KeyShare.XShare()
 		require.NoError(t, err)
@@ -280,7 +278,7 @@ func TestECDSAMPC_Refresh(t *testing.T) {
 
 func TestECDSAMPC_Sign_Refresh_Sign(t *testing.T) {
 	const nParties = 3
-	cv, err := curvepkg.NewSecp256k1()
+	cv, err := curve.NewSecp256k1()
 	require.NoError(t, err)
 	defer cv.Free()
 
@@ -326,7 +324,7 @@ func TestECDSAMPC_Sign_Refresh_Sign(t *testing.T) {
 func TestECDSAMPC_SerializeDeserialize(t *testing.T) {
 	const nParties = 3
 
-	cv, err := curvepkg.NewSecp256k1()
+	cv, err := curve.NewSecp256k1()
 	require.NoError(t, err)
 	defer cv.Free()
 

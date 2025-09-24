@@ -4,10 +4,8 @@ package mpc
 import (
 	"testing"
 
-	curvepkg "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
-	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/internal/curveref"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/transport/mocknet"
-	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +14,7 @@ import (
 // createThresholdAccessStructure builds an in-memory AccessStructure tree
 // representing a simple "threshold-of-n" policy and returns a high-level
 // Go wrapper that can be passed to the MPC APIs.
-func createThresholdAccessStructure(pnames []string, threshold int, cv curvepkg.Curve) *AccessStructure {
+func createThresholdAccessStructure(pnames []string, threshold int, cv curve.Curve) *AccessStructure {
 	// Build leaf nodes for each party.
 	kids := make([]*AccessNode, len(pnames))
 	for i, n := range pnames {
@@ -40,7 +38,7 @@ func TestECDSAMPCThresholdDKGWithMockNet(t *testing.T) {
 	)
 
 	// Prepare curve instance.
-	cv, err := curvepkg.NewSecp256k1()
+	cv, err := curve.NewSecp256k1()
 	require.NoError(t, err)
 	defer cv.Free()
 
@@ -91,7 +89,7 @@ func TestECDSAMPCThresholdDKGWithMockNet(t *testing.T) {
 	}
 
 	// Basic validations.
-	expectedCurveCode := cgobinding.ECurveGetCurveCode(curveref.Ref(cv))
+	expectedCurveCode := curve.Code(cv)
 
 	for i, r := range resp {
 		// Key share must be non-zero.
@@ -105,7 +103,7 @@ func TestECDSAMPCThresholdDKGWithMockNet(t *testing.T) {
 		// Curve matches.
 		c, err := r.KeyShare.Curve()
 		require.NoError(t, err)
-		actual := cgobinding.ECurveGetCurveCode(curveref.Ref(c))
+		actual := curve.Code(c)
 		assert.Equal(t, expectedCurveCode, actual)
 		c.Free()
 	}
@@ -120,7 +118,7 @@ func TestECDSAMPC_ToAdditiveShare(t *testing.T) {
 		threshold = 2
 	)
 
-	cv, err := curvepkg.NewSecp256k1()
+	cv, err := curve.NewSecp256k1()
 	require.NoError(t, err)
 	defer cv.Free()
 

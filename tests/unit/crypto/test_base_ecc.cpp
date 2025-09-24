@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cbmpc/crypto/base.h>
+#include <cbmpc/crypto/base_pki.h>
 
 #include "utils/test_macros.h"
 
@@ -67,53 +68,6 @@ TEST_F(ECC, secp256k1) {
       EXPECT_TRUE(((q - 1) * B + B).is_infinity());
       EXPECT_TRUE(((q - 1) * C + C).is_infinity());
     }
-  }
-}
-
-TEST_F(ECC, ECIES_EncryptDecrypt) {
-  ecurve_t curve = curve_p256;
-  const mod_t &q = curve.order();
-
-  ecc_prv_key_t prv_key;
-  prv_key.generate(curve);
-  ecc_pub_key_t pub_key(prv_key.pub());
-
-  buf_t seed = gen_random(32);
-  drbg_aes_ctr_t drbg(seed);
-  drbg_aes_ctr_t drbg_copy(seed);
-
-  buf_t label = buf_t("label");
-  bn_t eph = drbg.gen_bn(q);
-  buf_t iv = drbg.gen(ecies_ciphertext_t::iv_size);
-  buf_t plaintext = buf_t("plaintext");
-
-  ecies_ciphertext_t ecies, ecies_drbg, ecies_random;
-  ecies.encrypt(pub_key, label, eph, iv, plaintext);
-  ecies_drbg.encrypt(pub_key, label, plaintext, &drbg_copy);
-  ecies_random.encrypt(pub_key, label, plaintext);
-
-  EXPECT_EQ(coinbase::convert(ecies), coinbase::convert(ecies_drbg));
-  EXPECT_NE(coinbase::convert(ecies), coinbase::convert(ecies_random));
-
-  {  // directly from ecies
-    buf_t decrypted;
-    EXPECT_OK(ecies.decrypt(prv_key, label, decrypted));
-    EXPECT_EQ(decrypted, plaintext);
-  }
-  {  // from binary
-    auto ciphertext = coinbase::convert(ecies);
-    buf_t decrypted;
-    EXPECT_OK(ecies_ciphertext_t::decrypt(prv_key, ciphertext, label, decrypted));
-    EXPECT_EQ(decrypted, plaintext);
-  }
-  {
-    buf_t enc_info;
-    EXPECT_OK(ecies.decrypt_begin(enc_info));
-    buf_t dec_info(curve.size());
-    ecdh_t::execute(&prv_key, enc_info, dec_info);
-    buf_t decrypted;
-    EXPECT_OK(ecies.decrypt_end(label, dec_info, decrypted));
-    EXPECT_EQ(decrypted, plaintext);
   }
 }
 

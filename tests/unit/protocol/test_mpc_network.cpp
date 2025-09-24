@@ -73,8 +73,7 @@ TEST_F(Network4PC, BasicBroadcast) {
 
     for (int j = 0; j < 4; j++) {
       EXPECT_EQ(data.received(j), buf_t("test_data:" + std::to_string(j)));
-      EXPECT_EQ(data.all_received_refs()[j].get(), buf_t("test_data:" + std::to_string(j)));
-      EXPECT_EQ(data.all_received_values()[j], buf_t("test_data:" + std::to_string(j)));
+      EXPECT_EQ(data.all_received()[j], buf_t("test_data:" + std::to_string(j)));
     }
     EXPECT_EQ(data.msg, buf_t("test_data:" + std::to_string(party_index)));
   });
@@ -101,6 +100,96 @@ TEST_F(Network4PC, ParallelBroadcasting) {
   EXPECT_EQ(finished, parallel_count * 4);
 }
 
+class Network2PC_ParallelReceiveError : public Network2PC, public ::testing::WithParamInterface<int> {};
+
+TEST_P(Network2PC_ParallelReceiveError, DoesNotDeadlock) {
+  int parallel_count = 8;
+  const int abort_th = GetParam();
+  std::atomic<int> finished(0);
+
+  auto* runner = mpc_runner.get();
+  mpc_runner->run_2pc_parallel(parallel_count, [&, runner, abort_th](job_parallel_2p_t& job, int th_i) {
+    if (job.is_p2() && th_i == abort_th) {
+      runner->abort_connection();
+    }
+    buf_t data("x");
+    job.p1_to_p2(data);
+    finished++;
+  });
+
+  EXPECT_EQ(finished, parallel_count * 2);
+}
+INSTANTIATE_TEST_SUITE_P(, Network2PC_ParallelReceiveError, ::testing::Values(0, 1));
+
+class Network4PC_ParallelReceiveAllError : public Network4PC, public ::testing::WithParamInterface<int> {};
+
+TEST_P(Network4PC_ParallelReceiveAllError, DoesNotDeadlock) {
+  int parallel_count = 8;
+  const int abort_th = GetParam();
+  std::atomic<int> finished(0);
+
+  auto* runner = mpc_runner.get();
+  mpc_runner->run_mpc_parallel(parallel_count, [&, runner, abort_th](job_mp_t& job, int th_i) {
+    if (job.get_party_idx() == 0 && th_i == abort_th) {
+      runner->abort_connection();
+    }
+
+    auto data = job.uniform_msg<buf_t>(buf_t("x"));
+    job.plain_broadcast(data);
+    finished++;
+  });
+
+  EXPECT_EQ(finished, parallel_count * 4);
+}
+INSTANTIATE_TEST_SUITE_P(, Network4PC_ParallelReceiveAllError, ::testing::Values(0, 1));
+
+TEST_F(Network4PC, MessageWrapperCopySafety) {
+  mpc_runner->run_mpc([](job_mp_t& job) {
+    // nonuniform_msg_t copy then use-after-source-destruction should be safe
+    coinbase::buf_t sentinel("x");
+    auto copy_nu = job.nonuniform_msg<coinbase::buf_t>();
+    {
+      auto src = job.nonuniform_msg<coinbase::buf_t>();
+      int n = job.get_n_parties();
+      for (int i = 0; i < n; ++i) src[i] = sentinel;
+      copy_nu = src;  // deep copy
+    }
+    // Write through received() on the copy; should not crash or UAF
+    for (int i = 0; i < job.get_n_parties(); ++i) {
+      copy_nu.received(i) = sentinel;
+      EXPECT_EQ(copy_nu.received(i), sentinel);
+    }
+
+    // uniform_msg_t copy then use-after-source-destruction should be safe
+    auto copy_u = job.uniform_msg<coinbase::buf_t>();
+    {
+      auto src = job.uniform_msg<coinbase::buf_t>(coinbase::buf_t("self"));
+      copy_u = src;  // deep copy
+    }
+    for (int i = 0; i < job.get_n_parties(); ++i) {
+      copy_u.received(i) = sentinel;
+      EXPECT_EQ(copy_u.received(i), sentinel);
+    }
+  });
+}
+
+TEST_F(Network4PC, MessageWrapperReallocSafety) {
+  mpc_runner->run_mpc([](job_mp_t& job) {
+    auto w = job.nonuniform_msg<coinbase::buf_t>();
+    auto cap0 = w.msgs.capacity();
+    // Force reallocation of msgs
+    while (w.msgs.capacity() == cap0) {
+      w.msgs.push_back(coinbase::buf_t());
+      if (w.msgs.size() > 1000) break;  // safety guard
+    }
+    // Using received() after reallocation should be safe
+    for (int i = 0; i < job.get_n_parties(); ++i) {
+      w.received(i) = coinbase::buf_t("ok");
+      EXPECT_EQ(w.received(i), coinbase::buf_t("ok"));
+    }
+  });
+}
+
 TEST_P(NetworkMPC, PairwiseAndBroadcast) {
   const int m = GetParam();
   // This is a special case only used in ecdsa mpc to send both OT messages (pairwise) and a common message (broadcast).
@@ -125,8 +214,7 @@ TEST_P(NetworkMPC, PairwiseAndBroadcast) {
 
     for (int j = 0; j < m; j++) {
       EXPECT_EQ(data.received(j), buf_t("test_data:" + std::to_string(j)));
-      EXPECT_EQ(data.all_received_refs()[j].get(), buf_t("test_data:" + std::to_string(j)));
-      EXPECT_EQ(data.all_received_values()[j], buf_t("test_data:" + std::to_string(j)));
+      EXPECT_EQ(data.all_received()[j], buf_t("test_data:" + std::to_string(j)));
 
       if (ot_role_map[j][party_index] == ecdsampc::ot_sender) {
         EXPECT_EQ(ot_msg.received(j), buf_t("test_data:" + std::to_string(j) + std::to_string(party_index)));

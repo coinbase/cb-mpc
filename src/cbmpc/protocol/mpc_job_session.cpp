@@ -55,7 +55,7 @@ error_t parallel_data_transport_t::send(const party_idx_t receiver, const parall
   return SUCCESS;
 }
 
-error_t parallel_data_transport_t::receive(const party_idx_t sender, const parallel_id_t parallel_id, mem_t& msg) {
+error_t parallel_data_transport_t::receive(const party_idx_t sender, const parallel_id_t parallel_id, buf_t& msg) {
   {  // Wait for receivers to finish receiving the previous message
     std::unique_lock<std::mutex> lk(is_receive_active_mtx);
     receive_active_cv.wait(lk, [this] { return is_receive_active == 0; });
@@ -76,14 +76,36 @@ error_t parallel_data_transport_t::receive(const party_idx_t sender, const paral
       is_receive_active = parallel_count;
     }
 
+    // Pre-initialize receive buffers so non-master threads can safely read on error
+    {
+      std::lock_guard<std::mutex> lk(receive_msg_mutex);
+      receive_msg = std::vector<buf_t>(parallel_count);
+    }
+
+    // Common error cleanup helper
+    auto cleanup_receive_error = [&](error_t err) -> error_t {
+      {
+        std::lock_guard<std::mutex> lk(receive_ready_mtx);
+        receive_ready = 0;
+      }
+      receive_done_cv.notify_all();
+
+      {
+        std::lock_guard<std::mutex> lk(is_receive_active_mtx);
+        is_receive_active--;
+        if (is_receive_active == 0) receive_active_cv.notify_all();
+      }
+      return err;
+    };
+
     // Store the received messages
-    mem_t mem;
-    if (rv = data_transport_ptr->receive(sender, mem)) return rv;
+    buf_t buf;
+    if (rv = data_transport_ptr->receive(sender, buf)) return cleanup_receive_error(rv);
     {
       std::lock_guard<std::mutex> lk(receive_msg_mutex);
 
-      receive_msg = std::vector<buf_t>(parallel_count);
-      if (rv = deser(mem, receive_msg)) return rv;
+      // receive_msg = std::vector<buf_t>(parallel_count);
+      if (rv = deser(buf, receive_msg)) return cleanup_receive_error(rv);
     }
 
     {  // Notify all threads that the receive is done
@@ -110,7 +132,7 @@ error_t parallel_data_transport_t::receive(const party_idx_t sender, const paral
 }
 
 error_t parallel_data_transport_t::receive_all(const std::vector<party_idx_t>& senders, const parallel_id_t parallel_id,
-                                               std::vector<mem_t>& out_msgs) {
+                                               std::vector<buf_t>& out_msgs) {
   error_t rv = UNINITIALIZED_ERROR;
 
   {
@@ -131,14 +153,36 @@ error_t parallel_data_transport_t::receive_all(const std::vector<party_idx_t>& s
       is_receive_all_active = parallel_count;
     }
 
-    std::vector<mem_t> mems(senders.size());
-    if (rv = data_transport_ptr->receive_all(senders, mems)) return rv;
+    // Pre-initialize receive_all buffers so non-master threads can safely read on error
+    {
+      std::lock_guard<std::mutex> lk(receive_all_msgs_mutex);
+      for (auto s : senders) {
+        receive_all_msgs[s] = std::vector<buf_t>(parallel_count);
+      }
+    }
+
+    // Common error cleanup helper for receive_all
+    auto cleanup_receive_all_error = [&](error_t err) -> error_t {
+      {
+        std::lock_guard<std::mutex> lk(receive_all_ready_mtx);
+        receive_all_ready = 0;
+        receive_all_done_cv.notify_all();
+      }
+      {
+        std::lock_guard<std::mutex> lk2(is_receive_all_mtx);
+        is_receive_all_active--;
+        if (is_receive_all_active == 0) receive_all_active_cv.notify_all();
+      }
+      return err;
+    };
+
+    std::vector<buf_t> bufs(senders.size());
+    if (rv = data_transport_ptr->receive_all(senders, bufs)) return cleanup_receive_all_error(rv);
 
     {
       std::lock_guard<std::mutex> lk(receive_all_msgs_mutex);
-      for (int i = 0; i < mems.size(); i++) {
-        receive_all_msgs[senders[i]] = std::vector<buf_t>(parallel_count);
-        if (rv = deser(mems[i], receive_all_msgs[senders[i]])) return rv;
+      for (int i = 0; i < bufs.size(); i++) {
+        if (rv = deser(bufs[i], receive_all_msgs[senders[i]])) return cleanup_receive_all_error(rv);
       }
     }
 

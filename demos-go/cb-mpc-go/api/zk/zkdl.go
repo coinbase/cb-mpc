@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
-	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/internal/curveref"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 )
 
@@ -55,7 +54,13 @@ func ZKUCDLProve(req *ZKUCDLProveRequest) (*ZKUCDLProveResponse, error) {
 		req.SessionID = []byte{}
 	}
 
-	proof, err := cgobinding.ZK_DL_Prove(curveref.PointToCRef(req.PublicKey), req.Witness.Bytes, req.SessionID, req.Auxiliary)
+	// Convert point bytes to native point ref for the binding
+	pRef, err := cgobinding.ECCPointFromBytes(req.PublicKey.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("invalid public key: %v", err)
+	}
+	defer pRef.Free()
+	proof, err := cgobinding.ZK_DL_Prove(pRef, req.Witness.Bytes, req.SessionID, req.Auxiliary)
 	if err != nil {
 		return nil, err
 	}
@@ -94,10 +99,14 @@ func ZKUCDLVerify(req *ZKUCDLVerifyRequest) (*ZKUCDLVerifyResponse, error) {
 		req.SessionID = []byte{}
 	}
 
-	valid, err := cgobinding.ZK_DL_Verify(curveref.PointToCRef(req.PublicKey), req.Proof, req.SessionID, req.Auxiliary)
+	pRef, err := cgobinding.ECCPointFromBytes(req.PublicKey.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("invalid public key: %v", err)
+	}
+	defer pRef.Free()
+	valid, err := cgobinding.ZK_DL_Verify(pRef, req.Proof, req.SessionID, req.Auxiliary)
 	if err != nil {
 		return nil, err
 	}
-
 	return &ZKUCDLVerifyResponse{Valid: valid}, nil
 }

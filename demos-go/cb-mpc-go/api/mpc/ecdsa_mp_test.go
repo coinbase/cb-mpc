@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	curvepkg "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
-	curveref "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/internal/curveref"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/transport/mocknet"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 )
@@ -19,7 +18,7 @@ type SignMPInput struct {
 // ECDSAMPCWithMockNet performs complete N-party ECDSA workflow using MockNet.
 // It is used in unit tests to exercise the full protocol stack without external
 // networking.
-func ECDSAMPCWithMockNet(nParties int, c curvepkg.Curve, message []byte) ([]*ECDSAMPCKeyGenResponse, []*ECDSAMPCSignResponse, error) {
+func ECDSAMPCWithMockNet(nParties int, c curve.Curve, message []byte) ([]*ECDSAMPCKeyGenResponse, []*ECDSAMPCSignResponse, error) {
 	if nParties < 3 {
 		return nil, nil, fmt.Errorf("n-party ECDSA requires at least 3 parties")
 	}
@@ -39,8 +38,8 @@ func ECDSAMPCWithMockNet(nParties int, c curvepkg.Curve, message []byte) ([]*ECD
 	}
 
 	keyGenOutputs, err := runner.MPCRunMP(func(job cgobinding.JobMP, input *mocknet.MPCIO) (*mocknet.MPCIO, error) {
-		cv := input.Opaque.(curvepkg.Curve)
-		keyShare, err := cgobinding.KeyShareDKG(job, curveref.Ref(cv))
+		cv := input.Opaque.(curve.Curve)
+		keyShare, err := cgobinding.KeyShareDKGCode(job, curve.Code(cv))
 		if err != nil {
 			return nil, fmt.Errorf("n-party key generation failed: %v", err)
 		}
@@ -132,7 +131,7 @@ func TestECDSAMPCWithMockNet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Use secp256k1 for all tests (matches previous NID 714)
-			secp, errCurve := curvepkg.NewSecp256k1()
+			secp, errCurve := curve.NewSecp256k1()
 			if errCurve != nil {
 				t.Fatalf("failed to create curve: %v", errCurve)
 			}
@@ -195,7 +194,7 @@ func TestECDSAMPCWithMockNet(t *testing.T) {
 func TestECDSAMPCConsistency(t *testing.T) {
 	// Test that multiple runs produce different signatures but same public key structure
 	nParties := 3
-	secp, errCurve := curvepkg.NewSecp256k1()
+	secp, errCurve := curve.NewSecp256k1()
 	if errCurve != nil {
 		t.Fatalf("failed to create curve: %v", errCurve)
 	}
@@ -268,7 +267,7 @@ func TestECDSAMPCConsistency(t *testing.T) {
 func TestECDSAMPCScalability(t *testing.T) {
 	// Test with different party counts to ensure scalability
 	partyCounts := []int{3, 4, 5, 6}
-	secp, errCurve := curvepkg.NewSecp256k1()
+	secp, errCurve := curve.NewSecp256k1()
 	if errCurve != nil {
 		t.Fatalf("failed to create curve: %v", errCurve)
 	}
@@ -303,5 +302,47 @@ func TestECDSAMPCScalability(t *testing.T) {
 				t.Error("Signature was not generated")
 			}
 		})
+	}
+}
+
+func TestECDSAMPCKeyAccessors_Q_and_Curve(t *testing.T) {
+	// Use secp256k1 curve and 3-party setup
+	secp, errCurve := curve.NewSecp256k1()
+	if errCurve != nil {
+		t.Fatalf("failed to create curve: %v", errCurve)
+	}
+	defer secp.Free()
+
+	msg := []byte("accessors test message")
+	keyGenResponses, _, err := ECDSAMPCWithMockNet(3, secp, msg)
+	if err != nil {
+		t.Fatalf("ECDSAMPCWithMockNet failed: %v", err)
+	}
+	if len(keyGenResponses) == 0 {
+		t.Fatalf("no key generation responses returned")
+	}
+
+	// Verify Q() returns a valid, non-empty public key point
+	pt, err := keyGenResponses[0].KeyShare.Q()
+	if err != nil {
+		t.Fatalf("KeyShare.Q failed: %v", err)
+	}
+	if len(pt.GetX()) == 0 || len(pt.GetY()) == 0 {
+		t.Fatalf("public key coordinates should be non-empty")
+	}
+	pt.Free()
+
+	// Verify Curve() returns the same curve that was used for key generation
+	kc, err := keyGenResponses[0].KeyShare.Curve()
+	if err != nil {
+		t.Fatalf("KeyShare.Curve failed: %v", err)
+	}
+	defer kc.Free()
+
+	if curve.Code(kc) != curve.Code(secp) {
+		t.Fatalf("curve code mismatch: got %d want %d", curve.Code(kc), curve.Code(secp))
+	}
+	if kc.String() != secp.String() {
+		t.Fatalf("curve string mismatch: got %q want %q", kc.String(), secp.String())
 	}
 }

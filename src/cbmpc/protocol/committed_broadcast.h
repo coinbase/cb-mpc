@@ -36,7 +36,7 @@ inline error_t committed_pairwise_broadcast(job_mp_t& job, ARGS&... args) {
     coinbase::crypto::commitment_t com(job.get_pid(i), pid);
 
     com.set(com_rand.received(i), com_msg.received(i));
-    // effectively, it does com.open(args.all_received_values())...
+    // effectively, it does com.open(args.all_received())...
     rv = std::apply([&com](auto&&... args) { return com.open(args...); },
                     map_args_to_tuple([i](auto& arg) { return arg.received(i); }, args...));
     if (rv) return rv;
@@ -64,7 +64,7 @@ inline error_t committed_group_broadcast(job_mp_t& job, ARGS&... args) {
 
   if (rv = job.plain_broadcast(com_msg)) return rv;
 
-  auto v = job.uniform_msg<buf256_t>(crypto::sha256_t::hash(com_msg.all_received_refs()));
+  auto v = job.uniform_msg<buf256_t>(crypto::sha256_t::hash(com_msg.all_received()));
 
   if (rv = job.plain_broadcast(v, com_rand, args...)) return rv;
 

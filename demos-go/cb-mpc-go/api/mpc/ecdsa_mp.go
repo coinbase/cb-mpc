@@ -8,7 +8,6 @@ import (
 	"runtime"
 
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
-	curveref "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/internal/curveref"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 )
 
@@ -120,21 +119,21 @@ func (k ECDSAMPCKey) XShare() (*curve.Scalar, error) {
 // Q returns the aggregated public key point associated with the distributed key.
 // The returned Point must be freed by the caller.
 func (k ECDSAMPCKey) Q() (*curve.Point, error) {
-	cRef, err := cgobinding.MPC_mpc_eckey_mp_Q(k.cgobindingRef())
+	bytes, err := cgobinding.KeyShareQBytes(k.cgobindingRef())
 	if err != nil {
 		return nil, err
 	}
-	return curveref.PointFromCRef(cRef), nil
+	return curve.NewPointFromBytes(bytes)
 }
 
 // Curve returns the elliptic curve associated with this key.
 // The caller is responsible for freeing the returned Curve when done.
 func (k ECDSAMPCKey) Curve() (curve.Curve, error) {
-	cRef, err := cgobinding.MPC_mpc_eckey_mp_curve(k.cgobindingRef())
+	code, err := cgobinding.KeyShareCurveCode(k.cgobindingRef())
 	if err != nil {
 		return nil, err
 	}
-	return curveref.CurveFromCRef(cRef), nil
+	return curve.NewFromCode(code)
 }
 
 // Qis returns the per-party public key shares Qi for all peers.
@@ -198,7 +197,7 @@ func ECDSAMPCKeyGen(jobmp *JobMP, req *ECDSAMPCKeyGenRequest) (*ECDSAMPCKeyGenRe
 	}
 
 	// Perform distributed key generation using the provided JobMP and curve
-	keyShare, err := cgobinding.KeyShareDKG(jobmp.cgo(), curveref.Ref(req.Curve))
+	keyShare, err := cgobinding.KeyShareDKGCode(jobmp.cgo(), curve.Code(req.Curve))
 	if err != nil {
 		return nil, fmt.Errorf("ECDSA N-party key generation failed: %v", err)
 	}
@@ -371,7 +370,7 @@ func ECDSAMPCThresholdDKG(jobmp *JobMP, req *ECDSAMPCThresholdDKGRequest) (*ECDS
 
 	// Run the native threshold DKG using the curve reference directly to
 	// avoid leaking numeric NIDs into the API layer.
-	keyShareRef, err := cgobinding.ThresholdDKG(jobmp.cgo(), curveref.Ref(req.Curve), sid, acPtr, roleIndices)
+	keyShareRef, err := cgobinding.ThresholdDKGCode(jobmp.cgo(), curve.Code(req.Curve), sid, acPtr, roleIndices)
 	if err != nil {
 		return nil, fmt.Errorf("ECDSA threshold DKG failed: %v", err)
 	}

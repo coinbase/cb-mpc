@@ -185,11 +185,11 @@ class job_mp_t {
     if (!transport_ptr) return E_NET_GENERAL;
     return transport_ptr->send(to, msg);
   }
-  virtual error_t receive_impl(party_idx_t from, mem_t& msg) {
+  virtual error_t receive_impl(party_idx_t from, buf_t& msg) {
     if (!transport_ptr) return E_NET_GENERAL;
     return transport_ptr->receive(from, msg);
   }
-  virtual error_t receive_many_impl(std::vector<party_idx_t> from_set, std::vector<mem_t>& outs);
+  virtual error_t receive_many_impl(std::vector<party_idx_t> from_set, std::vector<buf_t>& outs);
 
   void set_transport(party_idx_t idx, std::shared_ptr<data_transport_interface_t> ptr) {
     party_index = idx;
@@ -223,11 +223,11 @@ class job_mp_t {
   error_t receive(party_idx_t from, MSGS&... msgs) {
     error_t rv = UNINITIALIZED_ERROR;
 
-    mem_t mem;
-    if (rv = receive_impl(from, mem)) return rv;
-    if (mem.size <= 0) return coinbase::error(E_NET_GENERAL);  // deserialization length validation
+    buf_t buf;
+    if (rv = receive_impl(from, buf)) return rv;
+    if (buf.size() <= 0) return coinbase::error(E_NET_GENERAL);  // deserialization length validation
 
-    if (rv = deser(mem, msgs...)) return rv;
+    if (rv = deser(buf, msgs...)) return rv;
 
     return SUCCESS;
   }
@@ -309,34 +309,54 @@ class job_mp_t {
   class uniform_msg_t : public T {
     friend class job_mp_t;
     void pack(coinbase::converter_t& c, int index) { c.convert(msg); }
-    void unpack(coinbase::converter_t& c, int index) { c.convert(*receptacle[index]); }
-
-    job_mp_t* job;
-    std::vector<std::shared_ptr<T>> receptacle;
-
-   public:
-    void init_receptacle() {
-      receptacle.resize(job->get_n_parties());
-      for (int i = 0; i < job->get_n_parties(); i++) {
-        if (i == job->get_party_idx())
-          receptacle[job->get_party_idx()].reset(&msg, [](T*) {});
-        else
-          receptacle[i] = std::make_shared<T>();
-      }
+    void unpack(coinbase::converter_t& c, int index) {
+      if (index == job->get_party_idx())
+        c.convert(msg);
+      else
+        c.convert(inbox[index]);
     }
 
-    uniform_msg_t(job_mp_t* job) : job(job) { init_receptacle(); }
-    uniform_msg_t(job_mp_t* job, const T& src) : T(src), job(job) { init_receptacle(); }
+    job_mp_t* job;
+    std::vector<T> inbox;
 
-    operator T&() { return *this; }
-    operator const T&() const { return *this; }
+   public:
+    uniform_msg_t(job_mp_t* job, const T& src) : T(src), job(job), inbox(job->get_n_parties()) {
+      inbox[job->get_party_idx()] = msg;
+    }
+
+    uniform_msg_t(const uniform_msg_t& other) : T((const T&)other), job(other.job), inbox(other.inbox) {}
+    uniform_msg_t& operator=(const uniform_msg_t& other) {
+      if (this != &other) {
+        (T&)(*this) = (const T&)other;
+        job = other.job;
+        inbox = other.inbox;
+      }
+      return *this;
+    }
+    uniform_msg_t(uniform_msg_t&& other) noexcept
+        : T(std::move((T&)other)), job(other.job), inbox(std::move(other.inbox)) {}
+    uniform_msg_t& operator=(uniform_msg_t&& other) noexcept {
+      if (this != &other) {
+        (T&)(*this) = std::move((T&)other);
+        job = other.job;
+        inbox = std::move(other.inbox);
+      }
+      return *this;
+    }
+    ~uniform_msg_t() = default;
 
     void convert(coinbase::converter_t& c) { c.convert(msg); }
 
     T& msg = *this;
-    T& received(int index) { return *receptacle[index]; }
-    std::vector<T> all_received_values() { return extract_values(receptacle); }
-    std::vector<std::reference_wrapper<T>> all_received_refs() { return extract_refs(receptacle); }
+    T& received(int index) {
+      int n = job->get_n_parties();
+      cb_assert(index >= 0 && index < n && "uniform_msg_t::received index out of range");
+      return (index == job->get_party_idx()) ? msg : inbox[index];
+    }
+    std::vector<T>& all_received() {
+      inbox[job->get_party_idx()] = msg;
+      return inbox;
+    }
   };
 
   // nonuniform message is for sending different contents to each other parties
@@ -345,44 +365,37 @@ class job_mp_t {
   class nonuniform_msg_t {
     friend class job_mp_t;
     void pack(coinbase::converter_t& c, int index) { c.convert(msgs[index]); }
-    void unpack(coinbase::converter_t& c, int index) { c.convert(*receptacle[index]); }
+    void unpack(coinbase::converter_t& c, int index) {
+      if (is_inplace)
+        c.convert(msgs[index]);
+      else
+        c.convert((index == job->get_party_idx()) ? msgs[index] : inbox[index]);
+    }
 
     job_mp_t* job;
-    std::vector<std::shared_ptr<T>> receptacle;
+    std::vector<T> inbox;
+    bool is_inplace = false;
 
    public:
-    nonuniform_msg_t(job_mp_t* job) : job(job) {
-      int n = job->get_n_parties();
-      int index = job->get_party_idx();
-      msgs.resize(n);
-
-      receptacle.resize(n);
-      for (int i = 0; i < n; i++) {
-        if (i == index)
-          receptacle[index].reset(&msgs[index], [](T*) {});
-        else
-          receptacle[i] = std::make_shared<T>();
-      }
-    }
+    nonuniform_msg_t(job_mp_t* job)
+        : job(job), msgs(job->get_n_parties()), inbox(job->get_n_parties()), is_inplace(false) {}
     // For inplace messages where sending and receiving use same slots.
-    // It is suitable when in a round, each party is either sender or receiver but not at the same time.
-    nonuniform_msg_t(job_mp_t* job, std::function<T(int i)>& f) : job(job) {
+    // It is suitable when in a round, each party is either sender or receiver but not both at the same time.
+    nonuniform_msg_t(job_mp_t* job, std::function<T(int i)>& f) : job(job), is_inplace(true) {
       int n = job->get_n_parties();
       msgs.reserve(n);
       for (int i = 0; i < n; i++) msgs.push_back(f(i));
-
-      receptacle.resize(n);
-      for (int i = 0; i < n; i++) receptacle[i].reset(&msgs[i], [](T*) {});
     }
 
     T& operator[](int index) { return msgs[index]; };
     const T& operator[](int index) const { return msgs[index]; };
-    T& received(int index) { return *receptacle[index]; }
+    T& received(int index) {
+      int n = job->get_n_parties();
+      cb_assert(index >= 0 && index < n && "nonuniform_msg_t::received index out of range");
+      return is_inplace ? msgs[index] : ((index == job->get_party_idx()) ? msgs[index] : inbox[index]);
+    }
 
     void convert(coinbase::converter_t& c) { c.convert(msgs); }
-
-    operator T&() { return msgs; }
-    operator const T&() const { return msgs; }
 
     std::vector<T> msgs;
   };
@@ -408,7 +421,7 @@ class job_mp_t {
   // Functions to create message containers
   template <typename T>
   uniform_msg_t<T> uniform_msg() {
-    return uniform_msg_t<T>(this);
+    return uniform_msg_t<T>(this, T());
   }
   template <typename T>
   uniform_msg_t<T> uniform_msg(const T& src) {

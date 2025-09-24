@@ -149,3 +149,16 @@ func ECCPointToBytes(point ECCPointRef) []byte {
 	cMem := C.ecc_point_to_bytes((*C.ecc_point_ref)(&point))
 	return CMEMGet(cMem)
 }
+
+// ECCVerifyDER verifies a DER-encoded ECDSA signature.
+// curveCode: OpenSSL NID for the curve (e.g., 714 for secp256k1)
+// pubOct: SEC1 uncompressed public key bytes
+// hash: 32-byte digest
+// derSig: DER-encoded ECDSA signature
+func ECCVerifyDER(curveCode int, pubOct []byte, hash []byte, derSig []byte) error {
+	rv := C.ecc_verify_der(C.int(curveCode), cmem(pubOct), cmem(hash), cmem(derSig))
+	if rv != 0 {
+		return fmt.Errorf("ecdsa verify failed (%d)", int(rv))
+	}
+	return nil
+}

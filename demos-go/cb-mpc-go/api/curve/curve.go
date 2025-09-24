@@ -6,6 +6,20 @@ import (
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 )
 
+// Bridging conventions between Go and native (cgo boundary):
+//
+//   - Curves are passed as integer codes (OpenSSL NIDs). The bindings resolve
+//     native curve handles internally via ECurveFind(code) when needed.
+//   - Points, scalars and other crypto artefacts are passed as canonical []byte
+//     encodings. The bindings reconstruct native objects internally as needed.
+//
+// Rationale: keep the public Go API free of native pointers/handles and any
+// linkname plumbing, while incurring only negligible overhead to reconstruct
+// native structures inside the bindings.
+//
+// The helpers Code(c) and NewFromCode(code) are the only public surface needed
+// by higher layers to follow this convention consistently.
+
 // Curve is the public interface that represents an elliptic curve supported by the cb-mpc library.
 //
 // Concrete curves – secp256k1, P-256 and Ed25519 – implement this interface.
@@ -127,6 +141,32 @@ func (b *baseCurve) String() string {
 		return "Ed25519"
 	default:
 		return fmt.Sprintf("unknown curve (%d)", cgobinding.ECurveGetCurveCode(b.cCurve))
+	}
+}
+
+// Code returns the internal numeric identifier for the curve (OpenSSL NID).
+// This is the standard medium for crossing the Go↔native boundary for curves.
+// Bindings will resolve a native handle on-demand using this code.
+func Code(c Curve) int { return cgobinding.ECurveGetCurveCode(nativeRef(c)) }
+
+// NewFromCode constructs a Curve instance for the provided internal code.
+// It resolves a native curve under the hood and wraps it in the appropriate
+// concrete curve type when recognised.
+func NewFromCode(code int) (Curve, error) {
+	bc, err := newBaseCurve(code)
+	if err != nil {
+		return nil, err
+	}
+	// Pick concrete wrapper for friendly String() output
+	switch code {
+	case secp256k1Code:
+		return &secp256k1Curve{baseCurve: bc}, nil
+	case p256Code:
+		return &p256Curve{baseCurve: bc}, nil
+	case ed25519Code:
+		return &ed25519Curve{baseCurve: bc}, nil
+	default:
+		return bc, nil
 	}
 }
 

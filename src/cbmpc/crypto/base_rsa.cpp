@@ -3,6 +3,7 @@
 #include <cbmpc/core/log.h>
 #include <cbmpc/crypto/base.h>
 
+#include "base_pki.h"
 #include "scope.h"
 
 namespace coinbase::crypto {
@@ -251,82 +252,6 @@ error_t rsa_oaep_t::execute(void *ctx, int hash_alg, int mgf_alg, cmem_t label, 
   if (rv = key->decrypt_oaep(mem_t(in), hash_e(hash_alg), hash_e(mgf_alg), mem_t(label), buf)) return rv;
 
   *out = buf.to_cmem();
-  return SUCCESS;
-}
-
-void rsa_kem_ciphertext_t::convert(coinbase::converter_t &converter) {
-  converter.convert(rsa_enc);
-  converter.convert(aes_enc);
-}
-
-error_t rsa_kem_ciphertext_t::encrypt(const rsa_pub_key_t &pub_key, mem_t label, mem_t plain, drbg_aes_ctr_t *drbg) {
-  return encrypt(pub_key, hash_e::sha256, hash_e::sha256, label, plain, drbg);
-}
-
-error_t rsa_kem_ciphertext_t::encrypt(const rsa_pub_key_t &pub_key, hash_e hash_alg, hash_e mgf_alg, mem_t label,
-                                      mem_t plain, drbg_aes_ctr_t *drbg) {
-  aes_enc = buf_t();
-  rsa_enc = buf_t();
-  bool rsa_hybrid = true;
-
-  buf_t bin;
-  if (rsa_hybrid) {
-    buf_t k, iv;
-    if (drbg) {
-      k = drbg->gen(32);
-      iv = drbg->gen(12);
-    } else {
-      k = crypto::gen_random(32);
-      iv = crypto::gen_random(12);
-    }
-    crypto::aes_gcm_t::encrypt(k, iv, label, 12, plain, aes_enc);
-
-    bin = k + iv;
-  } else {
-    cb_assert(plain.size + 32 + 32 <= pub_key.size());
-    bin = crypto::sha256_t::hash(label) + plain;
-  }
-
-  if (drbg) {
-    buf_t seed = drbg->gen_bitlen(256);
-    return pub_key.encrypt_oaep_with_seed(bin, hash_alg, mgf_alg, mem_t(), seed, rsa_enc);
-  } else {
-    return pub_key.encrypt_oaep(bin, hash_alg, mgf_alg, mem_t(), rsa_enc);
-  }
-}
-
-error_t rsa_kem_ciphertext_t::decrypt(const rsa_oaep_t &oaep, mem_t label, buf_t &out) {
-  return decrypt(oaep, crypto::hash_e::sha256, crypto::hash_e::sha256, label, out);
-}
-
-error_t rsa_kem_ciphertext_t::decrypt(const rsa_oaep_t &oaep, hash_e hash_alg, hash_e mgf_alg, mem_t label,
-                                      buf_t &out) {
-  error_t rv = UNINITIALIZED_ERROR;
-  buf_t dec_info;
-  if (rv = oaep.execute(crypto::hash_e::sha256, crypto::hash_e::sha256, mem_t(), rsa_enc, dec_info)) return rv;
-  if (rv = decrypt_end(label, dec_info, out)) return rv;
-  return SUCCESS;
-}
-
-error_t rsa_kem_ciphertext_t::decrypt_begin(buf_t &enc_info) const {
-  enc_info = rsa_enc;
-  return SUCCESS;
-}
-
-error_t rsa_kem_ciphertext_t::decrypt_end(mem_t label, mem_t dec_info, buf_t &out) const {
-  error_t rv = UNINITIALIZED_ERROR;
-  bool rsa_hybrid = !aes_enc.empty();
-  if (rsa_hybrid) {
-    if (dec_info.size != 32 + 12) return coinbase::error(E_CRYPTO);
-    mem_t k = dec_info.take(32);
-    mem_t iv = dec_info.skip(32);
-    if (rv = crypto::aes_gcm_t::decrypt(k, iv, label, 12, aes_enc, out)) return rv;
-  } else {
-    if (dec_info.size < 32) return coinbase::error(E_CRYPTO);
-    buf_t h = crypto::sha256_t::hash(label);
-    if (h != dec_info.take(32)) return coinbase::error(E_CRYPTO);
-    out = dec_info.skip(32);
-  }
   return SUCCESS;
 }
 

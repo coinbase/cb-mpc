@@ -20,18 +20,21 @@ static error_t batch_from_bin(ecurve_t curve, int batch_size, mem_t bin, std::ve
   return SUCCESS;
 }
 
-template <class PKI_T>
-void ec_pve_ac_t<PKI_T>::encrypt_row(const ss::ac_t& ac, const pks_t& ac_pks, mem_t L, ecurve_t curve, mem_t seed,
-                                     mem_t plain, buf_t& c, std::vector<CT_T>& quorum_c) {
+ec_pve_ac_t::ec_pve_ac_t() : base_pke(pve_base_pke_unified()), rows(kappa) {}
+
+void ec_pve_ac_t::encrypt_row(const ss::ac_t& ac, const pks_t& ac_pks, mem_t L, ecurve_t curve, mem_t seed, mem_t plain,
+                              buf_t& c, std::vector<ciphertext_adapter_t>& quorum_c) const {
   const mod_t& q = curve.order();
   crypto::drbg_aes_ctr_t drbg(seed);
   bn_t K = drbg.gen_bn(q);
 
   std::map<std::string, bn_t> K_shares = ac.share(curve.order(), K, &drbg);
-  for (const auto& [path, pub_key] : ac_pks) {
-    CT_T c;
-    c.encrypt(pub_key, L, K_shares[path].to_bin(), &drbg);
-    quorum_c.push_back(c);
+  for (const auto& [path, pub_key_ptr] : ac_pks) {
+    ciphertext_adapter_t item;
+    buf_t ct_ser;
+    base_pke.encrypt(pub_key_ptr, L, K_shares[path].to_bin(), drbg.gen(32), ct_ser);
+    item.ct_ser = ct_ser;
+    quorum_c.push_back(std::move(item));
   }
 
   buf_t k_and_iv = crypto::ro::hash_string(K, L).bitlen(256 + iv_bitlen);
@@ -41,13 +44,9 @@ void ec_pve_ac_t<PKI_T>::encrypt_row(const ss::ac_t& ac, const pks_t& ac_pks, me
   crypto::aes_gcm_t::encrypt(k_aes, iv, L, tag_size, plain, c);
 }
 
-template <class PKI_T>
-void ec_pve_ac_t<PKI_T>::encrypt_row0(const ss::ac_t& ac, const pks_t& ac_pks, mem_t L, ecurve_t curve, mem_t r0_1,
-                                      mem_t r0_2, int batch_size,
-                                      std::vector<bn_t>& x0,        // output
-                                      buf_t& c0,                    // output
-                                      std::vector<CT_T>& quorum_c0  // output
-) {
+void ec_pve_ac_t::encrypt_row0(const ss::ac_t& ac, const pks_t& ac_pks, mem_t L, ecurve_t curve, mem_t r0_1, mem_t r0_2,
+                               int batch_size, std::vector<bn_t>& x0, buf_t& c0,
+                               std::vector<ciphertext_adapter_t>& quorum_c0) const {
   const mod_t& q = curve.order();
   x0.resize(batch_size);
   crypto::drbg_aes_ctr_t drbg(r0_1);
@@ -60,12 +59,8 @@ void ec_pve_ac_t<PKI_T>::encrypt_row0(const ss::ac_t& ac, const pks_t& ac_pks, m
   );
 }
 
-template <class PKI_T>
-void ec_pve_ac_t<PKI_T>::encrypt_row1(const ss::ac_t& ac, const pks_t& ac_pks, mem_t L, ecurve_t curve, mem_t r1,
-                                      mem_t x1_bin,
-                                      buf_t& c1,                    // output
-                                      std::vector<CT_T>& quorum_c1  // output
-) {
+void ec_pve_ac_t::encrypt_row1(const ss::ac_t& ac, const pks_t& ac_pks, mem_t L, ecurve_t curve, mem_t r1, mem_t x1_bin,
+                               buf_t& c1, std::vector<ciphertext_adapter_t>& quorum_c1) const {
   encrypt_row(ac, ac_pks, L, curve,
               r1,        // seed
               x1_bin,    // plain
@@ -74,9 +69,8 @@ void ec_pve_ac_t<PKI_T>::encrypt_row1(const ss::ac_t& ac, const pks_t& ac_pks, m
   );
 }
 
-template <class PKI_T>
-void ec_pve_ac_t<PKI_T>::encrypt(const ss::ac_t& ac, const pks_t& ac_pks, mem_t label, ecurve_t curve,
-                                 const std::vector<bn_t>& _x) {
+void ec_pve_ac_t::encrypt(const ss::ac_t& ac, const pks_t& ac_pks, mem_t label, ecurve_t curve,
+                          const std::vector<bn_t>& _x) {
   int batch_size = int(_x.size());
   const auto& G = curve.generator();
   const mod_t& q = curve.order();
@@ -93,8 +87,8 @@ void ec_pve_ac_t<PKI_T>::encrypt(const ss::ac_t& ac, const pks_t& ac_pks, mem_t 
   std::vector<std::vector<ecc_point_t>> X1(kappa);
   std::vector<buf_t> c0(kappa);
   std::vector<buf_t> c1(kappa);
-  std::vector<std::vector<CT_T>> quorum_c0(kappa);
-  std::vector<std::vector<CT_T>> quorum_c1(kappa);
+  std::vector<std::vector<ciphertext_adapter_t>> quorum_c0(kappa);
+  std::vector<std::vector<ciphertext_adapter_t>> quorum_c1(kappa);
   std::vector<buf_t> r0_1(kappa);
   std::vector<buf_t> r0_2(kappa);
   std::vector<buf_t> r1(kappa);
@@ -134,9 +128,8 @@ void ec_pve_ac_t<PKI_T>::encrypt(const ss::ac_t& ac, const pks_t& ac_pks, mem_t 
   }
 }
 
-template <class PKI_T>
-error_t ec_pve_ac_t<PKI_T>::verify(const ss::ac_t& ac, const pks_t& ac_pks, const std::vector<ecc_point_t>& Q,
-                                   mem_t label) const {
+error_t ec_pve_ac_t::verify(const ss::ac_t& ac, const pks_t& ac_pks, const std::vector<ecc_point_t>& Q,
+                            mem_t label) const {
   error_t rv = UNINITIALIZED_ERROR;
   int batch_size = int(Q.size());
   if (batch_size == 0) return coinbase::error(E_BADARG);
@@ -156,8 +149,8 @@ error_t ec_pve_ac_t<PKI_T>::verify(const ss::ac_t& ac, const pks_t& ac_pks, cons
   std::vector<std::vector<ecc_point_t>> X1(kappa);
   std::vector<buf_t> c0(kappa);
   std::vector<buf_t> c1(kappa);
-  std::vector<std::vector<CT_T>> quorum_c0(kappa);
-  std::vector<std::vector<CT_T>> quorum_c1(kappa);
+  std::vector<std::vector<ciphertext_adapter_t>> quorum_c0(kappa);
+  std::vector<std::vector<ciphertext_adapter_t>> quorum_c1(kappa);
 
   for (int i = 0; i < kappa; i++) {
     X0[i].resize(batch_size);
@@ -193,9 +186,8 @@ error_t ec_pve_ac_t<PKI_T>::verify(const ss::ac_t& ac, const pks_t& ac_pks, cons
   return SUCCESS;
 }
 
-template <class PKI_T>
-error_t ec_pve_ac_t<PKI_T>::find_quorum_ciphertext(const std::vector<std::string>& sorted_leaves,
-                                                   const std::string& path, const row_t& row, const CT_T*& c) {
+error_t ec_pve_ac_t::find_quorum_ciphertext(const std::vector<std::string>& sorted_leaves, const std::string& path,
+                                            const row_t& row, const ciphertext_adapter_t*& c) {
   auto it = std::find(sorted_leaves.begin(), sorted_leaves.end(), path);
   if (it == sorted_leaves.end()) return coinbase::error(E_NOT_FOUND, "path not found");
   auto index = it - sorted_leaves.begin();
@@ -207,51 +199,48 @@ error_t ec_pve_ac_t<PKI_T>::find_quorum_ciphertext(const std::vector<std::string
   return SUCCESS;
 }
 
-template <class PKI_T>
-error_t ec_pve_ac_t<PKI_T>::get_row_to_decrypt(const ss::ac_t& ac, int row_index, const std::string& path,
-                                               buf_t& out) const {
+error_t ec_pve_ac_t::party_decrypt_row(const ss::ac_t& ac, int row_index, const std::string& path,
+                                       const void* prv_key_ptr, mem_t label, bn_t& out_share) const {
   error_t rv = UNINITIALIZED_ERROR;
   if (row_index < 0 || row_index >= kappa) return coinbase::error(E_RANGE);
+  if (Q.empty()) return coinbase::error(E_BADARG);
 
-  std::set<std::string> leaves = ac.list_leaf_names();
-  std::vector<std::string> sorted_leaves(leaves.begin(), leaves.end());
-  const CT_T* c;
-  if (rv = find_quorum_ciphertext(sorted_leaves, path, rows[row_index], c)) return rv;
-  if (rv = c->decrypt_begin(out)) return rv;
-
-  return SUCCESS;
-}
-
-template <class PKI_T>
-error_t ec_pve_ac_t<PKI_T>::restore_row(const ss::ac_t& ac, int row_index,
-                                        const std::map<std::string, buf_t>& decrypted, mem_t label,
-                                        std::vector<bn_t>& x) const {
-  error_t rv = UNINITIALIZED_ERROR;
-  if (row_index < 0 || row_index >= kappa) return coinbase::error(E_RANGE);
   const row_t& row = rows[row_index];
-
-  int batch_size = int(Q.size());
-  if (batch_size == 0) return coinbase::error(E_BADARG);
-
-  ecurve_t curve = Q[0].get_curve();
-  int curve_size = curve.size();
-  const auto& G = curve.generator();
-  const mod_t& q = curve.order();
 
   buf_t L = crypto::sha256_t::hash(label, Q);
 
   std::set<std::string> leaves = ac.list_leaf_names();
   std::vector<std::string> sorted_leaves(leaves.begin(), leaves.end());
 
-  std::map<std::string, bn_t> quorum_decrypted;
-  for (const auto& [path, dec] : decrypted) {
-    const CT_T* c;
-    if (rv = find_quorum_ciphertext(sorted_leaves, path, row, c)) return rv;
-    buf_t plain;
-    if (rv = c->decrypt_end(L, dec, plain)) return rv;
+  const ciphertext_adapter_t* c;
+  if (rv = find_quorum_ciphertext(sorted_leaves, path, row, c)) return rv;
 
-    quorum_decrypted[path] = bn_t::from_bin(plain);
+  buf_t plain;
+  if (rv = base_pke.decrypt(prv_key_ptr, L, c->ct_ser, plain)) return rv;
+  out_share = bn_t::from_bin(plain);
+  return SUCCESS;
+}
+
+error_t ec_pve_ac_t::aggregate_to_restore_row(const ss::ac_t& ac, int row_index, mem_t label,
+                                              const std::map<std::string, bn_t>& quorum_decrypted, std::vector<bn_t>& x,
+                                              bool skip_verify, const pks_t& all_ac_pks) const {
+  error_t rv = UNINITIALIZED_ERROR;
+  if (row_index < 0 || row_index >= kappa) return coinbase::error(E_RANGE);
+  if (Q.empty()) return coinbase::error(E_BADARG);
+
+  if (!skip_verify && !all_ac_pks.empty()) {
+    if (rv = verify(ac, all_ac_pks, Q, label)) return rv;
   }
+
+  const row_t& row = rows[row_index];
+
+  int batch_size = int(Q.size());
+  ecurve_t curve = Q[0].get_curve();
+  int curve_size = curve.size();
+  const auto& G = curve.generator();
+  const mod_t& q = curve.order();
+
+  buf_t L = crypto::sha256_t::hash(label, Q);
 
   bn_t K;
   if (rv = ac.reconstruct(q, quorum_decrypted, K)) return rv;
@@ -287,30 +276,5 @@ error_t ec_pve_ac_t<PKI_T>::restore_row(const ss::ac_t& ac, int row_index,
 
   return SUCCESS;
 }
-
-template <class PKI_T>
-error_t ec_pve_ac_t<PKI_T>::decrypt(const crypto::ss::ac_t& ac, const sks_t& quorum_ac_sks, const pks_t& all_ac_pks,
-                                    mem_t label, std::vector<bn_t>& x, bool skip_verify) const {
-  error_t rv = UNINITIALIZED_ERROR;
-  if (!skip_verify && (rv = verify(ac, all_ac_pks, Q, label))) return rv;
-
-  for (int row_index = 0; row_index < kappa; row_index++) {
-    std::map<std::string, buf_t> dec_infos;
-    for (const auto& [path, prv_key] : quorum_ac_sks) {
-      buf_t enc_info;
-      if (rv = get_row_to_decrypt(ac, row_index, path, enc_info)) continue;
-
-      if (rv = prv_key.execute(enc_info, dec_infos[path])) continue;
-    }
-
-    rv = restore_row(ac, row_index, dec_infos, label, x);
-    if (rv == SUCCESS) return SUCCESS;
-  }
-  return SUCCESS;
-}
-
-template class ec_pve_ac_t<hybrid_cipher_t>;
-template class ec_pve_ac_t<ecies_t>;
-template class ec_pve_ac_t<rsa_kem_t>;
 
 }  // namespace coinbase::mpc

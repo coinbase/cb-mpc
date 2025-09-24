@@ -8,7 +8,6 @@ import (
 	"runtime"
 
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
-	curveref "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/internal/curveref"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 )
 
@@ -95,19 +94,19 @@ func (k EDDSAMPCKey) XShare() (*curve.Scalar, error) {
 }
 
 func (k EDDSAMPCKey) Q() (*curve.Point, error) {
-	cRef, err := cgobinding.MPC_mpc_eckey_mp_Q(k.cgobindingRef())
+	bytes, err := cgobinding.KeyShareQBytes(k.cgobindingRef())
 	if err != nil {
 		return nil, err
 	}
-	return curveref.PointFromCRef(cRef), nil
+	return curve.NewPointFromBytes(bytes)
 }
 
 func (k EDDSAMPCKey) Curve() (curve.Curve, error) {
-	cRef, err := cgobinding.MPC_mpc_eckey_mp_curve(k.cgobindingRef())
+	code, err := cgobinding.KeyShareCurveCode(k.cgobindingRef())
 	if err != nil {
 		return nil, err
 	}
-	return curveref.CurveFromCRef(cRef), nil
+	return curve.NewFromCode(code)
 }
 
 func (k EDDSAMPCKey) Qis() (map[string]*curve.Point, error) {
@@ -179,7 +178,7 @@ func EDDSAMPCKeyGen(jobmp *JobMP, req *EDDSAMPCKeyGenRequest) (*EDDSAMPCKeyGenRe
 		return nil, fmt.Errorf("n-party EdDSA requires at least 3 parties")
 	}
 
-	key, err := cgobinding.KeyShareDKG(jobmp.cgo(), curveref.Ref(req.Curve))
+	key, err := cgobinding.KeyShareDKGCode(jobmp.cgo(), curve.Code(req.Curve))
 	if err != nil {
 		return nil, fmt.Errorf("EdDSA N-party key generation failed: %v", err)
 	}
@@ -280,7 +279,7 @@ func EDDSAMPCThresholdDKG(jobmp *JobMP, req *EDDSAMPCThresholdDKGRequest) (*EDDS
 		}
 	}
 
-	keyShareRef, err := cgobinding.ThresholdDKG(jobmp.cgo(), curveref.Ref(req.Curve), sid, acPtr, roleIndices)
+	keyShareRef, err := cgobinding.ThresholdDKGCode(jobmp.cgo(), curve.Code(req.Curve), sid, acPtr, roleIndices)
 	if err != nil {
 		return nil, fmt.Errorf("EdDSA threshold DKG failed: %v", err)
 	}

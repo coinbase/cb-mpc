@@ -42,7 +42,7 @@ inline error_t generate_sid_fixed_mp(mpc::job_mp_t& job, buf_t& sid) {
   error_t rv = UNINITIALIZED_ERROR;
   auto sid_msg = job.uniform_msg<buf_t>(crypto::gen_random_bitlen(SEC_P_COM));
   if (rv = job.plain_broadcast(sid_msg)) return rv;
-  sid = buf_t(crypto::sha256_t::hash(sid_msg.all_received_refs())).take(bits_to_bytes(SEC_P_COM));
+  sid = buf_t(crypto::sha256_t::hash(sid_msg.all_received())).take(bits_to_bytes(SEC_P_COM));
   return SUCCESS;
 }
 

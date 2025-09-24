@@ -7,9 +7,8 @@ import "C"
 
 import (
 	"fmt"
+	"runtime"
 )
-
-// -------------------------- Type Wrappers --------------------------
 
 type Mpc_ecdsa2pc_key_ref C.mpc_ecdsa2pc_key_ref
 
@@ -18,16 +17,12 @@ func (k *Mpc_ecdsa2pc_key_ref) Free() {
 	C.free_mpc_ecdsa2p_key(C.mpc_ecdsa2pc_key_ref(*k))
 }
 
-// -------------------------- ECDSA 2PC ------------------------------
-
-// DistributedKeyGenCurve performs the two-party ECDSA distributed key
-// generation using a native curve reference instead of a numeric identifier.
-func DistributedKeyGenCurve(job Job2P, curveRef ECurveRef) (Mpc_ecdsa2pc_key_ref, error) {
+// DistributedKeyGen performs the two-party ECDSA DKG using a numeric curve code.
+func DistributedKeyGen(job Job2P, curveCode int) (Mpc_ecdsa2pc_key_ref, error) {
 	var key Mpc_ecdsa2pc_key_ref
-	curveCode := ECurveGetCurveCode(curveRef)
 	cErr := C.mpc_ecdsa2p_dkg(job.GetCJob(), C.int(curveCode), (*C.mpc_ecdsa2pc_key_ref)(&key))
 	if cErr != 0 {
-		return key, fmt.Errorf("ECDSA-2p keygen failed, %v", cErr)
+		return key, fmt.Errorf("key generation failed, %v", cErr)
 	}
 	return key, nil
 }
@@ -45,7 +40,9 @@ func Refresh(job Job2P, key Mpc_ecdsa2pc_key_ref) (Mpc_ecdsa2pc_key_ref, error) 
 // Sign produces batch signatures using the two-party ECDSA key.
 func Sign(job Job2P, sid []byte, key Mpc_ecdsa2pc_key_ref, msgs [][]byte) ([][]byte, error) {
 	var sigs CMEMS
-	cErr := C.mpc_ecdsa2p_sign(job.GetCJob(), cmem(sid), (*C.mpc_ecdsa2pc_key_ref)(&key), cmems(msgs), &sigs)
+	pin := makeCmems(msgs)
+	cErr := C.mpc_ecdsa2p_sign(job.GetCJob(), cmem(sid), (*C.mpc_ecdsa2pc_key_ref)(&key), pin.c, &sigs)
+	runtime.KeepAlive(pin)
 	if cErr != 0 {
 		return nil, fmt.Errorf("ECDSA-2p sign failed, %v", cErr)
 	}

@@ -16,10 +16,10 @@ extern "C" {
 #define NETWORK_MEMORY_ERROR -3
 #define NETWORK_INVALID_STATE -4
 
-// Callback function types (const removed for cgo compatibility)
-typedef int (*send_f)(void* go_impl_ptr, int receiver, uint8_t* message, int message_size);
-typedef int (*receive_f)(void* go_impl_ptr, int sender, uint8_t** message, int* message_size);
-typedef int (*receive_all_f)(void* go_impl_ptr, int* senders, int sender_count, uint8_t** messages, int* message_sizes);
+// Callback function types using cmem_t/cmems_t for cleaner interfaces
+typedef int (*send_f)(void* go_impl_ptr, int receiver, cmem_t message);
+typedef int (*receive_f)(void* go_impl_ptr, int sender, cmem_t* message);
+typedef int (*receive_all_f)(void* go_impl_ptr, int* senders, int sender_count, cmems_t* messages);
 
 typedef struct data_transport_callbacks_t {
   send_f send_fun;
@@ -57,8 +57,8 @@ int is_peer1(const job_2p_ref* job);
 int is_peer2(const job_2p_ref* job);
 int is_role_index(const job_2p_ref* job, int party_index);
 int get_role_index(const job_2p_ref* job);
-int mpc_2p_send(job_2p_ref* job, int receiver, const uint8_t* msg, int msg_len);
-int mpc_2p_receive(job_2p_ref* job, int sender, uint8_t** msg, int* msg_len);
+int mpc_2p_send(job_2p_ref* job, int receiver, cmem_t msg);
+int mpc_2p_receive(job_2p_ref* job, int sender, cmem_t* msg);
 
 // job_mp_ref Functions
 job_mp_ref* new_job_mp(const data_transport_callbacks_t* callbacks, void* go_impl_ptr, int party_count, int party_index,

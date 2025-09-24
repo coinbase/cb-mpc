@@ -19,8 +19,8 @@ struct test_channel_sync_t {
 class test_channel_t {
  public:
   void send(test_channel_sync_t& sync, mem_t msg);
-  error_t receive(test_channel_sync_t& sync, bool& abort, mem_t& result);
-  mem_t receive();              // no-sync
+  error_t receive(test_channel_sync_t& sync, bool& abort, buf_t& result);
+  buf_t receive();              // no-sync
   bool queue_is_empty() const;  // no-sync
 
   static std::atomic<int> msg_counter;

@@ -3,49 +3,49 @@
 #include <stdint.h>
 
 #include <cbmpc/core/cmem.h>
+#include <cbmpc/crypto/pki_ffi.h>
 
 #include "ac.h"
 #include "curve.h"
+#include "kem.h"
 #include "network.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// ============================================================================
-// Public Verifiable Encryption (PVE) helper C API – extracted from cblib.h
-// ============================================================================
+void pve_register_kem_functions(kem_encap_ctx_fn e, kem_decap_ctx_fn d, void* /*ignored*/, kem_dk_to_ek_ctx_fn dpub);
 
-// Generate |n| ECIES encryption key pairs (private/public).
-// The caller *owns* the returned cmems_t buffers and must free them via
-// CMEMSGet (from the Go side) which zeroizes and frees the memory.
-int get_n_enc_keypairs(int n, cmems_t* prv_keys_ptr, cmems_t* pub_keys_ptr);
+// Switch the currently active PKI context (used by shim wrappers).
+void pve_activate_ctx(void* ctx);
 
-// Generate |n| raw EC scalar + EC point key pairs.
-int get_n_ec_keypairs(int n, cmems_t* prv_keys_ptr, cmems_t* pub_keys_ptr);
+int pve_encrypt(cmem_t pub_key_cmem, cmem_t x_cmem, const char* label_ptr, int curve_code, cmem_t* out_ptr);
+int pve_decrypt(cmem_t prv_key_cmem, cmem_t pve_bundle_cmem, const char* label_ptr, int curve_code, cmem_t* out_x_ptr);
+int pve_verify(cmem_t pub_key_cmem, cmem_t pve_bundle_cmem, cmem_t Q_cmem, const char* label_ptr);
 
-// Perform quorum decryption.
-int pve_quorum_decrypt(crypto_ss_node_ref* root_ptr, cmems_t quorum_prv_keys_list_ptr, int quorum_prv_keys_count,
-                       cmems_t all_pub_keys_list_ptr, int all_pub_keys_count, cmem_t pve_bundle_cmem,
-                       cmems_t Xs_list_ptr, int xs_count, const char* label_ptr, cmems_t* out_ptr);
+// Quorum encryption / verification operating on a full access-structure pointer.
+int pve_ac_encrypt(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub_keys_list_ptr, int pub_keys_count,
+                   cmems_t xs_list_ptr, int xs_count, const char* label_ptr, int curve_code, cmem_t* out_ptr);
+int pve_ac_verify(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub_keys_list_ptr, int pub_keys_count,
+                  cmem_t pve_bundle_cmem, cmems_t Xs_list_ptr, int xs_count, const char* label_ptr);
 
-// Generate a single base encryption key pair (crypto::pub_key_t, crypto::prv_key_t).
-// The returned cmem_t buffers are owned by the caller and must be freed via CMEMGet on the Go side.
-int generate_base_enc_keypair(cmem_t* prv_key_ptr, cmem_t* pub_key_ptr);
+// Interactive quorum decryption APIs
+int pve_ac_party_decrypt_row(crypto_ss_ac_ref* ac_ptr,
+    cmem_t prv_key_cmem,
+    cmem_t pve_bundle_cmem,
+    const char* label_ptr,
+    const char* path_ptr,
+    int row_index,
+    cmem_t* out_share_ptr);
 
-// Quorum encryption / decryption operating on a full access-structure pointer.
-int pve_quorum_encrypt_map(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub_keys_list_ptr,
-                            int pub_keys_count, cmems_t xs_list_ptr, int xs_count, const char* label_ptr,
-                            int curve_code, cmem_t* out_ptr);
-
-int pve_quorum_decrypt_map(crypto_ss_ac_ref* ac_ptr, cmems_t quorum_prv_keys_list_ptr, int quorum_prv_keys_count,
-                           cmems_t all_pub_keys_list_ptr, int all_pub_keys_count, cmem_t pve_bundle_cmem,
-                           cmems_t Xs_list_ptr, int xs_count, const char* label_ptr, cmems_t* out_ptr);
-
-// === New API: Quorum verification without private keys ===
-int pve_quorum_verify_map(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub_keys_list_ptr,
-                          int pub_keys_count, cmem_t pve_bundle_cmem, cmems_t Xs_list_ptr, int xs_count,
-                          const char* label_ptr);
+int pve_ac_aggregate_to_restore_row(crypto_ss_ac_ref* ac_ptr,
+    cmem_t pve_bundle_cmem,
+    const char* label_ptr,
+    cmems_t paths_list_ptr,
+    cmems_t shares_list_ptr,
+    int quorum_count,
+    int row_index,
+    cmems_t* out_values_ptr);
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -118,7 +118,7 @@ uninstall:
 ### Demos
 .PHONY: demos
 demos:
-	${RUN_CMD} 'bash ./scripts/run-demos.sh --run-all'
+	${RUN_CMD} 'BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/run-demos.sh --run-all'
 
 .PHONY: clean-demos
 clean-demos:
@@ -150,15 +150,21 @@ sanity-check:
 ### For Go wrappers
 .PHONY: test-go
 test-go:
-	${RUN_CMD} 'cd demos-go/cb-mpc-go && go test -v $(if $(filter),-run $(filter)) ./...'
+	@echo "Running Go tests$(if $(filter), (filter=$(filter)),)..."
+	@${RUN_CMD} 'BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/go_with_cpp.sh bash -lc "\
+		if [ -n \"$(filter)\" ]; then \
+			go test -v -run \"$(filter)\" ./...; \
+		else \
+			go test -v ./...; \
+		fi"'
 
 .PHONY: test-go-short
 test-go-short:
-	${RUN_CMD} 'cd demos-go/cb-mpc-go && go test -short ./...'
+	${RUN_CMD} 'BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/go_with_cpp.sh bash -lc "go test -short ./..."'
 
 .PHONY: test-go-race
 test-go-race:
-	${RUN_CMD} 'cd demos-go/cb-mpc-go && go test -race -v ./...'
+	${RUN_CMD} 'BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/go_with_cpp.sh bash -lc "go test -race -v ./..."'
 
 .PHONY: godoc
 godoc:

@@ -1,6 +1,6 @@
 module github.com/coinbase/cb-mpc/demo-go-ecdsa-mpc-with-backup
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.2
 
@@ -12,4 +12,7 @@ require (
 	golang.org/x/sync v0.15.0
 )
 
-require github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
+require (
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
+	golang.org/x/crypto v0.42.0
+)

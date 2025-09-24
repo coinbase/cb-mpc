@@ -6,8 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	curvepkg "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
-	curveref "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/internal/curveref"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/transport/mocknet"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +14,7 @@ import (
 )
 
 func TestECDSA2PCKeyGenWithMockNet(t *testing.T) {
-	secp, _ := curvepkg.NewSecp256k1()
+	secp, _ := curve.NewSecp256k1()
 
 	// Valid case
 	responses, err := ECDSA2PCKeyGenWithMockNet(secp)
@@ -62,7 +61,7 @@ func TestECDSA2PCFullProtocolWithMockNet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			secp, _ := curvepkg.NewSecp256k1()
+			secp, _ := curve.NewSecp256k1()
 			result, err := ECDSA2PCFullProtocolWithMockNet(secp, tt.sessionID, tt.message)
 
 			if tt.wantErr {
@@ -98,7 +97,7 @@ func TestECDSA2PCFullProtocolWithMockNet(t *testing.T) {
 }
 
 func TestECDSA2PCKeyGenRequest_Validation(t *testing.T) {
-	secp, _ := curvepkg.NewSecp256k1()
+	secp, _ := curve.NewSecp256k1()
 	_, err := ECDSA2PCKeyGenWithMockNet(secp)
 	assert.NoError(t, err)
 
@@ -109,7 +108,7 @@ func TestECDSA2PCKeyGenRequest_Validation(t *testing.T) {
 
 func TestECDSA2PCSignRequest_Validation(t *testing.T) {
 	// First generate valid key shares for testing
-	secp, _ := curvepkg.NewSecp256k1()
+	secp, _ := curve.NewSecp256k1()
 	keyGenResponses, err := ECDSA2PCKeyGenWithMockNet(secp)
 	require.NoError(t, err)
 	require.Len(t, keyGenResponses, 2)
@@ -139,7 +138,7 @@ func TestECDSA2PCSignRequest_Validation(t *testing.T) {
 
 func TestECDSA2PC_DeterministicSignatures(t *testing.T) {
 	// Test that Party 0 consistently gets signatures and Party 1 gets empty results
-	secp, _ := curvepkg.NewSecp256k1()
+	secp, _ := curve.NewSecp256k1()
 	sessionID := []byte("deterministic-test")
 	message := []byte("Consistent message")
 
@@ -159,7 +158,7 @@ func TestECDSA2PC_DeterministicSignatures(t *testing.T) {
 
 func TestECDSA2PC_DifferentMessages(t *testing.T) {
 	// Test that different messages produce different signatures (from Party 0)
-	secp, _ := curvepkg.NewSecp256k1()
+	secp, _ := curve.NewSecp256k1()
 	sessionID := []byte("different-messages-test")
 	message1 := []byte("First message")
 	message2 := []byte("Second message")
@@ -183,7 +182,7 @@ func TestECDSA2PC_DifferentMessages(t *testing.T) {
 
 func TestECDSA2PC_StructureValidation(t *testing.T) {
 	// Test that all response structures are properly populated
-	secp, _ := curvepkg.NewSecp256k1()
+	secp, _ := curve.NewSecp256k1()
 	result, err := ECDSA2PCFullProtocolWithMockNet(secp, []byte("structure-test"), []byte("Test message"))
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -214,7 +213,7 @@ func TestECDSA2PC_StructureValidation(t *testing.T) {
 
 func TestECDSA2PCKey_RoleIndex(t *testing.T) {
 	// Generate key shares for two parties
-	secp, _ := curvepkg.NewSecp256k1()
+	secp, _ := curve.NewSecp256k1()
 	keyGenResponses, err := ECDSA2PCKeyGenWithMockNet(secp)
 	require.NoError(t, err)
 	require.Len(t, keyGenResponses, 2)
@@ -232,13 +231,13 @@ func TestECDSA2PCKey_RoleIndex(t *testing.T) {
 
 func TestECDSA2PCKey_QAndXShare(t *testing.T) {
 	// Generate key shares
-	secp, _ := curvepkg.NewSecp256k1()
+	secp, _ := curve.NewSecp256k1()
 	keyGenResponses, err := ECDSA2PCKeyGenWithMockNet(secp)
 	require.NoError(t, err)
 	require.Len(t, keyGenResponses, 2)
 
 	// Extract curve
-	curveObj, err := curvepkg.NewSecp256k1()
+	curveObj, err := curve.NewSecp256k1()
 	require.NoError(t, err)
 	defer curveObj.Free()
 
@@ -280,7 +279,7 @@ type ECDSA2PCResult struct {
 // ECDSA2PCFullProtocolWithMockNet runs the complete ECDSA 2PC protocol (key generation + signing)
 // using the mock network. This is a test-only helper that provides a convenient way to exercise
 // the full protocol flow.
-func ECDSA2PCFullProtocolWithMockNet(curveObj curvepkg.Curve, sessionID []byte, message []byte) (*ECDSA2PCResult, error) {
+func ECDSA2PCFullProtocolWithMockNet(curveObj curve.Curve, sessionID []byte, message []byte) (*ECDSA2PCResult, error) {
 	if curveObj == nil {
 		return nil, fmt.Errorf("curve must be provided")
 	}
@@ -293,8 +292,8 @@ func ECDSA2PCFullProtocolWithMockNet(curveObj curvepkg.Curve, sessionID []byte, 
 
 	// Step 1: Distributed Key Generation
 	keyGenOutputs, err := runner.MPCRun2P(func(job cgobinding.Job2P, input *mocknet.MPCIO) (*mocknet.MPCIO, error) {
-		cv := input.Opaque.(curvepkg.Curve)
-		keyShareRef, err := cgobinding.DistributedKeyGenCurve(job, curveref.Ref(cv))
+		cv := input.Opaque.(curve.Curve)
+		keyShareRef, err := cgobinding.DistributedKeyGen(job, curve.Code(cv))
 		if err != nil {
 			return nil, fmt.Errorf("key generation failed: %v", err)
 		}
@@ -364,7 +363,7 @@ func ECDSA2PCFullProtocolWithMockNet(curveObj curvepkg.Curve, sessionID []byte, 
 // generation protocol locally using the in-memory mock network. This mirrors
 // the original implementation that lived in the production API but has been
 // moved here to avoid exposing testing utilities to API consumers.
-func ECDSA2PCKeyGenWithMockNet(curveObj curvepkg.Curve) ([]*ECDSA2PCKeyGenResponse, error) {
+func ECDSA2PCKeyGenWithMockNet(curveObj curve.Curve) ([]*ECDSA2PCKeyGenResponse, error) {
 	if curveObj == nil {
 		return nil, fmt.Errorf("curve must be provided")
 	}
@@ -373,8 +372,8 @@ func ECDSA2PCKeyGenWithMockNet(curveObj curvepkg.Curve) ([]*ECDSA2PCKeyGenRespon
 	runner := mocknet.NewMPCRunner(mocknet.GeneratePartyNames(2)...)
 
 	outputs, err := runner.MPCRun2P(func(job cgobinding.Job2P, input *mocknet.MPCIO) (*mocknet.MPCIO, error) {
-		cv := input.Opaque.(curvepkg.Curve)
-		keyShareRef, err := cgobinding.DistributedKeyGenCurve(job, curveref.Ref(cv))
+		cv := input.Opaque.(curve.Curve)
+		keyShareRef, err := cgobinding.DistributedKeyGen(job, curve.Code(cv))
 		if err != nil {
 			return nil, fmt.Errorf("key generation failed: %v", err)
 		}
@@ -399,26 +398,26 @@ func ECDSA2PCKeyGenWithMockNet(curveObj curvepkg.Curve) ([]*ECDSA2PCKeyGenRespon
 func TestECDSA2PCKeyGen_CurveIntegrity(t *testing.T) {
 	// Ensure that the curve associated with each generated key share matches
 	// the curve requested during key generation.
-	secp, _ := curvepkg.NewSecp256k1()
+	secp, _ := curve.NewSecp256k1()
 
 	keyGenResponses, err := ECDSA2PCKeyGenWithMockNet(secp)
 	require.NoError(t, err)
 	require.Len(t, keyGenResponses, 2)
 
-	expectedCode := cgobinding.ECurveGetCurveCode(curveref.Ref(secp))
+	expectedCode := curve.Code(secp)
 
 	for i, resp := range keyGenResponses {
 		c, err := resp.KeyShare.Curve()
 		require.NoError(t, err, "party %d Curve() should not error", i)
 		assert.NotNil(t, c, "party %d curve should not be nil", i)
-		assert.Equal(t, expectedCode, cgobinding.ECurveGetCurveCode(curveref.Ref(c)), "party %d curve code should match", i)
+		assert.Equal(t, expectedCode, curve.Code(c), "party %d curve code should match", i)
 		c.Free()
 	}
 }
 
 func TestECDSA2PC_Refresh(t *testing.T) {
 	// Step 0: initialise curve
-	curveObj, _ := curvepkg.NewSecp256k1()
+	curveObj, _ := curve.NewSecp256k1()
 
 	// Step 1: Generate initial key shares
 	keyGenResponses, err := ECDSA2PCKeyGenWithMockNet(curveObj)
@@ -469,16 +468,16 @@ func TestECDSA2PC_Refresh(t *testing.T) {
 	newShare1 := results[1].resp.NewKeyShare
 
 	// ===== Curve unchanged =====
-	expectedCode := cgobinding.ECurveGetCurveCode(curveref.Ref(curveObj))
+	expectedCode := curve.Code(curveObj)
 
 	c0, err := newShare0.Curve()
 	require.NoError(t, err)
-	assert.Equal(t, expectedCode, cgobinding.ECurveGetCurveCode(curveref.Ref(c0)), "party 0 curve code should remain unchanged")
+	assert.Equal(t, expectedCode, curve.Code(c0), "party 0 curve code should remain unchanged")
 	c0.Free()
 
 	c1, err := newShare1.Curve()
 	require.NoError(t, err)
-	assert.Equal(t, expectedCode, cgobinding.ECurveGetCurveCode(curveref.Ref(c1)), "party 1 curve code should remain unchanged")
+	assert.Equal(t, expectedCode, curve.Code(c1), "party 1 curve code should remain unchanged")
 	c1.Free()
 
 	// ===== Public key Q unchanged =====

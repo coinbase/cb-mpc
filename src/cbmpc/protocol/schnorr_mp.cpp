@@ -12,7 +12,7 @@
 
 #define _i msg
 #define _j received(j)
-#define _js all_received_refs()
+#define _js all_received()
 
 using namespace coinbase::mpc;
 

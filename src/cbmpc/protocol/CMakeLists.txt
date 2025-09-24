@@ -11,7 +11,9 @@ target_sources(cbmpc_protocol  PRIVATE
   agree_random.cpp
   ot.cpp
 
+  pve_base.cpp
   pve.cpp
+  pve_batch.cpp
   pve_ac.cpp
 
   ec_dkg.cpp

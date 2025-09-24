@@ -14,7 +14,7 @@ import (
 
 	"slices"
 
-	curvePkg "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/transport"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/transport/mtls"
 	"github.com/labstack/echo/v4"
@@ -202,7 +202,7 @@ func renderError(message string) (string, error) {
 	return renderTemplate("error.html", ErrorData{Message: message})
 }
 
-func dkg(dkgPartyIndex int, dkgPartyName string, dkgAllPNames []string, dkgTransport transport.Messenger, threshold int, curve curvePkg.Curve) (time.Duration, []byte, []byte, error) {
+func dkg(dkgPartyIndex int, dkgPartyName string, dkgAllPNames []string, dkgTransport transport.Messenger, threshold int, curve curve.Curve) (time.Duration, []byte, []byte, error) {
 	ac := createThresholdAccessStructure(dkgAllPNames, threshold, curve)
 
 	startTime := time.Now()
@@ -258,7 +258,7 @@ func main_web(runConfig *RunConfig) error {
 	var signingAllPNames []string
 	var signingParticipantPNames []string
 
-	curve, err := curvePkg.NewSecp256k1()
+	curve, err := curve.NewSecp256k1()
 	if err != nil {
 		return fmt.Errorf("creating curve: %v", err)
 	}

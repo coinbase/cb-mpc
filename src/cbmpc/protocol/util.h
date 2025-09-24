@@ -61,25 +61,3 @@ auto map_args_to_tuple(F f, Args&&... args) {
   std::tuple<Args...> tup(std::forward<Args>(args)...);
   return map_args_to_tuple_impl(f, tup, std::index_sequence_for<Args...>{});
 }
-
-// Returns a vector of reference_wrappers<T> obtained from a vector of shared_ptr<T>.
-template <typename T>
-std::vector<std::reference_wrapper<T>> extract_refs(const std::vector<std::shared_ptr<T>>& shared_ptr_vec) {
-  std::vector<std::reference_wrapper<T>> ref_vec;
-  ref_vec.reserve(shared_ptr_vec.size());
-  for (const auto& ptr : shared_ptr_vec) {
-    ref_vec.push_back(*ptr);
-  }
-  return ref_vec;
-}
-
-// Returns a vector of T by dereferencing each shared_ptr<T> in the input vector.
-template <typename T>
-std::vector<T> extract_values(const std::vector<std::shared_ptr<T>>& shared_ptr_vec) {
-  std::vector<T> value_vec;
-  value_vec.reserve(shared_ptr_vec.size());
-  for (const auto& ptr : shared_ptr_vec) {
-    value_vec.push_back(*ptr);
-  }
-  return value_vec;
-}

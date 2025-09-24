@@ -122,21 +122,6 @@ class rsa_oaep_t {
   const rsa_prv_key_t *key;
 };
 
-struct rsa_kem_ciphertext_t {
-  buf_t rsa_enc, aes_enc;
-  buf_t encrypted;
-  void convert(coinbase::converter_t &converter);
-  buf_t to_bin() const { return coinbase::convert(*this); }
-
-  error_t encrypt(const rsa_pub_key_t &pub_key, mem_t label, mem_t plain, drbg_aes_ctr_t *drbg = nullptr);
-  error_t encrypt(const rsa_pub_key_t &pub_key, hash_e hash_alg, hash_e mgf_alg, mem_t label, mem_t plain,
-                  drbg_aes_ctr_t *drbg = nullptr);
-  error_t decrypt(const rsa_oaep_t &prv_key, mem_t label, buf_t &out);
-  error_t decrypt(const rsa_oaep_t &prv_key, hash_e hash_alg, hash_e mgf_alg, mem_t label, buf_t &out);
-  error_t decrypt_begin(buf_t &enc_info) const;
-  error_t decrypt_end(mem_t label, mem_t dec_info, buf_t &out) const;
-};
-
 static int evp_md_size(hash_e type) { return hash_alg_t::get(type).size; }
 static int evp_digest_init_ex(hash_t &ctx, hash_e type, void *impl) {
   ctx.init();

@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	curvePkg "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/mpc"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/transport"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/transport/mtls"
@@ -25,7 +25,7 @@ type KeyShareData struct {
 	PartyName string   `json:"partyName"`
 }
 
-func runThresholdDKG(partyIndex int, quorumCount int, allPNameList []string, ac *mpc.AccessStructure, curve curvePkg.Curve, messenger transport.Messenger) (*mpc.ECDSAMPCKey, error) {
+func runThresholdDKG(partyIndex int, quorumCount int, allPNameList []string, ac *mpc.AccessStructure, curve curve.Curve, messenger transport.Messenger) (*mpc.ECDSAMPCKey, error) {
 	totalPartyCount := len(allPNameList) // since dkg involves all parties
 	job, err := mpc.NewJobMP(messenger, totalPartyCount, partyIndex, allPNameList)
 	if err != nil {
@@ -175,7 +175,7 @@ func setupTransport(config Config, partyIndex int, participantsIndices map[int]b
 	return myNetworkPartyIndex, myPname, allPNames, participantPNames, transport, nil
 }
 
-func createThresholdAccessStructure(pnameList []string, threshold int, curve curvePkg.Curve) mpc.AccessStructure {
+func createThresholdAccessStructure(pnameList []string, threshold int, curve curve.Curve) mpc.AccessStructure {
 	root := mpc.Threshold("", threshold)
 	for _, pname := range pnameList {
 		child := mpc.Leaf(pname)

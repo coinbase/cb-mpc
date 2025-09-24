@@ -1,15 +1,21 @@
 package main
 
 import (
+	"crypto/ecdsa"
+	"crypto/sha256"
+	"encoding/asn1"
 	"encoding/hex"
 	"fmt"
 	"log"
+	"math/big"
 
 	"sync"
 
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/mpc"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/transport/mocknet"
+	"github.com/btcsuite/btcd/btcec/v2"
+	btcecEcdsa "github.com/btcsuite/btcd/btcec/v2/ecdsa"
 )
 
 func main() {
@@ -38,12 +44,18 @@ func main() {
 
 	// === Signing round 1 ===
 	message1 := []byte("Hello, CB-MPC!")
+	digest1 := sha256.Sum256(message1)
 	fmt.Println("\n## Running first collaborative signing round")
-	firstSigResponses, err := signWithMockNet([]byte("session-1"), message1, keyGenResponses)
+	firstSigResponses, err := signWithMockNet([]byte("session-1"), digest1[:], keyGenResponses)
 	if err != nil {
 		log.Fatalf("Signing round 1 failed: %v", err)
 	}
 	printSignatures(message1, firstSigResponses)
+	if err := verifyExampleSignature(keyGenResponses[0].KeyShare, firstSigResponses[0].Signature, digest1[:]); err != nil {
+		fmt.Printf("❌ Signature verification FAILED: %v\n", err)
+	} else {
+		fmt.Println("✅ Signature verification PASSED")
+	}
 
 	// === Refresh ===
 	fmt.Println("\n## Running key refresh (re-share)")
@@ -56,12 +68,18 @@ func main() {
 
 	// === Signing round 2 ===
 	message2 := []byte("Fresh signing after refresh!")
+	digest2 := sha256.Sum256(message2)
 	fmt.Println("\n## Running second collaborative signing round")
-	secondSigResponses, err := signWithMockNet([]byte("session-2"), message2, refreshResponses)
+	secondSigResponses, err := signWithMockNet([]byte("session-2"), digest2[:], refreshResponses)
 	if err != nil {
 		log.Fatalf("Signing round 2 failed: %v", err)
 	}
 	printSignatures(message2, secondSigResponses)
+	if err := verifyExampleSignature(refreshResponses[0].KeyShare, secondSigResponses[0].Signature, digest2[:]); err != nil {
+		fmt.Printf("❌ Signature verification FAILED: %v\n", err)
+	} else {
+		fmt.Println("✅ Signature verification PASSED")
+	}
 
 	fmt.Println("🎉 ECDSA 2PC example completed successfully!")
 }
@@ -169,10 +187,11 @@ func signWithMockNet(sessionID, message []byte, keyGenResponses []*mpc.ECDSA2PCK
 			}
 			defer jp.Free()
 
+			msgCopy := append([]byte(nil), message...)
 			resp, err := mpc.ECDSA2PCSign(jp, &mpc.ECDSA2PCSignRequest{
 				SessionID: sessionID,
 				KeyShare:  keyGenResponses[idx].KeyShare,
-				Message:   message,
+				Message:   msgCopy,
 			})
 			if err != nil {
 				firstErr = err
@@ -233,4 +252,44 @@ func refreshWithMockNet(oldKeyGenResponses []*mpc.ECDSA2PCKeyGenResponse) ([]*mp
 		return nil, firstErr
 	}
 	return newResponses, nil
+}
+
+// verifyExampleSignature verifies a DER-encoded ECDSA signature using the public key Q from the key share
+func verifyExampleSignature(key mpc.ECDSA2PCKey, derSig []byte, digest []byte) error {
+	Q, err := key.Q()
+	if err != nil {
+		return fmt.Errorf("failed to get public key Q: %v", err)
+	}
+	defer Q.Free()
+
+	// Prefer native verification (matches signing backend)
+	if c, err := key.Curve(); err == nil {
+		resp := &mpc.ECDSA2PCSignResponse{Signature: derSig}
+		if err := resp.Verify(Q, digest, c); err == nil {
+			return nil
+		}
+	}
+
+	x := new(big.Int).SetBytes(Q.GetX())
+	y := new(big.Int).SetBytes(Q.GetY())
+	pubKey := &ecdsa.PublicKey{Curve: btcec.S256(), X: x, Y: y}
+
+	type ecdsaSignature struct{ R, S *big.Int }
+	var s ecdsaSignature
+	if _, err := asn1.Unmarshal(derSig, &s); err != nil {
+		return fmt.Errorf("failed to parse DER signature: %v", err)
+	}
+	// Verify with stdlib
+	if ecdsa.Verify(pubKey, digest, s.R, s.S) {
+		return nil
+	}
+	// Fallback to btcec ecdsa verification using parsed DER and SEC1-encoded pubkey
+	if pk, err := btcec.ParsePubKey(Q.Bytes()); err == nil {
+		if sig, err := btcecEcdsa.ParseDERSignature(derSig); err == nil {
+			if sig.Verify(digest, pk) {
+				return nil
+			}
+		}
+	}
+	return fmt.Errorf("invalid signature")
 }

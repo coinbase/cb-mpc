@@ -28,17 +28,6 @@ func (p *Point) Free() {
 	p.cPoint.Free()
 }
 
-// toCRef returns the underlying C++ point reference.
-//
-// INTERNAL USE ONLY – the function is intentionally unexported so that
-// application code cannot depend on the native representation. A
-// go:linkname directive (see api/internal/curveref) provides controlled
-// access for other cb-mpc-go sub-packages that need to cross the cgo
-// boundary.
-func toCRef(p *Point) cgobinding.ECCPointRef {
-	return p.cPoint
-}
-
 // Multiply multiplies the point by a scalar
 func (p *Point) Multiply(scalar *Scalar) (*Point, error) {
 	if scalar.Bytes == nil {
@@ -100,16 +89,4 @@ func (p *Point) Bytes() []byte {
 		return nil
 	}
 	return cgobinding.ECCPointToBytes(p.cPoint)
-}
-
-// newPointFromCRef wraps an existing native reference into a *Point.
-//
-// It is unexported so that it disappears from the public API surface. The
-// function is still linked to the internal helper package via go:linkname so
-// that other cb-mpc-go sub-packages can construct Point values without
-// direct access to the unexported cPoint field.
-//
-// **DO NOT** use this from application code; it is considered internal API.
-func newPointFromCRef(ref cgobinding.ECCPointRef) *Point {
-	return &Point{cPoint: ref}
 }

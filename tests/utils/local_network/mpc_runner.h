@@ -16,9 +16,9 @@ typedef std::function<void(mpc::job_parallel_mp_t& job, int th_i)> lambda_mp_par
 class local_data_transport_t : public mpc::data_transport_interface_t {
  public:
   local_data_transport_t(const std::shared_ptr<mpc_net_context_t>& nc_ptr) : net_context_ptr(nc_ptr) {}
-  error_t send(const mpc::party_idx_t receiver, const mem_t& msg) override;
-  error_t receive(const mpc::party_idx_t sender, mem_t& msg) override;
-  error_t receive_all(const std::vector<mpc::party_idx_t>& senders, std::vector<mem_t>& msgs) override;
+  error_t send(const mpc::party_idx_t receiver, mem_t msg) override;
+  error_t receive(const mpc::party_idx_t sender, buf_t& msg) override;
+  error_t receive_all(const std::vector<mpc::party_idx_t>& senders, std::vector<buf_t>& msgs) override;
 
   std::shared_ptr<mpc_net_context_t> net_context_ptr;
 };

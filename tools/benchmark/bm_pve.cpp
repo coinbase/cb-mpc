@@ -3,6 +3,7 @@
 #include <cbmpc/crypto/secret_sharing.h>
 #include <cbmpc/protocol/pve.h>
 #include <cbmpc/protocol/pve_ac.h>
+#include <cbmpc/protocol/pve_batch.h>
 
 #include "data/test_node.h"
 #include "util.h"
@@ -11,7 +12,7 @@ using namespace coinbase;
 using namespace coinbase::mpc;
 
 static void BM_PVE_Encrypt(benchmark::State& state) {
-  ec_pve_t<crypto::hybrid_cipher_t> pve;
+  ec_pve_t pve;
 
   crypto::pub_key_t pub_key;
   if (state.range(0) == 0) {
@@ -29,12 +30,12 @@ static void BM_PVE_Encrypt(benchmark::State& state) {
   ecc_point_t X = x * G;
 
   for (auto _ : state) {
-    pve.encrypt(pub_key, "test-label", crypto::curve_p256, x);
+    pve.encrypt(&pub_key, "test-label", crypto::curve_p256, x);
   }
 }
 
 static void BM_PVE_Verify(benchmark::State& state) {
-  ec_pve_t<crypto::hybrid_cipher_t> pve;
+  ec_pve_t pve;
 
   crypto::pub_key_t pub_key;
   if (state.range(0) == 0) {
@@ -50,15 +51,15 @@ static void BM_PVE_Verify(benchmark::State& state) {
   const crypto::ecc_generator_point_t& G = crypto::curve_p256.generator();
   bn_t x = bn_t::rand(q);
   ecc_point_t X = x * G;
-  pve.encrypt(pub_key, "test-label", crypto::curve_p256, x);
+  pve.encrypt(&pub_key, "test-label", crypto::curve_p256, x);
 
   for (auto _ : state) {
-    pve.verify(pub_key, X, "test-label");
+    pve.verify(&pub_key, X, "test-label");
   }
 }
 
 static void BM_PVE_Decrypt(benchmark::State& state) {
-  ec_pve_t<crypto::hybrid_cipher_t> pve;
+  ec_pve_t pve;
 
   crypto::pub_key_t pub_key;
   crypto::prv_key_t prv_key;
@@ -77,16 +78,16 @@ static void BM_PVE_Decrypt(benchmark::State& state) {
   const crypto::ecc_generator_point_t& G = crypto::curve_p256.generator();
   bn_t x = bn_t::rand(q);
   ecc_point_t X = x * G;
-  pve.encrypt(pub_key, "test-label", crypto::curve_p256, x);
+  pve.encrypt(&pub_key, "test-label", crypto::curve_p256, x);
 
   for (auto _ : state) {
-    pve.decrypt(prv_key, "test-label", crypto::curve_p256, x);
+    pve.decrypt(&prv_key, &pub_key, "test-label", crypto::curve_p256, x);
   }
 }
 
 static void BM_PVE_Batch_Encrypt(benchmark::State& state) {
   int n = state.range(1);
-  ec_pve_batch_t<crypto::hybrid_cipher_t> pve(n);
+  ec_pve_batch_t pve(n);
 
   crypto::pub_key_t pub_key;
   if (state.range(0) == 0) {
@@ -110,13 +111,13 @@ static void BM_PVE_Batch_Encrypt(benchmark::State& state) {
   }
 
   for (auto _ : state) {
-    pve.encrypt(pub_key, "test-label", crypto::curve_p256, x);
+    pve.encrypt(&pub_key, "test-label", crypto::curve_p256, x);
   }
 }
 
 static void BM_PVE_Batch_Verify(benchmark::State& state) {
   int n = state.range(1);
-  ec_pve_batch_t<crypto::hybrid_cipher_t> pve(n);
+  ec_pve_batch_t pve(n);
 
   crypto::pub_key_t pub_key;
   if (state.range(0) == 0) {
@@ -138,15 +139,15 @@ static void BM_PVE_Batch_Verify(benchmark::State& state) {
   for (int i = 0; i < n; i++) {
     X[i] = x[i] * G;
   }
-  pve.encrypt(pub_key, "test-label", crypto::curve_p256, x);
+  pve.encrypt(&pub_key, "test-label", crypto::curve_p256, x);
   for (auto _ : state) {
-    pve.verify(pub_key, X, "test-label");
+    pve.verify(&pub_key, X, "test-label");
   }
 }
 
 static void BM_PVE_Batch_Decrypt(benchmark::State& state) {
   int n = state.range(1);
-  ec_pve_batch_t<crypto::hybrid_cipher_t> pve(n);
+  ec_pve_batch_t pve(n);
 
   crypto::pub_key_t pub_key;
   crypto::prv_key_t prv_key;
@@ -167,10 +168,10 @@ static void BM_PVE_Batch_Decrypt(benchmark::State& state) {
   for (int i = 0; i < n; i++) {
     x[i] = bn_t::rand(q);
   }
-  pve.encrypt(pub_key, "test-label", crypto::curve_p256, x);
+  pve.encrypt(&pub_key, "test-label", crypto::curve_p256, x);
 
   for (auto _ : state) {
-    pve.decrypt(prv_key, "test-label", crypto::curve_p256, x);
+    pve.decrypt(&prv_key, &pub_key, "test-label", crypto::curve_p256, x);
   }
 }
 
@@ -200,11 +201,13 @@ class PVEACFixture : public benchmark::Fixture {
 
   std::map<std::string, crypto::pub_key_t> pub_keys;
   std::map<std::string, crypto::prv_key_t> prv_keys;
+  mpc::ec_pve_ac_t::pks_t pub_key_ptrs;
+  mpc::ec_pve_ac_t::sks_t prv_key_ptrs;
   std::vector<bn_t> xs;
   std::vector<ecc_point_t> Xs;
   std::string label = "test-label";
 
-  ec_pve_ac_t<crypto::hybrid_cipher_t> pve;
+  ec_pve_ac_t pve;
 
  public:
   void SetUp(const benchmark::State&) override {
@@ -222,6 +225,12 @@ class PVEACFixture : public benchmark::Fixture {
       pub_keys[path] = prv_key.pub();
       participant_index++;
     }
+
+    // Build pointer maps expected by ec_pve_ac_t
+    pub_key_ptrs.clear();
+    prv_key_ptrs.clear();
+    for (auto& kv : pub_keys) pub_key_ptrs[kv.first] = &kv.second;
+    for (auto& kv : prv_keys) prv_key_ptrs[kv.first] = &kv.second;
 
     int n = 20;
     xs.resize(n);
@@ -242,20 +251,29 @@ BENCHMARK(BM_PVE_Batch_Decrypt)->Name("PVE/vencrypt-batch/Decrypt")->ArgsProduct
 
 BENCHMARK_DEFINE_F(PVEACFixture, BM_AC_Encrypt)(benchmark::State& state) {
   for (auto _ : state) {
-    pve.encrypt(ac, pub_keys, label, curve, xs);
+    pve.encrypt(ac, pub_key_ptrs, label, curve, xs);
   }
 }
 BENCHMARK_DEFINE_F(PVEACFixture, BM_AC_Verify)(benchmark::State& state) {
-  pve.encrypt(ac, pub_keys, label, curve, xs);
+  pve.encrypt(ac, pub_key_ptrs, label, curve, xs);
   for (auto _ : state) {
-    pve.verify(ac, pub_keys, Xs, label);
+    pve.verify(ac, pub_key_ptrs, Xs, label);
   }
 }
 BENCHMARK_DEFINE_F(PVEACFixture, BM_AC_Decrypt)(benchmark::State& state) {
-  pve.encrypt(ac, pub_keys, label, curve, xs);
+  pve.encrypt(ac, pub_key_ptrs, label, curve, xs);
   std::vector<bn_t> decrypted_xs;
   for (auto _ : state) {
-    pve.decrypt(ac, prv_keys, pub_keys, label, decrypted_xs);
+    int row_index = 0;
+    std::map<std::string, bn_t> shares;
+    for (auto &kv : prv_key_ptrs) {
+      bn_t share;
+      auto rv = pve.party_decrypt_row(ac, row_index, kv.first, kv.second, label, share);
+      if (rv) benchmark::DoNotOptimize(rv);
+      shares[kv.first] = share;
+    }
+    auto rv = pve.aggregate_to_restore_row(ac, row_index, label, shares, decrypted_xs, /*skip_verify=*/true);
+    if (rv) benchmark::DoNotOptimize(rv);
   }
 }
 BENCHMARK_REGISTER_F(PVEACFixture, BM_AC_Encrypt)->Name("PVE/vencrypt-batch-many/Encrypt");

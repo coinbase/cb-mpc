@@ -3,7 +3,7 @@ generate-ca:
 	@echo "Generating CA RSA key..."
 	openssl genpkey -algorithm RSA -out certs/ca-key.pem -pkeyopt rsa_keygen_bits:2048
 	@echo "Generating CA certificate..."
-	openssl req -new -x509 -key certs/ca-key.pem -out certs/ca.pem -days 365
+	openssl req -new -x509 -key certs/ca-key.pem -out certs/ca.pem -days 365 -subj "/C=US/ST=California/L=San Francisco/O=My Company/CN=CA Root Certificate"
 
 .PHONY: generate-cert
 generate-cert:
@@ -66,3 +66,7 @@ run-sign:
 	go run *.go -index=0 -phase=sign -mode=cli -participants=0,2,3 -threshold=3 > sign-0.log 2>&1 &
 	sleep 5 && go run *.go -index=2 -phase=sign -mode=cli -participants=0,2,3 -threshold=3 > sign-2.log 2>&1 &
 	sleep 10 && go run *.go -index=3 -phase=sign -mode=cli -participants=0,2,3 -threshold=3 > sign-3.log 2>&1 &
+
+.PHONY: run-server
+run-server:
+	cd ../../../ && BUILD_TYPE=Release bash scripts/go_with_cpp.sh --no-cd bash -lc "cd 'demos-go/cmd/threshold-ecdsa-web' && env CGO_ENABLED=1 go run *.go -index=$(INDEX)"

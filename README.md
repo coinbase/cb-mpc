@@ -122,19 +122,21 @@ To test the library, run
 
 `make test`
 
-To run the demos and benchmarks, you first need to install the library:
+Running demos and benchmarks:
 
-`sudo make install`
+- Go wrapper and Go demos do not require installation. They compile against the local build output under `<repo_root>/lib` via `scripts/go_with_cpp.sh`.
+  - Run Go tests: `make test-go` (or `make test-go-short`, `make test-go-race`)
+- C++ demos and benchmarks still expect the library to be installed under `/usr/local/opt/cbmpc`.
+  - Install for C++ usage: `sudo make install`
+  - Run all demos (C++ + Go): `make demos`
+  - Run benchmarks: `make bench`
 
-This will copy the `.a` files and header files to `/usr/local/opt/cbmpc/lib`
-
-To run the demos (both cpp and go), run
-
-`make demos`
-
-To run the benchmarks, run
-
-`make bench`
+Notes:
+- If you have not run `make install`, the C++ portion of `make demos` may fail, but the Go demos will still use the local build.
+- To run a single Go demo without install, for example `ecdsa-2pc`:
+  ```bash
+  BUILD_TYPE=Release bash scripts/go_with_cpp.sh --no-cd bash -lc "cd demos-go/examples/ecdsa-2pc && go run main.go"
+  ```
 
 Our benchmark results can be found at <https://coinbase.github.io/cb-mpc>
 

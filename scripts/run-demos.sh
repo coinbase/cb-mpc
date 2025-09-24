@@ -46,7 +46,8 @@ run_all_go() {
 run_go_demo() {
   cd $DEMOS_GO_DIR/$1
   go mod tidy
-  env CGO_ENABLED=1 go run main.go 
+  # Ensure CGO uses the locally built C++ lib and auto-rebuilds if needed
+  (cd "$ROOT_PATH" && BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/go_with_cpp.sh --no-cd bash -lc "cd '$DEMOS_GO_DIR/$1' && env CGO_ENABLED=1 go run *.go")
 }
 
 POSITIONAL_ARGS=()

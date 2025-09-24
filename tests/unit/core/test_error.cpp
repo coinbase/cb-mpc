@@ -36,7 +36,6 @@ TEST(ErrorTest, TestLayeredErrorMsgs) {
   coinbase::set_test_error_storing_mode(true);
 
   EXPECT_ER_MSG(outer_func(), "inner error msg; outer error msg");
-  std::cout << coinbase::g_test_log_str << std::endl;
 }
 
 }  // namespace

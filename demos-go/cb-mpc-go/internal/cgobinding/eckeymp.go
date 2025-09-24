@@ -60,6 +60,15 @@ func KeyShareDKG(job JobMP, curveRef ECurveRef) (Mpc_eckey_mp_ref, error) {
 	return key, nil
 }
 
+// KeyShareDKGCode is a convenience wrapper that takes a curve code instead of a native curve ref.
+func KeyShareDKGCode(job JobMP, curveCode int) (Mpc_eckey_mp_ref, error) {
+	ref, err := ECurveFind(curveCode)
+	if err != nil {
+		return Mpc_eckey_mp_ref{}, err
+	}
+	return KeyShareDKG(job, ref)
+}
+
 // KeyShareRefresh rerandomises the secret shares while keeping the aggregated
 // public key unchanged.
 func KeyShareRefresh(job JobMP, sid []byte, key Mpc_eckey_mp_ref) (Mpc_eckey_mp_ref, error) {
@@ -100,6 +109,15 @@ func ThresholdDKG(job JobMP, curveRef ECurveRef, sid []byte, ac C_AcPtr, roleInd
 		return key, fmt.Errorf("threshold DKG failed, %v", cErr)
 	}
 	return key, nil
+}
+
+// ThresholdDKGCode mirrors ThresholdDKG but accepts a curve code.
+func ThresholdDKGCode(job JobMP, curveCode int, sid []byte, ac C_AcPtr, roleIndices []int) (Mpc_eckey_mp_ref, error) {
+	ref, err := ECurveFind(curveCode)
+	if err != nil {
+		return Mpc_eckey_mp_ref{}, err
+	}
+	return ThresholdDKG(job, ref, sid, ac, roleIndices)
 }
 
 // Back-compat synonym.
@@ -183,6 +201,26 @@ func KeyShareQis(key Mpc_eckey_mp_ref) ([][]byte, [][]byte, error) {
 		return nil, nil, fmt.Errorf("inconsistent Qis arrays: %d names vs %d points", len(names), len(points))
 	}
 	return names, points, nil
+}
+
+// KeyShareCurveCode returns the numeric curve code associated with the key share.
+func KeyShareCurveCode(key Mpc_eckey_mp_ref) (int, error) {
+	ref, err := KeyShareCurve(key)
+	if err != nil {
+		return 0, err
+	}
+	return ECurveGetCurveCode(ref), nil
+}
+
+// KeyShareQBytes returns the Q point as bytes.
+func KeyShareQBytes(key Mpc_eckey_mp_ref) ([]byte, error) {
+	ref, err := KeyShareQ(key)
+	if err != nil {
+		return nil, err
+	}
+	bytes := ECCPointToBytes(ref)
+	(&ref).Free()
+	return bytes, nil
 }
 
 // Free releases the underlying native key-share object.

@@ -18,7 +18,7 @@
 //
 // Quick example (random agreement between two parties):
 //
-//	import "github.com/cb-mpc/api/mpc"
+//	import "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/mpc"
 //
 //	// Agree on 128 bits of randomness between two parties.
 //	out, err := mpc.AgreeRandomWithMockNet(2 /* parties */, 128 /* bits */)
@@ -36,4 +36,48 @@
 //
 // Every exported helper returns rich, declarative request and response structs
 // making it straightforward to marshal results into JSON or protobuf.
+//
+// Package mpc exposes a thin, Go-idiomatic wrapper around the core C++
+// Publicly-Verifiable-Encryption (PVE) primitives found in cb-mpc.  The wrapper
+// is intentionally small – it forwards heavy cryptographic operations to the
+// native library while letting Go take care of configuration, concurrency and
+// pluggable encryption back-ends.
+//
+// Architecture
+//
+//	Go (mpc.PVE) ──▶ Cgo shim (internal/cgobinding) ──▶ C++ core (src/cbmpc)
+//	  ▲                     ▲                                │
+//	  │                     │                                │
+//	  │   per-backend ctx   │   stub functions               │
+//	  │   registry          │                                │
+//	  │                     │                                ▼
+//	 Backend impls      ←── thread-local ctx  ←────────  ffi_pke_t
+//
+// A caller supplies a custom encapsulation implementation that satisfies the
+// cgobinding.KEM interface (aliased as mpc.KEM).  Each implementation is
+// registered once and receives an opaque *context pointer*.  That pointer is
+// shipped down to the C++ code on every call so the correct backend can be
+// picked without any global state.
+//
+// The wrapper therefore supports multiple, independent encryption schemes –­
+// including non-ECIES KEM hybrids – running side-by-side inside the same Go
+// process.
+//
+// # Concurrency Model
+//
+// The context pointer is stored in a thread-local variable inside the shim
+// (`thread_local void* g_ctx`).  Every user-visible helper first calls the
+// unexported activateCtx() method which sets the variable, thereby guaranteeing
+// that concurrent goroutines operating on different PVE handles never clash.
+//
+// Adding a New Backend
+//
+//  1. Implement the KEM methods.
+//  2. Pass an instance via `NewPVE(Config{KEM: yourImpl})`.
+//  3. Use the returned *PVE handle* for Encrypt / Verify / Decrypt.
+//
+// The backend is registered automatically and its required `rho` size is cached
+// once at start-up for zero-alloc fast paths inside the native code.
+//
+// See the unit tests in pve_test.go for some example backends.
 package mpc

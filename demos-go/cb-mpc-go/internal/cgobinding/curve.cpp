@@ -120,6 +120,16 @@ cmem_t ecurve_random_scalar(ecurve_ref* curve) {
   return k_buf.to_cmem();
 }
 
+int ecc_verify_der(int curve_code, cmem_t pub_oct, cmem_t hash, cmem_t der_sig) {
+  ecurve_t curve = ecurve_t::find(curve_code);
+  if (!curve) return -1;
+  ecc_point_t Q;
+  if (Q.from_oct(curve, mem_t(pub_oct))) return -2;
+  ecc_pub_key_t pub(Q);
+  error_t rv = pub.verify(mem_t(hash), mem_t(der_sig));
+  return rv ? -3 : 0;
+}
+
 // ============ Scalar Operations ================
 
 // Adds two scalars represented as byte arrays (big-endian) and returns the

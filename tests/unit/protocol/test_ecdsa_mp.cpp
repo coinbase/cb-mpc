@@ -189,9 +189,6 @@ TEST_F(ECDSA4PC, ParallelKSRS8) {
 TEST(ECDSAMPCThreshold, DKG) {
   int n = 5;
   std::vector<crypto::pname_t> pnames = {"party-0", "party-1", "party-2", "party-3", "party-4"};
-  // We simulate storing the key shares in an array
-  // This is to ensure we can fetch the correct key share from a given party name.
-  // TODO: nicer to store key shares in a map
   std::map<crypto::pname_t, int> quorum_party_map;
   quorum_party_map[pnames[0]] = 0;
   quorum_party_map[pnames[1]] = 1;

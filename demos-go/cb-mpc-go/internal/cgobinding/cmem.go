@@ -1,6 +1,7 @@
 package cgobinding
 
 import (
+	"runtime"
 	"unsafe"
 )
 
@@ -11,6 +12,10 @@ import (
 #cgo !linux                         LDFLAGS:   -lcrypto
 #cgo android                        LDFLAGS:   -lcrypto -static-libstdc++
 #cgo                                LDFLAGS:   -ldl
+// Local headers/libs are provided via CGO_* environment variables.
+// See scripts/go_with_cpp.sh for how we set:
+//   CGO_CFLAGS/CGO_CXXFLAGS to include <repo>/src
+//   CGO_LDFLAGS to include <repo>/build/<type>/lib and <repo>/lib/<type>
 #cgo linux,!android                 CFLAGS:    -I/usr/local/include
 #cgo linux,!android                 CXXFLAGS:  -I/usr/local/include
 #cgo linux,!android                 LDFLAGS:   /usr/local/lib64/libcrypto.a
@@ -20,9 +25,6 @@ import (
 
 #cgo CFLAGS:    -I${SRCDIR}
 #cgo CXXFLAGS:  -I${SRCDIR}
-#cgo CFLAGS:    -I/usr/local/opt/cbmpc/include
-#cgo CXXFLAGS:  -I/usr/local/opt/cbmpc/include
-#cgo LDFLAGS:   -L/usr/local/opt/cbmpc/lib
 #cgo LDFLAGS:   -lcbmpc
 #cgo linux,!android                 LDFLAGS:   /usr/local/lib64/libcrypto.a
 
@@ -113,4 +115,57 @@ func CMEMSGet(cmems CMEMS) [][]byte {
 	C.free(unsafe.Pointer(cmems.data))
 	C.free(unsafe.Pointer(cmems.sizes))
 	return out
+}
+
+// cmemsPin holds Go-owned backing storage for a CMEMS so the Go GC cannot
+// reclaim it while a C function is executing. Always call runtime.KeepAlive
+// on the returned value after the C call returns.
+type cmemsPin struct {
+	c    CMEMS
+	lens []int32
+	data []byte
+}
+
+// makeCmems builds a CMEMS value backed by Go slices that stay reachable via
+// the returned cmemsPin. Call runtime.KeepAlive(pin) after the C call.
+func makeCmems(in [][]byte) cmemsPin {
+	var mems CMEMS
+	count := len(in)
+	if count > 0 {
+		lens := make([]int32, count)
+		mems.sizes = (*C.int)(&lens[0])
+		mems.count = C.int(count)
+		var n, k int
+		for i := 0; i < count; i++ {
+			l := len(in[i])
+			lens[i] = int32(l)
+			n += int(lens[i])
+		}
+		var data []byte
+		if n > 0 {
+			data = make([]byte, n)
+			for i := 0; i < count; i++ {
+				l := len(in[i])
+				if l > 0 {
+					copy(data[k:k+l], in[i])
+				}
+				k += l
+			}
+			mems.data = (*C.uchar)(&data[0])
+		} else {
+			mems.data = nil
+		}
+		// Ensure the slices are considered live until function return
+		// (and later via runtime.KeepAlive in callers).
+		_ = lens
+		_ = data
+		return cmemsPin{c: mems, lens: lens, data: data}
+	}
+	mems.sizes = nil
+	mems.data = nil
+	mems.count = 0
+	// KeepAlive on zero-value pin is harmless.
+	pin := cmemsPin{c: mems}
+	runtime.KeepAlive(pin)
+	return pin
 }

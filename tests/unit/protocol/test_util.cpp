@@ -63,29 +63,3 @@ TEST(ProtocolUtil, TestMapArgsToTuple) {
   EXPECT_EQ(std::get<1>(resultTuple), 4);
   EXPECT_EQ(std::get<2>(resultTuple), 6);
 }
-
-TEST(ProtocolUtil, TestExtractRefs) {
-  // Verify that extract_refs creates valid reference_wrapper objects
-  auto ptrA = std::make_shared<int>(10);
-  auto ptrB = std::make_shared<int>(20);
-  auto ptrC = std::make_shared<int>(30);
-  std::vector<std::shared_ptr<int>> sharedVec{ptrA, ptrB, ptrC};
-
-  auto refs = extract_refs(sharedVec);
-  EXPECT_EQ(refs.size(), 3u);
-  // Changing one of the shared ints should reflect in the reference
-  *ptrB = 50;
-  EXPECT_EQ(refs[1].get(), 50);
-}
-
-TEST(ProtocolUtil, TestExtractValues) {
-  // Test that we can extract values properly
-  auto ptrA = std::make_shared<int>(10);
-  auto ptrB = std::make_shared<int>(20);
-  std::vector<std::shared_ptr<int>> sharedVec{ptrA, ptrB};
-
-  auto vals = extract_values(sharedVec);
-  EXPECT_EQ(vals.size(), 2u);
-  EXPECT_EQ(vals[0], 10);
-  EXPECT_EQ(vals[1], 20);
-}

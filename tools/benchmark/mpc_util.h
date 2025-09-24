@@ -108,7 +108,7 @@ class bm_job_2p_t : public mpc::job_2p_t {
     return SUCCESS;
   }
 
-  error_t receive_impl(mpc::party_idx_t from, mem_t& msg) override {
+  error_t receive_impl(mpc::party_idx_t from, buf_t& msg) override {
     THREAD_SAFE_LOG(get_party_idx() << ": round " << current_round << " receive from " << from);
     error_t rv = UNINITIALIZED_ERROR;
 
@@ -124,7 +124,7 @@ class bm_job_2p_t : public mpc::job_2p_t {
     if (current_round == bm_round) {
       if (party_index == mpc::party_idx_t(bm_party)) {
         THREAD_SAFE_LOG("=============== Resuming timer after receive ==============");
-        message_size = msg.size;
+        message_size = msg.size();
         std::unique_lock<std::mutex> lock(abort_channel->m);
         abort_channel->cv.wait(lock, [this] { return this->abort_channel->another_job_abort; });
         abort_channel->another_job_abort = false;
@@ -310,7 +310,7 @@ class bm_job_mp_t : public mpc::job_mp_t {
     return SUCCESS;
   }
 
-  error_t receive_impl(mpc::party_idx_t from, mem_t& msg) override {
+  error_t receive_impl(mpc::party_idx_t from, buf_t& msg) override {
     THREAD_SAFE_LOG(get_party_idx() << ": round " << current_round << " receive from " << from);
     error_t rv = UNINITIALIZED_ERROR;
 
@@ -323,8 +323,8 @@ class bm_job_mp_t : public mpc::job_mp_t {
     if (rv = job_mp_t::receive_impl(from, msg)) return rv;
 
     if (bm_party == get_party_idx() && bm_round == current_round + 1) {
-      // THREAD_SAFE_LOG("#################### receive " << msg.size);
-      receive_message_size += msg.size;
+      // THREAD_SAFE_LOG("#################### receive " << msg.size());
+      receive_message_size += msg.size();
     }
 
     auto msg_goal = get_msg_count(current_round);
@@ -340,7 +340,7 @@ class bm_job_mp_t : public mpc::job_mp_t {
     return SUCCESS;
   }
 
-  error_t receive_many_impl(std::vector<mpc::party_idx_t> from_set, std::vector<mem_t>& outs) override {
+  error_t receive_many_impl(std::vector<mpc::party_idx_t> from_set, std::vector<buf_t>& outs) override {
     THREAD_SAFE_LOG(get_party_idx() << ": round " << current_round << " receive many");
     error_t rv = UNINITIALIZED_ERROR;
 
@@ -355,7 +355,7 @@ class bm_job_mp_t : public mpc::job_mp_t {
     if (bm_party == get_party_idx() && bm_round == current_round + 1) {
       for (auto& msg : outs) {
         // THREAD_SAFE_LOG("#################### receive many " << msg.size);
-        receive_message_size += msg.size;
+        receive_message_size += msg.size();
       }
     }
 

@@ -3,8 +3,9 @@ package mpc
 import (
 	"fmt"
 
+	"crypto/sha256"
+
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
-	curveref "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/internal/curveref"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/curvemap"
 )
@@ -42,7 +43,8 @@ func (k ECDSA2PCKey) Q() (*curve.Point, error) {
 	if err != nil {
 		return nil, err
 	}
-	return curveref.PointFromCRef(cPointRef), nil
+	bytes := cgobinding.ECCPointToBytes(cPointRef)
+	return curve.NewPointFromBytes(bytes)
 }
 
 // Curve returns the elliptic curve associated with this key.
@@ -83,7 +85,7 @@ func ECDSA2PCKeyGen(job2p *Job2P, req *ECDSA2PCKeyGenRequest) (*ECDSA2PCKeyGenRe
 	}
 
 	// Execute the distributed key generation using the provided Job2P
-	keyShareRef, err := cgobinding.DistributedKeyGenCurve(job2p.cgo(), curveref.Ref(req.Curve))
+	keyShareRef, err := cgobinding.DistributedKeyGen(job2p.cgo(), curve.Code(req.Curve))
 	if err != nil {
 		return nil, fmt.Errorf("ECDSA 2PC key generation failed: %v", err)
 	}
@@ -103,6 +105,36 @@ type ECDSA2PCSignResponse struct {
 	Signature []byte // The ECDSA signature
 }
 
+// Verify verifies the DER-encoded signature against Q and 32-byte digest using the native crypto backend.
+func (r *ECDSA2PCSignResponse) Verify(Q *curve.Point, digest []byte, c curve.Curve) error {
+	if len(r.Signature) == 0 {
+		return fmt.Errorf("empty signature")
+	}
+	if len(digest) != 32 {
+		return fmt.Errorf("digest must be 32 bytes, got %d", len(digest))
+	}
+	// Build SEC1 uncompressed encoding: 0x04 || X || Y, with 32-byte padded coordinates
+	pad32 := func(b []byte) []byte {
+		if len(b) >= 32 {
+			if len(b) == 32 {
+				return b
+			}
+			// Trim if somehow longer
+			return b[len(b)-32:]
+		}
+		p := make([]byte, 32)
+		copy(p[32-len(b):], b)
+		return p
+	}
+	x := pad32(Q.GetX())
+	y := pad32(Q.GetY())
+	pubOct := make([]byte, 1+32+32)
+	pubOct[0] = 0x04
+	copy(pubOct[1:1+32], x)
+	copy(pubOct[1+32:], y)
+	return cgobinding.ECCVerifyDER(curve.Code(c), pubOct, digest, r.Signature)
+}
+
 // ECDSA2PCSign executes the collaborative signing protocol between two parties.
 // Both parties use their key shares to jointly create a signature for the given message.
 func ECDSA2PCSign(job2p *Job2P, req *ECDSA2PCSignRequest) (*ECDSA2PCSignResponse, error) {
@@ -110,20 +142,25 @@ func ECDSA2PCSign(job2p *Job2P, req *ECDSA2PCSignRequest) (*ECDSA2PCSignResponse
 		return nil, fmt.Errorf("message cannot be empty")
 	}
 
-	// Prepare message array (cgobinding.Sign expects a slice)
-	messages := [][]byte{req.Message}
+	// Prepare 32-byte digest
+	msg := req.Message
+	if len(msg) != 32 {
+		d := sha256.Sum256(msg)
+		m := make([]byte, 32)
+		copy(m, d[:])
+		msg = m
+	}
 
-	// Execute the collaborative signing
-	signatures, err := cgobinding.Sign(job2p.cgo(), req.SessionID, req.KeyShare.cgobindingRef(), messages)
+	// Execute the collaborative signing using batch API with a single message
+	sigs, err := cgobinding.Sign(job2p.cgo(), req.SessionID, req.KeyShare.cgobindingRef(), [][]byte{msg})
 	if err != nil {
 		return nil, fmt.Errorf("ECDSA 2PC signing failed: %v", err)
 	}
-
-	if len(signatures) == 0 {
-		return nil, fmt.Errorf("no signature returned from signing operation")
+	if len(sigs) != 1 {
+		return nil, fmt.Errorf("unexpected batch sign result")
 	}
 
-	return &ECDSA2PCSignResponse{Signature: signatures[0]}, nil
+	return &ECDSA2PCSignResponse{Signature: sigs[0]}, nil
 }
 
 // ECDSA2PCRefreshRequest represents the parameters required to refresh (re-share)

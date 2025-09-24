@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/testutil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -81,7 +82,52 @@ func TestVerifyRejectsTamperedProof(t *testing.T) {
 		corrupted[0] ^= 0xFF
 	}
 
-	vr, err := ZKUCDLVerify(&ZKUCDLVerifyRequest{PublicKey: W, Proof: corrupted, SessionID: sessionID, Auxiliary: auxiliary})
-	require.NoError(t, err)
+	var vr *ZKUCDLVerifyResponse
+	testutil.TSilence(t, func(t *testing.T) {
+		var err2 error
+		vr, err2 = ZKUCDLVerify(&ZKUCDLVerifyRequest{PublicKey: W, Proof: corrupted, SessionID: sessionID, Auxiliary: auxiliary})
+		require.NoError(t, err2)
+	})
 	assert.False(t, vr.Valid)
+}
+
+// TestProveRejectsMalformedPublicKey ensures that ZKUCDLProve returns an error
+// when provided with an invalid public key (nil).
+func TestProveRejectsMalformedPublicKey(t *testing.T) {
+	c, err := curve.NewSecp256k1()
+	require.NoError(t, err)
+	defer c.Free()
+
+	// Valid non-nil witness
+	w := curve.NewScalarFromInt64(1)
+
+	_, err = ZKUCDLProve(&ZKUCDLProveRequest{
+		PublicKey: nil,
+		Witness:   w,
+		SessionID: []byte("badpk"),
+		Auxiliary: 0,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "public key cannot be nil")
+}
+
+// TestVerifyRejectsMalformedPublicKey ensures that ZKUCDLVerify returns an error
+// when provided with an invalid public key (nil).
+func TestVerifyRejectsMalformedPublicKey(t *testing.T) {
+	c, err := curve.NewSecp256k1()
+	require.NoError(t, err)
+	defer c.Free()
+
+	// Provide any non-empty proof bytes to bypass the proof length check and
+	// exercise the public key validation branch first.
+	bogusProof := []byte{0x01}
+
+	_, err = ZKUCDLVerify(&ZKUCDLVerifyRequest{
+		PublicKey: nil,
+		Proof:     bogusProof,
+		SessionID: []byte("badpk"),
+		Auxiliary: 0,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "public key cannot be nil")
 }

@@ -96,7 +96,7 @@ TEST_F(HDMPC_ECDSA_2P, KeygenDerive) {
                        &session_id](job_2p_t& job) {
     error_t rv = UNINITIALIZED_ERROR;
     auto role = job.get_party();
-    ecurve_t curve = coinbase::crypto::curve_ed25519;
+    ecurve_t curve = coinbase::crypto::curve_secp256k1;
 
     key_share_ecdsa_hdmpc_2p_t* key;
     std::vector<coinbase::mpc::ecdsa2pc::key_t>* derived_keys;

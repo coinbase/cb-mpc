@@ -1,9 +1,9 @@
 #include "pve.h"
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <map>
 
 #include <cbmpc/core/buf.h>
 #include <cbmpc/crypto/base.h>
@@ -24,76 +24,138 @@ using namespace coinbase::mpc;
 using node_t = coinbase::crypto::ss::node_t;
 using node_e = coinbase::crypto::ss::node_e;
 
-// ============================================================================
-// Helper – generate a random EC private key on P-256
-// ============================================================================
-static crypto::ecc_prv_key_t generate_prv_key() {
-  crypto::ecc_prv_key_t prv_key_ecc;
-  prv_key_ecc.generate(crypto::curve_p256);
-  return prv_key_ecc;
+static thread_local void* g_ctx = nullptr;
+
+// KEM
+static kem_encap_ctx_fn g_kem_enc = nullptr;
+static kem_decap_ctx_fn g_kem_dec = nullptr;
+static kem_dk_to_ek_ctx_fn g_kem_derive_pub = nullptr;
+
+// KEM registration and stub shims (third arg kept for backward compat but ignored)
+void pve_register_kem_functions(kem_encap_ctx_fn e, kem_decap_ctx_fn d, void* /*ignored*/, kem_dk_to_ek_ctx_fn dpub) {
+  g_kem_enc = e;
+  g_kem_dec = d;
+  g_kem_derive_pub = dpub;
 }
 
+static int stub_kem_encapsulate(cmem_t ek, cmem_t rho, cmem_t* ct_out, cmem_t* ss_out) {
+  if (g_kem_enc == nullptr || g_ctx == nullptr) return 1;
+  return g_kem_enc(g_ctx, ek, rho, ct_out, ss_out);
+}
+
+static int stub_kem_decapsulate(const void* dk, cmem_t ct, cmem_t* ss_out) {
+  if (g_kem_dec == nullptr || g_ctx == nullptr) return 1;
+  return g_kem_dec(g_ctx, dk, ct, ss_out);
+}
+
+static int stub_kem_dk_to_ek(const void* dk, cmem_t* out) {
+  if (g_kem_derive_pub == nullptr || g_ctx == nullptr) return 1;
+  return g_kem_derive_pub(g_ctx, dk, out);
+}
+
+ffi_kem_encap_fn get_ffi_kem_encap_fn(void) { return stub_kem_encapsulate; }
+ffi_kem_decap_fn get_ffi_kem_decap_fn(void) { return stub_kem_decapsulate; }
+ffi_kem_dk_to_ek_fn get_ffi_kem_dk_to_ek_fn(void) { return stub_kem_dk_to_ek; }
+
 // ============================================================================
-// Key-pair generation helpers
+// PVE – single receiver, single value
 // ============================================================================
-int get_n_enc_keypairs(int n, cmems_t* prv_keys_ptr, cmems_t* pub_keys_ptr) {
-  std::vector<buf_t> prv_keys(n);
-  std::vector<buf_t> pub_keys(n);
-  for (int i = 0; i < n; i++) {
-    crypto::ecc_prv_key_t prv_key = generate_prv_key();
-    prv_keys[i] = coinbase::ser(prv_key);
-    pub_keys[i] = coinbase::ser(prv_key.pub());
+
+int pve_encrypt(cmem_t pub_key_cmem, cmem_t x_cmem, const char* label_ptr, int curve_code, cmem_t* out_ptr) {
+  if (label_ptr == nullptr || out_ptr == nullptr) {
+    return coinbase::error(E_BADARG);
   }
-  *prv_keys_ptr = coinbase::mems_t(prv_keys).to_cmems();
-  *pub_keys_ptr = coinbase::mems_t(pub_keys).to_cmems();
-  return SUCCESS;
-}
+  error_t rv = UNINITIALIZED_ERROR;
 
-int get_n_ec_keypairs(int n, cmems_t* prv_keys_ptr, cmems_t* pub_keys_ptr) {
-  ecurve_t curve = crypto::curve_p256;
-  mod_t q = curve.order();
-  const ecc_generator_point_t& G = curve.generator();
+  // Wrap public key bytes into FFI PKI key type (opaque buffer).
+  ffi_kem_ek_t pub_key;
+  pub_key = coinbase::mem_t(pub_key_cmem);
 
-  std::vector<buf_t> xs(n);
-  std::vector<buf_t> Xs(n);
-  for (int i = 0; i < n; i++) {
-    bn_t x = bn_t::rand(q);
-    xs[i] = coinbase::ser(x);
-    Xs[i] = coinbase::ser(x * G);
-  }
-  *prv_keys_ptr = coinbase::mems_t(xs).to_cmems();
-  *pub_keys_ptr = coinbase::mems_t(Xs).to_cmems();
-  return SUCCESS;
-}
+  // Deserialize secret scalar x
+  bn_t x = bn_t::from_bin(coinbase::mem_t(x_cmem));
 
-// ============================================================================
-// Base Encryption Key Pair – single pair generation
-// ============================================================================
-int generate_base_enc_keypair(cmem_t* prv_key_ptr, cmem_t* pub_key_ptr) {
+  // Resolve curve
+  ecurve_t curve = ecurve_t::find(curve_code);
+  if (!curve) return coinbase::error(E_CRYPTO, "unsupported curve code");
+
+  // Perform encryption
+  ec_pve_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
   try {
-    // Generate EC private key on P-256
-    crypto::ecc_prv_key_t ecc_prv;
-    ecc_prv.generate(crypto::curve_p256);
-
-    // Serialize
-    buf_t prv_buf = coinbase::ser(ecc_prv);
-    buf_t pub_buf = coinbase::ser(ecc_prv.pub());
-
-    *prv_key_ptr = prv_buf.to_cmem();
-    *pub_key_ptr = pub_buf.to_cmem();
-
-    return SUCCESS;
+    pve.encrypt(&pub_key, std::string(label_ptr), curve, x);
   } catch (const std::exception& ex) {
     return coinbase::error(E_CRYPTO, ex.what());
   }
+
+  buf_t out = coinbase::convert(pve);
+  *out_ptr = out.to_cmem();
+  return SUCCESS;
 }
 
+int pve_decrypt(cmem_t prv_key_cmem, cmem_t pve_bundle_cmem, const char* label_ptr, int curve_code, cmem_t* out_x_ptr) {
+  if (label_ptr == nullptr || out_x_ptr == nullptr) {
+    return coinbase::error(E_BADARG);
+  }
+  error_t rv = UNINITIALIZED_ERROR;
+
+  // The dk can be either raw bytes or a handle encoded as bytes.
+  // We pass it through as an opaque handle pointer by default. For pure
+  // byte-backed dk, we pass a pointer to the cmem_t on the stack whose
+  // lifetime spans the call chain.
+  ffi_kem_dk_t prv_key;
+  cmem_t dk_bytes = prv_key_cmem;
+  prv_key.handle = static_cast<void*>(&dk_bytes);
+
+  // Deserialize ciphertext bundle
+  ec_pve_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
+  rv = coinbase::deser(coinbase::mem_t(pve_bundle_cmem), pve);
+  if (rv) return rv;
+
+  // Resolve curve
+  ecurve_t curve = ecurve_t::find(curve_code);
+  if (!curve) return coinbase::error(E_CRYPTO, "unsupported curve code");
+
+  // Decrypt
+  bn_t x_out;
+  rv = pve.decrypt(&prv_key, nullptr /*unused ek*/, std::string(label_ptr), curve, x_out, /*skip_verify=*/true);
+  if (rv) return rv;
+
+  buf_t x_buf = x_out.to_bin(curve.order().get_bin_size());
+  *out_x_ptr = x_buf.to_cmem();
+  return SUCCESS;
+}
+
+int pve_verify(cmem_t pub_key_cmem, cmem_t pve_bundle_cmem, cmem_t Q_cmem, const char* label_ptr) {
+  if (label_ptr == nullptr) {
+    return coinbase::error(E_BADARG);
+  }
+  error_t rv = UNINITIALIZED_ERROR;
+
+  // Deserialize inputs
+  ffi_kem_ek_t pub_key;
+  pub_key = coinbase::mem_t(pub_key_cmem);
+
+  ecc_point_t Q;
+  rv = coinbase::deser(coinbase::mem_t(Q_cmem), Q);
+  if (rv) return rv;
+
+  ec_pve_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
+  rv = coinbase::deser(coinbase::mem_t(pve_bundle_cmem), pve);
+  if (rv) return rv;
+
+  // Verify
+  rv = pve.verify(&pub_key, Q, std::string(label_ptr));
+  if (rv) return rv;
+
+  return SUCCESS;
+}
+
+// No explicit template instantiation needed; ec_pve_ac_t is non-templated.
+
 // ============================================================================
-// PVE – quorum encrypt (AccessStructure pointer API)
+// PVE-AC - many receivers, many values
 // =========================================================================
-int pve_quorum_encrypt_map(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub_keys_list_ptr,
-                              int pub_keys_count, cmems_t xs_list_ptr, int xs_count, const char* label_ptr,
-                              int curve_code, cmem_t* out_ptr) {
+int pve_ac_encrypt(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub_keys_list_ptr, int pub_keys_count,
+                   cmems_t xs_list_ptr, int xs_count, const char* label_ptr, int curve_code, cmem_t* out_ptr) {
   if (ac_ptr == nullptr || ac_ptr->opaque == nullptr) {
     return coinbase::error(E_CRYPTO, "null access-structure pointer");
   }
@@ -112,14 +174,11 @@ int pve_quorum_encrypt_map(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cme
     names[i] = std::string((const char*)name_bufs[i].data(), name_bufs[i].size());
   }
 
-  // Deserialize public keys
+  // Deserialize public keys (opaque FFI KEM ek)
   std::vector<buf_t> pub_bufs = coinbase::mems_t(pub_keys_list_ptr).bufs();
-  std::vector<crypto::ecc_pub_key_t> pub_keys_list(pub_keys_count);
+  std::vector<crypto::ffi_kem_ek_t> pub_keys_list(pub_keys_count);
   for (int i = 0; i < pub_keys_count; i++) {
-    crypto::ecc_pub_key_t pk;
-    rv = coinbase::deser(pub_bufs[i], pk);
-    if (rv) return rv;
-    pub_keys_list[i] = pk;
+    pub_keys_list[i] = pub_bufs[i];
   }
 
   // Deserialize xs
@@ -145,7 +204,7 @@ int pve_quorum_encrypt_map(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cme
   ss::ac_owned_t ac_owned(root);
   auto leaf_set = ac_owned.list_leaf_names();
   std::vector<std::string> leaves(leaf_set.begin(), leaf_set.end());
-  
+
   if (names.size() != pub_keys_list.size()) {
     return coinbase::error(E_CRYPTO, "names list and key list size mismatch");
   }
@@ -154,106 +213,103 @@ int pve_quorum_encrypt_map(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cme
   }
 
   // Build the mapping leaf_name -> pub_key
-  std::map<std::string, crypto::ecc_pub_key_t> pub_keys;
+  std::map<std::string, crypto::ffi_kem_ek_t> pub_keys;
+  std::vector<crypto::ffi_kem_ek_t> pub_keys_storage(leaves.size());
   for (size_t i = 0; i < leaves.size(); ++i) {
-    pub_keys[names[i]] = pub_keys_list[i];
+    pub_keys_storage[i] = pub_keys_list[i];
+    pub_keys[names[i]] = pub_keys_storage[i];
   }
 
-  // Encrypt
-  ec_pve_ac_t<ecies_t> pve;
-  pve.encrypt(ac_owned, pub_keys, std::string(label_ptr), curve, xs);
+  // Encrypt using FFI KEM base PKE
+  ec_pve_ac_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
+  std::map<std::string, const void*> ac_pks;
+  for (size_t i = 0; i < leaves.size(); ++i) {
+    ac_pks[names[i]] = static_cast<const void*>(&pub_keys_storage[i]);
+  }
+  pve.encrypt(ac_owned, ac_pks, std::string(label_ptr), curve, xs);
   buf_t out = coinbase::convert(pve);
   *out_ptr = out.to_cmem();
   return SUCCESS;
 }
 
-int pve_quorum_decrypt(crypto_ss_node_ref* root_ptr, cmems_t quorum_prv_keys_list_ptr, int quorum_prv_keys_count,
-                       cmems_t all_pub_keys_list_ptr, int all_pub_keys_count, cmem_t pve_bundle_cmem,
-                       cmems_t Xs_list_ptr, int xs_count, const char* label_ptr, cmems_t* out_ptr) {
-  error_t rv = UNINITIALIZED_ERROR;
-  crypto::ss::node_t* root = static_cast<crypto::ss::node_t*>(root_ptr->opaque);
-
-  // Deserialize quorum private keys
-  std::vector<buf_t> qprv_bufs = coinbase::mems_t(quorum_prv_keys_list_ptr).bufs();
-  std::vector<crypto::ecc_prv_key_t> quorum_prv_keys(quorum_prv_keys_count);
-  for (int i = 0; i < quorum_prv_keys_count; i++) {
-    rv = coinbase::deser(qprv_bufs[i], quorum_prv_keys[i]);
-    if (rv) return rv;
-  }
-
-  // Deserialize all public keys
-  std::vector<buf_t> pub_bufs = coinbase::mems_t(all_pub_keys_list_ptr).bufs();
-  std::vector<crypto::ecc_pub_key_t> all_pub_keys(all_pub_keys_count);
-  for (int i = 0; i < all_pub_keys_count; i++) {
-    rv = coinbase::deser(pub_bufs[i], all_pub_keys[i]);
-    if (rv) return rv;
-  }
-
-  // Deserialize Xs (points)
-  std::vector<buf_t> Xs_bufs = coinbase::mems_t(Xs_list_ptr).bufs();
-  std::vector<ecc_point_t> Xs(xs_count);
-  for (int i = 0; i < xs_count; i++) {
-    rv = coinbase::deser(Xs_bufs[i], Xs[i]);
-    if (rv) return rv;
-  }
-
-  // Deserialize the PVE bundle
-  ec_pve_ac_t<ecies_t> pve;
-  buf_t pve_bundle = coinbase::mem_t(pve_bundle_cmem);
-  rv = coinbase::deser(pve_bundle, pve);
-  if (rv) return rv;
-
-  ss::ac_owned_t ac(root);
-  auto leaf_set = ac.list_leaf_names();
-  std::vector<std::string> leaves(leaf_set.begin(), leaf_set.end());
-
-  std::map<std::string, crypto::ecc_pub_key_t> pub_keys;
-  std::map<std::string, crypto::ecc_prv_key_t> quorum_prv_map;
-  int idx = 0;
-  for (auto path : leaves) {
-    quorum_prv_map[path] = quorum_prv_keys[idx];
-    pub_keys[path] = all_pub_keys[idx];
-    idx++;
-  }
-
-  std::string label(label_ptr);
-  rv = pve.verify(ac, pub_keys, Xs, label);
-  if (rv) return rv;
-
-  std::vector<bn_t> decrypted_xs;
-  rv = pve.decrypt(ac, quorum_prv_map, pub_keys, label, decrypted_xs, true /*skip_verify*/);
-  if (rv) return rv;
-
-  std::vector<buf_t> out(xs_count);
-  for (int i = 0; i < xs_count; i++) {
-    out[i] = coinbase::ser(decrypted_xs[i]);
-  }
-  *out_ptr = coinbase::mems_t(out).to_cmems();
-  return SUCCESS;
-}
-
-// ============================================================================
-// PVE – quorum decrypt (AccessStructure pointer API)
-// =========================================================================
-int pve_quorum_decrypt_map(crypto_ss_ac_ref* ac_ptr, cmems_t quorum_prv_keys_list_ptr, int quorum_prv_keys_count,
-                           cmems_t all_pub_keys_list_ptr, int all_pub_keys_count, cmem_t pve_bundle_cmem,
-                           cmems_t Xs_list_ptr, int xs_count, const char* label_ptr, cmems_t* out_ptr) {
+extern "C" int pve_ac_party_decrypt_row(crypto_ss_ac_ref* ac_ptr, cmem_t prv_key_cmem, cmem_t pve_bundle_cmem,
+                            const char* label_ptr, const char* path_ptr, int row_index, cmem_t* out_share_ptr) {
   if (ac_ptr == nullptr || ac_ptr->opaque == nullptr) {
     return coinbase::error(E_CRYPTO, "null access-structure pointer");
   }
 
+  // Deserialize PVE bundle
+  ec_pve_ac_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
+  error_t rv = coinbase::deser(coinbase::mem_t(pve_bundle_cmem), pve);
+  if (rv) return rv;
+
+  // Access structure
   crypto::ss::ac_t* ac = static_cast<crypto::ss::ac_t*>(ac_ptr->opaque);
-  crypto_ss_node_ref root_ref{reinterpret_cast<void*>(const_cast<node_t*>(ac->root))};
-  return pve_quorum_decrypt(&root_ref, quorum_prv_keys_list_ptr, quorum_prv_keys_count,
-                            all_pub_keys_list_ptr, all_pub_keys_count, pve_bundle_cmem, Xs_list_ptr, xs_count, label_ptr, out_ptr);
+  ss::ac_owned_t ac_owned(const_cast<node_t*>(ac->root));
+
+  // Prepare DK handle wrapper for FFI KEM
+  ffi_kem_dk_t prv_key;
+  cmem_t dk_bytes = prv_key_cmem;
+  prv_key.handle = static_cast<void*>(&dk_bytes);
+
+  // Compute share
+  bn_t share;
+  rv = pve.party_decrypt_row(ac_owned, row_index, std::string(path_ptr), static_cast<const void*>(&prv_key),
+                             std::string(label_ptr), share);
+  if (rv) return rv;
+
+  buf_t share_buf = share.to_bin();
+  *out_share_ptr = share_buf.to_cmem();
+  return SUCCESS;
 }
 
-// ============================================================================
-// PVE – quorum verify (AccessStructure pointer API)
-// =========================================================================
-int pve_quorum_verify_map(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub_keys_list_ptr,
-                          int pub_keys_count, cmem_t pve_bundle_cmem, cmems_t Xs_list_ptr, int xs_count,
-                          const char* label_ptr) {
+extern "C" int pve_ac_aggregate_to_restore_row(crypto_ss_ac_ref* ac_ptr, cmem_t pve_bundle_cmem, const char* label_ptr,
+                                    cmems_t paths_list_ptr, cmems_t shares_list_ptr, int quorum_count, int row_index,
+                                    cmems_t* out_values_ptr) {
+  if (ac_ptr == nullptr || ac_ptr->opaque == nullptr) {
+    return coinbase::error(E_CRYPTO, "null access-structure pointer");
+  }
+
+  // Deserialize PVE bundle
+  ec_pve_ac_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
+  error_t rv = coinbase::deser(coinbase::mem_t(pve_bundle_cmem), pve);
+  if (rv) return rv;
+
+  // Access structure
+  crypto::ss::ac_t* ac = static_cast<crypto::ss::ac_t*>(ac_ptr->opaque);
+  ss::ac_owned_t ac_owned(const_cast<node_t*>(ac->root));
+
+  // Build quorum shares map: path -> bn share
+  std::vector<buf_t> name_bufs = coinbase::mems_t(paths_list_ptr).bufs();
+  std::vector<buf_t> share_bufs = coinbase::mems_t(shares_list_ptr).bufs();
+  if ((int)name_bufs.size() != quorum_count || (int)share_bufs.size() != quorum_count) {
+    return coinbase::error(E_CRYPTO, "quorum lists size mismatch");
+  }
+  std::map<std::string, bn_t> quorum_decrypted;
+  for (int i = 0; i < quorum_count; i++) {
+    std::string path((const char*)name_bufs[i].data(), name_bufs[i].size());
+    quorum_decrypted[path] = bn_t::from_bin(share_bufs[i]);
+  }
+
+  // Recover values for the specified row
+  std::vector<bn_t> x;
+  rv = pve.aggregate_to_restore_row(ac_owned, row_index, std::string(label_ptr), quorum_decrypted, x,
+                                    true /*skip_verify*/);
+  if (rv) return rv;
+
+  // Serialize outputs to fixed-size bins
+  const std::vector<ecc_point_t>& Q = pve.get_Q();
+  if (Q.empty()) return coinbase::error(E_CRYPTO, "empty Q");
+  ecurve_t curve = Q[0].get_curve();
+  int fixed_size = curve.order().get_bin_size();
+  std::vector<buf_t> out(x.size());
+  for (size_t i = 0; i < x.size(); i++) out[i] = x[i].to_bin(fixed_size);
+  *out_values_ptr = coinbase::mems_t(out).to_cmems();
+  return SUCCESS;
+}
+
+int pve_ac_verify(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub_keys_list_ptr, int pub_keys_count,
+                  cmem_t pve_bundle_cmem, cmems_t Xs_list_ptr, int xs_count, const char* label_ptr) {
   if (ac_ptr == nullptr || ac_ptr->opaque == nullptr) {
     return coinbase::error(E_CRYPTO, "null access-structure pointer");
   }
@@ -272,14 +328,11 @@ int pve_quorum_verify_map(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmem
     names[i] = std::string((const char*)name_bufs[i].data(), name_bufs[i].size());
   }
 
-  // Deserialize public keys
+  // Deserialize public keys (opaque FFI KEM ek)
   std::vector<buf_t> pub_bufs = coinbase::mems_t(pub_keys_list_ptr).bufs();
-  std::vector<crypto::ecc_pub_key_t> pub_keys_list(pub_keys_count);
+  std::vector<crypto::ffi_kem_ek_t> pub_keys_list(pub_keys_count);
   for (int i = 0; i < pub_keys_count; i++) {
-    crypto::ecc_pub_key_t pk;
-    rv = coinbase::deser(pub_bufs[i], pk);
-    if (rv) return rv;
-    pub_keys_list[i] = pk;
+    pub_keys_list[i] = pub_bufs[i];
   }
 
   // Deserialize Xs (public shares)
@@ -291,7 +344,7 @@ int pve_quorum_verify_map(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmem
   }
 
   // Deserialize the PVE bundle
-  ec_pve_ac_t<ecies_t> pve;
+  ec_pve_ac_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
   buf_t pve_bundle = coinbase::mem_t(pve_bundle_cmem);
   rv = coinbase::deser(pve_bundle, pve);
   if (rv) return rv;
@@ -305,15 +358,23 @@ int pve_quorum_verify_map(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmem
   }
 
   // Build mapping leaf_name -> pub_key
-  std::map<std::string, crypto::ecc_pub_key_t> pub_keys;
+  std::map<std::string, crypto::ffi_kem_ek_t> pub_keys;
   for (size_t i = 0; i < leaves.size(); ++i) {
     pub_keys[names[i]] = pub_keys_list[i];
   }
 
   // Perform verification
   std::string label(label_ptr);
-  rv = pve.verify(*ac, pub_keys, Xs, label);
+  std::vector<crypto::ffi_kem_ek_t> pub_keys_storage(leaves.size());
+  std::map<std::string, const void*> ac_pks;
+  for (size_t i = 0; i < leaves.size(); ++i) {
+    pub_keys_storage[i] = pub_keys[names[i]];
+    ac_pks[names[i]] = static_cast<const void*>(&pub_keys_storage[i]);
+  }
+  rv = pve.verify(*ac, ac_pks, Xs, label);
   if (rv) return rv;
 
   return SUCCESS;
 }
+
+extern "C" void pve_activate_ctx(void* ctx) { g_ctx = ctx; }

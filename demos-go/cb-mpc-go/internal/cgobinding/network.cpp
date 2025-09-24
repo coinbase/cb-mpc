@@ -93,17 +93,21 @@ class callback_data_transport_t : public data_transport_interface_t {
     }
   }
 
-  error_t send(const party_idx_t receiver, const mem_t& msg) override {
-    // Cast away const for callback compatibility
-    int result = callbacks.send_fun(go_impl_ptr, receiver, const_cast<uint8_t*>(msg.data), msg.size);
+  error_t send(const party_idx_t receiver, mem_t msg) override {
+    cmem_t cmsg = static_cast<cmem_t>(msg);
+    int result = callbacks.send_fun(go_impl_ptr, receiver, cmsg);
     return error_t(result);
   }
 
-  error_t receive(const party_idx_t sender, mem_t& msg) override {
-    return error_t(callbacks.receive_fun(go_impl_ptr, sender, &msg.data, &msg.size));
+  error_t receive(const party_idx_t sender, buf_t& msg) override {
+    cmem_t cmsg{nullptr, 0};
+    error_t rv = UNINITIALIZED_ERROR;
+    if (rv = error_t(callbacks.receive_fun(go_impl_ptr, sender, &cmsg))) return rv;
+    msg = buf_t::from_cmem(cmsg);
+    return SUCCESS;
   }
 
-  error_t receive_all(const std::vector<party_idx_t>& senders, std::vector<mem_t>& msgs) override {
+  error_t receive_all(const std::vector<party_idx_t>& senders, std::vector<buf_t>& msgs) override {
     const auto n = static_cast<int>(senders.size());
     if (n == 0) {
       msgs.clear();
@@ -119,21 +123,9 @@ class callback_data_transport_t : public data_transport_interface_t {
       c_senders.push_back(sender);
     }
 
-    std::vector<byte_ptr> c_messages(n);
-    std::vector<int> c_sizes(n);
-
-    int result = callbacks.receive_all_fun(go_impl_ptr, const_cast<int*>(c_senders.data()), n, c_messages.data(),
-                                           c_sizes.data());
-
-    if (result != NETWORK_SUCCESS) {
-      return error_t(result);
-    }
-
-    msgs.clear();
-    msgs.reserve(n);
-    for (int i = 0; i < n; ++i) {
-      msgs.emplace_back(c_messages[i], c_sizes[i]);
-    }
+    cmems_t cmsgs;
+    int result = callbacks.receive_all_fun(go_impl_ptr, const_cast<int*>(c_senders.data()), n, &cmsgs);
+    msgs = mems_t::from_cmems(cmsgs).bufs();
 
     return SUCCESS;
   }
@@ -201,14 +193,14 @@ int get_role_index(const job_2p_ref* job) {
   return static_cast<int>(static_cast<const job_2p_t*>(job->opaque)->get_party_idx());
 }
 
-int mpc_2p_send(job_2p_ref* job, int receiver, const uint8_t* msg, int msg_len) {
+int mpc_2p_send(job_2p_ref* job, int receiver, cmem_t msg) {
   if (!job || !job->opaque) return NETWORK_INVALID_STATE;
-  if (!msg && msg_len > 0) return NETWORK_PARAM_ERROR;
-  if (msg_len < 0) return NETWORK_PARAM_ERROR;
+  if (!msg.data && msg.size > 0) return NETWORK_PARAM_ERROR;
+  if (msg.size < 0) return NETWORK_PARAM_ERROR;
 
   try {
     job_2p_t* j = GET_JOB_2P(job);
-    buf_t msg_buf(msg, msg_len);
+    buf_t msg_buf{mem_t(msg)};
     error_t result = j->send(party_idx_t(receiver), msg_buf);
     return static_cast<int>(result);
   } catch (const std::exception& e) {
@@ -217,8 +209,8 @@ int mpc_2p_send(job_2p_ref* job, int receiver, const uint8_t* msg, int msg_len) 
   }
 }
 
-int mpc_2p_receive(job_2p_ref* job, int sender, uint8_t** msg, int* msg_len) {
-  if (!job || !job->opaque || !msg || !msg_len) return NETWORK_PARAM_ERROR;
+int mpc_2p_receive(job_2p_ref* job, int sender, cmem_t* msg) {
+  if (!job || !job->opaque || !msg) return NETWORK_PARAM_ERROR;
 
   try {
     job_2p_t* j = GET_JOB_2P(job);
@@ -227,13 +219,13 @@ int mpc_2p_receive(job_2p_ref* job, int sender, uint8_t** msg, int* msg_len) {
 
     if (err) return static_cast<int>(err);
 
-    *msg_len = static_cast<int>(msg_buf.size());
-    if (*msg_len > 0) {
-      *msg = static_cast<uint8_t*>(malloc(*msg_len));
-      if (!*msg) return NETWORK_MEMORY_ERROR;
-      memcpy(*msg, msg_buf.data(), *msg_len);
+    msg->size = static_cast<int>(msg_buf.size());
+    if (msg->size > 0) {
+      msg->data = static_cast<uint8_t*>(malloc(msg->size));
+      if (!msg->data) return NETWORK_MEMORY_ERROR;
+      memcpy(msg->data, msg_buf.data(), msg->size);
     } else {
-      *msg = nullptr;
+      msg->data = nullptr;
     }
 
     return NETWORK_SUCCESS;

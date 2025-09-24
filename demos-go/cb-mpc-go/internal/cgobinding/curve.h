@@ -43,6 +43,9 @@ int ecc_point_is_zero(ecc_point_ref* point);
 int ecc_point_equals(ecc_point_ref* point1, ecc_point_ref* point2);
 cmem_t ecurve_random_scalar(ecurve_ref* curve);
 
+// ECDSA verification (DER-encoded signature). Returns 0 on success, non-zero on failure.
+int ecc_verify_der(int curve_code, cmem_t pub_oct, cmem_t hash, cmem_t der_sig);
+
 // Scalar operations
 cmem_t bn_add(cmem_t a, cmem_t b);
 cmem_t ec_mod_add(ecurve_ref* curve, cmem_t a, cmem_t b);

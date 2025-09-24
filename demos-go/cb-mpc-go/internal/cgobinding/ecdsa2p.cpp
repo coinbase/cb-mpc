@@ -43,7 +43,20 @@ int mpc_ecdsa2p_sign(job_2p_ref* j, cmem_t sid_mem, mpc_ecdsa2pc_key_ref* k, cme
   job_2p_t* job = static_cast<job_2p_t*>(j->opaque);
   ecdsa2pc::key_t* key = static_cast<ecdsa2pc::key_t*>(k->opaque);
   buf_t sid = mem_t(sid_mem);
-  std::vector<mem_t> messages = coinbase::mems_t(msgs).mems();
+  // Reconstruct messages from cmems_t explicitly and copy into owned buffers
+  int count = msgs.count;
+  std::vector<buf_t> owned_msgs;
+  owned_msgs.reserve(count);
+  const uint8_t* p = msgs.data;
+  for (int i = 0; i < count; i++) {
+    int len = msgs.sizes ? msgs.sizes[i] : 0;
+    buf_t b(len);
+    if (len > 0) memcpy(b.data(), p, len);
+    owned_msgs.emplace_back(std::move(b));
+    p += len;
+  }
+  std::vector<mem_t> messages(owned_msgs.size());
+  for (size_t i = 0; i < owned_msgs.size(); i++) messages[i] = owned_msgs[i];
 
   std::vector<buf_t> signatures;
   error_t err = ecdsa2pc::sign_batch(*job, sid, *key, messages, signatures);

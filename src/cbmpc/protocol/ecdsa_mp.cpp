@@ -16,7 +16,7 @@ namespace coinbase::mpc::ecdsampc {
 #define _ij msgs[j]
 #define _i msg
 #define _j received(j)
-#define _js all_received_refs()
+#define _js all_received()
 
 error_t dkg(job_mp_t& job, ecurve_t curve, key_t& key, buf_t& sid) {
   return eckey::key_share_mp_t::dkg(job, curve, key, sid);
@@ -117,7 +117,7 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
     // Verifying that Ei_gen values are valid is done in the following verification function
     if (rv = pi_s._j.verify(Ei_gen._j, sid, peers_count + j)) return rv;
   }
-  const std::vector<ecc_point_t>& E_i = Ei_gen.all_received_values();
+  const std::vector<ecc_point_t>& E_i = Ei_gen.all_received();
   ecc_point_t E = SUM(E_i);
 
   // Proceed with the signing protocol

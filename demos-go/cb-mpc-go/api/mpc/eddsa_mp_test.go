@@ -1,10 +1,11 @@
 package mpc
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
-	curvepkg "github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
+	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/transport/mocknet"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 )
@@ -13,7 +14,7 @@ import (
 // mock network. It is intentionally lightweight compared to the exhaustive
 // ECDSA test-suite – its goal is to ensure the basic API surface compiles and
 // the protocol can run end-to-end.
-func EDDSAMPCWithMockNet(nParties int, cv curvepkg.Curve, message []byte) ([]*EDDSAMPCKeyGenResponse, []*EDDSAMPCSignResponse, error) {
+func EDDSAMPCWithMockNet(nParties int, cv curve.Curve, message []byte) ([]*EDDSAMPCKeyGenResponse, []*EDDSAMPCSignResponse, error) {
 	if nParties < 3 {
 		return nil, nil, fmt.Errorf("EdDSA N-party requires at least 3 parties")
 	}
@@ -29,7 +30,7 @@ func EDDSAMPCWithMockNet(nParties int, cv curvepkg.Curve, message []byte) ([]*ED
 		keyGenInputs[i] = &mocknet.MPCIO{Opaque: cv}
 	}
 	keyGenOutputs, err := runner.MPCRunMP(func(job cgobinding.JobMP, input *mocknet.MPCIO) (*mocknet.MPCIO, error) {
-		curveObj := input.Opaque.(curvepkg.Curve)
+		curveObj := input.Opaque.(curve.Curve)
 		apiJob := &JobMP{inner: job}
 		resp, err := EDDSAMPCKeyGen(apiJob, &EDDSAMPCKeyGenRequest{Curve: curveObj})
 		if err != nil {
@@ -92,7 +93,7 @@ func EDDSAMPCWithMockNet(nParties int, cv curvepkg.Curve, message []byte) ([]*ED
 }
 
 func TestEDDSAMPC_EndToEnd(t *testing.T) {
-	ed, err := curvepkg.NewEd25519()
+	ed, err := curve.NewEd25519()
 	if err != nil {
 		t.Fatalf("failed to init curve: %v", err)
 	}
@@ -117,5 +118,45 @@ func TestEDDSAMPC_EndToEnd(t *testing.T) {
 		if len(signRes[i].Signature) != 0 {
 			t.Fatalf("party %d unexpectedly received signature bytes", i)
 		}
+	}
+
+	// Validate EDDSAMPCKey.Curve() and EDDSAMPCKey.Q() accessors on resulting key shares
+	expectedCode := curve.Code(ed)
+	var q0 []byte
+	for i := 0; i < nParties; i++ {
+		c, err := keyRes[i].KeyShare.Curve()
+		if err != nil {
+			t.Fatalf("Curve() failed for party %d: %v", i, err)
+		}
+		if got := curve.Code(c); got != expectedCode {
+			t.Fatalf("Curve() returned unexpected code for party %d: got %d want %d", i, got, expectedCode)
+		}
+
+		q, err := keyRes[i].KeyShare.Q()
+		if err != nil {
+			t.Fatalf("Q() failed for party %d: %v", i, err)
+		}
+		qBytes := q.Bytes()
+		if len(qBytes) == 0 {
+			t.Fatalf("Q() returned empty point for party %d", i)
+		}
+		if q.IsZero() {
+			t.Fatalf("Q() returned zero point for party %d", i)
+		}
+		if i == 0 {
+			q0 = qBytes
+		} else if !bytes.Equal(qBytes, q0) {
+			t.Fatalf("Q() mismatch across parties: party %d differs", i)
+		}
+		q.Free()
+	}
+
+	// Negative checks: zero-value key should surface errors from Curve() and Q()
+	var zeroKey EDDSAMPCKey
+	if _, err := zeroKey.Curve(); err == nil {
+		t.Fatalf("expected Curve() to fail on zero-value key")
+	}
+	if _, err := zeroKey.Q(); err == nil {
+		t.Fatalf("expected Q() to fail on zero-value key")
 	}
 }

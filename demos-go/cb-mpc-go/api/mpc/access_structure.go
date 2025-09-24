@@ -6,11 +6,9 @@ package mpc
 
 import (
 	"fmt"
-	"runtime"
 	"strings"
 
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
-	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/internal/curveref"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 )
 
@@ -87,8 +85,7 @@ func (as *AccessStructure) String() string {
 }
 
 // toCryptoAC converts the AccessStructure into the native secret-sharing
-// representation expected by the MPC engine and returns an opaque handle that
-// must eventually be released via cgobinding.FreeAccessStructure.
+// representation expected by the MPC engine and returns an opaque handle.
 //
 // The method panics if the AccessStructure is malformed (nil fields, unknown
 // node kinds, …). Such errors typically indicate a misuse by calling code.
@@ -136,20 +133,15 @@ func (as *AccessStructure) toCryptoAC() cgobinding.C_AcPtr {
 
 	rootPtr := build(as.Root)
 
-	// Resolve the underlying native curve reference via the internal helper.
-	curveRef := curveref.Ref(as.Curve)
+	code := curve.Code(as.Curve)
+	curveRef, err := cgobinding.ECurveFind(code)
+	if err != nil {
+		panic(fmt.Sprintf("AccessStructure.toCryptoAC: unsupported curve code %d", code))
+	}
 
 	ac := cgobinding.NewAccessStructure(rootPtr, curveRef)
-
-	// Ensure native resources are released when the Go value becomes
-	// unreachable by attaching a finalizer.
-	runtime.SetFinalizer(&ac, func(p *cgobinding.C_AcPtr) {
-		cgobinding.FreeAccessStructure(*p)
-	})
 	return ac
 }
-
-// ---- helpers (section 3) ----
 
 // Leaf returns a pointer to a leaf node.
 func Leaf(name string) *AccessNode {
@@ -208,8 +200,6 @@ Example construction (root name must be ""):
 
 `root` is now ready to be translated to C++.
 */
-
-// ---- pretty printing (optional helper) ----
 
 // String returns a human-readable, multi-line representation of the subtree
 // rooted at the receiver. It recursively walks the tree and formats each node

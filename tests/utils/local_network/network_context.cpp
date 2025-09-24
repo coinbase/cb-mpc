@@ -11,13 +11,15 @@ void mpc_net_context_t::send(party_idx_t receiver, mem_t msg) {
   rec_in.send(rec->channel_sync, msg);
 }
 
-error_t mpc_net_context_t::receive(party_idx_t sender, mem_t& result) {
+error_t mpc_net_context_t::receive(party_idx_t sender, buf_t& result) {
   return in[sender].receive(channel_sync, is_abort, result);
 }
 
-error_t mpc_net_context_t::receive_all(const std::vector<party_idx_t>& senders, std::vector<mem_t>& result) {
+error_t mpc_net_context_t::receive_all(const std::vector<party_idx_t>& senders, std::vector<buf_t>& result) {
   int n = (int)senders.size();
-  std::vector<mem_t> out(n);
+  // Instead of using out, clear and resize `result` and use it directly.
+  result.clear();
+  result.resize(n);
   int received = 0;
 
   std::unique_lock lock(channel_sync.mutex);
@@ -25,21 +27,20 @@ error_t mpc_net_context_t::receive_all(const std::vector<party_idx_t>& senders, 
     if (is_abort) return E_GENERAL;
     int old_received = received;
     for (int i = 0; i < n; i++) {
-      if (out[i].size) continue;
+      if (result[i].size() > 0) continue;
       party_idx_t sender = senders[i];
       cb_assert(sender != index);
       test_channel_t& channel = in[sender];
       if (channel.queue_is_empty()) {
         continue;
       }
-      out[i] = channel.receive();
-      cb_assert(out[i].size);
+      result[i] = channel.receive();
+      cb_assert(result[i].size() > 0);
       received++;
     }
     if (received == old_received && !is_abort) channel_sync.cond.wait(lock);
   }
 
-  result = out;
   return SUCCESS;
 }
 

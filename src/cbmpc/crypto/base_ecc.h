@@ -354,32 +354,6 @@ class ecdh_t {
   const ecc_prv_key_t* key;
 };
 
-struct ecies_ciphertext_t {
-  enum { iv_size = 12, tag_size = 12 };
-
-  ecc_point_t E;
-  uint8_t iv[iv_size];
-  buf_t encrypted;
-  void convert(coinbase::converter_t& converter);
-  buf_t to_bin() const { return coinbase::convert(*this); }
-
-  static int get_bin_size(int plaintext_size);
-
-  error_t encrypt(const ecc_point_t& pub_key, mem_t aad, const bn_t& e, mem_t iv, mem_t plain);
-  error_t encrypt(const ecc_point_t& pub_key, mem_t aad, mem_t plain, drbg_aes_ctr_t* drbg = nullptr);
-
-  error_t decrypt(const ecdh_t& ecdh, mem_t aad, buf_t& decrypted);
-  static error_t decrypt(const ecdh_t& ecdh, mem_t encrypted, mem_t aad, buf_t& decrypted);
-
-  void add_password_encryption(mem_t password, mem_t salt);
-  void remove_password_encryption(mem_t password, mem_t salt);
-  void change_password_encryption(mem_t old_password, mem_t old_salt, mem_t new_password, mem_t new_salt);
-
-  error_t decrypt_begin(buf_t& enc_info) const;
-  error_t decrypt_end(mem_t aad, mem_t shared_secret, buf_t& out) const;
-  error_t from_bin(mem_t mem) const;
-};
-
 struct allow_ecc_infinity_t {
   allow_ecc_infinity_t();
   ~allow_ecc_infinity_t();

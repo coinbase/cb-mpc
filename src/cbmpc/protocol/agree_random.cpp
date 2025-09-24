@@ -97,7 +97,7 @@ error_t weak_multi_agree_random(job_mp_t& job, int t, buf_t& out) {
   auto r = job.uniform_msg<buf_t>(crypto::gen_random_bitlen(SEC_P_COM));
   if (rv = job.plain_broadcast(r)) return rv;
 
-  auto hashed_r = job.uniform_msg<buf_t>(crypto::ro::hash_string(r.all_received_refs()).bitlen(t));
+  auto hashed_r = job.uniform_msg<buf_t>(crypto::ro::hash_string(r.all_received()).bitlen(t));
   if (rv = job.plain_broadcast(hashed_r)) return rv;
 
   for (int i = 0; i < job.get_n_parties(); i++)

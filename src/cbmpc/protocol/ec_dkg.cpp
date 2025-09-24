@@ -14,7 +14,7 @@ using namespace coinbase::crypto::ss;
 #define _i msg
 #define _j received(j)
 #define _ji received(j)
-#define _js all_received_refs()
+#define _js all_received()
 
 namespace coinbase::mpc::eckey {
 void dkg_2p_t::step1_p1_to_p2(const bn_t& x1) {
@@ -213,7 +213,7 @@ error_t key_share_mp_t::refresh(job_mp_t& job, buf_t& sid, const key_share_mp_t&
     if (h_consistency._j != h_consistency) return coinbase::error(E_CRYPTO);
   }
   auto h = job.uniform_msg<buf256_t>();
-  h._i = crypto::sha256_t::hash(c.all_received_refs());
+  h._i = crypto::sha256_t::hash(c.all_received());
 
   if (rv = job.plain_broadcast(r, h, R, pi_r, rho)) return rv;
 
@@ -580,7 +580,7 @@ error_t key_share_mp_t::reconstruct_pub_additive_shares(const crypto::ss::node_t
 
     case node_e::OR:
       for (int i = 0; i < n; i++) {
-        ecc_point_t additive_share_from_child;
+        ecc_point_t additive_share_from_child = curve.infinity();
         bool child_is_in_quorum = false;
         rv = reconstruct_pub_additive_shares(node->children[i], quorum_names, target, additive_share_from_child,
                                              child_is_in_quorum);
@@ -603,7 +603,7 @@ error_t key_share_mp_t::reconstruct_pub_additive_shares(const crypto::ss::node_t
     case node_e::AND:
       is_in_quorum = true;
       for (int i = 0; i < n; i++) {
-        ecc_point_t additive_share_from_child;
+        ecc_point_t additive_share_from_child = curve.infinity();
         bool child_is_in_quorum = false;
         rv = reconstruct_pub_additive_shares(node->children[i], quorum_names, target, additive_share_from_child,
                                              child_is_in_quorum);
@@ -626,7 +626,7 @@ error_t key_share_mp_t::reconstruct_pub_additive_shares(const crypto::ss::node_t
       int count = 0;
 
       for (int i = 0; i < n; i++) {
-        ecc_point_t share_from_child;
+        ecc_point_t share_from_child = curve.infinity();
         bool child_is_in_quorum = false;
         rv = reconstruct_pub_additive_shares(node->children[i], quorum_names, target, share_from_child,
                                              child_is_in_quorum);

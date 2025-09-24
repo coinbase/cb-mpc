@@ -6,16 +6,16 @@ using namespace coinbase::mpc;
 
 namespace coinbase::testutils {
 
-error_t local_data_transport_t::send(const party_idx_t receiver, const mem_t& msg) {
+error_t local_data_transport_t::send(const party_idx_t receiver, mem_t msg) {
   net_context_ptr->send(receiver, msg);
   return SUCCESS;
 }
 
-error_t local_data_transport_t::receive(const party_idx_t sender, mem_t& msg) {
+error_t local_data_transport_t::receive(const party_idx_t sender, buf_t& msg) {
   return net_context_ptr->receive(sender, msg);
 }
 
-error_t local_data_transport_t::receive_all(const std::vector<party_idx_t>& senders, std::vector<mem_t>& msgs) {
+error_t local_data_transport_t::receive_all(const std::vector<party_idx_t>& senders, std::vector<buf_t>& msgs) {
   return net_context_ptr->receive_all(senders, msgs);
 }
 

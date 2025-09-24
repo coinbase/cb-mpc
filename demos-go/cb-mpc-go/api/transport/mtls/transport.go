@@ -172,17 +172,22 @@ func NewMTLSMessenger(config Config) (*MTLSMessenger, error) {
 
 	for i, party := range config.Parties {
 		if i < config.SelfIndex {
-			// TODO: exponential backoff
+			// Exponential backoff with cap for connection retries
 			backoff := 1 * time.Second
+			maxBackoff := 20 * time.Second
 			attempts := 0
 			for {
 				counterPartyAddress := party.Address
 				conn, err := tls.Dial("tcp", counterPartyAddress, tlsConfig)
 				if err != nil {
 					attempts++
-					time.Sleep(backoff)
 					if attempts > 10 {
 						return nil, fmt.Errorf("connecting to %s: %v", counterPartyAddress, err)
+					}
+					time.Sleep(backoff)
+					backoff *= 2
+					if backoff > maxBackoff {
+						backoff = maxBackoff
 					}
 					continue
 				}
