@@ -26,8 +26,6 @@ class parallel_data_transport_t : public data_transport_interface_t {
     return receive_all(senders, 0, msgs);
   }
 
-  // (legacy mem_t interface removed)
-
   void set_parallel(int _parallel_count);
 
  private:

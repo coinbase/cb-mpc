@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
-	"crypto/subtle"
 	"crypto/x509"
 	"encoding/asn1"
 	"encoding/hex"
@@ -106,16 +105,16 @@ func (rsaDemoKEM) Encapsulate(ek []byte, rho [32]byte) ([]byte, []byte, error) {
 	// Derive the shared secret independently from the OAEP seed
 	ss := make([]byte, 32)
 	if _, err := io.ReadFull(hkdf.New(sha256.New, rho[:], salt, []byte(kemDS+"|ss")), ss); err != nil {
-		zero(oaepSeed[:])
+		mpc.SecureWipe(oaepSeed[:])
 		return nil, nil, fmt.Errorf("hkdf: %w", err)
 	}
 
 	// Deterministic OAEP randomness: rsa.EncryptOAEP reads exactly Hash.Size() bytes.
 	r := bytes.NewReader(oaepSeed[:])
 	ct, err := rsa.EncryptOAEP(sha256.New(), r, pub, ss, []byte(kemLabel))
-	zero(oaepSeed[:]) // best-effort wipe
+	mpc.SecureWipe(oaepSeed[:]) // best-effort wipe
 	if err != nil {
-		zero(ss)
+		mpc.SecureWipe(ss)
 		return nil, nil, err
 	}
 
@@ -146,7 +145,7 @@ func (rsaDemoKEM) Decapsulate(skHandle unsafe.Pointer, ct []byte) ([]byte, error
 	runtime.KeepAlive(cm)
 
 	prv, err := x509.ParsePKCS1PrivateKey(dkCopy)
-	zero(dkCopy) // best-effort wipe of private key bytes copy
+	mpc.SecureWipe(dkCopy) // best-effort wipe of private key bytes copy
 	if err != nil {
 		return nil, fmt.Errorf("kem: decapsulation failed")
 	}
@@ -171,7 +170,7 @@ func (rsaDemoKEM) Decapsulate(skHandle unsafe.Pointer, ct []byte) ([]byte, error
 
 	out := make([]byte, 32)
 	copy(out, ss)
-	zero(ss) // wipe temp
+	mpc.SecureWipe(ss) // wipe temp
 	return out, nil
 }
 
@@ -184,21 +183,6 @@ func (rsaDemoKEM) DerivePub(dk []byte) ([]byte, error) {
 		return nil, fmt.Errorf("invalid RSA modulus size: got %d bits", prv.Size()*8)
 	}
 	return x509.MarshalPKCS1PublicKey(&prv.PublicKey), nil
-}
-
-//go:noinline
-func zero(b []byte) {
-	if len(b) == 0 {
-		return
-	}
-	// Cross-package call to inhibit dead-store elimination; x ^ x == 0.
-	_ = subtle.XORBytes(b, b, b)
-	// Defensive second pass.
-	for i := range b {
-		b[i] = 0
-	}
-	// Keep the backing array alive until after the zeroization.
-	runtime.KeepAlive(&b[0])
 }
 
 func main() {

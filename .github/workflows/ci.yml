@@ -53,9 +53,13 @@ jobs:
             if ! command -v go >/dev/null 2>&1; then
               apt-get update
               apt-get install -y --no-install-recommends ca-certificates curl git
-              GO_VERSION="${GO_VERSION:-1.22.7}"
-              curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" \
-                | tar -C /usr/local -xz
+              GO_VERSION="${GO_VERSION:-1.24.6}"
+              GO_FILENAME="go${GO_VERSION}.linux-amd64.tar.gz"
+              GO_SHA256="bbca37cc395c974ffa4893ee35819ad23ebb27426df87af92e93a9ec66ef8712"
+              curl -fsSLo "/tmp/${GO_FILENAME}" "https://go.dev/dl/${GO_FILENAME}"
+              printf '"'"'%s  %s\n'"'"' "$GO_SHA256" "/tmp/$GO_FILENAME" | sha256sum --check --status -
+              tar -C /usr/local -xzf "/tmp/${GO_FILENAME}"
+              rm -f "/tmp/${GO_FILENAME}"
               ln -sf /usr/local/go/bin/* /usr/local/bin/
             fi
             export PATH="/usr/local/go/bin:$PATH"

@@ -103,8 +103,6 @@ error_t parallel_data_transport_t::receive(const party_idx_t sender, const paral
     if (rv = data_transport_ptr->receive(sender, buf)) return cleanup_receive_error(rv);
     {
       std::lock_guard<std::mutex> lk(receive_msg_mutex);
-
-      // receive_msg = std::vector<buf_t>(parallel_count);
       if (rv = deser(buf, receive_msg)) return cleanup_receive_error(rv);
     }
 

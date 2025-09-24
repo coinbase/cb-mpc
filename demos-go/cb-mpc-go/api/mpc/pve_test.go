@@ -562,9 +562,6 @@ func (r *rsaGoKEM) DerivePub(dk []byte) ([]byte, error) {
 	return x509.MarshalPKCS1PublicKey(&prv.PublicKey), nil
 }
 
-// Helpers for P-256 uncompressed point encoding
-// (Removed legacy P-256 point helpers; using crypto/ecdh key encoding.)
-
 // =============================
 // Go-defined ECDH KEM (toy, P-256 + HKDF=truncate)
 // =============================
