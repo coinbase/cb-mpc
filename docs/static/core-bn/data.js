@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752241157381,
+  "lastUpdate": 1758812354426,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1800,6 +1800,126 @@ window.BENCHMARK_DATA = {
             "value": 1325.4823840302536,
             "unit": "us/iter",
             "extra": "iterations: 526\ncpu: 1325.2833631178744 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cc4265d32ae59dab0c3917f7e39ac76fc44516a6",
+          "message": "feat: Pluggable KEMs, Distributed Decryption, and Core Hardening (#45)\n\nThis commit introduces a major architectural refactor focused on cryptographic flexibility, API safety, and support for distributed operations. It incorporates several critical bug fixes related to concurrency, cryptographic correctness, and memory management. The public API has been updated, the CGO boundary has been hardened, and the developer experience has been improved.\n\n---\n## Key Architectural Changes\n\n### Pluggable, Instance-Based Architecture\nThe core API has been refactored from package-level functions to an **instance-based model**. Clients now create a handle (`NewPVE`) configured with a specific Key Encapsulation Mechanism (KEM) implementation. This is enabled by a new `mpc.KEM` Go interface and a generic `kem_aead_ciphertext_t` in C++, allowing different encryption backends to be plugged in seamlessly.\n\n### Interactive Distributed Decryption Protocol\nThe decryption process is now an **interactive, two-step protocol** for distributed environments, enhancing security by not requiring private keys to be co-located:\n1.  `AcPartyDecryptRow`: Each party generates a \"decryption share\" using its private key.\n2.  `AcAggregateToRestoreRow`: A new function aggregates shares from a quorum of parties to reconstruct the plaintext.\n\n### CGO Boundary Hardening & Memory Safety\nThe interface between Go and C++ has been overhauled to improve safety:\n* **No Leaked Handles**: The `go:linkname` pattern has been removed. Primitives (curve IDs, `[]byte`) are now passed instead of raw C++ pointers.\n* **Defensive Copying**: Data from Go is immediately copied into C++-owned buffers to prevent use-after-free errors from the Go GC (Fixes #42, #43).\n* **Memory Leak Fixed**: A memory leak in `hash32bit_for_zk_fischlin` was patched by correctly freeing the `EVP_MD_CTX` (Fixes #41).\n* **Clearer Ownership**: C++ message classes now own their data directly, improving clarity and memory safety.\n\n---\n## Additional Bug Fixes\n\n* **Deadlock Prevention**: A deadlock in parallel receive operations is now prevented. When a master thread encountered an error, it would leave worker threads blocked indefinitely. The fix ensures all waiting threads are properly notified on an error (Fixes #44).\n* **Corrected Public Key Reconstruction**: An uninitialized variable in the `reconstruct_pub_additive_shares` function could cause incorrect results. Shares are now correctly initialized to the curve's identity point (`infinity`), ensuring parties outside the quorum do not affect the sum (Fixes #38).\n* **ECDSA Test Fix**: The ECDSA test suite now works correctly with the `secp256k1` curve (Fixes #35).\n\n---\n## Developer Experience & Documentation\n\n* **Simplified Build Process**: A new `go_with_cpp.sh` wrapper script automatically rebuilds the C++ library as needed.\n* **Faster Filtered Tests**: The `make test-go` target is now significantly faster when using a filter.\n* **Cleaner Test Logs**: A new `testutil.TSilence` helper suppresses C++ `stderr` during tests that intentionally trigger errors.\n* **Documentation**: The documentation for Go wrapper compilation has been corrected.\n\nFixes #35, #38, #41, #42, #43, #44",
+          "timestamp": "2025-09-25T07:20:22-07:00",
+          "tree_id": "3f24c9802b3339b2fa1c1ee9fbe1802ac960ab45",
+          "url": "https://github.com/coinbase/cb-mpc/commit/cc4265d32ae59dab0c3917f7e39ac76fc44516a6"
+        },
+        "date": 1758812353326,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.06890034869959083,
+            "unit": "us/iter",
+            "extra": "iterations: 10624618\ncpu: 0.06889634930874693 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.27466258636185786,
+            "unit": "us/iter",
+            "extra": "iterations: 2539026\ncpu: 0.27464325453933847 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.061189163170651976,
+            "unit": "us/iter",
+            "extra": "iterations: 11495964\ncpu: 0.06118420473480949 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.3228977479815173,
+            "unit": "us/iter",
+            "extra": "iterations: 2171341\ncpu: 0.32287301579991556 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.14570360325229845,
+            "unit": "us/iter",
+            "extra": "iterations: 4813457\ncpu: 0.1456875827497796 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 11.010577963654542,
+            "unit": "us/iter",
+            "extra": "iterations: 63722\ncpu: 11.009918065974142 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 16.274176299773654,
+            "unit": "us/iter",
+            "extra": "iterations: 43046\ncpu: 16.27328248850075 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16512.720333328918,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16512.439119047427 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 17.327703730237637,
+            "unit": "us/iter",
+            "extra": "iterations: 40480\ncpu: 17.326752742094946 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 674.1498070176475,
+            "unit": "us/iter",
+            "extra": "iterations: 1026\ncpu: 674.1329142300136 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 23.417690781402797,
+            "unit": "us/iter",
+            "extra": "iterations: 29332\ncpu: 23.416039922269114 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1203.122156626273,
+            "unit": "us/iter",
+            "extra": "iterations: 581\ncpu: 1203.003753872632 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 24.06108179891073,
+            "unit": "us/iter",
+            "extra": "iterations: 30196\ncpu: 24.058597297655908 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1204.0028065628999,
+            "unit": "us/iter",
+            "extra": "iterations: 579\ncpu: 1203.9121174438767 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 26.621356417799603,
+            "unit": "us/iter",
+            "extra": "iterations: 27190\ncpu: 26.61959830820149 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1385.20700392924,
+            "unit": "us/iter",
+            "extra": "iterations: 509\ncpu: 1385.1353222003618 us\nthreads: 1"
           }
         ]
       }
