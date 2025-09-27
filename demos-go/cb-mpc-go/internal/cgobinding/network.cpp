@@ -81,13 +81,14 @@ class callback_data_transport_t : public data_transport_interface_t {
 
  public:
   callback_data_transport_t(const data_transport_callbacks_t* callbacks_ptr, void* go_impl_ptr)
-      : callbacks(*callbacks_ptr), go_impl_ptr(go_impl_ptr) {
+      : callbacks(), go_impl_ptr(go_impl_ptr) {
     if (!callbacks_ptr) {
       throw std::invalid_argument("callbacks_ptr cannot be null");
     }
     if (!go_impl_ptr) {
       throw std::invalid_argument("go_impl_ptr cannot be null");
     }
+    callbacks = *callbacks_ptr;
     if (!callbacks.send_fun || !callbacks.receive_fun || !callbacks.receive_all_fun) {
       throw std::invalid_argument("all callback functions must be provided");
     }
