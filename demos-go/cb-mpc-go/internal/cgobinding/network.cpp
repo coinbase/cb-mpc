@@ -30,6 +30,24 @@ bool validate_party_names(const char* const* pnames, int count) noexcept {
   return true;
 }
 
+// Helper functions to validate and dereference pointers before construction
+const data_transport_callbacks_t& validate_and_deref_callbacks(const data_transport_callbacks_t* callbacks_ptr) {
+  if (!callbacks_ptr) {
+    throw std::invalid_argument("callbacks_ptr cannot be null");
+  }
+  if (!callbacks_ptr->send_fun || !callbacks_ptr->receive_fun || !callbacks_ptr->receive_all_fun) {
+    throw std::invalid_argument("all callback functions must be provided");
+  }
+  return *callbacks_ptr;
+}
+
+void* validate_go_impl_ptr(void* go_impl_ptr) {
+  if (!go_impl_ptr) {
+    throw std::invalid_argument("go_impl_ptr cannot be null");
+  }
+  return go_impl_ptr;
+}
+
 // RAII wrapper for job references
 template <typename JobType>
 struct JobDeleter {
@@ -81,16 +99,8 @@ class callback_data_transport_t : public data_transport_interface_t {
 
  public:
   callback_data_transport_t(const data_transport_callbacks_t* callbacks_ptr, void* go_impl_ptr)
-      : callbacks(*callbacks_ptr), go_impl_ptr(go_impl_ptr) {
-    if (!callbacks_ptr) {
-      throw std::invalid_argument("callbacks_ptr cannot be null");
-    }
-    if (!go_impl_ptr) {
-      throw std::invalid_argument("go_impl_ptr cannot be null");
-    }
-    if (!callbacks.send_fun || !callbacks.receive_fun || !callbacks.receive_all_fun) {
-      throw std::invalid_argument("all callback functions must be provided");
-    }
+      : callbacks(validate_and_deref_callbacks(callbacks_ptr)), go_impl_ptr(validate_go_impl_ptr(go_impl_ptr)) {
+    // Validation is now done safely in the helper functions before dereferencing
   }
 
   error_t send(const party_idx_t receiver, mem_t msg) override {
