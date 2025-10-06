@@ -2,6 +2,7 @@ package mpc
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"fmt"
 	"testing"
 
@@ -120,6 +121,24 @@ func TestEDDSAMPC_EndToEnd(t *testing.T) {
 		}
 	}
 
+	// Verify the signature against the aggregated public key Q using Ed25519
+	qVerify, err := keyRes[0].KeyShare.Q()
+	if err != nil {
+		t.Fatalf("Q() failed for verification: %v", err)
+	}
+	pub, err := ed25519PublicKeyFromPoint(qVerify)
+	qVerify.Free()
+	if err != nil {
+		t.Fatalf("failed to derive Ed25519 public key: %v", err)
+	}
+	sig := signRes[0].Signature
+	if len(sig) != ed25519.SignatureSize {
+		t.Fatalf("unexpected Ed25519 signature length: got %d", len(sig))
+	}
+	if !ed25519.Verify(ed25519.PublicKey(pub), message, sig) {
+		t.Fatalf("signature verification failed")
+	}
+
 	// Validate EDDSAMPCKey.Curve() and EDDSAMPCKey.Q() accessors on resulting key shares
 	expectedCode := curve.Code(ed)
 	var q0 []byte
@@ -159,4 +178,38 @@ func TestEDDSAMPC_EndToEnd(t *testing.T) {
 	if _, err := zeroKey.Q(); err == nil {
 		t.Fatalf("expected Q() to fail on zero-value key")
 	}
+}
+
+// ed25519PublicKeyFromPoint converts a curve point on Ed25519 to the 32-byte
+// compressed public key as defined by RFC 8032: little-endian encoding of the
+// y-coordinate with the most-significant bit set to the sign bit of x.
+func ed25519PublicKeyFromPoint(q *curve.Point) ([]byte, error) {
+	if q == nil {
+		return nil, fmt.Errorf("nil point")
+	}
+	// Some curves may already serialize Ed25519 points in compressed 32-byte form.
+	if pb := q.Bytes(); len(pb) == ed25519.PublicKeySize {
+		return pb, nil
+	}
+
+	x := q.GetX()
+	y := q.GetY()
+	if len(y) == 0 {
+		return nil, fmt.Errorf("empty y coordinate")
+	}
+	if len(y) > ed25519.PublicKeySize {
+		y = y[len(y)-ed25519.PublicKeySize:]
+	}
+	pub := make([]byte, ed25519.PublicKeySize)
+	copy(pub[ed25519.PublicKeySize-len(y):], y)
+	for i, j := 0, len(pub)-1; i < j; i, j = i+1, j-1 {
+		pub[i], pub[j] = pub[j], pub[i]
+	}
+	var xlsb byte
+	if len(x) > 0 {
+		xlsb = x[len(x)-1] & 1
+	}
+	pub[31] &^= 0x80
+	pub[31] |= (xlsb << 7)
+	return pub, nil
 }

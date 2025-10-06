@@ -1,46 +1,28 @@
-// Replace placeholder with test implementations
 package mpc
 
 import (
-	"crypto/sha256"
+	"crypto/ed25519"
 	"testing"
 
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/curve"
 	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/api/transport/mocknet"
-	"github.com/coinbase/cb-mpc/demos-go/cb-mpc-go/internal/cgobinding"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// createThresholdAccessStructure builds an in-memory AccessStructure tree
-// representing a simple "threshold-of-n" policy and returns a high-level
-// Go wrapper that can be passed to the MPC APIs.
-func createThresholdAccessStructure(pnames []string, threshold int, cv curve.Curve) *AccessStructure {
-	// Build leaf nodes for each party.
-	kids := make([]*AccessNode, len(pnames))
-	for i, n := range pnames {
-		kids[i] = Leaf(n)
-	}
-
-	// Root is a THRESHOLD node with K=threshold.
-	root := Threshold("", threshold, kids...)
-
-	return &AccessStructure{Root: root, Curve: cv}
-}
-
-// TestECDSAMPCThresholdDKGWithMockNet exercises the high-level
-// ECDSAMPCThresholdDKG wrapper across multiple parties using the in-memory mock
-// network. It validates that each participant receives a non-nil key share and
-// that basic invariants (party name, curve code) hold.
-func TestECDSAMPCThresholdDKGWithMockNet(t *testing.T) {
+// TestEDDSAMPCThresholdDKGWithMockNet exercises the high-level
+// EDDSAMPCThresholdDKG wrapper across multiple parties using the in-memory mock
+// network. It validates that the threshold DKG protocol works and that the
+// resulting key shares can be used to sign a message.
+func TestEDDSAMPCThresholdDKGWithMockNet(t *testing.T) {
 	const (
 		nParties  = 5
-		threshold = 3
+		threshold = 3 // 3-of-5 threshold policy
 	)
 
 	// Prepare curve instance.
-	cv, err := curve.NewSecp256k1()
+	cv, err := curve.NewEd25519()
 	require.NoError(t, err)
 	defer cv.Free()
 
@@ -51,7 +33,7 @@ func TestECDSAMPCThresholdDKGWithMockNet(t *testing.T) {
 	// Channel to gather per-party results.
 	type result struct {
 		idx  int
-		resp *ECDSAMPCThresholdDKGResponse
+		resp *EDDSAMPCThresholdDKGResponse
 		err  error
 	}
 	resCh := make(chan result, nParties)
@@ -70,19 +52,19 @@ func TestECDSAMPCThresholdDKGWithMockNet(t *testing.T) {
 			// Each party creates its own access-structure object.
 			ac := createThresholdAccessStructure(pnames, threshold, cv)
 
-			req := &ECDSAMPCThresholdDKGRequest{
+			req := &EDDSAMPCThresholdDKGRequest{
 				Curve:           cv,
 				SessionID:       nil, // let native generate SID
 				AccessStructure: ac,
 			}
 
-			r, e := ECDSAMPCThresholdDKG(job, req)
+			r, e := EDDSAMPCThresholdDKG(job, req)
 			resCh <- result{idx: idx, resp: r, err: e}
 		}(i)
 	}
 
 	// Collect results.
-	resp := make([]*ECDSAMPCThresholdDKGResponse, nParties)
+	resp := make([]*EDDSAMPCThresholdDKGResponse, nParties)
 	for i := 0; i < nParties; i++ {
 		out := <-resCh
 		require.NoError(t, out.err, "party %d threshold DKG should succeed", out.idx)
@@ -108,9 +90,11 @@ func TestECDSAMPCThresholdDKGWithMockNet(t *testing.T) {
 		actual := curve.Code(c)
 		assert.Equal(t, expectedCurveCode, actual)
 		c.Free()
+
+		// Note: For threshold-DKG keys, SUM(Qis) may not equal Q until converted to additive shares.
 	}
 
-	// Convert a quorum of parties to additive shares under the same threshold policy
+	// Convert to additive shares for a quorum of size `threshold`
 	root := Threshold("", threshold, func() []*AccessNode {
 		kids := make([]*AccessNode, len(pnames))
 		for i, n := range pnames {
@@ -118,22 +102,23 @@ func TestECDSAMPCThresholdDKGWithMockNet(t *testing.T) {
 		}
 		return kids
 	}()...)
-	asQ := &AccessStructure{Root: root, Curve: cv}
+	acQ := &AccessStructure{Root: root, Curve: cv}
 	quorumNames := pnames[:threshold]
-
-	additive := make([]ECDSAMPCKey, threshold)
+	additive := make([]EDDSAMPCKey, threshold)
 	for i := 0; i < threshold; i++ {
-		as, err := resp[i].KeyShare.ToAdditiveShare(asQ, quorumNames)
+		as, err := resp[i].KeyShare.ToAdditiveShare(acQ, quorumNames)
 		require.NoError(t, err, "party %d additive share conversion failed", i)
 		additive[i] = as
 	}
 
-	// Run an ECDSA MPC signing with only the quorum parties, then verify the DER signature
-	message := []byte("ecdsa threshold dkg signing")
-	digest := sha256.Sum256(message)
+	// Run an EdDSA MPC signing round with only the quorum parties using additive shares
+	message := []byte("eddsa threshold dkg signing")
 	sigReceiver := 0
 
+	// Fresh mock network for signing across quorum parties
 	signMessengers := mocknet.NewMockNetwork(threshold)
+	signPNames := quorumNames
+
 	type signResult struct {
 		idx int
 		sig []byte
@@ -143,15 +128,19 @@ func TestECDSAMPCThresholdDKGWithMockNet(t *testing.T) {
 
 	for i := 0; i < threshold; i++ {
 		go func(idx int) {
-			job, err := NewJobMP(signMessengers[idx], threshold, idx, quorumNames)
+			job, err := NewJobMP(signMessengers[idx], threshold, idx, signPNames)
 			if err != nil {
 				signCh <- signResult{idx: idx, err: err}
 				return
 			}
 			defer job.Free()
 
-			req := &ECDSAMPCSignRequest{KeyShare: additive[idx], Message: digest[:], SignatureReceiver: sigReceiver}
-			r, e := ECDSAMPCSign(job, req)
+			req := &EDDSAMPCSignRequest{
+				KeyShare:          additive[idx],
+				Message:           message,
+				SignatureReceiver: sigReceiver,
+			}
+			r, e := EDDSAMPCSign(job, req)
 			if e != nil {
 				signCh <- signResult{idx: idx, err: e}
 				return
@@ -167,47 +156,36 @@ func TestECDSAMPCThresholdDKGWithMockNet(t *testing.T) {
 		sigs[out.idx] = out.sig
 	}
 
-	// Only the receiver should have the signature
-	require.NotEmpty(t, sigs[sigReceiver])
+	// Only the receiver should obtain the signature bytes.
+	require.NotEmpty(t, sigs[sigReceiver], "receiver should have signature bytes")
 	for i := 0; i < threshold; i++ {
-		if i != sigReceiver {
-			assert.Empty(t, sigs[i])
+		if i == sigReceiver {
+			continue
 		}
+		assert.Empty(t, sigs[i], "non-receiver party %d should not have signature", i)
 	}
 
-	// Verify signature against Q
+	// Verify the signature against the aggregated public key Q using Ed25519.
 	Q, err := resp[0].KeyShare.Q()
 	require.NoError(t, err)
-	// Build SEC1 uncompressed pubkey
-	pad32 := func(b []byte) []byte {
-		p := make([]byte, 32)
-		if len(b) >= 32 {
-			copy(p, b[len(b)-32:])
-			return p
-		}
-		copy(p[32-len(b):], b)
-		return p
-	}
-	x := pad32(Q.GetX())
-	y := pad32(Q.GetY())
-	pubOct := make([]byte, 1+32+32)
-	pubOct[0] = 0x04
-	copy(pubOct[1:33], x)
-	copy(pubOct[33:], y)
+	pub, err := ed25519PublicKeyFromPoint(Q)
 	Q.Free()
-	require.NoError(t, cgobinding.ECCVerifyDER(curve.Code(cv), pubOct, digest[:], sigs[sigReceiver]))
+	require.NoError(t, err)
+	require.Len(t, sigs[sigReceiver], ed25519.SignatureSize)
+	valid := ed25519.Verify(ed25519.PublicKey(pub), message, sigs[sigReceiver])
+	require.True(t, valid, "signature verification failed")
 }
 
-// TestECDSAMPC_ToAdditiveShare verifies that a subset of parties satisfying the
+// TestEDDSAMPC_ToAdditiveShare verifies that a subset of parties satisfying the
 // quorum threshold can convert their threshold-DKG key share into an additive
 // secret share without error.
-func TestECDSAMPC_ToAdditiveShare(t *testing.T) {
+func TestEDDSAMPC_ToAdditiveShare(t *testing.T) {
 	const (
 		nParties  = 4
 		threshold = 2
 	)
 
-	cv, err := curve.NewSecp256k1()
+	cv, err := curve.NewEd25519()
 	require.NoError(t, err)
 	defer cv.Free()
 
@@ -217,7 +195,7 @@ func TestECDSAMPC_ToAdditiveShare(t *testing.T) {
 	// First run threshold DKG to obtain key shares.
 	type dkgResult struct {
 		idx   int
-		share ECDSAMPCKey
+		share EDDSAMPCKey
 		err   error
 	}
 	dkgCh := make(chan dkgResult, nParties)
@@ -233,8 +211,8 @@ func TestECDSAMPC_ToAdditiveShare(t *testing.T) {
 
 			ac := createThresholdAccessStructure(pnames, threshold, cv)
 
-			req := &ECDSAMPCThresholdDKGRequest{Curve: cv, AccessStructure: ac}
-			resp, err := ECDSAMPCThresholdDKG(job, req)
+			req := &EDDSAMPCThresholdDKGRequest{Curve: cv, AccessStructure: ac}
+			resp, err := EDDSAMPCThresholdDKG(job, req)
 			if err != nil {
 				dkgCh <- dkgResult{idx: idx, err: err}
 				return
@@ -243,7 +221,7 @@ func TestECDSAMPC_ToAdditiveShare(t *testing.T) {
 		}(i)
 	}
 
-	shares := make([]ECDSAMPCKey, nParties)
+	shares := make([]EDDSAMPCKey, nParties)
 	for i := 0; i < nParties; i++ {
 		out := <-dkgCh
 		require.NoError(t, out.err)
@@ -284,15 +262,16 @@ func TestECDSAMPC_ToAdditiveShare(t *testing.T) {
 	}
 }
 
-// TestECDSAMPCThresholdDKG_SigningFailsWithTooFewParties ensures that attempting
-// to sign with fewer than 3 parties (and fewer than the 3-of-5 threshold) fails.
-func TestECDSAMPCThresholdDKG_SigningFailsWithTooFewParties(t *testing.T) {
+// TestEDDSAMPCThresholdDKG_SigningFailsWithTooFewParties ensures that attempting
+// to sign with fewer than 3 parties (below the protocol minimum and below the
+// 3-of-5 threshold) fails as expected.
+func TestEDDSAMPCThresholdDKG_SigningFailsWithTooFewParties(t *testing.T) {
 	const (
 		nParties  = 5
 		threshold = 3
 	)
 
-	cv, err := curve.NewSecp256k1()
+	cv, err := curve.NewEd25519()
 	require.NoError(t, err)
 	defer cv.Free()
 
@@ -302,7 +281,7 @@ func TestECDSAMPCThresholdDKG_SigningFailsWithTooFewParties(t *testing.T) {
 	// Run threshold DKG across all parties
 	type dkgRes struct {
 		idx  int
-		resp *ECDSAMPCThresholdDKGResponse
+		resp *EDDSAMPCThresholdDKGResponse
 		err  error
 	}
 	dkgCh := make(chan dkgRes, nParties)
@@ -315,18 +294,19 @@ func TestECDSAMPCThresholdDKG_SigningFailsWithTooFewParties(t *testing.T) {
 			}
 			defer job.Free()
 			ac := createThresholdAccessStructure(pnames, threshold, cv)
-			r, e := ECDSAMPCThresholdDKG(job, &ECDSAMPCThresholdDKGRequest{Curve: cv, AccessStructure: ac})
+			r, e := EDDSAMPCThresholdDKG(job, &EDDSAMPCThresholdDKGRequest{Curve: cv, AccessStructure: ac})
 			dkgCh <- dkgRes{idx: idx, resp: r, err: e}
 		}(i)
 	}
-	resp := make([]*ECDSAMPCThresholdDKGResponse, nParties)
+	resp := make([]*EDDSAMPCThresholdDKGResponse, nParties)
 	for i := 0; i < nParties; i++ {
 		out := <-dkgCh
 		require.NoError(t, out.err)
 		resp[out.idx] = out.resp
 	}
 
-	// Convert to additive shares for a valid 3-of-5 quorum
+	// Convert to additive shares for a valid 3-of-5 quorum, but we will only
+	// attempt to sign with TWO parties to trigger failure.
 	root := Threshold("", threshold, func() []*AccessNode {
 		kids := make([]*AccessNode, len(pnames))
 		for i, n := range pnames {
@@ -336,14 +316,14 @@ func TestECDSAMPCThresholdDKG_SigningFailsWithTooFewParties(t *testing.T) {
 	}()...)
 	asQ := &AccessStructure{Root: root, Curve: cv}
 	quorumNames := pnames[:threshold]
-	additive := make([]ECDSAMPCKey, threshold)
+	additive := make([]EDDSAMPCKey, threshold)
 	for i := 0; i < threshold; i++ {
 		as, err := resp[i].KeyShare.ToAdditiveShare(asQ, quorumNames)
 		require.NoError(t, err)
 		additive[i] = as
 	}
 
-	// Attempt to sign with only two parties -> should fail
+	// Use ONLY two parties for signing – should fail with "n-party signing requires at least 3 parties"
 	signMessengers := mocknet.NewMockNetwork(2)
 	signPNames := quorumNames[:2]
 	type signResult struct {
@@ -351,7 +331,7 @@ func TestECDSAMPCThresholdDKG_SigningFailsWithTooFewParties(t *testing.T) {
 		err error
 	}
 	signCh := make(chan signResult, 2)
-	digest := sha256.Sum256([]byte("ecdsa threshold negative test"))
+	message := []byte("eddsa threshold negative test")
 	sigReceiver := 0
 	for i := 0; i < 2; i++ {
 		go func(idx int) {
@@ -361,7 +341,7 @@ func TestECDSAMPCThresholdDKG_SigningFailsWithTooFewParties(t *testing.T) {
 				return
 			}
 			defer job.Free()
-			_, e := ECDSAMPCSign(job, &ECDSAMPCSignRequest{KeyShare: additive[idx], Message: digest[:], SignatureReceiver: sigReceiver})
+			_, e := EDDSAMPCSign(job, &EDDSAMPCSignRequest{KeyShare: additive[idx], Message: message, SignatureReceiver: sigReceiver})
 			signCh <- signResult{idx: idx, err: e}
 		}(i)
 	}
@@ -370,3 +350,6 @@ func TestECDSAMPCThresholdDKG_SigningFailsWithTooFewParties(t *testing.T) {
 		require.Error(t, out.err, "party %d signing should fail with too few parties", out.idx)
 	}
 }
+
+// ed25519PublicKeyFromPoint helper is defined in eddsa_mp_test.go within the
+// same package and reused here.
