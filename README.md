@@ -92,12 +92,36 @@ There are three build modes available:
 
 ### OpenSSL
 
-The library depends on OpenSSL. Therefore, the first step is to build the proper version of OpenSSL. The write permission to the `/usr/local/opt` may be required
+The library depends on a **custom build of OpenSSL 3.2.0** with specific modifications (see [External Dependencies](#external-dependencies)). You must build this custom version before compiling the library.
+
+**Quick Start:**
+```bash
+# Automatic detection of your platform
+make openssl
+
+# Or use platform-specific targets:
+make openssl-macos      # for x86_64
+make openssl-macos-m1   # for ARM64 (Apple Silicon)
+```
+
+**Manual Build:**
+```bash
+scripts/openssl/build-static-openssl-macos.sh      # for x86_64
+# or
+scripts/openssl/build-static-openssl-macos-m1.sh   # for ARM64
+```
+
+**Note:** These scripts install OpenSSL to `/usr/local/opt/openssl@3.2.0` and may require `sudo` permission.
+
+**Custom Install Location:**
+If you prefer a different installation path, you can set the `CBMPC_OPENSSL_ROOT` variable:
 
 ```bash
-scripts/openssl/build-static-openssl-macos.sh
-or
-scripts/openssl/build-static-openssl-macos-m1.sh
+# Option 1: Environment variable (before running cmake)
+export CBMPC_OPENSSL_ROOT=/your/custom/path
+
+# Option 2: CMake variable
+cmake -DCBMPC_OPENSSL_ROOT=/your/custom/path ...
 ```
 
 ### Compilers
