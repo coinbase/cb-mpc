@@ -185,25 +185,3 @@ sanity-check:
 	$(MAKE) benchmark-build
 	$(MAKE) dudect filter=NON_EXISTING_TEST
 
-### For Go wrappers
-.PHONY: test-go
-test-go:
-	@echo "Running Go tests$(if $(filter), (filter=$(filter)),)..."
-	@${RUN_CMD} 'BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/go_with_cpp.sh bash -lc "\
-		if [ -n \"$(filter)\" ]; then \
-			go test -v -run \"$(filter)\" ./...; \
-		else \
-			go test -v ./...; \
-		fi"'
-
-.PHONY: test-go-short
-test-go-short:
-	${RUN_CMD} 'BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/go_with_cpp.sh bash -lc "go test -short ./..."'
-
-.PHONY: test-go-race
-test-go-race:
-	${RUN_CMD} 'BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/go_with_cpp.sh bash -lc "go test -race -v ./..."'
-
-.PHONY: godoc
-godoc:
-	${RUN_CMD} 'cd demos-go/cb-mpc-go && godoc -http=:6060'

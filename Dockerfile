@@ -1,20 +1,24 @@
-FROM public.ecr.aws/docker/library/golang:1.24.6-bookworm
+FROM public.ecr.aws/docker/library/ubuntu:24.04
 
 LABEL description="Build environment for MPC project with LLVM and tweaked OpenSSL"
 LABEL version="1.0"
 
-ENV CGO_ENABLED=0 \
-    CC=/usr/bin/clang-20 \
-    CXX=/usr/bin/clang++-20
+ENV CC=/usr/bin/clang-20 \
+    CXX=/usr/bin/clang++-20 \
+    DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     libssl-dev \
     cmake \
     rsync \
     wget \
+    curl \
     gnupg \
     ca-certificates \
     lsb-release \
+    git \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/* \
     # Import LLVM's GPG key
     && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg \
