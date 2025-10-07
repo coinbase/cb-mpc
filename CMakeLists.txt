@@ -86,16 +86,16 @@ endif()
 
 include_directories(${SRC_DIR})
 
+add_subdirectory(src/cbmpc/core)
+add_subdirectory(src/cbmpc/crypto)
+add_subdirectory(src/cbmpc/zk)
+add_subdirectory(src/cbmpc/protocol)
+
 add_library(
   cbmpc STATIC $<TARGET_OBJECTS:cbmpc_core> $<TARGET_OBJECTS:cbmpc_crypto>
                $<TARGET_OBJECTS:cbmpc_zk> $<TARGET_OBJECTS:cbmpc_protocol>)
 
 link_openssl(cbmpc)
-
-add_subdirectory(src/cbmpc/core)
-add_subdirectory(src/cbmpc/crypto)
-add_subdirectory(src/cbmpc/zk)
-add_subdirectory(src/cbmpc/protocol)
 
 # ------------- Tests ---------------------------
 

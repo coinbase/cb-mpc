@@ -27,12 +27,50 @@ ghas: submodules openssl-linux build
 submodules:
 	git submodule update --init --recursive
 
+# OpenSSL build targets
+# Note: These require write permission to /usr/local/opt
+# You can customize the install location by setting CBMPC_OPENSSL_ROOT:
+#   export CBMPC_OPENSSL_ROOT=/custom/path
+#   or
+#   cmake -DCBMPC_OPENSSL_ROOT=/custom/path ...
+
 .PHONY: openssl-linux
 openssl-linux:
+	@echo "Building custom OpenSSL for Linux..."
 	${RUN_CMD} 'bash ./scripts/openssl/build-static-openssl-linux.sh'
 	${RUN_CMD} 'mkdir -p /usr/local/lib64'
 	${RUN_CMD} 'mkdir -p /usr/local/lib'
 	${RUN_CMD} 'mkdir -p /usr/local/include'
+
+.PHONY: openssl-macos
+openssl-macos:
+	@echo "Building custom OpenSSL for macOS (x86_64)..."
+	@echo "Note: Requires sudo permission for /usr/local/opt"
+	${RUN_CMD} 'bash ./scripts/openssl/build-static-openssl-macos.sh'
+
+.PHONY: openssl-macos-m1
+openssl-macos-m1:
+	@echo "Building custom OpenSSL for macOS (ARM64)..."
+	@echo "Note: Requires sudo permission for /usr/local/opt"
+	${RUN_CMD} 'bash ./scripts/openssl/build-static-openssl-macos-m1.sh'
+
+.PHONY: openssl
+openssl:
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		if [ "$$(uname -m)" = "arm64" ]; then \
+			echo "Detected macOS ARM64"; \
+			$(MAKE) openssl-macos-m1; \
+		else \
+			echo "Detected macOS x86_64"; \
+			$(MAKE) openssl-macos; \
+		fi; \
+	elif [ "$$(uname)" = "Linux" ]; then \
+		echo "Detected Linux"; \
+		$(MAKE) openssl-linux; \
+	else \
+		echo "Unsupported platform: $$(uname)"; \
+		exit 1; \
+	fi
 
 .PHONY: docker-run
 docker-run:
@@ -147,25 +185,3 @@ sanity-check:
 	$(MAKE) benchmark-build
 	$(MAKE) dudect filter=NON_EXISTING_TEST
 
-### For Go wrappers
-.PHONY: test-go
-test-go:
-	@echo "Running Go tests$(if $(filter), (filter=$(filter)),)..."
-	@${RUN_CMD} 'BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/go_with_cpp.sh bash -lc "\
-		if [ -n \"$(filter)\" ]; then \
-			go test -v -run \"$(filter)\" ./...; \
-		else \
-			go test -v ./...; \
-		fi"'
-
-.PHONY: test-go-short
-test-go-short:
-	${RUN_CMD} 'BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/go_with_cpp.sh bash -lc "go test -short ./..."'
-
-.PHONY: test-go-race
-test-go-race:
-	${RUN_CMD} 'BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/go_with_cpp.sh bash -lc "go test -race -v ./..."'
-
-.PHONY: godoc
-godoc:
-	${RUN_CMD} 'cd demos-go/cb-mpc-go && godoc -http=:6060'

@@ -12,7 +12,6 @@ on:
       - '**/*.h'
       - '**/*.hpp'
       - '**/*.c'
-      - '**/*.go'
       - '**/*.py'
 
 permissions:
@@ -30,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp', 'go', 'python' ]
+        language: [ 'cpp', 'python' ]
 
     steps:
     - name: Harden the runner (Audit all outbound calls)
@@ -52,9 +51,9 @@ jobs:
     - name: Install language dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake golang-go
+        sudo apt-get install -y cmake
 
-    - if: matrix.language == 'go' || matrix.language == 'python'
+    - if: matrix.language == 'python'
       name: Autobuild
       uses: github/codeql-action/autobuild@fca7ace96b7d713c7035871441bd52efbe39e27e # v3.28.19
     - if: matrix.language == 'cpp'

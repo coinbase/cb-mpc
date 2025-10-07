@@ -1,3 +1,16 @@
+# Link OpenSSL to a target
+#
+# This macro links the custom OpenSSL build to a CMake target.
+# The OpenSSL path can be customized via:
+#   1. CMake variable: -DCBMPC_OPENSSL_ROOT=/path/to/openssl
+#   2. Environment variable: export CBMPC_OPENSSL_ROOT=/path/to/openssl
+#   3. Default: /usr/local/opt/openssl@3.2.0
+#
+# To build the custom OpenSSL, run the appropriate script:
+#   - macOS (x86_64): scripts/openssl/build-static-openssl-macos.sh
+#   - macOS (ARM64):  scripts/openssl/build-static-openssl-macos-m1.sh
+#   - Linux:          scripts/openssl/build-static-openssl-linux.sh
+#
 macro(link_openssl TARGET_NAME)
   if(NOT DEFINED CBMPC_OPENSSL_ROOT)
     if(DEFINED ENV{CBMPC_OPENSSL_ROOT})
