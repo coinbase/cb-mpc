@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1758812357015,
+  "lastUpdate": 1759938070454,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1476,6 +1476,114 @@ window.BENCHMARK_DATA = {
             "value": 80.1783208175467,
             "unit": "us/iter",
             "extra": "iterations: 8709\ncpu: 80.16973337926294 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "085d71b9928dc011a806af2cecb42af946374098",
+          "message": "build: Improve OpenSSL build process and fix on macOS (#52)\n\nThis commit introduces several improvements to the build system, focusing on making the custom OpenSSL dependency easier to manage and fixing critical ordering issues in CMake.\n\nOpenSSL Build Improvements\nThe previous process for building the required custom OpenSSL was manual and error-prone. This change streamlines the entire experience.\n\nNew make openssl Target\nA new, platform-aware make openssl target has been added. It automatically detects the user's OS (macOS/Linux) and architecture (x86_64/ARM64) and runs the appropriate build script. This simplifies the setup instructions to a single command.\n\nCustomizable Install Path: The OpenSSL installation path was previously hardcoded. Now, users can specify a custom location by setting the CBMPC_OPENSSL_ROOT environment or CMake variable. This is crucial for environments where the user lacks write permissions to /usr/local/opt.\n\nCMake Fixes\nSeveral logical errors in the CMake configuration have been corrected to ensure a more reliable and deterministic build.",
+          "timestamp": "2025-10-08T08:01:18-07:00",
+          "tree_id": "d52df688bc731cf341ddc8532c399f476036fa54",
+          "url": "https://github.com/coinbase/cb-mpc/commit/085d71b9928dc011a806af2cecb42af946374098"
+        },
+        "date": 1759938069633,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.3566305103554741,
+            "unit": "us/iter",
+            "extra": "iterations: 1957224\ncpu: 0.3566106086988511 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.3100177927250307,
+            "unit": "us/iter",
+            "extra": "iterations: 2259800\ncpu: 0.3099842132047085 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 0.34529742959399407,
+            "unit": "us/iter",
+            "extra": "iterations: 2029835\ncpu: 0.3452804065355066 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.3097977354291159,
+            "unit": "us/iter",
+            "extra": "iterations: 2261444\ncpu: 0.30975608858764564 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.35654339844562,
+            "unit": "us/iter",
+            "extra": "iterations: 16890\ncpu: 41.35426980461808 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 64.1154405741407,
+            "unit": "us/iter",
+            "extra": "iterations: 10938\ncpu: 64.10958584750414 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 32.114369525628064,
+            "unit": "us/iter",
+            "extra": "iterations: 21966\ncpu: 32.11021947555313 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 64.18030504756865,
+            "unit": "us/iter",
+            "extra": "iterations: 10936\ncpu: 64.1716674286759 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 19.875891177980925,
+            "unit": "us/iter",
+            "extra": "iterations: 35094\ncpu: 19.873662420926653 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.164456119974552,
+            "unit": "us/iter",
+            "extra": "iterations: 49077\ncpu: 14.163084785133574 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 19.917448265082438,
+            "unit": "us/iter",
+            "extra": "iterations: 35189\ncpu: 19.91547125522183 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.331268502976948,
+            "unit": "us/iter",
+            "extra": "iterations: 95917\ncpu: 7.330684060177016 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61.82642984077748,
+            "unit": "us/iter",
+            "extra": "iterations: 11367\ncpu: 61.81860147796244 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 78.70584830452277,
+            "unit": "us/iter",
+            "extra": "iterations: 8906\ncpu: 78.69137334381321 us\nthreads: 1"
           }
         ]
       }
