@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1758812354426,
+  "lastUpdate": 1759938066760,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1920,6 +1920,126 @@ window.BENCHMARK_DATA = {
             "value": 1385.20700392924,
             "unit": "us/iter",
             "extra": "iterations: 509\ncpu: 1385.1353222003618 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "085d71b9928dc011a806af2cecb42af946374098",
+          "message": "build: Improve OpenSSL build process and fix on macOS (#52)\n\nThis commit introduces several improvements to the build system, focusing on making the custom OpenSSL dependency easier to manage and fixing critical ordering issues in CMake.\n\nOpenSSL Build Improvements\nThe previous process for building the required custom OpenSSL was manual and error-prone. This change streamlines the entire experience.\n\nNew make openssl Target\nA new, platform-aware make openssl target has been added. It automatically detects the user's OS (macOS/Linux) and architecture (x86_64/ARM64) and runs the appropriate build script. This simplifies the setup instructions to a single command.\n\nCustomizable Install Path: The OpenSSL installation path was previously hardcoded. Now, users can specify a custom location by setting the CBMPC_OPENSSL_ROOT environment or CMake variable. This is crucial for environments where the user lacks write permissions to /usr/local/opt.\n\nCMake Fixes\nSeveral logical errors in the CMake configuration have been corrected to ensure a more reliable and deterministic build.",
+          "timestamp": "2025-10-08T08:01:18-07:00",
+          "tree_id": "d52df688bc731cf341ddc8532c399f476036fa54",
+          "url": "https://github.com/coinbase/cb-mpc/commit/085d71b9928dc011a806af2cecb42af946374098"
+        },
+        "date": 1759938065233,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.06901656654318286,
+            "unit": "us/iter",
+            "extra": "iterations: 10564123\ncpu: 0.06881947872057151 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.2758796892395787,
+            "unit": "us/iter",
+            "extra": "iterations: 2535459\ncpu: 0.2758518694248272 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.06108177479611619,
+            "unit": "us/iter",
+            "extra": "iterations: 11475504\ncpu: 0.06107219003191459 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.3230612420638416,
+            "unit": "us/iter",
+            "extra": "iterations: 2162272\ncpu: 0.32304132551316167 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.1447371309407257,
+            "unit": "us/iter",
+            "extra": "iterations: 4837028\ncpu: 0.14472224928199737 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 10.959584330556966,
+            "unit": "us/iter",
+            "extra": "iterations: 63844\ncpu: 10.958811618946196 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 16.300303100172645,
+            "unit": "us/iter",
+            "extra": "iterations: 42933\ncpu: 16.29881375631797 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16521.579999995258,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16520.470714285788 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 17.395345487014026,
+            "unit": "us/iter",
+            "extra": "iterations: 40317\ncpu: 17.394435920331315 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 677.8970465567467,
+            "unit": "us/iter",
+            "extra": "iterations: 1031\ncpu: 677.8636382153368 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 23.340485231259052,
+            "unit": "us/iter",
+            "extra": "iterations: 30876\ncpu: 23.33844364555037 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1203.4815233159695,
+            "unit": "us/iter",
+            "extra": "iterations: 579\ncpu: 1203.365924006897 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 23.206319293798266,
+            "unit": "us/iter",
+            "extra": "iterations: 30699\ncpu: 23.205049056973113 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1201.384780068617,
+            "unit": "us/iter",
+            "extra": "iterations: 582\ncpu: 1201.2929089347044 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 25.782387807519207,
+            "unit": "us/iter",
+            "extra": "iterations: 27640\ncpu: 25.78097073082492 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1379.1480137249034,
+            "unit": "us/iter",
+            "extra": "iterations: 510\ncpu: 1379.0272686274345 us\nthreads: 1"
           }
         ]
       }
