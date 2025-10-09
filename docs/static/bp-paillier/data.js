@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1759938075213,
+  "lastUpdate": 1760035277463,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1122,6 +1122,72 @@ window.BENCHMARK_DATA = {
             "value": 8325.17157142493,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8324.78863095238 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ec9a818f748e59ecec24676272d62e7e9068f6f1",
+          "message": "fix: Prevent buffer overflow in converter (#54)\n\nAdd a bounds check in bits_t::convert to ensure there is sufficient data in the source buffer before deserializing. Also, add an assertion in converter_t::forward to protect against integer overflow on the offset.\n\nRemove the bufs128_t and bufs128_ref_t classes along with their associated functions, as they were not being used anywhere in the codebase.",
+          "timestamp": "2025-10-09T11:02:02-07:00",
+          "tree_id": "2157f87e79b77ff4fb1a01b419249988bf3e26e2",
+          "url": "https://github.com/coinbase/cb-mpc/commit/ec9a818f748e59ecec24676272d62e7e9068f6f1"
+        },
+        "date": 1760035276822,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 49690.802500013626,
+            "unit": "us/iter",
+            "extra": "iterations: 14\ncpu: 49688.10964285714 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4512.201290322815,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4511.643761290321 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8569.22930487843,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8568.580304878049 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4507.320864516465,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4507.065864516127 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 10.987369542735182,
+            "unit": "us/iter",
+            "extra": "iterations: 63814\ncpu: 10.986818503776602 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.824127227441707,
+            "unit": "us/iter",
+            "extra": "iterations: 54603\ncpu: 12.82322343094702 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8317.024321429688,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8316.789964285712 us\nthreads: 1"
           }
         ]
       }
