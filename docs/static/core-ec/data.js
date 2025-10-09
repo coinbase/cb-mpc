@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1759938070454,
+  "lastUpdate": 1760035273665,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1584,6 +1584,114 @@ window.BENCHMARK_DATA = {
             "value": 78.70584830452277,
             "unit": "us/iter",
             "extra": "iterations: 8906\ncpu: 78.69137334381321 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ec9a818f748e59ecec24676272d62e7e9068f6f1",
+          "message": "fix: Prevent buffer overflow in converter (#54)\n\nAdd a bounds check in bits_t::convert to ensure there is sufficient data in the source buffer before deserializing. Also, add an assertion in converter_t::forward to protect against integer overflow on the offset.\n\nRemove the bufs128_t and bufs128_ref_t classes along with their associated functions, as they were not being used anywhere in the codebase.",
+          "timestamp": "2025-10-09T11:02:02-07:00",
+          "tree_id": "2157f87e79b77ff4fb1a01b419249988bf3e26e2",
+          "url": "https://github.com/coinbase/cb-mpc/commit/ec9a818f748e59ecec24676272d62e7e9068f6f1"
+        },
+        "date": 1760035273066,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.3575352552271657,
+            "unit": "us/iter",
+            "extra": "iterations: 1958589\ncpu: 0.3575117163427345 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.31601981320215394,
+            "unit": "us/iter",
+            "extra": "iterations: 2216300\ncpu: 0.31599399404412765 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 0.3452309886039713,
+            "unit": "us/iter",
+            "extra": "iterations: 2026403\ncpu: 0.34521487088205055 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.3123989689001244,
+            "unit": "us/iter",
+            "extra": "iterations: 2241102\ncpu: 0.3123784602396499 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.386367985830454,
+            "unit": "us/iter",
+            "extra": "iterations: 16930\ncpu: 41.382896810395735 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 63.587253335761886,
+            "unit": "us/iter",
+            "extra": "iterations: 11017\ncpu: 63.5838313515476 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 32.260525540860726,
+            "unit": "us/iter",
+            "extra": "iterations: 22141\ncpu: 32.259298721828266 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 63.71190596892664,
+            "unit": "us/iter",
+            "extra": "iterations: 11007\ncpu: 63.707641682565715 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 19.961791419947044,
+            "unit": "us/iter",
+            "extra": "iterations: 35128\ncpu: 19.960587394670945 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.179854452648392,
+            "unit": "us/iter",
+            "extra": "iterations: 49173\ncpu: 14.178706261566301 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 19.96249970054165,
+            "unit": "us/iter",
+            "extra": "iterations: 35063\ncpu: 19.961642243960885 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.2861304623381935,
+            "unit": "us/iter",
+            "extra": "iterations: 96250\ncpu: 7.28561594805195 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61.65599700545855,
+            "unit": "us/iter",
+            "extra": "iterations: 11354\ncpu: 61.65340611238323 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 78.39262536379049,
+            "unit": "us/iter",
+            "extra": "iterations: 8934\ncpu: 78.38864719050821 us\nthreads: 1"
           }
         ]
       }
