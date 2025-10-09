@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1759938079818,
+  "lastUpdate": 1760035281152,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -714,6 +714,48 @@ window.BENCHMARK_DATA = {
             "value": 13803.640235294677,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13802.42260784313 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ec9a818f748e59ecec24676272d62e7e9068f6f1",
+          "message": "fix: Prevent buffer overflow in converter (#54)\n\nAdd a bounds check in bits_t::convert to ensure there is sufficient data in the source buffer before deserializing. Also, add an assertion in converter_t::forward to protect against integer overflow on the offset.\n\nRemove the bufs128_t and bufs128_ref_t classes along with their associated functions, as they were not being used anywhere in the codebase.",
+          "timestamp": "2025-10-09T11:02:02-07:00",
+          "tree_id": "2157f87e79b77ff4fb1a01b419249988bf3e26e2",
+          "url": "https://github.com/coinbase/cb-mpc/commit/ec9a818f748e59ecec24676272d62e7e9068f6f1"
+        },
+        "date": 1760035280522,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24512.37686207229,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24511.303862068966 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 99221.21128569674,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 99211.34742857143 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13786.215705883531,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13785.11988235294 us\nthreads: 1"
           }
         ]
       }
