@@ -49,7 +49,7 @@ static global_t<convertable_t::factory_t> g_convertable_factory;
 class converter_t {
  public:
   template <typename T>
-  static int64_t convert_write(const T& src, byte_ptr out) {
+  static int convert_write(const T& src, byte_ptr out) {
     converter_t converter(true);
     converter.pointer = out;
     converter.convert((T&)src);
@@ -59,7 +59,6 @@ class converter_t {
   explicit converter_t(bool write);
   explicit converter_t(byte_ptr out);
   explicit converter_t(mem_t src);
-  explicit converter_t(cmembig_t src);
 
   bool is_calc_size() const { return !pointer; }
   bool is_write() const { return write; }
@@ -67,10 +66,23 @@ class converter_t {
   void set_error();
   void set_error(error_t rv);
   byte_ptr current() const { return pointer + offset; }
-  bool at_least(int n) const { return offset + n <= size; }
-  void forward(int n) { offset += n; }
-  int get_size() const { return (int)(write ? offset : size); }
-  int get_offset() const { return (int)offset; }
+  bool at_least(int n) const {
+    // Check for overflow before performing addition
+    if (n < 0) return false;
+    if (offset < 0 || offset > size) return false;
+    if (n > size - offset) return false;
+    return true;
+  }
+  void forward(int n) {
+    // Check for overflow before performing addition
+    if (n < 0 || offset < 0 || offset > INT_MAX - n) {
+      cb_assert(false);
+      return;
+    }
+    offset += n;
+  }
+  int get_size() const { return write ? offset : size; }
+  int get_offset() const { return offset; }
 
   // Maximum number of elements allowed when (de)serializing a std::vector.
   static constexpr uint32_t MAX_CONTAINER_ELEMENTS = 1 << 20;
@@ -110,14 +122,14 @@ class converter_t {
 
   template <typename T, size_t size>
   void convert(T (&arr)[size]) {
-    for (int i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
       convert(arr[i]);
     }
   }
 
   template <typename T, size_t size>
   void convert(std::array<T, size>& arr) {
-    for (int i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
       convert(arr[i]);
     }
   }
@@ -219,7 +231,7 @@ class converter_t {
   error_t rv_error = SUCCESS;
   bool write;
   byte_ptr pointer;
-  int64_t offset, size;
+  int offset, size;
 
  private:
   static void flags_to_buf(uint64_t& buf, int offset) {}
@@ -230,12 +242,14 @@ class converter_t {
 
   template <typename FIRST, typename... LAST>
   static void flags_to_buf(uint64_t& buf, int offset, FIRST& first, LAST&... last) {
+    cb_assert(offset >= 0 && offset < 64);
     if (first) buf |= uint64_t(1) << offset;
     flags_to_buf(buf, offset + 1, last...);
   }
 
   template <typename FIRST, typename... LAST>
   void flags_from_buf(uint64_t& buf, int offset, FIRST& first, LAST&... last) {
+    cb_assert(offset >= 0 && offset < 64);
     first = ((buf >> offset) & 1) != 0;
     flags_from_buf(buf, offset + 1, last...);
   }
@@ -269,32 +283,14 @@ error_t deser(mem_t bin, ARGS&... args) {
 
 template <typename T>
 buf_t convert(const T& src) {
-  int size = (int)converter_t::convert_write(src, nullptr);
+  int size = converter_t::convert_write(src, nullptr);
   buf_t result(size);
   converter_t::convert_write(src, result.data());
   return result;
 }
 
 template <typename T>
-cmembig_t convert_big(const T& src) {
-  int64_t size = converter_t::convert_write(src, nullptr);
-  cmembig_t result;
-  result.data = (byte_ptr)malloc(size);
-  result.size = size;
-  converter_t::convert_write(src, result.data);
-  return result;
-}
-
-template <typename T>
 error_t convert(T& dst, mem_t src) {
-  if (src.size < 0 || (src.size && !src.data)) return coinbase::error(E_BADARG);
-  converter_t converter(src);
-  converter.convert(dst);
-  return converter.get_rv();
-}
-
-template <typename T>
-error_t convert(T& dst, cmembig_t src) {
   if (src.size < 0 || (src.size && !src.data)) return coinbase::error(E_BADARG);
   converter_t converter(src);
   converter.convert(dst);

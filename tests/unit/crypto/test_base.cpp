@@ -50,10 +50,6 @@ TEST(BaseTest, TestGenRandomHelpers) {
   bits_t bits = gen_random_bits(10);
   EXPECT_EQ(bits.count(), 10);
 
-  // Test gen_random_bufs128
-  auto bufs128 = gen_random_bufs128(5);
-  EXPECT_EQ(bufs128.size(), 5);
-
   // Test gen_random_bool
   bool random_bool = gen_random_bool();
   SUCCEED() << "Generated a random bool: " << (random_bool ? "true" : "false");
@@ -103,15 +99,6 @@ TEST(BaseTest, TestDRBG) {
   EXPECT_EQ(second_data.size(), 16);
 
   // RNG might differ, so we won't strictly compare random_data vs second_data
-}
-
-TEST(BaseTest, TestRandomShuffle) {
-  buf128_t key{};
-  std::vector<int> test_vec = {1, 2, 3, 4, 5};
-  random_shuffle(key, test_vec, static_cast<int>(test_vec.size()));
-  SUCCEED() << "Vector after shuffle: [" << test_vec[0] << ", " << test_vec[1] << ", " << test_vec[2] << ", "
-            << test_vec[3] << ", " << test_vec[4] << "]";
-  // We just confirm that the function runs
 }
 
 TEST(BaseTest, TestAES_GCM) {

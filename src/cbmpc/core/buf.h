@@ -1,5 +1,6 @@
 #pragma once
 #include <cbmpc/core/cmem.h>
+#include <cbmpc/core/error.h>
 #include <cbmpc/core/macros.h>
 
 namespace coinbase {
@@ -41,7 +42,9 @@ struct mem_t {
   mem_t(const_byte_ptr the_data, int the_size) noexcept(true) : data(byte_ptr(the_data)), size(the_size) {}
   mem_t(cmem_t cmem) noexcept(true) : data(cmem.data), size(cmem.size) {}
 
-  mem_t(const std::string& s) noexcept(true) : data(byte_ptr(s.data())), size(int(s.size())) {}
+  mem_t(const std::string& s) noexcept(true) : data(byte_ptr(s.data())), size(int(s.size())) {
+    cb_assert(s.size() <= INT_MAX);
+  }
   template <size_t N>
   mem_t(const char (&s)[N]) : data(byte_ptr(s)), size(N) {
     if (N > 0 && s[N - 1] == '\0') size--;  // zero-terminated

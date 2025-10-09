@@ -479,9 +479,11 @@ buf_t bn_t::to_bin(int size) const {
 }
 
 buf_t bn_t::vector_to_bin(const std::vector<bn_t>& vals, int val_size) {
-  buf_t out(val_size * vals.size());
+  size_t count = vals.size();
+  cb_assert(count <= INT_MAX / val_size);
+  buf_t out(val_size * count);
   mem_t out_mem = out;
-  for (int i = 0; i < vals.size(); i++, out_mem = out_mem.skip(val_size)) vals[i].to_bin(out_mem.take(val_size));
+  for (size_t i = 0; i < count; i++, out_mem = out_mem.skip(val_size)) vals[i].to_bin(out_mem.take(val_size));
   return out;
 }
 

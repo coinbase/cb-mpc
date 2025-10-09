@@ -48,7 +48,6 @@ buf_t gen_random(int size);
 buf_t gen_random_bitlen(int bitlen);
 
 coinbase::bits_t gen_random_bits(int count);
-coinbase::bufs128_t gen_random_bufs128(int count);
 bool gen_random_bool();
 
 template <typename T>
@@ -149,23 +148,10 @@ class drbg_aes_ctr_t {
     gen(byte_ptr(&result), sizeof(result));
     return result;
   }
-  coinbase::bufs128_t gen_bufs128(int count);
 
  private:
   aes_ctr_t ctr;
 };
-
-template <typename T>
-void random_shuffle(buf128_t key, T& v, int count) {
-  std::vector<uint32_t> rnd(count);
-  drbg_aes_ctr_t(key).gen(byte_ptr(rnd.data()), count * sizeof(uint32_t));
-
-  for (uint32_t i = 0; i < (uint32_t)count - 1; i++) {
-    unsigned k = rnd[i] % (count - i);
-    if (k == 0) continue;
-    std::swap(v[i], v[i + k]);
-  }
-}
 
 class aes_gcm_t {
  private:

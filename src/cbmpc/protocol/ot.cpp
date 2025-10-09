@@ -435,7 +435,7 @@ error_t ot_protocol_pvw_ctx_t::step3_S2R(const std::vector<bn_t>& x0, const std:
   std::vector<buf_t> x0_bin(x0.size()), x1_bin(x1.size());
   int n = coinbase::bits_to_bytes(l);
 
-  for (int i = 0; i < int(x0.size()); i++) {
+  for (size_t i = 0; i < x0.size(); i++) {
     x0_bin[i] = x0[i].to_bin(n);
     x1_bin[i] = x1[i].to_bin(n);
   }
@@ -456,7 +456,7 @@ error_t ot_protocol_pvw_ctx_t::output_R(int m, std::vector<bn_t>& x) {
   error_t rv = ext.output_R(m, x_bin);
   if (rv) return rv;
   x.resize(x_bin.size());
-  for (int i = 0; i < int(x.size()); i++) x[i] = bn_t::from_bin(x_bin[i]);
+  for (size_t i = 0; i < x.size(); i++) x[i] = bn_t::from_bin(x_bin[i]);
   return SUCCESS;
 }
 

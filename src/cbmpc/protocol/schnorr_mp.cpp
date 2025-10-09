@@ -56,7 +56,7 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
   auto sid_i = job.uniform_msg<buf_t>(crypto::gen_random_bitlen(SEC_P_COM));
   auto ki = job.uniform_msg<std::vector<bn_t>>(std::vector<bn_t>(msgs.size()));
   auto Ri = job.uniform_msg<std::vector<ecc_point_t>>(std::vector<ecc_point_t>(msgs.size()));
-  for (int l = 0; l < msgs.size(); l++) {
+  for (size_t l = 0; l < msgs.size(); l++) {
     ki[l] = bn_t::rand(q);
     Ri[l] = ki[l] * G;
   }
@@ -93,7 +93,7 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
   }
 
   std::vector<ecc_point_t> R(msgs.size());
-  for (int l = 0; l < msgs.size(); l++) {
+  for (size_t l = 0; l < msgs.size(); l++) {
     R[l] = Ri._i[l];
     for (int j = 0; j < n; j++) {
       if (j == i) continue;
@@ -105,14 +105,14 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
 
   if (variant == variant_e::EdDSA) {
     if (key.curve != crypto::curve_ed25519) return coinbase::error(E_BADARG, "EdDSA variant requires EdDSA curve");
-    for (int l = 0; l < msgs.size(); l++) {
+    for (size_t l = 0; l < msgs.size(); l++) {
       e[l] = calc_eddsa_HRAM(R[l], key.Q, msgs[l]);
     }
   } else if (variant == variant_e::BIP340) {
     if (key.curve != crypto::curve_secp256k1)
       return coinbase::error(E_BADARG, "BIP340 variant requires secp256k1 curve");
     bn_t rx, ry;
-    for (int l = 0; l < msgs.size(); l++) {
+    for (size_t l = 0; l < msgs.size(); l++) {
       R[l].get_coordinates(rx, ry);
       if (ry.is_odd()) ki[l] = q - ki[l];
       e[l] = crypto::bip340::hash_message(rx, key.Q, msgs[l]);
@@ -124,7 +124,7 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
 
   auto ssi = job.uniform_msg<std::vector<bn_t>>();
   ssi.msg.resize(msgs.size());
-  for (int l = 0; l < msgs.size(); l++) {
+  for (size_t l = 0; l < msgs.size(); l++) {
     ssi.msg[l] = (e[l] * key.x_share + ki[l]) % q;
   }
 
@@ -133,18 +133,18 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
   if (job.is_party_idx(sig_receiver)) {
     std::vector<bn_t> ss(msgs.size(), 0);
     for (int j = 0; j < n; j++) {
-      for (int l = 0; l < msgs.size(); l++) MODULO(q) ss[l] += ssi._j[l];
+      for (size_t l = 0; l < msgs.size(); l++) MODULO(q) ss[l] += ssi._j[l];
     }
 
     crypto::ecc_pub_key_t verify_key(key.Q);
     if (key.curve == crypto::curve_ed25519) {
-      for (int l = 0; l < msgs.size(); l++) {
+      for (size_t l = 0; l < msgs.size(); l++) {
         sigs[l] = R[l].to_compressed_bin() + ss[l].to_bin(crypto::ed25519::prv_bin_size()).rev();
         if (rv = verify_key.verify(msgs[l], sigs[l])) return coinbase::error(rv, "ed25519 verify failed");
       }
     } else if (key.curve == crypto::curve_secp256k1) {
       bn_t rx, ry;
-      for (int l = 0; l < msgs.size(); l++) {
+      for (size_t l = 0; l < msgs.size(); l++) {
         R[l].get_coordinates(rx, ry);
         sigs[l] = rx.to_bin(32) + ss[l].to_bin(32);
         if (rv = crypto::bip340::verify(verify_key, msgs[l], sigs[l])) {

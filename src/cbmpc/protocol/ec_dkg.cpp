@@ -677,7 +677,7 @@ error_t key_share_mp_t::to_additive_share(const crypto::ss::ac_t ac, const std::
   party_map_t<ecc_point_t> new_Qis;
   std::vector<crypto::pname_t> quorum_names_vec(quorum_names.begin(), quorum_names.end());
 
-  for (int j = 0; j < quorum_names_vec.size(); j++) {
+  for (size_t j = 0; j < quorum_names_vec.size(); j++) {
     crypto::vartime_scope_t vartime_scope;
     bool _ignore_is_in_quorum = false;
     ecc_point_t new_Qi;

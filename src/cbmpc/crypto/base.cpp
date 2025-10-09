@@ -129,12 +129,6 @@ coinbase::bits_t gen_random_bits(int count) {
   return out;
 }
 
-coinbase::bufs128_t gen_random_bufs128(int count) {
-  coinbase::bufs128_t out(count);
-  gen_random(mem_t(out).data, count * 16);
-  return out;
-}
-
 /**
  * Call through the next function which adds the check for equality of the sizes as well.
  */

@@ -35,12 +35,6 @@ void drbg_aes_ctr_t::gen(mem_t out) {
   ctr.update(out, out.data);
 }
 
-coinbase::bufs128_t drbg_aes_ctr_t::gen_bufs128(int count) {
-  coinbase::bufs128_t out(count);
-  ctr.update(mem_t(out), (byte_ptr)out.data());
-  return out;
-}
-
 bn_t drbg_aes_ctr_t::gen_bn(const mod_t& mod) { return gen_bn(mod.get_bits_count() + SEC_P_STAT) % mod; }
 
 bn_t drbg_aes_ctr_t::gen_bn(const bn_t& mod) { return gen_bn(mod.get_bits_count() + SEC_P_STAT) % mod; }

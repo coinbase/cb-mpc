@@ -367,7 +367,9 @@ void log_frame_t::print_frames(log_string_buf_t& ss) const {
     f = f->up;
   }
 
-  for (int i = (int)frames.size() - 1; i >= 0; i--) {
+  size_t count = frames.size();
+  cb_assert(count <= INT_MAX);
+  for (int i = (int)count - 1; i >= 0; i--) {
     ss.begin_line();
     frames[i]->print(ss);
     ss.end_line();

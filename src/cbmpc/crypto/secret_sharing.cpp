@@ -348,7 +348,7 @@ error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t &Q, cons
       }
     } else if (node->type == node_e::AND) {
       ecc_point_t expected_sum = Q.get_curve().infinity();
-      for (int i = 0; i < sorted_children.size(); i++) {
+      for (size_t i = 0; i < sorted_children.size(); i++) {
         auto child_pub_shares = pub_data.at(sorted_children[i]->name);
         expected_sum += child_pub_shares;
       }
@@ -366,7 +366,7 @@ error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t &Q, cons
       //       scratch for itself and each of its children.
       if (my_pub_share != lagrange_interpolate_exponent(0, quorum, quorum_pids)) return coinbase::error(E_CRYPTO);
 
-      for (int i = node->threshold; i < sorted_children.size(); i++) {
+      for (size_t i = node->threshold; i < sorted_children.size(); i++) {
         if (pub_data.at(sorted_children[i]->name) !=
             lagrange_interpolate_exponent(sorted_children[i]->get_pid(), quorum, quorum_pids))
           return coinbase::error(E_CRYPTO);

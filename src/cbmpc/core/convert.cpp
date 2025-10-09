@@ -117,8 +117,6 @@ converter_t::converter_t(byte_ptr out) : write(true), rv_error(0), pointer(out),
 
 converter_t::converter_t(mem_t src) : write(false), rv_error(0), pointer(src.data), offset(0), size(src.size) {}
 
-converter_t::converter_t(cmembig_t src) : write(false), rv_error(0), pointer(src.data), offset(0), size(src.size) {}
-
 void converter_t::set_error() {
   if (rv_error) return;
   rv_error = coinbase::error(E_FORMAT, "Converter error" + std::string(write ? "(write)" : "(read)"));

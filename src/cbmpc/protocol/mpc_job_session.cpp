@@ -179,7 +179,7 @@ error_t parallel_data_transport_t::receive_all(const std::vector<party_idx_t>& s
 
     {
       std::lock_guard<std::mutex> lk(receive_all_msgs_mutex);
-      for (int i = 0; i < bufs.size(); i++) {
+      for (size_t i = 0; i < bufs.size(); i++) {
         if (rv = deser(bufs[i], receive_all_msgs[senders[i]])) return cleanup_receive_all_error(rv);
       }
     }
@@ -196,7 +196,7 @@ error_t parallel_data_transport_t::receive_all(const std::vector<party_idx_t>& s
 
   {
     std::lock_guard<std::mutex> lk(receive_all_msgs_mutex);
-    for (int i = 0; i < out_msgs.size(); i++) {
+    for (size_t i = 0; i < out_msgs.size(); i++) {
       out_msgs[i] = receive_all_msgs[senders[i]][parallel_id];
     }
   }

@@ -558,6 +558,10 @@ void bits_t::convert(converter_t& converter) {
       memmove(converter.current(), data, size);
     }
   } else {
+    if (!converter.at_least(size)) {
+      converter.set_error();
+      return;
+    }
     alloc(count);
     memmove(data, converter.current(), size);
   }
@@ -717,20 +721,26 @@ bits_t bits_t::operator+(const bits_t& src2) const {
 }
 
 std::vector<mem_t> buf_t::to_mems(const std::vector<buf_t>& in) {
-  std::vector<mem_t> out(in.size());
-  for (int i = 0; i < int(in.size()); i++) out[i] = in[i];
+  size_t count = in.size();
+  cb_assert(count <= INT_MAX);
+  std::vector<mem_t> out(count);
+  for (size_t i = 0; i < count; i++) out[i] = in[i];
   return out;
 }
 
 std::vector<mem_t> buf_t::to_mems(const std::vector<std::string>& in) {
-  std::vector<mem_t> out(in.size());
-  for (int i = 0; i < int(in.size()); i++) out[i] = mem_t::from_string(in[i]);
+  size_t count = in.size();
+  cb_assert(count <= INT_MAX);
+  std::vector<mem_t> out(count);
+  for (size_t i = 0; i < count; i++) out[i] = mem_t::from_string(in[i]);
   return out;
 }
 
 std::vector<buf_t> buf_t::from_mems(const std::vector<mem_t>& in) {
-  std::vector<buf_t> out(in.size());
-  for (int i = 0; i < int(in.size()); i++) out[i] = in[i];
+  size_t count = in.size();
+  cb_assert(count <= INT_MAX);
+  std::vector<buf_t> out(count);
+  for (size_t i = 0; i < count; i++) out[i] = in[i];
   return out;
 }
 
@@ -743,7 +753,9 @@ mems_t::mems_t(cmems_t cmems) : sizes(cmems.sizes, cmems.sizes + cmems.count) {
 mems_t::operator cmems_t() const {
   cmems_t out{0, nullptr, nullptr};
   if (!sizes.empty()) {
-    out.count = int(sizes.size());
+    size_t count_sz = sizes.size();
+    cb_assert(count_sz <= INT_MAX);
+    out.count = int(count_sz);
     out.data = buffer.data();
     out.sizes = (int*)sizes.data();
   }
@@ -766,19 +778,34 @@ mems_t mems_t::from_cmems(cmems_t cmems) {  // static
 
 cmems_t mems_t::to_cmems() const {
   cmems_t out{0, nullptr, nullptr};
-  int count = int(sizes.size());
+  size_t count_sz = sizes.size();
+
+  // Check for overflow when casting size_t to int
+  if (count_sz > INT_MAX) {
+    return out;  // Return empty result on overflow
+  }
+  int count = int(count_sz);
+
   if (count) {
+    // Check for multiplication overflow before allocating
+    constexpr size_t int_size = sizeof(int);
+    if (count > INT_MAX / int_size) {
+      return out;  // Return empty result on overflow
+    }
+
     out.count = count;
     out.data = cgo_malloc(buffer.size());
     memmove(out.data, buffer.data(), buffer.size());
-    out.sizes = (int*)cgo_malloc(count * sizeof(int));
-    memmove(out.sizes, sizes.data(), count * sizeof(int));
+    out.sizes = (int*)cgo_malloc(count * int_size);
+    memmove(out.sizes, sizes.data(), count * int_size);
   }
   return out;
 }
 
 std::vector<mem_t> mems_t::mems() const {
-  int count = int(sizes.size());
+  size_t count_sz = sizes.size();
+  cb_assert(count_sz <= INT_MAX);
+  int count = int(count_sz);
   std::vector<mem_t> out(count);
   int n = 0;
   for (int i = 0; i < count; i++) {
@@ -789,7 +816,9 @@ std::vector<mem_t> mems_t::mems() const {
 }
 
 void mems_t::init(const std::vector<mem_t>& mems) {
-  int count = int(mems.size());
+  size_t count_sz = mems.size();
+  cb_assert(count_sz <= INT_MAX);
+  int count = int(count_sz);
   int n = 0;
   for (int i = 0; i < count; i++) n += mems[i].size;
   buffer.alloc(n);

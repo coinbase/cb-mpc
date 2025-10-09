@@ -70,14 +70,13 @@ inline int get_bin_size(const bn_t& v) { return v.get_bin_size(); }
 inline int get_bin_size(const mod_t& v) { return v.get_bin_size(); }
 inline int get_bin_size(const ecc_point_t& v) { return v.to_compressed_bin(nullptr); }
 inline int get_bin_size(const ecc_generator_point_t& v) { return v.to_compressed_bin(nullptr); }
-inline int get_bin_size(const coinbase::bufs128_t& v) { return mem_t(v).size; }
 template <std::size_t N>
 int get_bin_size(const byte_t (&v)[N]) {
   return N;
 }
 template <typename V>
 int get_bin_size(const V& v) {
-  return (int)coinbase::converter_t::convert_write(v, nullptr);
+  return coinbase::converter_t::convert_write(v, nullptr);
 }
 
 template <class T>
@@ -161,10 +160,6 @@ T& update_state(T& state, const buf256_t& v) {
 template <class T>
 T& update_state(T& state, const buf128_t& v) {
   return state.update(v, 16);
-}
-template <class T>
-T& update_state(T& state, const coinbase::bufs128_t& v) {
-  return state.update(mem_t(v));
 }
 template <class T, std::size_t N>
 T& update_state(T& state, const uint8_t (&v)[N]) {
