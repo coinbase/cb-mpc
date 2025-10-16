@@ -261,9 +261,9 @@ error_t key_share_mp_t::refresh(job_mp_t& job, buf_t& sid, const key_share_mp_t&
   return SUCCESS;
 }
 
-error_t dkg_mp_threshold_t::dkg_or_refresh(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t ac,
-                                           const party_set_t& quorum_party_set, key_share_mp_t& key,
-                                           key_share_mp_t& new_key, bool is_refresh) {
+error_t key_share_mp_t::threshold_dkg_or_refresh(job_mp_t& job, const ecurve_t& curve, buf_t& sid,
+                                                 const crypto::ss::ac_t ac, const party_set_t& quorum_party_set,
+                                                 key_share_mp_t& key, key_share_mp_t& new_key, bool is_refresh) {
   error_t rv = UNINITIALIZED_ERROR;
 
   const auto& G = curve.generator();
@@ -451,17 +451,18 @@ error_t dkg_mp_threshold_t::dkg_or_refresh(job_mp_t& job, const ecurve_t& curve,
   return SUCCESS;
 }
 
-error_t dkg_mp_threshold_t::dkg(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t ac,
-                                const party_set_t& quorum_party_set, key_share_mp_t& key) {
+error_t key_share_mp_t::threshold_dkg(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t ac,
+                                      const party_set_t& quorum_party_set, key_share_mp_t& key) {
   key_share_mp_t dummy_new_key;
   bool is_refresh = false;
-  return dkg_or_refresh(job, curve, sid, ac, quorum_party_set, key, dummy_new_key, is_refresh);
+  return threshold_dkg_or_refresh(job, curve, sid, ac, quorum_party_set, key, dummy_new_key, is_refresh);
 }
 
-error_t dkg_mp_threshold_t::refresh(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t ac,
-                                    const party_set_t& quorum_party_set, key_share_mp_t& key, key_share_mp_t& new_key) {
+error_t key_share_mp_t::threshold_refresh(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t ac,
+                                          const party_set_t& quorum_party_set, key_share_mp_t& key,
+                                          key_share_mp_t& new_key) {
   bool is_refresh = true;
-  return dkg_or_refresh(job, curve, sid, ac, quorum_party_set, key, new_key, is_refresh);
+  return threshold_dkg_or_refresh(job, curve, sid, ac, quorum_party_set, key, new_key, is_refresh);
 }
 
 error_t key_share_mp_t::reconstruct_additive_share(const mod_t& q, const node_t* node,
