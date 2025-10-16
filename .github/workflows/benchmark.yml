@@ -40,10 +40,6 @@ jobs:
           set -e
           sudo apt-get update
           sudo apt-get install libssl-dev cmake -y
-          wget https://go.dev/dl/go1.22.3.linux-amd64.tar.gz
-          echo "8920ea521bad8f6b7bc377b4824982e011c19af27df88a815e3586ea895f1b36 go1.22.3.linux-amd64.tar.gz" | sha256sum --check
-          sudo tar -C /usr/local -xzf go1.22.3.linux-amd64.tar.gz
-          rm -f go1.22.3.linux-amd64.tar.gz
           sudo mkdir -p /usr/local/opt
           sudo mkdir -p /usr/local/lib64
           sudo chmod 777 -R /usr/local/opt

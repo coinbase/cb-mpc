@@ -48,29 +48,9 @@ jobs:
           docker run --rm -v "$(pwd)":/code -t cb-mpc bash -lc '
             set -euo pipefail
             cd /code
-            # Never re-touch submodules inside the container; avoids git safe.directory pain.
-            # If you insist on touching git here, you MUST first: git config --global --add safe.directory /code
-            if ! command -v go >/dev/null 2>&1; then
-              apt-get update
-              apt-get install -y --no-install-recommends ca-certificates curl git
-              GO_VERSION="${GO_VERSION:-1.24.6}"
-              GO_FILENAME="go${GO_VERSION}.linux-amd64.tar.gz"
-              GO_SHA256="bbca37cc395c974ffa4893ee35819ad23ebb27426df87af92e93a9ec66ef8712"
-              curl -fsSLo "/tmp/${GO_FILENAME}" "https://go.dev/dl/${GO_FILENAME}"
-              printf '"'"'%s  %s\n'"'"' "$GO_SHA256" "/tmp/$GO_FILENAME" | sha256sum --check --status -
-              tar -C /usr/local -xzf "/tmp/${GO_FILENAME}"
-              rm -f "/tmp/${GO_FILENAME}"
-              ln -sf /usr/local/go/bin/* /usr/local/bin/
-            fi
-            export PATH="/usr/local/go/bin:$PATH"
-            export GOTOOLCHAIN=auto
-            go version
-            export CGO_ENABLED=1
             make build
             make install
             make benchmark-build
-            # Run demos (Go + C++) with cgo on
-            BUILD_TYPE=${BUILD_TYPE:-Release} bash scripts/run-demos.sh --run-all
-            make test-go
-            make test-go-race
+            # Run C++ demos
+            bash scripts/run-demos.sh --run-all
           '
