@@ -26,6 +26,16 @@ error_t refresh(job_mp_t& job, buf_t& sid, key_t& key, key_t& new_key) {
   return eckey::key_share_mp_t::refresh(job, sid, key, new_key);
 }
 
+error_t threshold_dkg(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::ac_t ac,
+                      const party_set_t& quorum_party_set, key_t& key) {
+  return eckey::key_share_mp_t::threshold_dkg(job, curve, sid, ac, quorum_party_set, key);
+}
+
+error_t threshold_refresh(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::ac_t ac,
+                          const party_set_t& quorum_party_set, key_t& key, key_t& new_key) {
+  return eckey::key_share_mp_t::threshold_refresh(job, curve, sid, ac, quorum_party_set, key, new_key);
+}
+
 error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receiver,
              const std::vector<std::vector<int>>& ot_role_map, buf_t& sig) {
   error_t rv = UNINITIALIZED_ERROR;

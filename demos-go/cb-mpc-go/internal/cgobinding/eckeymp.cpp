@@ -136,8 +136,7 @@ int eckey_dkg_mp_threshold_dkg(job_mp_ref* job_ptr, ecurve_ref* curve_ref, cmem_
 
   // Allocate key share with RAII – will auto free on early return.
   std::unique_ptr<eckey::key_share_mp_t> key_share(new eckey::key_share_mp_t());
-  eckey::dkg_mp_threshold_t dkg_threshold;
-  error_t err = dkg_threshold.dkg(*job, *curve_ptr, sid_buf, *ac_obj, *quorum_set, *key_share);
+  error_t err = eckey::key_share_mp_t::threshold_dkg(*job, *curve_ptr, sid_buf, *ac_obj, *quorum_set, *key_share);
   if (err) {
     return err;  // unique_ptr cleans up
   }

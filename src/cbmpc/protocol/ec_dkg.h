@@ -62,7 +62,7 @@ struct key_share_mp_t {
 
   /**
    * @specs:
-   * - ec-dkg-spec | EC-Refresh-MP
+   * - ec-dkg-spec | EC-DKG-MP
    */
   static error_t dkg(job_mp_t& job, ecurve_t curve, key_share_mp_t& key, buf_t& sid);
 
@@ -82,9 +82,8 @@ struct key_share_mp_t {
   error_t reconstruct_pub_additive_shares(const crypto::ss::node_t* node, const std::set<crypto::pname_t>& quorum_names,
                                           const crypto::pname_t target, ecc_point_t& pub_additive_shares,
                                           bool& is_in_quorum) const;
-};
 
-struct dkg_mp_threshold_t {
+ public:
   /**
    * @specs:
    * - ec-dkg-spec | EC-DKG-Threshold-MP
@@ -97,21 +96,21 @@ struct dkg_mp_threshold_t {
    * In the future, we are planning on adding a VSS implementation that will make it easier to implement a threshold DKG
    * with only a subset of the parties online.
    */
-  static error_t dkg(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t,
-                     const party_set_t& quorum_party_set, key_share_mp_t& key);
+  static error_t threshold_dkg(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t,
+                               const party_set_t& quorum_party_set, key_share_mp_t& key);
   /**
    * @specs:
    * - ec-dkg-spec | EC-Refresh-Threshold-MP
    * @notes:
    * - See `dkg` for notes.
    */
-  static error_t refresh(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t,
-                         const party_set_t& quorum_party_set, key_share_mp_t& key, key_share_mp_t& new_key);
+  static error_t threshold_refresh(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t,
+                                   const party_set_t& quorum_party_set, key_share_mp_t& key, key_share_mp_t& new_key);
 
  private:
-  static error_t dkg_or_refresh(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t,
-                                const party_set_t& quorum_party_set, key_share_mp_t& key, key_share_mp_t& new_key,
-                                bool is_refresh);
+  static error_t threshold_dkg_or_refresh(job_mp_t& job, const ecurve_t& curve, buf_t& sid, const crypto::ss::ac_t,
+                                          const party_set_t& quorum_party_set, key_share_mp_t& key,
+                                          key_share_mp_t& new_key, bool is_refresh);
 };
 
 }  // namespace coinbase::mpc::eckey

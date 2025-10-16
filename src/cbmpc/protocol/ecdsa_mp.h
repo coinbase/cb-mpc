@@ -33,6 +33,20 @@ error_t refresh(job_mp_t& job, buf_t& sid, key_t& key, key_t& new_key);
 
 /**
  * @specs:
+ * - ec-dkg-spec | EC-DKG-Threshold-MP
+ */
+error_t threshold_dkg(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::ac_t ac,
+                      const party_set_t& quorum_party_set, key_t& key);
+
+/**
+ * @specs:
+ * - ec-dkg-spec | EC-Refresh-Threshold-MP
+ */
+error_t threshold_refresh(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::ac_t ac,
+                          const party_set_t& quorum_party_set, key_t& key, key_t& new_key);
+
+/**
+ * @specs:
  * - ecdsa-mpc-spec | ECDSA-MPC-Sign-MP
  * @notes:
  * - This function runs base OT internally which is not efficient and is only done for ease of use.
