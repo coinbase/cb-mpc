@@ -18,6 +18,24 @@ using namespace coinbase::mpc;
 
 namespace coinbase::mpc::schnorrmp {
 
+error_t dkg(job_mp_t& job, ecurve_t curve, key_t& key, buf_t& sid) {
+  return eckey::key_share_mp_t::dkg(job, curve, key, sid);
+}
+
+error_t refresh(job_mp_t& job, buf_t& sid, key_t& key, key_t& new_key) {
+  return eckey::key_share_mp_t::refresh(job, sid, key, new_key);
+}
+
+error_t threshold_dkg(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::ac_t ac,
+                      const party_set_t& quorum_party_set, key_t& key) {
+  return eckey::key_share_mp_t::threshold_dkg(job, curve, sid, ac, quorum_party_set, key);
+}
+
+error_t threshold_refresh(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::ac_t ac,
+                          const party_set_t& quorum_party_set, key_t& key, key_t& new_key) {
+  return eckey::key_share_mp_t::threshold_refresh(job, curve, sid, ac, quorum_party_set, key, new_key);
+}
+
 static bn_t calc_eddsa_HRAM(const ecc_point_t& R, const ecc_point_t& Q, mem_t in) {
   buf_t HRAM_buf = crypto::sha512_t::hash(R, Q.to_compressed_bin(), in);
   bn_t HRAM = bn_t::from_bin(HRAM_buf.rev()) % crypto::curve_ed25519.order();

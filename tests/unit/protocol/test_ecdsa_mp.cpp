@@ -238,8 +238,8 @@ TEST(ECDSAMPCThreshold, DKG) {
   // DKG is an n-party protocol
   mpc_runner_t all_parties_runner(pnames);
   all_parties_runner.run_mpc([&curve, &keyshares, &quorum_party_set, &ac, &sid_dkg](mpc::job_mp_t& job) {
-    eckey::dkg_mp_threshold_t dkg_threshold;
-    EXPECT_OK(dkg_threshold.dkg(job, curve, sid_dkg, ac, quorum_party_set, keyshares[job.get_party_idx()]));
+    EXPECT_OK(eckey::key_share_mp_t::threshold_dkg(job, curve, sid_dkg, ac, quorum_party_set,
+                                                   keyshares[job.get_party_idx()]));
   });
 
   for (int i = 0; i < n; i++) {
@@ -268,9 +268,9 @@ TEST(ECDSAMPCThreshold, DKG) {
 
   // Refresh is an n-party protocol
   all_parties_runner.run_mpc([&](mpc::job_mp_t& job) {
-    eckey::dkg_mp_threshold_t dkg_threshold;
-    ASSERT_OK(dkg_threshold.refresh(job, curve, sid_refresh, ac, quorum_party_set, keyshares[job.get_party_idx()],
-                                    new_keyshares[job.get_party_idx()]));
+    ASSERT_OK(eckey::key_share_mp_t::threshold_refresh(job, curve, sid_refresh, ac, quorum_party_set,
+                                                       keyshares[job.get_party_idx()],
+                                                       new_keyshares[job.get_party_idx()]));
   });
   ASSERT_EQ(sid_refresh.size(), 16);
   ASSERT_NE(sid_refresh, sid_dkg);

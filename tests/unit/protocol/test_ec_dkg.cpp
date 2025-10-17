@@ -36,8 +36,8 @@ static void RunDkgAndAdditiveShareTest(crypto::ss::node_t* root_node, const std:
   buf_t sid_dkg = crypto::gen_random(16);
   mpc_runner_t all_parties_runner(pnames);
   all_parties_runner.run_mpc([&](mpc::job_mp_t& job) {
-    coinbase::mpc::eckey::dkg_mp_threshold_t dkg_threshold;
-    ASSERT_OK(dkg_threshold.dkg(job, curve, sid_dkg, ac, quorum_party_set, keyshares[job.get_party_idx()]));
+    ASSERT_OK(coinbase::mpc::eckey::key_share_mp_t::threshold_dkg(job, curve, sid_dkg, ac, quorum_party_set,
+                                                                  keyshares[job.get_party_idx()]));
   });
 
   // Basic key consistency
