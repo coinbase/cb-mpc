@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1760035273665,
+  "lastUpdate": 1760855387620,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1692,6 +1692,114 @@ window.BENCHMARK_DATA = {
             "value": 78.39262536379049,
             "unit": "us/iter",
             "extra": "iterations: 8934\ncpu: 78.38864719050821 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "231b02ec9224a5400473f344c31302caab741e7d",
+          "message": "refactor: Consolidate threshold DKG logic into key_share_mp_t (#55)\n\nThe static methods for threshold distributed key generation (DKG) and key refresh have been moved from the `dkg_mp_threshold_t` struct to become static methods of `key_share_mp_t`.\n\nThis refactoring simplifies the code by removing the unnecessary `dkg_mp_threshold_t` struct and centralizes key generation logic within the key share structure itself.\n\nThe functions were renamed to `threshold_dkg` and `threshold_refresh` for clarity. All call sites and protocol wrappers (`ecdsa_mp`, `schnorr_mp`) have been updated to use the new API.",
+          "timestamp": "2025-10-18T22:50:15-07:00",
+          "tree_id": "820469edfdd766d9cc097b65b5b474fb780e0507",
+          "url": "https://github.com/coinbase/cb-mpc/commit/231b02ec9224a5400473f344c31302caab741e7d"
+        },
+        "date": 1760855386839,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.3562932016380275,
+            "unit": "us/iter",
+            "extra": "iterations: 1961193\ncpu: 0.35627785383692473 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.3077870706669635,
+            "unit": "us/iter",
+            "extra": "iterations: 2272012\ncpu: 0.3077635888366787 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 0.34542592841362973,
+            "unit": "us/iter",
+            "extra": "iterations: 2024798\ncpu: 0.3454098265604765 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.3081611737236085,
+            "unit": "us/iter",
+            "extra": "iterations: 2276345\ncpu: 0.3081390812904022 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.39901767662388,
+            "unit": "us/iter",
+            "extra": "iterations: 16915\ncpu: 41.39644528524978 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 63.897104719231315,
+            "unit": "us/iter",
+            "extra": "iterations: 10934\ncpu: 63.89151289555514 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 31.307382009071695,
+            "unit": "us/iter",
+            "extra": "iterations: 20955\ncpu: 31.305695585779073 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 63.825185736463354,
+            "unit": "us/iter",
+            "extra": "iterations: 10951\ncpu: 63.821640580768864 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 19.943587955446066,
+            "unit": "us/iter",
+            "extra": "iterations: 35103\ncpu: 19.942657037860013 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.220608292413493,
+            "unit": "us/iter",
+            "extra": "iterations: 49491\ncpu: 14.21989230365118 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 19.946534260233214,
+            "unit": "us/iter",
+            "extra": "iterations: 35099\ncpu: 19.94591182084957 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.333349925438914,
+            "unit": "us/iter",
+            "extra": "iterations: 95226\ncpu: 7.3331511561968306 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61.676667341357316,
+            "unit": "us/iter",
+            "extra": "iterations: 11363\ncpu: 61.67247637067669 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 79.21792004976369,
+            "unit": "us/iter",
+            "extra": "iterations: 8843\ncpu: 79.21758882732115 us\nthreads: 1"
           }
         ]
       }
