@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1760035281152,
+  "lastUpdate": 1760855396297,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -756,6 +756,48 @@ window.BENCHMARK_DATA = {
             "value": 13786.215705883531,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13785.11988235294 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "231b02ec9224a5400473f344c31302caab741e7d",
+          "message": "refactor: Consolidate threshold DKG logic into key_share_mp_t (#55)\n\nThe static methods for threshold distributed key generation (DKG) and key refresh have been moved from the `dkg_mp_threshold_t` struct to become static methods of `key_share_mp_t`.\n\nThis refactoring simplifies the code by removing the unnecessary `dkg_mp_threshold_t` struct and centralizes key generation logic within the key share structure itself.\n\nThe functions were renamed to `threshold_dkg` and `threshold_refresh` for clarity. All call sites and protocol wrappers (`ecdsa_mp`, `schnorr_mp`) have been updated to use the new API.",
+          "timestamp": "2025-10-18T22:50:15-07:00",
+          "tree_id": "820469edfdd766d9cc097b65b5b474fb780e0507",
+          "url": "https://github.com/coinbase/cb-mpc/commit/231b02ec9224a5400473f344c31302caab741e7d"
+        },
+        "date": 1760855395476,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24386.587428564002,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24384.913892857145 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 99493.57014284034,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 99488.55742857141 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13831.29670588745,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13830.268156862745 us\nthreads: 1"
           }
         ]
       }
