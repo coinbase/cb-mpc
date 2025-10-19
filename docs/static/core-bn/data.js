@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1760035270367,
+  "lastUpdate": 1760855383830,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2160,6 +2160,126 @@ window.BENCHMARK_DATA = {
             "value": 1364.8791015623551,
             "unit": "us/iter",
             "extra": "iterations: 512\ncpu: 1364.8074160156343 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "231b02ec9224a5400473f344c31302caab741e7d",
+          "message": "refactor: Consolidate threshold DKG logic into key_share_mp_t (#55)\n\nThe static methods for threshold distributed key generation (DKG) and key refresh have been moved from the `dkg_mp_threshold_t` struct to become static methods of `key_share_mp_t`.\n\nThis refactoring simplifies the code by removing the unnecessary `dkg_mp_threshold_t` struct and centralizes key generation logic within the key share structure itself.\n\nThe functions were renamed to `threshold_dkg` and `threshold_refresh` for clarity. All call sites and protocol wrappers (`ecdsa_mp`, `schnorr_mp`) have been updated to use the new API.",
+          "timestamp": "2025-10-18T22:50:15-07:00",
+          "tree_id": "820469edfdd766d9cc097b65b5b474fb780e0507",
+          "url": "https://github.com/coinbase/cb-mpc/commit/231b02ec9224a5400473f344c31302caab741e7d"
+        },
+        "date": 1760855382222,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.06603768621583819,
+            "unit": "us/iter",
+            "extra": "iterations: 9987604\ncpu: 0.06603369366666922 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.2684379284129929,
+            "unit": "us/iter",
+            "extra": "iterations: 2593876\ncpu: 0.2684276892958636 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.0652850324018139,
+            "unit": "us/iter",
+            "extra": "iterations: 10707730\ncpu: 0.06528397372739157 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.3253726379469281,
+            "unit": "us/iter",
+            "extra": "iterations: 2164801\ncpu: 0.32536738665586495 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.1456918776870421,
+            "unit": "us/iter",
+            "extra": "iterations: 4807276\ncpu: 0.14568528975660988 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 10.923297099862543,
+            "unit": "us/iter",
+            "extra": "iterations: 63928\ncpu: 10.92282408334378 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 16.310956289753854,
+            "unit": "us/iter",
+            "extra": "iterations: 42919\ncpu: 16.310130990936646 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16538.730809527024,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16538.431833333383 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 16.709666206073265,
+            "unit": "us/iter",
+            "extra": "iterations: 41975\ncpu: 16.709314544371498 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 669.8356370581874,
+            "unit": "us/iter",
+            "extra": "iterations: 1047\ncpu: 669.800061127052 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 23.098591497229794,
+            "unit": "us/iter",
+            "extra": "iterations: 30296\ncpu: 23.098181971217425 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1139.159149750279,
+            "unit": "us/iter",
+            "extra": "iterations: 601\ncpu: 1139.069858569046 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 23.10641308664641,
+            "unit": "us/iter",
+            "extra": "iterations: 30214\ncpu: 23.10535162507443 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1129.406152103602,
+            "unit": "us/iter",
+            "extra": "iterations: 618\ncpu: 1129.3526504854674 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 25.51900168506831,
+            "unit": "us/iter",
+            "extra": "iterations: 27892\ncpu: 25.518192133944343 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1303.1702111111035,
+            "unit": "us/iter",
+            "extra": "iterations: 540\ncpu: 1303.0694351851619 us\nthreads: 1"
           }
         ]
       }
