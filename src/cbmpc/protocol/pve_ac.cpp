@@ -168,6 +168,7 @@ error_t ec_pve_ac_t::verify(const ss::ac_t& ac, const pks_t& ac_pks, const std::
     } else {
       c1[i] = row.c;
       quorum_c1[i] = row.quorum_c;
+      if (row.r.size() != 32) return coinbase::error(E_CRYPTO);
       mem_t r0_1 = row.r.take(16);
       mem_t r0_2 = row.r.skip(16);
       encrypt_row0(ac, ac_pks, L, curve, r0_1, r0_2, batch_size, xb, c0[i], quorum_c0[i]);
@@ -261,6 +262,7 @@ error_t ec_pve_ac_t::aggregate_to_restore_row(const ss::ac_t& ac, int row_index,
     seed = decrypted_data;
   } else {
     x_bin = decrypted_data;
+    if (row.r.size() != 32) return coinbase::error(E_CRYPTO);
     seed = row.r.take(16);
   }
 

@@ -107,6 +107,7 @@ error_t ec_pve_batch_t::verify(const void* ek, const std::vector<ecc_point_t>& Q
     } else {
       c1[i] = rows[i].c;
 
+      if (rows[i].r.size() != 32) return coinbase::error(E_CRYPTO);
       crypto::drbg_aes_ctr_t drbg01(rows[i].r.take(16));
       buf_t x0_source_bin = drbg01.gen(n * (curve_size + coinbase::bits_to_bytes(SEC_P_STAT)));
       xi = bn_t::vector_from_bin(x0_source_bin, n, curve_size + coinbase::bits_to_bytes(SEC_P_STAT), q);
@@ -149,6 +150,7 @@ error_t ec_pve_batch_t::restore_from_decrypted(int row_index, mem_t decrypted_x_
     r01 = decrypted_x_buf;
   } else {
     x1_bin = decrypted_x_buf;
+    if (rows[row_index].r.size() != 32) return coinbase::error(E_CRYPTO);
     r01 = rows[row_index].r.take(16);
   }
 

@@ -70,6 +70,13 @@ struct mem_t {
   uint8_t operator[](int index) const { return data[index]; }
   uint8_t& operator[](int index) { return data[index]; }
 
+  /**
+   * @warning:
+   * - These helpers perform no bounds checks. Callers must ensure:
+   *   0 ≤ offset ≤ this->size and 0 ≤ len ≤ (this->size - offset).
+   * - Misuse can create invalid views and cause OOB access in downstream operations.
+   * - Example: taking/skipping fixed sizes requires the source buffer to be long enough.
+   */
   mem_t range(int offset, int size) const { return mem_t(data + offset, size); }
   mem_t skip(int offset) const { return range(offset, size - offset); }
   mem_t take(int size) const { return range(0, size); }
@@ -136,6 +143,13 @@ class buf_t {
   cmem_t to_cmem() const { return mem_t(*this).to_cmem(); }
   static buf_t from_cmem(cmem_t cmem);
 
+  /**
+   * @warning:
+   * - These helpers perform no bounds checks. Callers must ensure:
+   *   0 ≤ offset ≤ size() and 0 ≤ len ≤ (size() - offset).
+   * - Misuse can create invalid views and cause OOB access in downstream operations.
+   * - Example: taking/skipping fixed sizes requires the source buffer to be long enough.
+   */
   mem_t range(int offset, int size) const { return mem_t(data() + offset, size); }
   mem_t skip(int offset) const { return range(offset, size() - offset); }
   mem_t take(int size) const { return range(0, size); }
