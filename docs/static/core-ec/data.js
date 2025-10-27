@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1760855387620,
+  "lastUpdate": 1761580212594,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1800,6 +1800,114 @@ window.BENCHMARK_DATA = {
             "value": 79.21792004976369,
             "unit": "us/iter",
             "extra": "iterations: 8843\ncpu: 79.21758882732115 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "50522e0ded8eefead310ba9c99513bd01751c7d6",
+          "message": "fix: Prevent Out-of-Bounds read in PVE (#57)",
+          "timestamp": "2025-10-27T08:13:03-07:00",
+          "tree_id": "c54d31a69486f2e1673f2fb747f0cf27aaef3e32",
+          "url": "https://github.com/coinbase/cb-mpc/commit/50522e0ded8eefead310ba9c99513bd01751c7d6"
+        },
+        "date": 1761580212092,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.32581928930704224,
+            "unit": "us/iter",
+            "extra": "iterations: 2149170\ncpu: 0.32579383250278016 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.2903984711762088,
+            "unit": "us/iter",
+            "extra": "iterations: 2409434\ncpu: 0.29037617880381855 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 0.31593524622519725,
+            "unit": "us/iter",
+            "extra": "iterations: 2221523\ncpu: 0.31591037770034347 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.28952625802865,
+            "unit": "us/iter",
+            "extra": "iterations: 2410120\ncpu: 0.28949348870595665 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 40.233826655909,
+            "unit": "us/iter",
+            "extra": "iterations: 17347\ncpu: 40.230180838185255 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 60.51136294570082,
+            "unit": "us/iter",
+            "extra": "iterations: 11583\ncpu: 60.50655633255631 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 29.88893766821503,
+            "unit": "us/iter",
+            "extra": "iterations: 23407\ncpu: 29.887516042209626 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 60.63906704782437,
+            "unit": "us/iter",
+            "extra": "iterations: 11544\ncpu: 60.631001645876694 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 17.208472253035765,
+            "unit": "us/iter",
+            "extra": "iterations: 40563\ncpu: 17.20732376796588 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.730174529200758,
+            "unit": "us/iter",
+            "extra": "iterations: 47207\ncpu: 14.728783824432812 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 17.463545074508737,
+            "unit": "us/iter",
+            "extra": "iterations: 40666\ncpu: 17.462616460925563 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 6.965281481555045,
+            "unit": "us/iter",
+            "extra": "iterations: 100678\ncpu: 6.964981833171102 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 57.8221784622826,
+            "unit": "us/iter",
+            "extra": "iterations: 12109\ncpu: 57.819854983896235 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 76.46484343653545,
+            "unit": "us/iter",
+            "extra": "iterations: 9172\ncpu: 76.45586317051897 us\nthreads: 1"
           }
         ]
       }
