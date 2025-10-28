@@ -165,8 +165,21 @@ error_t rsa_prv_key_t::decrypt_oaep(mem_t in, hash_e hash_alg, hash_e mgf_alg, m
     return openssl_error("RSA decrypt OAEP error");
   if (EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, hash_alg_t::get(mgf_alg).md) <= 0)
     return openssl_error("RSA decrypt OAEP error");
-  if (EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, label.data, label.size) <= 0)
-    return openssl_error("RSA decrypt OAEP error");
+  // EVP_PKEY_CTX_set0_rsa_oaep_label takes ownership of the buffer and frees it
+  // using OPENSSL_free. Only pass memory allocated by OPENSSL_malloc, otherwise
+  // we risk invalid-free crashes.
+  if (label.size > 0) {
+    auto openssl_deleter = [](uint8_t *p) { OPENSSL_free(p); };
+    std::unique_ptr<uint8_t, decltype(openssl_deleter)> label_ptr(
+        static_cast<uint8_t *>(OPENSSL_memdup(label.data, static_cast<size_t>(label.size))), openssl_deleter);
+    if (!label_ptr) return openssl_error("RSA decrypt OAEP error");
+    if (EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, label_ptr.get(), label.size) <= 0) {
+      return openssl_error("RSA decrypt OAEP error");
+    }
+    (void)label_ptr.release();
+  } else {
+    if (EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, nullptr, 0) <= 0) return openssl_error("RSA decrypt OAEP error");
+  }
 
   size_t outlen = n_size;
   if (EVP_PKEY_decrypt(ctx, out.alloc(n_size), &outlen, in.data, in.size) <= 0)

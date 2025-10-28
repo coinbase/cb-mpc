@@ -1,3 +1,6 @@
+#include <openssl/core_names.h>
+#include <openssl/kdf.h>
+
 #include <cbmpc/crypto/base.h>
 
 // NOLINTBEGIN(*magic-number*)
@@ -223,6 +226,73 @@ buf_t pbkdf2(hash_e type, mem_t password, mem_t salt, int iter, int out_size) {
   PKCS5_PBKDF2_HMAC(const_char_ptr(password.data), password.size, salt.data, salt.size, iter, hash_alg_t::get(type).md,
                     out_size, out.data());
   return out;
+}
+
+// -------------------------- RFC 5869 HKDF ----------------------------
+
+buf_t hkdf_extract(hash_e type, mem_t salt, mem_t ikm) {
+  const hash_alg_t &alg = hash_alg_t::get(type);
+  buf_t prk(alg.size);
+
+  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "HKDF", NULL);
+  cb_assert(kdf && "EVP_KDF_fetch(HKDF) failed");
+  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
+  EVP_KDF_free(kdf);
+  cb_assert(kctx && "EVP_KDF_CTX_new failed");
+
+  int mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
+  OSSL_PARAM params[7];
+  int pidx = 0;
+  params[pidx++] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, (char *)EVP_MD_name(alg.md), 0);
+  params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, (void *)ikm.data, (size_t)ikm.size);
+  buf_t zero_salt;
+  if (salt.size > 0) {
+    params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, (void *)salt.data, (size_t)salt.size);
+  } else {
+    zero_salt.resize(alg.size);
+    memset(zero_salt.data(), 0, zero_salt.size());
+    params[pidx++] =
+        OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, (void *)zero_salt.data(), (size_t)zero_salt.size());
+  }
+  params[pidx++] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+  params[pidx] = OSSL_PARAM_construct_end();
+
+  int rc = EVP_KDF_derive(kctx, prk.data(), prk.size(), params);
+  EVP_KDF_CTX_free(kctx);
+  cb_assert(rc > 0 && "HKDF extract failed");
+  return prk;
+}
+
+buf_t hkdf_expand(hash_e type, mem_t prk, mem_t info, int out_len) {
+  const hash_alg_t &alg = hash_alg_t::get(type);
+  const int hash_len = alg.size;
+  cb_assert(out_len >= 0);
+  const int n = (out_len + hash_len - 1) / hash_len;
+  cb_assert(n <= 255 && "hkdf_expand: output too long");
+
+  buf_t okm(out_len);
+
+  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "HKDF", NULL);
+  cb_assert(kdf && "EVP_KDF_fetch(HKDF) failed");
+  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
+  EVP_KDF_free(kdf);
+  cb_assert(kctx && "EVP_KDF_CTX_new failed");
+
+  int mode = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
+  OSSL_PARAM params[6];
+  int pidx = 0;
+  params[pidx++] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, (char *)EVP_MD_name(alg.md), 0);
+  params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, (void *)prk.data, (size_t)prk.size);
+  if (info.size > 0) {
+    params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, (void *)info.data, (size_t)info.size);
+  }
+  params[pidx++] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+  params[pidx] = OSSL_PARAM_construct_end();
+
+  int rc = EVP_KDF_derive(kctx, okm.data(), okm.size(), params);
+  EVP_KDF_CTX_free(kctx);
+  cb_assert(rc > 0 && "HKDF expand failed");
+  return okm;
 }
 
 }  // namespace coinbase::crypto

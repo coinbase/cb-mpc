@@ -347,4 +347,16 @@ typedef hmac_template_t<hash_e::sha512> hmac_sha512_t;
  */
 buf_t pbkdf2(hash_e type, mem_t password, mem_t salt, int iter, int out_size);
 
+/**
+ * RFC 5869 HKDF (HMAC-based Extract-and-Expand Key Derivation Function)
+ */
+buf_t hkdf_extract(hash_e type, mem_t salt, mem_t ikm);
+buf_t hkdf_expand(hash_e type, mem_t prk, mem_t info, int out_len);
+
+// SHA-256 convenience wrappers
+inline buf_t hkdf_extract_sha256(mem_t salt, mem_t ikm) { return hkdf_extract(hash_e::sha256, salt, ikm); }
+inline buf_t hkdf_expand_sha256(mem_t prk, mem_t info, int out_len) {
+  return hkdf_expand(hash_e::sha256, prk, info, out_len);
+}
+
 }  // namespace coinbase::crypto
