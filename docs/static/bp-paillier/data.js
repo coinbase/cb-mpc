@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1761580217618,
+  "lastUpdate": 1761668680636,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1320,6 +1320,72 @@ window.BENCHMARK_DATA = {
             "value": 7535.566537633771,
             "unit": "us/iter",
             "extra": "iterations: 93\ncpu: 7535.333999999996 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3aced93df47d96b405b84308252e4df314e68f6b",
+          "message": "feat: Implement RFC 5869 HKDF and RFC 9180 DHKEM(P-256) (#58)\n\n- Add HKDF-Extract and HKDF-Expand functions per RFC 5869\n- Upgrade KEM-DEM to use HKDF for AES-GCM-256 key derivation\n- Implement RFC 9180 DHKEM(P-256, HKDF-SHA256) with labeled extract/expand\n- Add HPKE test vectors for P-256 KEM validation\n- Fix RSA OAEP label memory management to prevent invalid-free crashes",
+          "timestamp": "2025-10-28T08:46:35-07:00",
+          "tree_id": "8242d875446e59331df000a6293ab53d0602e49d",
+          "url": "https://github.com/coinbase/cb-mpc/commit/3aced93df47d96b405b84308252e4df314e68f6b"
+        },
+        "date": 1761668680115,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 45044.56126666507,
+            "unit": "us/iter",
+            "extra": "iterations: 15\ncpu: 45041.003000000004 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4513.363825806723,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4512.71201935484 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8595.48854877974,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8594.289024390244 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4509.449141935494,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4509.236535483869 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.01861591421945,
+            "unit": "us/iter",
+            "extra": "iterations: 63327\ncpu: 11.017524199788408 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.84105421078141,
+            "unit": "us/iter",
+            "extra": "iterations: 54491\ncpu: 12.840264869427992 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8326.24830952357,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8325.343904761907 us\nthreads: 1"
           }
         ]
       }
