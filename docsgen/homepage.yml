@@ -145,7 +145,7 @@ benchmarks:
                 value_type: "ms"
               - source: "ZK/DH/Verify/3"
                 value_type: "KB"
-          - name: "ElGamal Com (secp256k1)"
+          - name: "UC ElGamal Com (secp256k1)"
             cells:
               - source: "ZK/ElGamalCom/Prover/3"
                 value_type: "ms"
