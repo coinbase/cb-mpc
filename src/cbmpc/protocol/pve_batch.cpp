@@ -73,11 +73,11 @@ error_t ec_pve_batch_t::verify(const void* ek, const std::vector<ecc_point_t>& Q
 
   // This verifies that the input Q values are the same as backed up Q values (step 2 of spec)
   // and that the input Q values are on curve (step 1 of spec) assuming backed up one is on curve
-  if (Q != this->Q) return coinbase::error(E_CRYPTO, "public keys (Qs) mismatch");
   ecurve_t curve = Q[0].get_curve();
   for (int i = 0; i < n; i++) {
     if (rv = curve.check(Q[i])) return coinbase::error(rv, "ec_pve_batch_t::verify: check Q[i] failed");
   }
+  if (Q != this->Q) return coinbase::error(E_CRYPTO, "public keys (Qs) mismatch");
   if (label != this->L) return coinbase::error(E_CRYPTO);
   buf_t inner_label = genPVELabelWithPoint(label, Q);
 
@@ -100,6 +100,7 @@ error_t ec_pve_batch_t::verify(const void* ek, const std::vector<ecc_point_t>& Q
 
       xi = bn_t::vector_from_bin(rows[i].x_bin, n, curve_size, q);
 
+      if (rows[i].r.size() != 16) return coinbase::error(E_CRYPTO);
       crypto::drbg_aes_ctr_t drbg1(rows[i].r);
       buf_t rho1 = drbg1.gen(rho_size);
 
@@ -128,9 +129,7 @@ error_t ec_pve_batch_t::verify(const void* ek, const std::vector<ecc_point_t>& Q
     if (bi) std::swap(X0[i], X1[i]);
   }
 
-  // If a different SEC_P_COM is used, change `bitlen128` to `bitlen(SEC_P_COM)`
-  cb_assert(SEC_P_COM == 128);
-  buf128_t b_tag = crypto::ro::hash_string(Q, label, c0, c1, X0, X1).bitlen128();
+  buf_t b_tag = crypto::ro::hash_string(Q, label, c0, c1, X0, X1).bitlen(SEC_P_COM);
   if (b_tag != b) return coinbase::error(E_CRYPTO);
   return SUCCESS;
 }

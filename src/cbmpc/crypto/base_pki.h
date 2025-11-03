@@ -39,6 +39,10 @@ struct kem_aead_ciphertext_t {
     c.convert(aead_ciphertext);
   }
 
+  /**
+   * @specs:
+   * - basic-primitives-spec | kemdem-seal-1P
+   */
   error_t seal(const typename KEM_POLICY::ek_t& pub_key, mem_t aad, mem_t plain, drbg_aes_ctr_t* drbg = nullptr) {
     error_t rv = UNINITIALIZED_ERROR;
     kem_ct = buf_t();
@@ -58,6 +62,10 @@ struct kem_aead_ciphertext_t {
     return SUCCESS;
   }
 
+  /**
+   * @specs:
+   * - basic-primitives-spec | kemdem-open-1P
+   */
   error_t open(const typename KEM_POLICY::dk_t& prv_key_handle, mem_t aad, buf_t& plain) const {
     error_t rv = UNINITIALIZED_ERROR;
     buf_t kem_ss;
@@ -128,6 +136,10 @@ struct kem_policy_ecdh_p256_t {
     return hkdf_expand_sha256(prk, labeled_info, L);
   }
 
+  /**
+   * @specs:
+   * - basic-primitives-spec | ecies-encapsulate-1P
+   */
   static error_t encapsulate(const ek_t& pub_key, buf_t& kem_ct, buf_t& kem_ss, drbg_aes_ctr_t* drbg) {
     cb_assert(pub_key.get_curve() == curve_p256);
     const mod_t& q = curve_p256.order();
@@ -141,7 +153,7 @@ struct kem_policy_ecdh_p256_t {
     // raw ECDH secret: affine X coordinate, 32-byte big-endian
     buf_t dh = (e * pub_key).get_x().to_bin(32);
 
-    // kem_context = enc || pkR
+    // kem_context = enc || pub_key
     buf_t kem_context;
     kem_context += enc;
     kem_context += pub_key.to_oct();
@@ -152,6 +164,10 @@ struct kem_policy_ecdh_p256_t {
     return SUCCESS;
   }
 
+  /**
+   * @specs:
+   * - basic-primitives-spec | ecies-decapsulate-1P
+   */
   static error_t decapsulate(const dk_t& prv_key, mem_t kem_ct, buf_t& kem_ss) {
     error_t rv = UNINITIALIZED_ERROR;
     ecc_point_t E;
@@ -160,11 +176,11 @@ struct kem_policy_ecdh_p256_t {
 
     buf_t dh = prv_key.ecdh(E);
 
-    // kem_context = enc || pkR
-    ecc_pub_key_t pkR = prv_key.pub();
+    // kem_context = enc || pub_key
+    ecc_pub_key_t pub_key = prv_key.pub();
     buf_t kem_context;
     kem_context += kem_ct;
-    kem_context += pkR.to_oct();
+    kem_context += pub_key.to_oct();
 
     buf_t eae_prk = labeled_extract(mem_t("eae_prk"), dh, mem_t());
     buf_t shared_secret = labeled_expand(eae_prk, mem_t("shared_secret"), kem_context, 32);

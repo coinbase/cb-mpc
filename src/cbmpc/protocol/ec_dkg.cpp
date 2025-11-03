@@ -437,6 +437,10 @@ error_t key_share_mp_t::threshold_dkg_or_refresh(job_mp_t& job, const ecurve_t& 
       crypto::vartime_scope_t vartime_scope;
       new_key.Qis[job.get_name(j)] += Qis[job.get_name(j)];
     }
+    ecc_point_t reconstructed_Q;
+    if (rv = ac.reconstruct_exponent(new_key.Qis, reconstructed_Q))
+      return coinbase::error(rv, "Failed to reconstruct exponent for new_key");
+    if (reconstructed_Q != key.Q) return coinbase::error(E_CRYPTO, "key.Q mismatch");
     new_key.party_name = job.get_name(i);
   } else {
     key.x_share = x_i;

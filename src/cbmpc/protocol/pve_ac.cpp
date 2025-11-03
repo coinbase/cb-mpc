@@ -138,10 +138,10 @@ error_t ec_pve_ac_t::verify(const ss::ac_t& ac, const pks_t& ac_pks, const std::
   const auto& G = curve.generator();
   if (Q.size() != this->Q.size()) return coinbase::error(E_CRYPTO);
   for (int i = 0; i < batch_size; i++) {
-    if (Q[i] != this->Q[i]) return coinbase::error(E_CRYPTO);
+    if (rv = curve.check(Q[i])) return coinbase::error(rv, "ec_pve_ac_t::verify: check Q[i] failed");
   }
-
   if (Q != this->Q) return coinbase::error(E_CRYPTO);
+
   buf_t L = crypto::sha256_t::hash(label, Q);
   if (L != this->L) return coinbase::error(E_CRYPTO);
 
