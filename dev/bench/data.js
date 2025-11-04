@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1761668685916,
+  "lastUpdate": 1762279062158,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -94878,6 +94878,4536 @@ window.BENCHMARK_DATA = {
             "value": 425218.6,
             "unit": "ns/iter",
             "extra": "iterations: 10\ncpu: 97035.39999463828 ns\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d2a3b9b38f17b1fe41c3923e0a10d956adfdeffc",
+          "message": "chore: Enhance protocol validation and link to specs (#60)\n\nThis commit strengthens security checks in PVE and DKG protocols and adds traceability by linking KEM/DEM functions to the `basic-primitives-spec`.\n\n* PVE: Adds explicit point-on-curve checks in `pve_ac.cpp` and `pve_batch.cpp` to prevent invalid-curve attacks.\n* DKG: Adds a public key reconstruction check in `ec_dkg.cpp` to verify the new shares match the original group key.\n* PVE Batch: Validates the DRBG seed length and refactors RO hashing to use the generic `bitlen(SEC_P_COM)` instead of a hardcoded `bitlen128()`.\n* PKI: Adds `@specs` tags to `seal`, `open`, `encapsulate`, and `decapsulate` in `base_pki.h` and renames `pkR` to `pub_key` for clarity.",
+          "timestamp": "2025-11-04T09:19:52-08:00",
+          "tree_id": "70c88dc37f8ab1f777ee770ea4b6932f08052d64",
+          "url": "https://github.com/coinbase/cb-mpc/commit/d2a3b9b38f17b1fe41c3923e0a10d956adfdeffc"
+        },
+        "date": 1762279061631,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 67.58026965919012,
+            "unit": "ns/iter",
+            "extra": "iterations: 10370201\ncpu: 67.56197849974171 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/512",
+            "value": 81.38926993799383,
+            "unit": "ns/iter",
+            "extra": "iterations: 8628226\ncpu: 81.35765150333336 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/1024",
+            "value": 109.25373972561691,
+            "unit": "ns/iter",
+            "extra": "iterations: 6408291\ncpu: 109.21857496795946 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/2048",
+            "value": 182.29679305061836,
+            "unit": "ns/iter",
+            "extra": "iterations: 3837354\ncpu: 182.2374300103665 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 282.4109031052097,
+            "unit": "ns/iter",
+            "extra": "iterations: 2473167\ncpu: 282.3929051293341 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 60.410990985234264,
+            "unit": "ns/iter",
+            "extra": "iterations: 11665633\ncpu: 60.407258225935756 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/512",
+            "value": 74.30124228999391,
+            "unit": "ns/iter",
+            "extra": "iterations: 9437732\ncpu: 74.29677002907094 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/1024",
+            "value": 111.03772616400197,
+            "unit": "ns/iter",
+            "extra": "iterations: 6290568\ncpu: 111.03142387142097 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/2048",
+            "value": 186.0412883317334,
+            "unit": "ns/iter",
+            "extra": "iterations: 3629500\ncpu: 186.03038545254148 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 328.27385048133357,
+            "unit": "ns/iter",
+            "extra": "iterations: 2128804\ncpu: 328.260645883788 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 143.78649496127002,
+            "unit": "ns/iter",
+            "extra": "iterations: 4850012\ncpu: 143.78089105758912 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/512",
+            "value": 283.2777115319778,
+            "unit": "ns/iter",
+            "extra": "iterations: 2468918\ncpu: 283.26999519627566 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/1024",
+            "value": 824.5194545168135,
+            "unit": "ns/iter",
+            "extra": "iterations: 851062\ncpu: 824.4431956778716 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/2048",
+            "value": 2728.212195312274,
+            "unit": "ns/iter",
+            "extra": "iterations: 256000\ncpu: 2728.1126093749995 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 10973.456690068337,
+            "unit": "ns/iter",
+            "extra": "iterations: 63669\ncpu: 10972.656897391254 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 16279.707881450578,
+            "unit": "ns/iter",
+            "extra": "iterations: 42784\ncpu: 16279.33627056823 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/512",
+            "value": 42019.27813697577,
+            "unit": "ns/iter",
+            "extra": "iterations: 16704\ncpu: 42016.34285201134 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/1024",
+            "value": 310866.774566451,
+            "unit": "ns/iter",
+            "extra": "iterations: 2249\ncpu: 310858.5411293927 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/2048",
+            "value": 2211191.781645706,
+            "unit": "ns/iter",
+            "extra": "iterations: 316\ncpu: 2211127.6392405406 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16526278.071426403,
+            "unit": "ns/iter",
+            "extra": "iterations: 42\ncpu: 16524725.952380879 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 17473.509525950303,
+            "unit": "ns/iter",
+            "extra": "iterations: 39996\ncpu: 17472.68601860205 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/512",
+            "value": 36944.57921815935,
+            "unit": "ns/iter",
+            "extra": "iterations: 18853\ncpu: 36941.58213546771 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/1024",
+            "value": 87739.92261457561,
+            "unit": "ns/iter",
+            "extra": "iterations: 7986\ncpu: 87738.36639118583 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/2048",
+            "value": 228320.18531812946,
+            "unit": "ns/iter",
+            "extra": "iterations: 3065\ncpu: 228318.94029364007 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 677516.6957364161,
+            "unit": "ns/iter",
+            "extra": "iterations: 1032\ncpu: 677457.9437984452 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 23122.042681132905,
+            "unit": "ns/iter",
+            "extra": "iterations: 30599\ncpu: 23121.942906630462 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/512",
+            "value": 50671.18324960377,
+            "unit": "ns/iter",
+            "extra": "iterations: 13337\ncpu: 50666.34228087132 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/1024",
+            "value": 129435.31203351078,
+            "unit": "ns/iter",
+            "extra": "iterations: 5493\ncpu: 129431.78645549141 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/2048",
+            "value": 366643.74856251955,
+            "unit": "ns/iter",
+            "extra": "iterations: 1913\ncpu: 366631.05331939465 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1202414.3889844604,
+            "unit": "ns/iter",
+            "extra": "iterations: 581\ncpu: 1202290.018932863 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 22911.10489161037,
+            "unit": "ns/iter",
+            "extra": "iterations: 30031\ncpu: 22909.841463820787 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/512",
+            "value": 51836.853798622076,
+            "unit": "ns/iter",
+            "extra": "iterations: 13755\ncpu: 51829.60974191269 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/1024",
+            "value": 132043.44105539532,
+            "unit": "ns/iter",
+            "extra": "iterations: 5344\ncpu: 131969.49476047966 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/2048",
+            "value": 366831.02100836474,
+            "unit": "ns/iter",
+            "extra": "iterations: 1904\ncpu: 366805.1628151236 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1216238.152397163,
+            "unit": "ns/iter",
+            "extra": "iterations: 584\ncpu: 1216086.6952055101 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 25047.60308823543,
+            "unit": "ns/iter",
+            "extra": "iterations: 27200\ncpu: 25045.917977940993 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/512",
+            "value": 56754.525781627606,
+            "unit": "ns/iter",
+            "extra": "iterations: 12218\ncpu: 56749.97765591751 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/1024",
+            "value": 139994.10939071758,
+            "unit": "ns/iter",
+            "extra": "iterations: 4973\ncpu: 139983.77981098034 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/2048",
+            "value": 407999.79186318145,
+            "unit": "ns/iter",
+            "extra": "iterations: 1696\ncpu: 407944.4687499966 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1368809.8941177523,
+            "unit": "ns/iter",
+            "extra": "iterations: 510\ncpu: 1368758.4392157 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 357.0457657592458,
+            "unit": "ns/iter",
+            "extra": "iterations: 1949405\ncpu: 357.02335738339985 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 307.8886669727027,
+            "unit": "ns/iter",
+            "extra": "iterations: 2274132\ncpu: 307.8686672541456 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 346.3254546022965,
+            "unit": "ns/iter",
+            "extra": "iterations: 2016103\ncpu: 346.313421486895 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 309.65904324740274,
+            "unit": "ns/iter",
+            "extra": "iterations: 2272646\ncpu: 309.62745099765436 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41375.739063431916,
+            "unit": "ns/iter",
+            "extra": "iterations: 16870\ncpu: 41374.31766449438 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 63814.14983119053,
+            "unit": "ns/iter",
+            "extra": "iterations: 10959\ncpu: 63812.371657999276 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 32669.73369768087,
+            "unit": "ns/iter",
+            "extra": "iterations: 21408\ncpu: 32666.886304186326 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 63104.380703337396,
+            "unit": "ns/iter",
+            "extra": "iterations: 11090\ncpu: 63103.243733093084 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 20014.49791333216,
+            "unit": "ns/iter",
+            "extra": "iterations: 34984\ncpu: 20013.47418820066 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14246.439800691403,
+            "unit": "ns/iter",
+            "extra": "iterations: 49170\ncpu: 14245.527740492498 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 20037.713629051046,
+            "unit": "ns/iter",
+            "extra": "iterations: 34808\ncpu: 20035.292691335726 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7258.029086393151,
+            "unit": "ns/iter",
+            "extra": "iterations: 95818\ncpu: 7257.4588490680935 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61735.43517703262,
+            "unit": "ns/iter",
+            "extra": "iterations: 11354\ncpu: 61727.42011625908 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 78282.46494464701,
+            "unit": "ns/iter",
+            "extra": "iterations: 8943\ncpu: 78277.163144357 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/1",
+            "value": 311.14432586280554,
+            "unit": "ns/iter",
+            "extra": "iterations: 2241213\ncpu: 311.1274287629123 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/4",
+            "value": 310.05800125469,
+            "unit": "ns/iter",
+            "extra": "iterations: 2249141\ncpu: 310.0366028630486 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/16",
+            "value": 307.3372998501754,
+            "unit": "ns/iter",
+            "extra": "iterations: 2270674\ncpu: 307.3088395780254 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/64",
+            "value": 348.18854671832815,
+            "unit": "ns/iter",
+            "extra": "iterations: 2010271\ncpu: 348.1603355965427 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/256",
+            "value": 468.2190688093626,
+            "unit": "ns/iter",
+            "extra": "iterations: 1496192\ncpu: 468.14984975190373 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/1024",
+            "value": 963.5729726433103,
+            "unit": "ns/iter",
+            "extra": "iterations: 737660\ncpu: 960.4798606404161 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/4096",
+            "value": 2872.8660549250044,
+            "unit": "ns/iter",
+            "extra": "iterations: 243458\ncpu: 2872.569215223948 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/1",
+            "value": 309.9189319296386,
+            "unit": "ns/iter",
+            "extra": "iterations: 2253859\ncpu: 309.90397491590585 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/4",
+            "value": 309.43704062822576,
+            "unit": "ns/iter",
+            "extra": "iterations: 2262737\ncpu: 309.4098523160294 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/16",
+            "value": 306.15542677168133,
+            "unit": "ns/iter",
+            "extra": "iterations: 2286691\ncpu: 306.14834842136923 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/64",
+            "value": 345.6869382441836,
+            "unit": "ns/iter",
+            "extra": "iterations: 2021007\ncpu: 345.6468097339539 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/256",
+            "value": 464.91741650354027,
+            "unit": "ns/iter",
+            "extra": "iterations: 1503327\ncpu: 464.9089958472088 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/1024",
+            "value": 947.2956127494476,
+            "unit": "ns/iter",
+            "extra": "iterations: 739552\ncpu: 947.2395882913112 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/4096",
+            "value": 2873.320986488363,
+            "unit": "ns/iter",
+            "extra": "iterations: 243571\ncpu: 2873.197051373197 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/1",
+            "value": 677.5521412846066,
+            "unit": "ns/iter",
+            "extra": "iterations: 1037508\ncpu: 677.4722652740872 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/4",
+            "value": 678.6012616803407,
+            "unit": "ns/iter",
+            "extra": "iterations: 1014520\ncpu: 678.5859608484743 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/16",
+            "value": 683.9521319827509,
+            "unit": "ns/iter",
+            "extra": "iterations: 1026134\ncpu: 683.9236795584227 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/64",
+            "value": 703.9138012180997,
+            "unit": "ns/iter",
+            "extra": "iterations: 992253\ncpu: 703.8778930373531 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/256",
+            "value": 757.8631595475616,
+            "unit": "ns/iter",
+            "extra": "iterations: 923455\ncpu: 757.8223768348216 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/1024",
+            "value": 947.9831754139439,
+            "unit": "ns/iter",
+            "extra": "iterations: 738562\ncpu: 947.9026906339483 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/4096",
+            "value": 1657.0076538935152,
+            "unit": "ns/iter",
+            "extra": "iterations: 419917\ncpu: 1656.9577749889017 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/1",
+            "value": 680.9127756148614,
+            "unit": "ns/iter",
+            "extra": "iterations: 1028428\ncpu: 680.8811263404104 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/4",
+            "value": 681.4837559490534,
+            "unit": "ns/iter",
+            "extra": "iterations: 1027884\ncpu: 681.4435665892195 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/16",
+            "value": 678.7371125775571,
+            "unit": "ns/iter",
+            "extra": "iterations: 1025302\ncpu: 678.7189403707275 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/64",
+            "value": 704.3131341160836,
+            "unit": "ns/iter",
+            "extra": "iterations: 994593\ncpu: 704.2706534230651 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/256",
+            "value": 753.0703230129225,
+            "unit": "ns/iter",
+            "extra": "iterations: 929653\ncpu: 753.0079427485248 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/1024",
+            "value": 946.8187457410099,
+            "unit": "ns/iter",
+            "extra": "iterations: 741075\ncpu: 946.7792355699655 ns\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/4096",
+            "value": 1651.2926877055177,
+            "unit": "ns/iter",
+            "extra": "iterations: 423629\ncpu: 1651.1704958819987 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/String/1024",
+            "value": 1416.8199531568905,
+            "unit": "ns/iter",
+            "extra": "iterations: 491000\ncpu: 1416.7925173115848 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/String/2048",
+            "value": 1475.7176719128993,
+            "unit": "ns/iter",
+            "extra": "iterations: 473350\ncpu: 1475.5982951304293 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/String/4096",
+            "value": 1577.0222088982716,
+            "unit": "ns/iter",
+            "extra": "iterations: 445317\ncpu: 1576.9548568771947 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/String/8192",
+            "value": 1797.1274939983775,
+            "unit": "ns/iter",
+            "extra": "iterations: 389485\ncpu: 1797.0113585889217 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/String/16384",
+            "value": 2333.0019357648366,
+            "unit": "ns/iter",
+            "extra": "iterations: 298590\ncpu: 2332.8885595632914 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/String/32768",
+            "value": 3254.0681933248825,
+            "unit": "ns/iter",
+            "extra": "iterations: 215285\ncpu: 3253.865146201582 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/String/65536",
+            "value": 5066.370609215665,
+            "unit": "ns/iter",
+            "extra": "iterations: 138785\ncpu: 5066.195388550701 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/String/131072",
+            "value": 8704.129322336967,
+            "unit": "ns/iter",
+            "extra": "iterations: 80512\ncpu: 8704.093563692377 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/String/262144",
+            "value": 15998.417285259868,
+            "unit": "ns/iter",
+            "extra": "iterations: 43378\ncpu: 15997.14989164976 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/Number/256",
+            "value": 1677.4892687527472,
+            "unit": "ns/iter",
+            "extra": "iterations: 417752\ncpu: 1677.4569792604239 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/Number/512",
+            "value": 1823.6172346690664,
+            "unit": "ns/iter",
+            "extra": "iterations: 390550\ncpu: 1823.408603251847 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/Number/1024",
+            "value": 1976.6069333905566,
+            "unit": "ns/iter",
+            "extra": "iterations: 353449\ncpu: 1976.4635576843 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/Number/2048",
+            "value": 2359.4001527145233,
+            "unit": "ns/iter",
+            "extra": "iterations: 295977\ncpu: 2359.319359274469 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/Number/4096",
+            "value": 3144.377327449689,
+            "unit": "ns/iter",
+            "extra": "iterations: 223689\ncpu: 3144.073700539561 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/Curve/3",
+            "value": 22076.149679821145,
+            "unit": "ns/iter",
+            "extra": "iterations: 31701\ncpu: 22075.81410680929 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/DRBG/Curve/4",
+            "value": 16382.807104003927,
+            "unit": "ns/iter",
+            "extra": "iterations: 43018\ncpu: 16381.076991026037 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-encrypt-1P/4/256",
+            "value": 189953.81549715428,
+            "unit": "ns/iter",
+            "extra": "iterations: 3691\ncpu: 189945.47520997218 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-encrypt-1P/30/256",
+            "value": 189905.948439611,
+            "unit": "ns/iter",
+            "extra": "iterations: 3685\ncpu: 189887.58643147774 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-encrypt-1P/4/65536",
+            "value": 269103.3862760435,
+            "unit": "ns/iter",
+            "extra": "iterations: 2594\ncpu: 269070.31264454924 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-encrypt-1P/30/65536",
+            "value": 269468.8069230831,
+            "unit": "ns/iter",
+            "extra": "iterations: 2600\ncpu: 269407.3130769189 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-verify-1P/4/256",
+            "value": 200420.9372842331,
+            "unit": "ns/iter",
+            "extra": "iterations: 3476\ncpu: 200407.40247412014 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-verify-1P/30/256",
+            "value": 220861.3138535741,
+            "unit": "ns/iter",
+            "extra": "iterations: 2909\ncpu: 220848.23925747373 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-verify-1P/4/65536",
+            "value": 241993.88177708164,
+            "unit": "ns/iter",
+            "extra": "iterations: 2656\ncpu: 241974.52259037815 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-verify-1P/30/65536",
+            "value": 262230.7790818181,
+            "unit": "ns/iter",
+            "extra": "iterations: 2897\ncpu: 262217.21021748 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-local-decrypt-1P/4/256",
+            "value": 322461.3822171006,
+            "unit": "ns/iter",
+            "extra": "iterations: 1732\ncpu: 322442.939953809 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-local-decrypt-1P/30/256",
+            "value": 363661.6538650952,
+            "unit": "ns/iter",
+            "extra": "iterations: 2031\ncpu: 363627.9226981693 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-local-decrypt-1P/4/65536",
+            "value": 364596.06993741315,
+            "unit": "ns/iter",
+            "extra": "iterations: 1916\ncpu: 364580.65135698166 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-local-decrypt-1P/30/65536",
+            "value": 405729.5603537943,
+            "unit": "ns/iter",
+            "extra": "iterations: 1922\ncpu: 405684.89646203845 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-combine-1P/4/256",
+            "value": 922918.5154362429,
+            "unit": "ns/iter",
+            "extra": "iterations: 745\ncpu: 922787.0805369356 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-combine-1P/30/256",
+            "value": 5424905.449612296,
+            "unit": "ns/iter",
+            "extra": "iterations: 129\ncpu: 5424341.170542769 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-combine-1P/4/65536",
+            "value": 979200.3170389625,
+            "unit": "ns/iter",
+            "extra": "iterations: 716\ncpu: 979142.3561452541 ns\nthreads: 1"
+          },
+          {
+            "name": "tdh2-combine-1P/30/65536",
+            "value": 5454629.531249644,
+            "unit": "ns/iter",
+            "extra": "iterations: 128\ncpu: 5454034.812500286 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/Commitment/ComBn/2",
+            "value": 2649.7117597861584,
+            "unit": "ns/iter",
+            "extra": "iterations: 264231\ncpu: 2649.416820887742 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/Commitment/ComBn/4",
+            "value": 2886.843120566216,
+            "unit": "ns/iter",
+            "extra": "iterations: 242033\ncpu: 2886.660224018964 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/Commitment/ComBn/6",
+            "value": 3197.8620193740476,
+            "unit": "ns/iter",
+            "extra": "iterations: 218335\ncpu: 3197.6224792176367 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/Commitment/ComBn/8",
+            "value": 3437.4254568646766,
+            "unit": "ns/iter",
+            "extra": "iterations: 203835\ncpu: 3437.374562759157 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/Commitment/ComBn/10",
+            "value": 3681.0529166602223,
+            "unit": "ns/iter",
+            "extra": "iterations: 189789\ncpu: 3680.8342106236178 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/Commitment/ComBn/12",
+            "value": 3916.275832162975,
+            "unit": "ns/iter",
+            "extra": "iterations: 178721\ncpu: 3916.0022549114256 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/Commitment/ComBn/14",
+            "value": 4179.3174573760025,
+            "unit": "ns/iter",
+            "extra": "iterations: 167276\ncpu: 4179.047424615307 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/Commitment/ComBn/16",
+            "value": 4456.213869333528,
+            "unit": "ns/iter",
+            "extra": "iterations: 156965\ncpu: 4455.497410250427 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/Commitment/ComBn/18",
+            "value": 4696.329409539955,
+            "unit": "ns/iter",
+            "extra": "iterations: 148071\ncpu: 4695.978253675372 ns\nthreads: 1"
+          },
+          {
+            "name": "Crypto/Commitment/ComBn/20",
+            "value": 4953.532377825437,
+            "unit": "ns/iter",
+            "extra": "iterations: 141007\ncpu: 4953.152389597678 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/LocalKeyGen/3",
+            "value": 21192.323222863055,
+            "unit": "ns/iter",
+            "extra": "iterations: 33101\ncpu: 21192.216700401485 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/LocalKeyGen/4",
+            "value": 15709.466976346477,
+            "unit": "ns/iter",
+            "extra": "iterations: 44347\ncpu: 15707.774235009794 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/Commit/3",
+            "value": 82961.40296209438,
+            "unit": "ns/iter",
+            "extra": "iterations: 8440\ncpu: 82954.9125592395 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/Commit/4",
+            "value": 94176.5912682548,
+            "unit": "ns/iter",
+            "extra": "iterations: 7467\ncpu: 94165.82536493872 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/Rerand/3",
+            "value": 62373.29847237712,
+            "unit": "ns/iter",
+            "extra": "iterations: 11063\ncpu: 62369.28889089728 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/Rerand/4",
+            "value": 78716.76155745208,
+            "unit": "ns/iter",
+            "extra": "iterations: 8912\ncpu: 78716.21981598131 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/Add/3",
+            "value": 756.9275696528389,
+            "unit": "ns/iter",
+            "extra": "iterations: 911952\ncpu: 756.8269294875029 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/Add/4",
+            "value": 661.0507871141693,
+            "unit": "ns/iter",
+            "extra": "iterations: 1063124\ncpu: 660.9761335460381 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/AddScalar/3",
+            "value": 20494.484962737817,
+            "unit": "ns/iter",
+            "extra": "iterations: 34215\ncpu: 20491.88589799742 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/AddScalar/4",
+            "value": 7653.7117822916025,
+            "unit": "ns/iter",
+            "extra": "iterations: 91646\ncpu: 7653.302490016364 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/MulScalar/3",
+            "value": 82873.28862318659,
+            "unit": "ns/iter",
+            "extra": "iterations: 8447\ncpu: 82869.413993134 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/ElGamal/MulScalar/4",
+            "value": 126881.25217391808,
+            "unit": "ns/iter",
+            "extra": "iterations: 5520\ncpu: 126870.30525361902 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 63864403.9473655,
+            "unit": "ns/iter",
+            "extra": "iterations: 19\ncpu: 63858361.42105088 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4514244.154838267,
+            "unit": "ns/iter",
+            "extra": "iterations: 155\ncpu: 4514049.535483874 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8564777.098764565,
+            "unit": "ns/iter",
+            "extra": "iterations: 81\ncpu: 8563828.691357944 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4503995.529031976,
+            "unit": "ns/iter",
+            "extra": "iterations: 155\ncpu: 4503693.5161291575 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11054.540306643292,
+            "unit": "ns/iter",
+            "extra": "iterations: 62744\ncpu: 11053.509833609913 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12856.547370935945,
+            "unit": "ns/iter",
+            "extra": "iterations: 54411\ncpu: 12854.800132326165 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8321115.999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 84\ncpu: 8320484.595237704 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/10/2",
+            "value": 16774.316403257435,
+            "unit": "ns/iter",
+            "extra": "iterations: 41760\ncpu: 16772.513266284197 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/20/2",
+            "value": 34327.09921747834,
+            "unit": "ns/iter",
+            "extra": "iterations: 20319\ncpu: 34323.976770509165 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/30/2",
+            "value": 52014.02062773142,
+            "unit": "ns/iter",
+            "extra": "iterations: 13477\ncpu: 52012.69399717688 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/10/3",
+            "value": 18758.194568443258,
+            "unit": "ns/iter",
+            "extra": "iterations: 37411\ncpu: 18756.87805725528 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/20/3",
+            "value": 38755.357198183796,
+            "unit": "ns/iter",
+            "extra": "iterations: 18074\ncpu: 38754.19973442385 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/30/3",
+            "value": 58709.161436483184,
+            "unit": "ns/iter",
+            "extra": "iterations: 11918\ncpu: 58704.81926497693 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/10/4",
+            "value": 20951.92957283558,
+            "unit": "ns/iter",
+            "extra": "iterations: 33453\ncpu: 20950.848324514347 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/20/4",
+            "value": 42851.63725369067,
+            "unit": "ns/iter",
+            "extra": "iterations: 16240\ncpu: 42848.639901477705 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/30/4",
+            "value": 64758.933843892366,
+            "unit": "ns/iter",
+            "extra": "iterations: 10838\ncpu: 64755.215630190454 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/10/5",
+            "value": 22869.374917752433,
+            "unit": "ns/iter",
+            "extra": "iterations: 30396\ncpu: 22866.74703908544 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/20/5",
+            "value": 46927.727735709595,
+            "unit": "ns/iter",
+            "extra": "iterations: 14923\ncpu: 46927.36125444088 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/30/5",
+            "value": 70921.24148957967,
+            "unit": "ns/iter",
+            "extra": "iterations: 9694\ncpu: 70912.75624097387 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/10/6",
+            "value": 25050.490784642865,
+            "unit": "ns/iter",
+            "extra": "iterations: 28051\ncpu: 25048.582831270392 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/20/6",
+            "value": 51454.52779197884,
+            "unit": "ns/iter",
+            "extra": "iterations: 13691\ncpu: 51446.63961726652 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/30/6",
+            "value": 77667.1753723083,
+            "unit": "ns/iter",
+            "extra": "iterations: 8998\ncpu: 77660.20949100183 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/10/7",
+            "value": 27272.06881553181,
+            "unit": "ns/iter",
+            "extra": "iterations: 25750\ncpu: 27269.988155339182 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/20/7",
+            "value": 55482.50569800459,
+            "unit": "ns/iter",
+            "extra": "iterations: 12636\ncpu: 55479.8911047768 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Shamir/30/7",
+            "value": 83876.15184875148,
+            "unit": "ns/iter",
+            "extra": "iterations: 8357\ncpu: 83868.96302501086 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Horner/3",
+            "value": 489.5210916101636,
+            "unit": "ns/iter",
+            "extra": "iterations: 1405227\ncpu: 489.4972911850064 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Horner/4",
+            "value": 703.6093073119639,
+            "unit": "ns/iter",
+            "extra": "iterations: 1005532\ncpu: 703.5785942167843 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Horner/6",
+            "value": 1125.9599709323832,
+            "unit": "ns/iter",
+            "extra": "iterations: 620624\ncpu: 1125.8475437624234 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Horner/8",
+            "value": 1552.9395467052386,
+            "unit": "ns/iter",
+            "extra": "iterations: 452465\ncpu: 1552.7922756456073 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Horner/10",
+            "value": 1992.0107209314642,
+            "unit": "ns/iter",
+            "extra": "iterations: 351462\ncpu: 1991.7396845177589 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Horner/16",
+            "value": 3264.2083784944134,
+            "unit": "ns/iter",
+            "extra": "iterations: 214048\ncpu: 3263.858877447915 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Horner/32",
+            "value": 6662.43215065177,
+            "unit": "ns/iter",
+            "extra": "iterations: 104931\ncpu: 6661.834395936368 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/3/3",
+            "value": 83626.23169568212,
+            "unit": "ns/iter",
+            "extra": "iterations: 8386\ncpu: 83620.88230383824 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/4/3",
+            "value": 127730.8892330011,
+            "unit": "ns/iter",
+            "extra": "iterations: 5489\ncpu: 127730.03625432742 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/3/4",
+            "value": 125175.38345050736,
+            "unit": "ns/iter",
+            "extra": "iterations: 5547\ncpu: 125162.74707048826 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/4/4",
+            "value": 191262.05599562143,
+            "unit": "ns/iter",
+            "extra": "iterations: 3661\ncpu: 191245.6036601913 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/3/6",
+            "value": 209064.03574619454,
+            "unit": "ns/iter",
+            "extra": "iterations: 3357\ncpu: 209040.02323504147 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/4/6",
+            "value": 319318.06278432783,
+            "unit": "ns/iter",
+            "extra": "iterations: 2198\ncpu: 319309.79799817625 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/3/8",
+            "value": 294854.485809698,
+            "unit": "ns/iter",
+            "extra": "iterations: 2396\ncpu: 294827.3864774507 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/4/8",
+            "value": 445755.9040307005,
+            "unit": "ns/iter",
+            "extra": "iterations: 1563\ncpu: 445740.87779911055 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/3/10",
+            "value": 375719.86641634104,
+            "unit": "ns/iter",
+            "extra": "iterations: 1864\ncpu: 375687.56866951217 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/4/10",
+            "value": 572738.9966915454,
+            "unit": "ns/iter",
+            "extra": "iterations: 1209\ncpu: 572726.5550041291 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/3/16",
+            "value": 626831.493297562,
+            "unit": "ns/iter",
+            "extra": "iterations: 1119\ncpu: 626764.16711348 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/4/16",
+            "value": 955039.144611184,
+            "unit": "ns/iter",
+            "extra": "iterations: 733\ncpu: 955015.5497953305 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/3/32",
+            "value": 1296747.4639556457,
+            "unit": "ns/iter",
+            "extra": "iterations: 541\ncpu: 1296636.5268022078 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECHorner/4/32",
+            "value": 1977242.5730336173,
+            "unit": "ns/iter",
+            "extra": "iterations: 356\ncpu: 1977144.837078598 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Lagrange/3",
+            "value": 38429.37114726477,
+            "unit": "ns/iter",
+            "extra": "iterations: 18688\ncpu: 38427.5938035101 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Lagrange/4",
+            "value": 54618.276399495524,
+            "unit": "ns/iter",
+            "extra": "iterations: 12576\ncpu: 54615.65195610405 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Lagrange/6",
+            "value": 95968.21709071008,
+            "unit": "ns/iter",
+            "extra": "iterations: 7232\ncpu: 95967.64380531451 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Lagrange/8",
+            "value": 147543.94043625737,
+            "unit": "ns/iter",
+            "extra": "iterations: 4768\ncpu: 147530.8768875895 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Lagrange/10",
+            "value": 205949.98548147958,
+            "unit": "ns/iter",
+            "extra": "iterations: 3375\ncpu: 205945.26370371535 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Lagrange/16",
+            "value": 433074.4699999656,
+            "unit": "ns/iter",
+            "extra": "iterations: 1600\ncpu: 433024.4593750265 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/Lagrange/32",
+            "value": 1363985.4912280072,
+            "unit": "ns/iter",
+            "extra": "iterations: 513\ncpu: 1363919.6276802565 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/3/3",
+            "value": 134487.48643902325,
+            "unit": "ns/iter",
+            "extra": "iterations: 5125\ncpu: 134473.80468292843 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/4/3",
+            "value": 229605.36482939188,
+            "unit": "ns/iter",
+            "extra": "iterations: 3048\ncpu: 229597.89763779775 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/3/4",
+            "value": 184404.32848451636,
+            "unit": "ns/iter",
+            "extra": "iterations: 3781\ncpu: 184395.17693732932 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/4/4",
+            "value": 309232.9740659377,
+            "unit": "ns/iter",
+            "extra": "iterations: 2275\ncpu: 309222.3221977912 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/3/6",
+            "value": 290596.5726280557,
+            "unit": "ns/iter",
+            "extra": "iterations: 2382\ncpu: 290575.06717044057 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/4/6",
+            "value": 476635.65190737986,
+            "unit": "ns/iter",
+            "extra": "iterations: 1468\ncpu: 476616.66144414706 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/3/8",
+            "value": 408745.8242210548,
+            "unit": "ns/iter",
+            "extra": "iterations: 1701\ncpu: 408715.539682511 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/4/8",
+            "value": 653206.5469042639,
+            "unit": "ns/iter",
+            "extra": "iterations: 1066\ncpu: 653180.9756097785 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/3/10",
+            "value": 544175.8875097409,
+            "unit": "ns/iter",
+            "extra": "iterations: 1289\ncpu: 544147.260667185 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/4/10",
+            "value": 840091.4404332744,
+            "unit": "ns/iter",
+            "extra": "iterations: 831\ncpu: 840012.3586041037 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/3/16",
+            "value": 991579.035410745,
+            "unit": "ns/iter",
+            "extra": "iterations: 706\ncpu: 991572.283286089 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/4/16",
+            "value": 1454651.679089017,
+            "unit": "ns/iter",
+            "extra": "iterations: 483\ncpu: 1454515.151138745 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/3/32",
+            "value": 2505120.836956707,
+            "unit": "ns/iter",
+            "extra": "iterations: 276\ncpu: 2505077.8731884086 ns\nthreads: 1"
+          },
+          {
+            "name": "BP/Share/ECLagrange/4/32",
+            "value": 3402241.980582743,
+            "unit": "ns/iter",
+            "extra": "iterations: 206\ncpu: 3401991.0145631353 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/3/1",
+            "value": 1332279.470363224,
+            "unit": "ns/iter",
+            "extra": "iterations: 523\ncpu: 1332257.0669216374 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/4/1",
+            "value": 1221216.5933681878,
+            "unit": "ns/iter",
+            "extra": "iterations: 573\ncpu: 1221096.8708551815 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/3/4",
+            "value": 1672896.7417062854,
+            "unit": "ns/iter",
+            "extra": "iterations: 422\ncpu: 1672855.3222748535 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/4/4",
+            "value": 1584935.968325652,
+            "unit": "ns/iter",
+            "extra": "iterations: 442\ncpu: 1584866.8574660646 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/3/16",
+            "value": 3837858.449999961,
+            "unit": "ns/iter",
+            "extra": "iterations: 180\ncpu: 3837661.961111078 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/4/16",
+            "value": 3783080.978835897,
+            "unit": "ns/iter",
+            "extra": "iterations: 189\ncpu: 3782751.0634918655 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/3/64",
+            "value": 11626047.833334496,
+            "unit": "ns/iter",
+            "extra": "iterations: 60\ncpu: 11624990.933333378 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Prover/4/64",
+            "value": 11594722.508196684,
+            "unit": "ns/iter",
+            "extra": "iterations: 61\ncpu: 11594345.557376923 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/3/1",
+            "value": 1458624.4553012531,
+            "unit": "ns/iter",
+            "extra": "iterations: 481\ncpu: 1458521.3264033291 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/4/1",
+            "value": 6137842.210525952,
+            "unit": "ns/iter",
+            "extra": "iterations: 114\ncpu: 6137717.833333431 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/3/4",
+            "value": 2190035.974683436,
+            "unit": "ns/iter",
+            "extra": "iterations: 316\ncpu: 2189916.3132910123 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/4/4",
+            "value": 14531128.833333185,
+            "unit": "ns/iter",
+            "extra": "iterations: 48\ncpu: 14530674.70833247 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/3/16",
+            "value": 5597553.913386094,
+            "unit": "ns/iter",
+            "extra": "iterations: 127\ncpu: 5597083.582677346 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/4/16",
+            "value": 48181362.06666471,
+            "unit": "ns/iter",
+            "extra": "iterations: 15\ncpu: 48180259.99999993 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/3/64",
+            "value": 28025796.679999076,
+            "unit": "ns/iter",
+            "extra": "iterations: 25\ncpu: 28023651.720000092 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/Batch-DL/Verify/4/64",
+            "value": 270387083.00002176,
+            "unit": "ns/iter",
+            "extra": "iterations: 3\ncpu: 270382715.9999908 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/ValidPaillier-Int/V1",
+            "value": 750.4886136361459,
+            "unit": "ns/iter",
+            "extra": "iterations: 934495\ncpu: 750.472786906298 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/ValidPaillier-Int/P2",
+            "value": 9761931.125000147,
+            "unit": "ns/iter",
+            "extra": "iterations: 72\ncpu: 9760996.444444774 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/ValidPaillier-Int/Verify",
+            "value": 9249625.600000398,
+            "unit": "ns/iter",
+            "extra": "iterations: 75\ncpu: 9248759.053333135 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero-Int/P1",
+            "value": 33309719.000001114,
+            "unit": "ns/iter",
+            "extra": "iterations: 21\ncpu: 33308810.85714141 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero-Int/V2",
+            "value": 2986.2180019395914,
+            "unit": "ns/iter",
+            "extra": "iterations: 235108\ncpu: 2985.945833404231 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero-Int/P3",
+            "value": 351699.2341389229,
+            "unit": "ns/iter",
+            "extra": "iterations: 1986\ncpu: 351675.63746223145 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero-Int/Verify",
+            "value": 35127842.449998066,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 35127209.15000216 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual-Int/P1",
+            "value": 35594346.94999482,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 35593259.35000004 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual-Int/V2",
+            "value": 862.5790795031719,
+            "unit": "ns/iter",
+            "extra": "iterations: 812170\ncpu: 862.5349483482387 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual-Int/P3",
+            "value": 705487.0453172283,
+            "unit": "ns/iter",
+            "extra": "iterations: 993\ncpu: 705426.5246727575 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual-Int/Verify",
+            "value": 73581957.88889235,
+            "unit": "ns/iter",
+            "extra": "iterations: 9\ncpu: 73574772.77777332 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/P1/3",
+            "value": 129763562.79998526,
+            "unit": "ns/iter",
+            "extra": "iterations: 5\ncpu: 129756268.3999786 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/P1/4",
+            "value": 129626504.20001864,
+            "unit": "ns/iter",
+            "extra": "iterations: 5\ncpu: 129622144.19999328 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/V2/3",
+            "value": 770.8279943720055,
+            "unit": "ns/iter",
+            "extra": "iterations: 904046\ncpu: 770.8066779787667 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/V2/4",
+            "value": 772.6173151008838,
+            "unit": "ns/iter",
+            "extra": "iterations: 907982\ncpu: 772.5767812577758 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/P3/3",
+            "value": 4709.620946456714,
+            "unit": "ns/iter",
+            "extra": "iterations: 118970\ncpu: 4709.384365806322 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/P3/4",
+            "value": 7403.591668828788,
+            "unit": "ns/iter",
+            "extra": "iterations: 131026\ncpu: 7403.0593775276 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/Verify/3",
+            "value": 6708.985919165232,
+            "unit": "ns/iter",
+            "extra": "iterations: 92040\ncpu: 6708.455497609812 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersenInt/Verify/4",
+            "value": 7240.026845081548,
+            "unit": "ns/iter",
+            "extra": "iterations: 108586\ncpu: 7239.7145488365495 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/P1/3",
+            "value": 20451417.20588069,
+            "unit": "ns/iter",
+            "extra": "iterations: 34\ncpu: 20450049.029410794 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/P1/4",
+            "value": 20463875.558822807,
+            "unit": "ns/iter",
+            "extra": "iterations: 34\ncpu: 20462868.26470457 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/V2/3",
+            "value": 918.2063399277552,
+            "unit": "ns/iter",
+            "extra": "iterations: 762974\ncpu: 918.1628797311374 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/V2/4",
+            "value": 908.9811021404597,
+            "unit": "ns/iter",
+            "extra": "iterations: 766436\ncpu: 908.9054689497015 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/P3/3",
+            "value": 353815.7263530821,
+            "unit": "ns/iter",
+            "extra": "iterations: 1977\ncpu: 353813.28072838456 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/P3/4",
+            "value": 353964.2948912435,
+            "unit": "ns/iter",
+            "extra": "iterations: 1977\ncpu: 353957.7835103907 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/Verifier/3",
+            "value": 43863517.99999488,
+            "unit": "ns/iter",
+            "extra": "iterations: 16\ncpu: 43860541.749999985 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq-Int/Verifier/4",
+            "value": 43851301.18750169,
+            "unit": "ns/iter",
+            "extra": "iterations: 16\ncpu: 43848715.25000022 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/DL/Prover/3",
+            "value": 979727.6736113265,
+            "unit": "ns/iter",
+            "extra": "iterations: 720\ncpu: 979667.106944425 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/DL/Prover/4",
+            "value": 907283.6814622893,
+            "unit": "ns/iter",
+            "extra": "iterations: 766\ncpu: 907248.3485640645 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/DL/Verify/3",
+            "value": 768680.4002191182,
+            "unit": "ns/iter",
+            "extra": "iterations: 912\ncpu: 768625.5570175747 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/DL/Verify/4",
+            "value": 4453997.394904806,
+            "unit": "ns/iter",
+            "extra": "iterations: 157\ncpu: 4453697.560509849 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/DH/Prove/3",
+            "value": 77838.7683359188,
+            "unit": "ns/iter",
+            "extra": "iterations: 9026\ncpu: 77833.12353201241 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/DH/Verify/3",
+            "value": 137154.63419914406,
+            "unit": "ns/iter",
+            "extra": "iterations: 5082\ncpu: 137150.0448642266 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalCom/Prover/3",
+            "value": 2716929.2674418893,
+            "unit": "ns/iter",
+            "extra": "iterations: 258\ncpu: 2716737.565891407 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalCom/Verify/3",
+            "value": 1073942.3701998077,
+            "unit": "ns/iter",
+            "extra": "iterations: 651\ncpu: 1073887.840245925 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalPubShareEqual/Prover/3",
+            "value": 78271.05706944814,
+            "unit": "ns/iter",
+            "extra": "iterations: 8954\ncpu: 78268.88172884221 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalPubShareEqual/Verify/3",
+            "value": 143826.8864557917,
+            "unit": "ns/iter",
+            "extra": "iterations: 4932\ncpu: 143815.4943227954 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalComMult/Prover/3",
+            "value": 255995.27343167138,
+            "unit": "ns/iter",
+            "extra": "iterations: 2710\ncpu: 255993.96752766293 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/ElGamalComMult/Verify/3",
+            "value": 371792.7684153987,
+            "unit": "ns/iter",
+            "extra": "iterations: 1887\ncpu: 371766.0471647639 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/UCElGamalComMultPrivScalar/Prover/3",
+            "value": 4174432.988095521,
+            "unit": "ns/iter",
+            "extra": "iterations: 168\ncpu: 4174236.726190846 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/UCElGamalComMultPrivScalar/Verify/3",
+            "value": 1000354.3609131151,
+            "unit": "ns/iter",
+            "extra": "iterations: 701\ncpu: 1000278.9686162703 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/ValidPaillier/Prover",
+            "value": 23442000.93333105,
+            "unit": "ns/iter",
+            "extra": "iterations: 30\ncpu: 23441582.466663625 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/ValidPaillier/Verify",
+            "value": 22548817.645165104,
+            "unit": "ns/iter",
+            "extra": "iterations: 31\ncpu: 22547421.22580601 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero/Prover",
+            "value": 92403623.12499428,
+            "unit": "ns/iter",
+            "extra": "iterations: 8\ncpu: 92397066.37499978 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierZero/Verify",
+            "value": 87804145.37500292,
+            "unit": "ns/iter",
+            "extra": "iterations: 8\ncpu: 87800777.1249969 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual/Prover",
+            "value": 90738489.62498233,
+            "unit": "ns/iter",
+            "extra": "iterations: 8\ncpu: 90735371.99999748 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/TwoPaillierEqual/Verify",
+            "value": 183591981.5000011,
+            "unit": "ns/iter",
+            "extra": "iterations: 4\ncpu: 183585338.00000033 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersen/Prover/3",
+            "value": 331786990.99994445,
+            "unit": "ns/iter",
+            "extra": "iterations: 2\ncpu: 331752409.0000461 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/RangePedersen/Verify/3",
+            "value": 17534776.075001445,
+            "unit": "ns/iter",
+            "extra": "iterations: 40\ncpu: 17533315.40000147 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq/Prover/3",
+            "value": 48125176.00000016,
+            "unit": "ns/iter",
+            "extra": "iterations: 15\ncpu: 48123889.466660336 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierPedersenEq/Verify/3",
+            "value": 98939327.42855732,
+            "unit": "ns/iter",
+            "extra": "iterations: 7\ncpu: 98933230.28571948 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierRangeExpSlack/Prover/3",
+            "value": 383223019.00007004,
+            "unit": "ns/iter",
+            "extra": "iterations: 2\ncpu: 383220441.99998116 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PaillierRangeExpSlack/Verify/3",
+            "value": 116998196.50001095,
+            "unit": "ns/iter",
+            "extra": "iterations: 6\ncpu: 116990881.3333412 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PDL/Prover",
+            "value": 390571637.4999884,
+            "unit": "ns/iter",
+            "extra": "iterations: 2\ncpu: 390545674.00000906 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/PDL/Verify",
+            "value": 126946243.79996641,
+            "unit": "ns/iter",
+            "extra": "iterations: 5\ncpu: 126939911.79999101 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/UnknownOrderDL/Prove",
+            "value": 303857897.4999382,
+            "unit": "ns/iter",
+            "extra": "iterations: 2\ncpu: 303855860.49999344 ns\nthreads: 1"
+          },
+          {
+            "name": "ZK/UnknownOrderDL/Verify",
+            "value": 304721416.0000067,
+            "unit": "ns/iter",
+            "extra": "iterations: 2\ncpu: 304702700.0000071 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt/Encrypt/0",
+            "value": 11032543.140622409,
+            "unit": "ns/iter",
+            "extra": "iterations: 64\ncpu: 11032022.35937495 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt/Encrypt/1",
+            "value": 23733205.166672632,
+            "unit": "ns/iter",
+            "extra": "iterations: 30\ncpu: 23731067.7333312 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt/Verify/0",
+            "value": 6686145.86274374,
+            "unit": "ns/iter",
+            "extra": "iterations: 102\ncpu: 6685679.37254898 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt/Verify/1",
+            "value": 12944620.462963872,
+            "unit": "ns/iter",
+            "extra": "iterations: 54\ncpu: 12943839.888889754 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt/Decrypt/0",
+            "value": 7380812.021052694,
+            "unit": "ns/iter",
+            "extra": "iterations: 95\ncpu: 7380512.442104622 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt/Decrypt/1",
+            "value": 13052267.111110842,
+            "unit": "ns/iter",
+            "extra": "iterations: 54\ncpu: 13051190.407408185 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Encrypt/0/4",
+            "value": 18851719.62162285,
+            "unit": "ns/iter",
+            "extra": "iterations: 37\ncpu: 18850632.64864732 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Encrypt/1/4",
+            "value": 31482871.54545993,
+            "unit": "ns/iter",
+            "extra": "iterations: 22\ncpu: 31478759.681817792 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Encrypt/0/16",
+            "value": 48639432.99999716,
+            "unit": "ns/iter",
+            "extra": "iterations: 14\ncpu: 48633413.21428801 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Encrypt/1/16",
+            "value": 61097406.08333898,
+            "unit": "ns/iter",
+            "extra": "iterations: 12\ncpu: 61087901.08333058 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Verify/0/4",
+            "value": 14142779.448979571,
+            "unit": "ns/iter",
+            "extra": "iterations: 49\ncpu: 14141395.530612277 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Verify/1/4",
+            "value": 20392262.058822673,
+            "unit": "ns/iter",
+            "extra": "iterations: 34\ncpu: 20391054.294116337 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Verify/0/16",
+            "value": 43267113.062512405,
+            "unit": "ns/iter",
+            "extra": "iterations: 16\ncpu: 43264462.562497385 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Verify/1/16",
+            "value": 49511787.57143485,
+            "unit": "ns/iter",
+            "extra": "iterations: 14\ncpu: 49507340.35714634 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Decrypt/0/4",
+            "value": 14890618.148940044,
+            "unit": "ns/iter",
+            "extra": "iterations: 47\ncpu: 14889424.702128634 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Decrypt/1/4",
+            "value": 20550938.94118192,
+            "unit": "ns/iter",
+            "extra": "iterations: 34\ncpu: 20548829.08823388 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Decrypt/0/16",
+            "value": 44224951.06250323,
+            "unit": "ns/iter",
+            "extra": "iterations: 16\ncpu: 44224643.18750485 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch/Decrypt/1/16",
+            "value": 49859065.28570793,
+            "unit": "ns/iter",
+            "extra": "iterations: 14\ncpu: 49851283.428568296 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch-many/Encrypt",
+            "value": 408315583.999979,
+            "unit": "ns/iter",
+            "extra": "iterations: 2\ncpu: 408278277.0000222 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch-many/Verify",
+            "value": 229601165.00000063,
+            "unit": "ns/iter",
+            "extra": "iterations: 3\ncpu: 229574099.00000885 ns\nthreads: 1"
+          },
+          {
+            "name": "PVE/vencrypt-batch-many/Decrypt/iterations:5",
+            "value": 10252101.80000613,
+            "unit": "ns/iter",
+            "extra": "iterations: 5\ncpu: 10251953.000010872 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/64",
+            "value": 6204621.491071245,
+            "unit": "ns/iter",
+            "extra": "iterations: 112\ncpu: 6203622.339285175 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/128",
+            "value": 12290637.298248615,
+            "unit": "ns/iter",
+            "extra": "iterations: 57\ncpu: 12288192.210526336 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24497474.035708167,
+            "unit": "ns/iter",
+            "extra": "iterations: 28\ncpu: 24495691.64285695 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/512",
+            "value": 48892338.57142829,
+            "unit": "ns/iter",
+            "extra": "iterations: 14\ncpu: 48885631.42857753 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/1024",
+            "value": 97719754.14287226,
+            "unit": "ns/iter",
+            "extra": "iterations: 7\ncpu: 97718114.14285432 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/2048",
+            "value": 195414922.49999237,
+            "unit": "ns/iter",
+            "extra": "iterations: 4\ncpu: 195401038.24999732 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/64",
+            "value": 24904613.888894446,
+            "unit": "ns/iter",
+            "extra": "iterations: 27\ncpu: 24903864.22222299 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/128",
+            "value": 49667142.85714196,
+            "unit": "ns/iter",
+            "extra": "iterations: 14\ncpu: 49663040.28571195 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 99241899.99998946,
+            "unit": "ns/iter",
+            "extra": "iterations: 7\ncpu: 99235595.71429256 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/512",
+            "value": 198405341.25000885,
+            "unit": "ns/iter",
+            "extra": "iterations: 4\ncpu: 198384201.0000103 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/1024",
+            "value": 396692325.49999833,
+            "unit": "ns/iter",
+            "extra": "iterations: 2\ncpu: 396650011.5000144 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/2048",
+            "value": 792836353.9999737,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 792763994.9999729 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/64",
+            "value": 3446214.4729067734,
+            "unit": "ns/iter",
+            "extra": "iterations: 203\ncpu: 3445781.246305697 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/128",
+            "value": 6890923.1176469205,
+            "unit": "ns/iter",
+            "extra": "iterations: 102\ncpu: 6890490.2254905 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13798293.840000043,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 13797206.019999065 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/512",
+            "value": 27576044.879997425,
+            "unit": "ns/iter",
+            "extra": "iterations: 25\ncpu: 27572457.759997636 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/1024",
+            "value": 55141427.461544126,
+            "unit": "ns/iter",
+            "extra": "iterations: 13\ncpu: 55136404.692313164 ns\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/2048",
+            "value": 110331163.49998789,
+            "unit": "ns/iter",
+            "extra": "iterations: 6\ncpu: 110322576.83333077 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/1/1/2048",
+            "value": 24676108.39285531,
+            "unit": "ns/iter",
+            "extra": "iterations: 28\ncpu: 24674370.142857276 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/1/1/4096",
+            "value": 24570694.55172602,
+            "unit": "ns/iter",
+            "extra": "iterations: 29\ncpu: 24567562.551722184 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/1/1/65536",
+            "value": 24697513.82142249,
+            "unit": "ns/iter",
+            "extra": "iterations: 28\ncpu: 24694177.14285425 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/2/2/2048",
+            "value": 103259660.71429451,
+            "unit": "ns/iter",
+            "extra": "iterations: 7\ncpu: 103247664.99999377 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/2/2/4096",
+            "value": 104332706.28573155,
+            "unit": "ns/iter",
+            "extra": "iterations: 7\ncpu: 104323160.71428107 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/2/2/65536",
+            "value": 134945897.79998022,
+            "unit": "ns/iter",
+            "extra": "iterations: 5\ncpu: 134936543.20000133 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/3/1/2048",
+            "value": 18187268.289472356,
+            "unit": "ns/iter",
+            "extra": "iterations: 38\ncpu: 18185266.02631652 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/3/1/4096",
+            "value": 21286748.51515329,
+            "unit": "ns/iter",
+            "extra": "iterations: 33\ncpu: 21285529.575758725 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/3/1/65536",
+            "value": 114792235.66667922,
+            "unit": "ns/iter",
+            "extra": "iterations: 6\ncpu: 114783228.83332717 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/4/2/2048",
+            "value": 746085.1223175448,
+            "unit": "ns/iter",
+            "extra": "iterations: 932\ncpu: 746023.4581545864 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/4/2/4096",
+            "value": 1493689.0512818831,
+            "unit": "ns/iter",
+            "extra": "iterations: 468\ncpu: 1493567.8525640103 ns\nthreads: 1"
+          },
+          {
+            "name": "Full-OT-2P/4/2/65536",
+            "value": 24013968.241378874,
+            "unit": "ns/iter",
+            "extra": "iterations: 29\ncpu: 24011254.44827875 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/1/1/256/iterations:10000/manual_time",
+            "value": 62083.97899999983,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65287.23729999229 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/2/1/256/iterations:10000/manual_time",
+            "value": 861.8412999999969,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 59598.377600002554 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/3/1/256/iterations:10000/manual_time",
+            "value": 54671.53389999971,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 67418.84460000164 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/1/2/256/iterations:10000/manual_time",
+            "value": 39026.81170000012,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 60593.48139999657 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/2/2/256/iterations:10000/manual_time",
+            "value": 10503.742900000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65445.36600000583 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/3/2/256/iterations:10000/manual_time",
+            "value": 44863.17410000006,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 61989.29740000949 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/1/1/1024/iterations:10000/manual_time",
+            "value": 61823.794799999916,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65026.69140000989 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/2/1/1024/iterations:10000/manual_time",
+            "value": 846.8901000000014,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 59414.06769999275 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/3/1/1024/iterations:10000/manual_time",
+            "value": 57515.76509999967,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 67706.98760000187 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/1/2/1024/iterations:10000/manual_time",
+            "value": 39085.78020000014,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 60968.79320000426 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/2/2/1024/iterations:10000/manual_time",
+            "value": 10499.528500000062,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65700.02619999967 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/3/2/1024/iterations:10000/manual_time",
+            "value": 46938.75760000017,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 63242.743299997535 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/1/1/4096/iterations:10000/manual_time",
+            "value": 62347.312300000274,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65294.06519999839 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/2/1/4096/iterations:10000/manual_time",
+            "value": 863.8221999999953,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 60427.387499998986 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/3/1/4096/iterations:10000/manual_time",
+            "value": 58081.540300000044,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 67476.0294000066 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/1/2/4096/iterations:10000/manual_time",
+            "value": 39369.04059999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 60740.74249999057 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/2/2/4096/iterations:10000/manual_time",
+            "value": 10381.065800000039,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 64984.34139999745 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakAgreeRandom-2P/3/2/4096/iterations:10000/manual_time",
+            "value": 47699.49679999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 63423.45299999579 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/1/1/256/iterations:10000/manual_time",
+            "value": 69212.38860000027,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65254.310500006344 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/2/1/256/iterations:10000/manual_time",
+            "value": 1088.889299999989,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 61548.206099996605 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/3/1/256/iterations:10000/manual_time",
+            "value": 590.4588999999962,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 62602.31329999896 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/4/1/256/iterations:10000/manual_time",
+            "value": 41874.433399999936,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 61490.12780000475 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/1/2/256/iterations:10000/manual_time",
+            "value": 39466.953800000025,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 60214.521399996105 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/2/2/256/iterations:10000/manual_time",
+            "value": 10405.491500000056,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 66880.23039999962 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/3/2/256/iterations:10000/manual_time",
+            "value": 650.6538000000052,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 62347.33210000058 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/4/2/256/iterations:10000/manual_time",
+            "value": 47752.50769999994,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 63817.0174000038 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/1/1/1024/iterations:10000/manual_time",
+            "value": 69774.74539999977,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65998.78780000382 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/2/1/1024/iterations:10000/manual_time",
+            "value": 1076.9752999999837,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 61748.41630000856 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/3/1/1024/iterations:10000/manual_time",
+            "value": 837.1604999999979,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 64073.44010000316 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/4/1/1024/iterations:10000/manual_time",
+            "value": 42838.86499999984,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 62373.32819999893 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/1/2/1024/iterations:10000/manual_time",
+            "value": 39440.27840000005,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 60453.82370000426 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/2/2/1024/iterations:10000/manual_time",
+            "value": 10527.870900000073,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65621.56900000674 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/3/2/1024/iterations:10000/manual_time",
+            "value": 753.9434000000015,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 62049.29050001056 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/4/2/1024/iterations:10000/manual_time",
+            "value": 48301.405399999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 64229.852999994815 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/1/1/4096/iterations:10000/manual_time",
+            "value": 70112.67040000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 66092.586700006 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/2/1/4096/iterations:10000/manual_time",
+            "value": 1108.724299999978,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 61752.295000007965 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/3/1/4096/iterations:10000/manual_time",
+            "value": 1215.6069999999845,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 64917.057500008465 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/4/1/4096/iterations:10000/manual_time",
+            "value": 41752.648599999855,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 62833.42030000086 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/1/2/4096/iterations:10000/manual_time",
+            "value": 39576.67229999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 60033.377100000966 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/2/2/4096/iterations:10000/manual_time",
+            "value": 10548.902300000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 66437.57130000267 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/3/2/4096/iterations:10000/manual_time",
+            "value": 932.3191999999881,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 62077.42020000069 ns\nthreads: 1"
+          },
+          {
+            "name": "AgreeRandom-2P/4/2/4096/iterations:10000/manual_time",
+            "value": 50576.79649999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65117.126100005866 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/0/256/iterations:1000/manual_time",
+            "value": 136011.29800000013,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 166010.6409999571 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/0/256/iterations:1000/manual_time",
+            "value": 4712.147999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171985.7199999524 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/0/256/iterations:1000/manual_time",
+            "value": 102993.07199999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 175693.62099993668 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/1/256/iterations:1000/manual_time",
+            "value": 135804.69499999995,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 168187.77799994676 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/1/256/iterations:1000/manual_time",
+            "value": 4589.809000000007,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172874.19499996305 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/1/256/iterations:1000/manual_time",
+            "value": 103427.73300000008,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174781.15799997342 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/2/256/iterations:1000/manual_time",
+            "value": 138200.27,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 169301.11400006354 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/2/256/iterations:1000/manual_time",
+            "value": 4571.741000000003,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 173474.6779999341 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/2/256/iterations:1000/manual_time",
+            "value": 102899.74200000006,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 173177.71700004413 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/3/256/iterations:1000/manual_time",
+            "value": 138072.87199999994,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 167821.85500005653 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/3/256/iterations:1000/manual_time",
+            "value": 4106.7350000000015,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172818.02200000128 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/3/256/iterations:1000/manual_time",
+            "value": 102376.22600000005,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 173562.12100003177 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/0/1024/iterations:1000/manual_time",
+            "value": 134697.16100000008,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 164071.64899999314 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/0/1024/iterations:1000/manual_time",
+            "value": 5103.441000000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172001.76999995165 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/0/1024/iterations:1000/manual_time",
+            "value": 105205.00400000003,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 176827.0869999924 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/1/1024/iterations:1000/manual_time",
+            "value": 135762.67500000005,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 168962.8650000259 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/1/1024/iterations:1000/manual_time",
+            "value": 5102.605999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 173049.8260000104 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/1/1024/iterations:1000/manual_time",
+            "value": 105107.33300000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 175230.32899998725 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/2/1024/iterations:1000/manual_time",
+            "value": 138307.815,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 169365.77399997076 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/2/1024/iterations:1000/manual_time",
+            "value": 4994.035999999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171866.43300010473 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/2/1024/iterations:1000/manual_time",
+            "value": 105709.31600000006,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174672.60000000804 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/3/1024/iterations:1000/manual_time",
+            "value": 139125.32100000014,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 168422.82000004617 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/3/1024/iterations:1000/manual_time",
+            "value": 4521.425,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171840.25599999586 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/3/1024/iterations:1000/manual_time",
+            "value": 108971.723,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 179134.23699997112 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/0/4096/iterations:1000/manual_time",
+            "value": 136577.06199999995,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 164866.4619999636 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/0/4096/iterations:1000/manual_time",
+            "value": 5286.246999999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 173511.98500000464 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/0/4096/iterations:1000/manual_time",
+            "value": 110448.17599999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 179219.4050000262 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/1/4096/iterations:1000/manual_time",
+            "value": 141227.26700000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171568.5059999714 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/1/4096/iterations:1000/manual_time",
+            "value": 5490.315999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 183066.89899998216 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/1/4096/iterations:1000/manual_time",
+            "value": 110045.0430000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 176216.47800001485 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/2/4096/iterations:1000/manual_time",
+            "value": 138915.99699999992,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 168884.77800000602 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/2/4096/iterations:1000/manual_time",
+            "value": 5140.018000000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172172.73400001432 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/2/4096/iterations:1000/manual_time",
+            "value": 109819.61399999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174435.07199993747 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/1/3/4096/iterations:1000/manual_time",
+            "value": 139047.3989999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 167242.8499999796 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/2/3/4096/iterations:1000/manual_time",
+            "value": 4713.368,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172501.70900001648 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiAgreeRandom-MP/3/3/4096/iterations:1000/manual_time",
+            "value": 109159.90699999989,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174165.74399999264 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/0/256/iterations:1000/manual_time",
+            "value": 124434.34499999986,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 162499.2399999883 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/0/256/iterations:1000/manual_time",
+            "value": 8825.062999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172876.80100002943 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/0/256/iterations:1000/manual_time",
+            "value": 91911.8100000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172147.46600006946 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/1/256/iterations:1000/manual_time",
+            "value": 125610.02099999985,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 165716.15899999868 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/1/256/iterations:1000/manual_time",
+            "value": 8734.122,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171370.10599992663 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/1/256/iterations:1000/manual_time",
+            "value": 89373.76600000005,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 170801.58299995674 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/2/256/iterations:1000/manual_time",
+            "value": 127539.23899999991,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 166807.67499997272 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/2/256/iterations:1000/manual_time",
+            "value": 8934.697000000015,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171837.40899997702 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/2/256/iterations:1000/manual_time",
+            "value": 89862.7089999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 170739.1010000947 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/3/256/iterations:1000/manual_time",
+            "value": 130035.65800000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 166619.74800001647 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/3/256/iterations:1000/manual_time",
+            "value": 8163.708999999992,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172166.8640000189 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/3/256/iterations:1000/manual_time",
+            "value": 91067.98800000008,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171498.00400000002 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/0/1024/iterations:1000/manual_time",
+            "value": 124695.27699999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 162757.0090000745 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/0/1024/iterations:1000/manual_time",
+            "value": 11775.284000000003,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172716.95099998396 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/0/1024/iterations:1000/manual_time",
+            "value": 92455.03399999993,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 173564.86500000302 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/1/1024/iterations:1000/manual_time",
+            "value": 126581.3309999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 166686.2660000561 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/1/1024/iterations:1000/manual_time",
+            "value": 11442.255999999988,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171789.55099996075 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/1/1024/iterations:1000/manual_time",
+            "value": 91676.98900000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172228.7410000263 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/2/1024/iterations:1000/manual_time",
+            "value": 127672.596,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 166626.34099998287 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/2/1024/iterations:1000/manual_time",
+            "value": 11941.701000000008,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171337.70800001002 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/2/1024/iterations:1000/manual_time",
+            "value": 92642.44999999987,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172458.58000001137 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/3/1024/iterations:1000/manual_time",
+            "value": 129086.59299999978,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 165078.6989999915 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/3/1024/iterations:1000/manual_time",
+            "value": 10778.365999999982,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 170464.31699998266 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/3/1024/iterations:1000/manual_time",
+            "value": 93356.32799999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172520.32399994732 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/0/4096/iterations:1000/manual_time",
+            "value": 124630.16800000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 162574.75599991268 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/0/4096/iterations:1000/manual_time",
+            "value": 12047.599000000024,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172503.89799994536 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/0/4096/iterations:1000/manual_time",
+            "value": 96446.10199999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174457.41300002736 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/1/4096/iterations:1000/manual_time",
+            "value": 125824.2120000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 166169.1259999998 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/1/4096/iterations:1000/manual_time",
+            "value": 11841.01300000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172646.50299989627 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/1/4096/iterations:1000/manual_time",
+            "value": 95388.72599999991,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 173236.9540000036 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/2/4096/iterations:1000/manual_time",
+            "value": 127184.12199999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 166090.94700004332 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/2/4096/iterations:1000/manual_time",
+            "value": 12074.673999999994,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 173090.43000000203 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/2/4096/iterations:1000/manual_time",
+            "value": 96454.72499999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172206.4190000765 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/1/3/4096/iterations:1000/manual_time",
+            "value": 130084.83599999992,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 166873.11199996204 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/2/3/4096/iterations:1000/manual_time",
+            "value": 11389.725000000015,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171662.9320000038 ns\nthreads: 1"
+          },
+          {
+            "name": "WeakMultiAgreeRandom-MP/3/3/4096/iterations:1000/manual_time",
+            "value": 97005.36300000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 173357.91899995456 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/0/256/iterations:1000/manual_time",
+            "value": 151424.48400000005,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 164376.14999995276 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/0/256/iterations:1000/manual_time",
+            "value": 2438.019999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172613.36399997163 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/0/256/iterations:1000/manual_time",
+            "value": 110580.2839999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174016.76299994052 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/1/256/iterations:1000/manual_time",
+            "value": 150899.37,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 169409.51000003677 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/1/256/iterations:1000/manual_time",
+            "value": 2362.436999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171610.10500001337 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/1/256/iterations:1000/manual_time",
+            "value": 110176.82000000017,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174132.4170000098 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/2/256/iterations:1000/manual_time",
+            "value": 154708.70699999982,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171115.3530000047 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/2/256/iterations:1000/manual_time",
+            "value": 2244.4700000000025,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172391.60600001927 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/2/256/iterations:1000/manual_time",
+            "value": 110687.14499999992,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174142.97599998463 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/3/256/iterations:1000/manual_time",
+            "value": 152298.91800000006,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 167950.70699993175 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/3/256/iterations:1000/manual_time",
+            "value": 1865.6229999999982,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 170823.6480000096 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/3/256/iterations:1000/manual_time",
+            "value": 109428.66600000006,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174397.3449999885 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/0/1024/iterations:1000/manual_time",
+            "value": 148567.818,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 163691.18099999015 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/0/1024/iterations:1000/manual_time",
+            "value": 2388.6529999999966,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172672.11199998655 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/0/1024/iterations:1000/manual_time",
+            "value": 110131.71200000006,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 175065.97800002055 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/1/1024/iterations:1000/manual_time",
+            "value": 149130.43499999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 168900.7080000238 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/1/1024/iterations:1000/manual_time",
+            "value": 2422.315000000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 171820.41999990362 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/1/1024/iterations:1000/manual_time",
+            "value": 111155.97799999994,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174855.9950000299 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/2/1024/iterations:1000/manual_time",
+            "value": 153632.9470000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 170330.2089999852 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/2/1024/iterations:1000/manual_time",
+            "value": 2372.963,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172902.54099998492 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/2/1024/iterations:1000/manual_time",
+            "value": 112462.99200000007,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174462.86599999893 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/3/1024/iterations:1000/manual_time",
+            "value": 152384.33799999984,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 167896.34799999933 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/3/1024/iterations:1000/manual_time",
+            "value": 1893.080999999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172927.14100005926 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/3/1024/iterations:1000/manual_time",
+            "value": 110071.62399999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 173972.0989999114 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/0/4096/iterations:1000/manual_time",
+            "value": 148561.985,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 163374.37300001056 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/0/4096/iterations:1000/manual_time",
+            "value": 2515.2559999999958,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172508.00600004368 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/0/4096/iterations:1000/manual_time",
+            "value": 110959.84200000003,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 175148.91600001193 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/1/4096/iterations:1000/manual_time",
+            "value": 149741.23099999983,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 168890.17799996963 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/1/4096/iterations:1000/manual_time",
+            "value": 2363.852000000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172384.07800005007 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/1/4096/iterations:1000/manual_time",
+            "value": 112010.63499999995,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174569.65199994555 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/2/4096/iterations:1000/manual_time",
+            "value": 152028.45600000003,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 168933.04099994566 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/2/4096/iterations:1000/manual_time",
+            "value": 2349.051999999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172214.59899997173 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/2/4096/iterations:1000/manual_time",
+            "value": 113825.27199999991,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 173635.7869999665 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/1/3/4096/iterations:1000/manual_time",
+            "value": 151845.50299999994,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 166986.87600000994 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/2/3/4096/iterations:1000/manual_time",
+            "value": 1855.8659999999977,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 172066.4619999752 ns\nthreads: 1"
+          },
+          {
+            "name": "MultiPairwiseAgreeRandom-MP/3/3/4096/iterations:1000/manual_time",
+            "value": 110629.16399999989,
+            "unit": "ns/iter",
+            "extra": "iterations: 1000\ncpu: 174362.97999995534 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-2P/1/1/iterations:10000/manual_time",
+            "value": 62854.940900000176,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65455.00219999668 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-2P/2/1/iterations:10000/manual_time",
+            "value": 849.6552999999985,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 59876.569400000786 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-2P/3/1/iterations:10000/manual_time",
+            "value": 56469.62339999984,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 67122.52670000681 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-2P/1/2/iterations:10000/manual_time",
+            "value": 39529.1215,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 61214.75450000844 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-2P/2/2/iterations:10000/manual_time",
+            "value": 10834.7672,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65356.95540000006 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-2P/3/2/iterations:10000/manual_time",
+            "value": 44971.51489999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 62000.71019999313 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-2P/1/1/iterations:10000/manual_time",
+            "value": 63173.224199999975,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65611.5108999984 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-2P/2/1/iterations:10000/manual_time",
+            "value": 835.445600000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 60860.60510000379 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-2P/3/1/iterations:10000/manual_time",
+            "value": 57411.369099999894,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 67548.3303999954 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-2P/1/2/iterations:10000/manual_time",
+            "value": 39610.84799999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 59401.986700004265 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-2P/2/2/iterations:10000/manual_time",
+            "value": 10298.025500000012,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 65275.39470000647 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-2P/3/2/iterations:10000/manual_time",
+            "value": 47959.33250000012,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 63232.31249999708 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-MP/1/0/iterations:10000/manual_time",
+            "value": 123942.0797,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 162314.2440000038 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-MP/2/0/iterations:10000/manual_time",
+            "value": 90096.70539999989,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 171764.5951999998 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-MP/1/1/iterations:10000/manual_time",
+            "value": 125476.36489999988,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 165661.73480000545 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-MP/2/1/iterations:10000/manual_time",
+            "value": 91730.40630000024,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 171363.31929999642 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-MP/1/2/iterations:10000/manual_time",
+            "value": 127026.26840000019,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 166020.50430000192 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-MP/2/2/iterations:10000/manual_time",
+            "value": 92478.83710000028,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 171546.83830000294 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-MP/1/3/iterations:10000/manual_time",
+            "value": 128411.85610000047,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 164699.33890000448 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Fixed-MP/2/3/iterations:10000/manual_time",
+            "value": 94548.31319999984,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 171652.80770000207 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-MP/1/0/iterations:10000/manual_time",
+            "value": 124960.40689999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 162865.40350000677 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-MP/2/0/iterations:10000/manual_time",
+            "value": 92724.63259999984,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 172792.1216000027 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-MP/1/1/iterations:10000/manual_time",
+            "value": 125968.1047000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 166172.6025000007 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-MP/2/1/iterations:10000/manual_time",
+            "value": 93944.88850000019,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 171751.48180000405 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-MP/1/2/iterations:10000/manual_time",
+            "value": 127567.47889999943,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 166211.2384000011 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-MP/2/2/iterations:10000/manual_time",
+            "value": 94345.82999999984,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 171378.14459999846 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-MP/1/3/iterations:10000/manual_time",
+            "value": 128521.7104999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 164719.67549999818 ns\nthreads: 1"
+          },
+          {
+            "name": "GenerateSID-Dynamic-MP/2/3/iterations:10000/manual_time",
+            "value": 95978.37299999985,
+            "unit": "ns/iter",
+            "extra": "iterations: 10000\ncpu: 171814.63520000761 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-KeyGen-2P/1/1/iterations:10/manual_time",
+            "value": 93760.8,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 64701.89999845389 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-KeyGen-2P/2/1/iterations:10/manual_time",
+            "value": 975.8,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 61352.299996997324 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-KeyGen-2P/3/1/iterations:10/manual_time",
+            "value": 7928571.699999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 80575.8999945283 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-KeyGen-2P/4/1/iterations:10/manual_time",
+            "value": 59328.4,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 67217.40001012222 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-KeyGen-2P/1/2/iterations:10/manual_time",
+            "value": 64997.40000000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 70965.19999549855 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-KeyGen-2P/2/2/iterations:10/manual_time",
+            "value": 1134552.7999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 74367.90000383553 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-KeyGen-2P/3/2/iterations:10/manual_time",
+            "value": 2935.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 62199.19999921331 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-KeyGen-2P/4/2/iterations:10/manual_time",
+            "value": 6978993.300000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 86418.1999986613 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Refresh-2P/1/1/iterations:200/manual_time",
+            "value": 71609.35500000003,
+            "unit": "ns/iter",
+            "extra": "iterations: 200\ncpu: 67772.36499999618 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Refresh-2P/2/1/iterations:200/manual_time",
+            "value": 1028.08,
+            "unit": "ns/iter",
+            "extra": "iterations: 200\ncpu: 62535.20000029766 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Refresh-2P/3/1/iterations:200/manual_time",
+            "value": 778.0900000000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 200\ncpu: 63211.67000010064 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Refresh-2P/4/1/iterations:200/manual_time",
+            "value": 42635.125,
+            "unit": "ns/iter",
+            "extra": "iterations: 200\ncpu: 64195.24500017814 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Refresh-2P/1/2/iterations:200/manual_time",
+            "value": 40408.01000000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 200\ncpu: 59542.50999991473 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Refresh-2P/2/2/iterations:200/manual_time",
+            "value": 10702.160000000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 200\ncpu: 66746.40499966244 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Refresh-2P/3/2/iterations:200/manual_time",
+            "value": 698.9850000000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 200\ncpu: 62740.19999978009 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Refresh-2P/4/2/iterations:200/manual_time",
+            "value": 51837.02999999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 200\ncpu: 63573.115000394864 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/1/1/1/iterations:50/manual_time",
+            "value": 93501.06000000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 69461.20000066003 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/2/1/1/iterations:50/manual_time",
+            "value": 1234.76,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 67180.28000022969 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/3/1/1/iterations:50/manual_time",
+            "value": 10665852.839999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 84915.45999959271 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/4/1/1/iterations:50/manual_time",
+            "value": 20055.98,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 78797.5599996571 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/5/1/1/iterations:50/manual_time",
+            "value": 213136.82,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 85263.55999947555 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/1/2/1/iterations:50/manual_time",
+            "value": 42413.46000000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 61836.40000017476 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/2/2/1/iterations:50/manual_time",
+            "value": 1501640.4600000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 77768.35999948162 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/3/2/1/iterations:50/manual_time",
+            "value": 2635.8200000000006,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 70111.73999899256 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/4/2/1/iterations:50/manual_time",
+            "value": 9277718.240000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 90871.53999871589 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/5/2/1/iterations:50/manual_time",
+            "value": 77318.43999999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 80529.85999938755 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/1/1/4/iterations:50/manual_time",
+            "value": 158107.62,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 71651.68000028643 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/2/1/4/iterations:50/manual_time",
+            "value": 1097.66,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 60646.260001249175 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/3/1/4/iterations:50/manual_time",
+            "value": 19654444.76,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 87660.37999976106 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/4/1/4/iterations:50/manual_time",
+            "value": 53537.95999999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 86005.60000104451 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/5/1/4/iterations:50/manual_time",
+            "value": 635575.4400000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 100221.32000131025 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/1/2/4/iterations:50/manual_time",
+            "value": 43029.26,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 63210.24000044417 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/2/2/4/iterations:50/manual_time",
+            "value": 1914938.7200000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 68234.30000167718 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/3/2/4/iterations:50/manual_time",
+            "value": 2668.2999999999993,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 66580.13999867762 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/4/2/4/iterations:50/manual_time",
+            "value": 18023352.44,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 101936.83999887071 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/5/2/4/iterations:50/manual_time",
+            "value": 67005.44,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 89225.41999936584 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/1/1/16/iterations:50/manual_time",
+            "value": 400652.28000000014,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 61482.35999944518 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/2/1/16/iterations:50/manual_time",
+            "value": 1197.04,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 69789.56000011749 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/3/1/16/iterations:50/manual_time",
+            "value": 56643814.75999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 104439.96000049083 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/4/1/16/iterations:50/manual_time",
+            "value": 187540.16,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 88912.96000001601 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/5/1/16/iterations:50/manual_time",
+            "value": 2174948.58,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 100922.98000017762 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/1/2/16/iterations:50/manual_time",
+            "value": 45732.1,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 67645.48000091963 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/2/2/16/iterations:50/manual_time",
+            "value": 4400896.080000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 77185.03999967652 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/3/2/16/iterations:50/manual_time",
+            "value": 2423.3600000000006,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 70344.31999954904 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/4/2/16/iterations:50/manual_time",
+            "value": 52852765.87999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 104639.99999956286 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-2PC-Sign-2P/5/2/16/iterations:50/manual_time",
+            "value": 89004.54000000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 50\ncpu: 95582.81999943574 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/1/0/iterations:1/manual_time",
+            "value": 242719,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 272677.99998753617 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/2/0/iterations:1/manual_time",
+            "value": 1616033,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 198681.00002895517 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/3/0/iterations:1/manual_time",
+            "value": 20419688,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 255595.9999881452 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/1/1/iterations:1/manual_time",
+            "value": 224540,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 221822.99994710775 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/2/1/iterations:1/manual_time",
+            "value": 1622356,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 196995.99999967177 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/3/1/iterations:1/manual_time",
+            "value": 20458801,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 220882.9999972295 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/1/2/iterations:1/manual_time",
+            "value": 209523,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 205311.9999345654 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/2/2/iterations:1/manual_time",
+            "value": 1574366,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 198240.00003154651 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/3/2/iterations:1/manual_time",
+            "value": 20489815,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 223145.00006359594 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/1/3/iterations:1/manual_time",
+            "value": 201962,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 190456.99991693255 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/2/3/iterations:1/manual_time",
+            "value": 1610142,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 207258.00004584016 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-KeyGen-MP/3/3/iterations:1/manual_time",
+            "value": 20504850,
+            "unit": "ns/iter",
+            "extra": "iterations: 1\ncpu: 223530.9999605306 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/1/0/iterations:10/manual_time",
+            "value": 4612500.899999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 187672.59999776797 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/2/0/iterations:10/manual_time",
+            "value": 2595694.4000000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 201360.59999913414 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/3/0/iterations:10/manual_time",
+            "value": 69788747.80000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 242407.59998974678 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/1/1/iterations:10/manual_time",
+            "value": 4552148.700000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 186485.20000397184 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/2/1/iterations:10/manual_time",
+            "value": 2589622.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 211153.60000294456 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/3/1/iterations:10/manual_time",
+            "value": 69778300.1,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 225581.50000122623 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/1/2/iterations:10/manual_time",
+            "value": 4579799.699999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 185320.2000006604 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/2/2/iterations:10/manual_time",
+            "value": 2590773,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 198730.5999932687 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/3/2/iterations:10/manual_time",
+            "value": 69728505.6,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 229972.8000025425 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/1/3/iterations:10/manual_time",
+            "value": 4613942.7,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 185122.500010948 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/2/3/iterations:10/manual_time",
+            "value": 2601993.1,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 199640.79999681417 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Refresh-MP/3/3/iterations:10/manual_time",
+            "value": 69765160.20000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 215235.99999682122 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/1/0/iterations:10/manual_time",
+            "value": 252206.6,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 172298.40000254626 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/2/0/iterations:10/manual_time",
+            "value": 2516804.7,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 181531.4999930706 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/3/0/iterations:10/manual_time",
+            "value": 44878801.900000006,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 223591.19999464383 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/4/0/iterations:10/manual_time",
+            "value": 508785.6,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 201112.80000492116 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/1/1/iterations:10/manual_time",
+            "value": 255431.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 180133.00000347954 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/2/1/iterations:10/manual_time",
+            "value": 2504604.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 184406.09999288426 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/3/1/iterations:10/manual_time",
+            "value": 45009713.6,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 209844.69999802968 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/4/1/iterations:10/manual_time",
+            "value": 131547.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 195759.4000032259 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/1/2/iterations:10/manual_time",
+            "value": 251654.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 169312.4999974316 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/2/2/iterations:10/manual_time",
+            "value": 2561942.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 184063.79999760247 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/3/2/iterations:10/manual_time",
+            "value": 45090792.7,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 206176.50000076537 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/4/2/iterations:10/manual_time",
+            "value": 113268,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 190312.89999702494 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/1/3/iterations:10/manual_time",
+            "value": 254702.39999999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 172108.10000278798 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/2/3/iterations:10/manual_time",
+            "value": 2477383.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 181786.40000314772 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/3/3/iterations:10/manual_time",
+            "value": 44921830.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 204585.50000057585 ns\nthreads: 1"
+          },
+          {
+            "name": "Schnorr-MPC-Sign-MP/4/3/iterations:10/manual_time",
+            "value": 115681.20000000003,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 191037.1999997551 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-KeyGen-2P/1/1/iterations:20/manual_time",
+            "value": 218303592.65,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 101724.29999784072 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-KeyGen-2P/2/1/iterations:20/manual_time",
+            "value": 2144.55,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 95306.69999548991 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-KeyGen-2P/3/1/iterations:20/manual_time",
+            "value": 17227211.450000003,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 108990.35000306866 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-KeyGen-2P/4/1/iterations:20/manual_time",
+            "value": 116862.8,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 102117.30000264652 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-KeyGen-2P/1/2/iterations:20/manual_time",
+            "value": 62887.15000000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 70556.15000126636 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-KeyGen-2P/2/2/iterations:20/manual_time",
+            "value": 1214247.55,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 98900.40000186673 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-KeyGen-2P/3/2/iterations:20/manual_time",
+            "value": 2504.15,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 92050.59999999321 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-KeyGen-2P/4/2/iterations:20/manual_time",
+            "value": 76742090.70000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 123454.94999976836 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Refresh-2P/1/1/iterations:20/manual_time",
+            "value": 90921651,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 102408.69999620372 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Refresh-2P/2/1/iterations:20/manual_time",
+            "value": 2466.8,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 87267.2499951932 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Refresh-2P/3/1/iterations:20/manual_time",
+            "value": 10506581.799999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 111438.19999688277 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Refresh-2P/4/1/iterations:20/manual_time",
+            "value": 100566.45,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 99523.59999942928 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Refresh-2P/1/2/iterations:20/manual_time",
+            "value": 46661.85,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 67062.25000243649 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Refresh-2P/2/2/iterations:20/manual_time",
+            "value": 387985.45,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 94799.70000256799 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Refresh-2P/3/2/iterations:20/manual_time",
+            "value": 1334.5,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 90748.75000010252 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Refresh-2P/4/2/iterations:20/manual_time",
+            "value": 86227000.49999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 101814.59999785147 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/1/1/1/iterations:20/manual_time",
+            "value": 1550469.3000000003,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 62316.65000200337 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/2/1/1/iterations:20/manual_time",
+            "value": 1050.55,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 72870.79999969137 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/3/1/1/iterations:20/manual_time",
+            "value": 1941424.8,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 64212.55000077508 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/4/1/1/iterations:20/manual_time",
+            "value": 4236.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 67715.40000158893 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/5/1/1/iterations:20/manual_time",
+            "value": 23484579.750000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 105478.64999921332 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/1/2/1/iterations:20/manual_time",
+            "value": 45372.799999999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 64993.19999875297 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/2/2/1/iterations:20/manual_time",
+            "value": 1535880.2000000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 68048.25000017445 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/3/2/1/iterations:20/manual_time",
+            "value": 2895.35,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 68461.19999863731 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/4/2/1/iterations:20/manual_time",
+            "value": 42841331.00000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 108622.80000196732 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/5/2/1/iterations:20/manual_time",
+            "value": 86082.80000000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 95551.65000278976 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/1/1/4/iterations:20/manual_time",
+            "value": 1992826.1500000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 62503.30000057147 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/2/1/4/iterations:20/manual_time",
+            "value": 1063.4999999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 72532.79999872575 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/3/1/4/iterations:20/manual_time",
+            "value": 2886161.6,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 69357.64999980165 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/4/1/4/iterations:20/manual_time",
+            "value": 4980.25,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 70432.00000111938 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/5/1/4/iterations:20/manual_time",
+            "value": 93486051.54999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 123059.75000117542 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/1/2/4/iterations:20/manual_time",
+            "value": 49068.95,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 70511.25000430147 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/2/2/4/iterations:20/manual_time",
+            "value": 1915690.5,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 62389.949999897 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/3/2/4/iterations:20/manual_time",
+            "value": 2749.6000000000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 69163.40000202581 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/4/2/4/iterations:20/manual_time",
+            "value": 166598841.64999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 113376.3499979068 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/5/2/4/iterations:20/manual_time",
+            "value": 126018.54999999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 105518.89999987907 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/1/1/16/iterations:20/manual_time",
+            "value": 4338128.800000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 74853.04999477194 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/2/1/16/iterations:20/manual_time",
+            "value": 1066.65,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 74688.09999977566 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/3/1/16/iterations:20/manual_time",
+            "value": 6822900.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 86759.54999830537 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/4/1/16/iterations:20/manual_time",
+            "value": 5576.850000000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 78609.99999707019 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/5/1/16/iterations:20/manual_time",
+            "value": 373423741.99999994,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 144535.99999910692 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/1/2/16/iterations:20/manual_time",
+            "value": 49797.84999999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 64405.399996303466 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/2/2/16/iterations:20/manual_time",
+            "value": 4392545.7,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 76430.14999985098 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/3/2/16/iterations:20/manual_time",
+            "value": 3340.7,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 68132.80000415034 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/4/2/16/iterations:20/manual_time",
+            "value": 661626328.2499999,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 125288.19999602092 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-2P/5/2/16/iterations:20/manual_time",
+            "value": 183180.95,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 122251.9500004182 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/1/1/1/iterations:20/manual_time",
+            "value": 1620454.8,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 63045.15000010724 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/2/1/1/iterations:20/manual_time",
+            "value": 969.95,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 59468.849997301724 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/3/1/1/iterations:20/manual_time",
+            "value": 1937057.35,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 67983.0500018852 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/4/1/1/iterations:20/manual_time",
+            "value": 5025.449999999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 74804.99999701351 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/5/1/1/iterations:20/manual_time",
+            "value": 0,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 93505.45000188504 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/1/2/1/iterations:20/manual_time",
+            "value": 47440.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 63842.00000297824 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/2/2/1/iterations:20/manual_time",
+            "value": 1476533.4000000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 79918.9000019851 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/3/2/1/iterations:20/manual_time",
+            "value": 3054.0499999999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 68189.25000402487 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/4/2/1/iterations:20/manual_time",
+            "value": 13015474.05,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 87087.49999755128 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/5/2/1/iterations:20/manual_time",
+            "value": 0,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 76474.15000064939 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/1/1/4/iterations:20/manual_time",
+            "value": 1961075.5000000005,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 62392.64999976512 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/2/1/4/iterations:20/manual_time",
+            "value": 1076.5500000000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 62941.75000221003 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/3/1/4/iterations:20/manual_time",
+            "value": 2871915.8499999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 72085.64999814371 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/4/1/4/iterations:20/manual_time",
+            "value": 4529.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 79330.59999913894 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/5/1/4/iterations:20/manual_time",
+            "value": 0,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 96251.74999996489 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/1/2/4/iterations:20/manual_time",
+            "value": 53639.6,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 75516.30000079967 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/2/2/4/iterations:20/manual_time",
+            "value": 1887108.3499999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 66293.45000419562 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/3/2/4/iterations:20/manual_time",
+            "value": 2456.6,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 67027.39999582263 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/4/2/4/iterations:20/manual_time",
+            "value": 47039282.75,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 107728.69999868816 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/5/2/4/iterations:20/manual_time",
+            "value": 0,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 87258.89999823266 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/1/1/16/iterations:20/manual_time",
+            "value": 4494919.799999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 67682.79999960214 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/2/1/16/iterations:20/manual_time",
+            "value": 1000.7000000000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 72012.39999972131 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/3/1/16/iterations:20/manual_time",
+            "value": 6834451.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 77893.89999857121 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/4/1/16/iterations:20/manual_time",
+            "value": 5678.700000000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 80977.15000303651 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/5/1/16/iterations:20/manual_time",
+            "value": 0,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 112996.79999865475 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/1/2/16/iterations:20/manual_time",
+            "value": 46145.40000000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 62869.5499983678 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/2/2/16/iterations:20/manual_time",
+            "value": 4372216.7,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 79905.99999629922 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/3/2/16/iterations:20/manual_time",
+            "value": 3646.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 63478.949999762335 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/4/2/16/iterations:20/manual_time",
+            "value": 183558165.45,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 116376.7500031554 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-2PC-Sign-With-Global-Abort-2P/5/2/16/iterations:20/manual_time",
+            "value": 0,
+            "unit": "ns/iter",
+            "extra": "iterations: 20\ncpu: 100806.40000182939 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/1/0/iterations:10/manual_time",
+            "value": 180533.39999999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 187792.70000095494 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/2/0/iterations:10/manual_time",
+            "value": 1303318.4,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 189882.19999300782 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/3/0/iterations:10/manual_time",
+            "value": 3227368.1,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 191507.1999974316 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/1/1/iterations:10/manual_time",
+            "value": 170380.3,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 178974.59999858256 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/2/1/iterations:10/manual_time",
+            "value": 1307429.6,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 181180.0999917068 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/3/1/iterations:10/manual_time",
+            "value": 3216153.6999999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 188472.10000103587 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/1/2/iterations:10/manual_time",
+            "value": 175095.69999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 181340.5000007151 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/2/2/iterations:10/manual_time",
+            "value": 1276538.5,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 178561.7999985334 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/3/2/iterations:10/manual_time",
+            "value": 3220337.5,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 181966.20000026087 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/1/3/iterations:10/manual_time",
+            "value": 170257.69999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 169969.0999998893 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/2/3/iterations:10/manual_time",
+            "value": 1295005.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 184008.10000684942 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-KeyGen-MP/3/3/iterations:10/manual_time",
+            "value": 3204865.4000000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 191273.20000507098 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/1/0/iterations:10/manual_time",
+            "value": 4573282.500000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 182919.19999455786 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/2/0/iterations:10/manual_time",
+            "value": 1128428.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 185695.99999409547 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/3/0/iterations:10/manual_time",
+            "value": 10929070.099999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 226231.99999998178 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/1/1/iterations:10/manual_time",
+            "value": 4551528.3,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 182557.49999980253 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/2/1/iterations:10/manual_time",
+            "value": 1114609.4,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 187040.9000048312 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/3/1/iterations:10/manual_time",
+            "value": 10941638.499999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 220523.30000406076 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/1/2/iterations:10/manual_time",
+            "value": 4570019.7,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 191878.20000752254 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/2/2/iterations:10/manual_time",
+            "value": 1129706.4999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 181993.0999999997 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/3/2/iterations:10/manual_time",
+            "value": 10947725.8,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 213661.20000720915 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/1/3/iterations:10/manual_time",
+            "value": 4545442.5,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 187141.80000642955 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/2/3/iterations:10/manual_time",
+            "value": 1117022.8,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 188131.40000020212 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Refresh-MP/3/3/iterations:10/manual_time",
+            "value": 10941028.8,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 209820.70000172826 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/1/0/iterations:10/manual_time",
+            "value": 213189.5,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 173091.0999981461 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/2/0/iterations:10/manual_time",
+            "value": 69139778.29999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 214213.20000172273 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/3/0/iterations:10/manual_time",
+            "value": 3183042.0999999996,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 262729.40000353626 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/4/0/iterations:10/manual_time",
+            "value": 70541820.50000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 273881.9000001058 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/5/0/iterations:10/manual_time",
+            "value": 10052142.999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 249774.1000070164 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/6/0/iterations:10/manual_time",
+            "value": 11064796.4,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 253960.80000064103 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/7/0/iterations:10/manual_time",
+            "value": 21543905.5,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 252609.20000391704 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/8/0/iterations:10/manual_time",
+            "value": 9252207.400000002,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 260052.8000016311 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/9/0/iterations:10/manual_time",
+            "value": 2747696.4000000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 256535.00000544227 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/10/0/iterations:10/manual_time",
+            "value": 2804707.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 240061.69999211124 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/1/1/iterations:10/manual_time",
+            "value": 215959.50000000006,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 177263.59999414854 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/2/1/iterations:10/manual_time",
+            "value": 46616288.3,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 213596.89999371767 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/3/1/iterations:10/manual_time",
+            "value": 95805087.7,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 262144.6000034666 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/4/1/iterations:10/manual_time",
+            "value": 49253888.8,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 271517.4000059051 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/5/1/iterations:10/manual_time",
+            "value": 12272235.4,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 267491.09999855136 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/6/1/iterations:10/manual_time",
+            "value": 9810276.7,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 255599.8000048021 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/7/1/iterations:10/manual_time",
+            "value": 21256097.3,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 258108.09999029516 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/8/1/iterations:10/manual_time",
+            "value": 9279283.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 254977.49999203734 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/9/1/iterations:10/manual_time",
+            "value": 2734396.4000000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 247907.40000071313 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/10/1/iterations:10/manual_time",
+            "value": 1284325.9999999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 218739.60000675652 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/1/2/iterations:10/manual_time",
+            "value": 214801.39999999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 173547.6000021663 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/2/2/iterations:10/manual_time",
+            "value": 23978072,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 196054.7000066981 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/3/2/iterations:10/manual_time",
+            "value": 188474248,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 281691.6999904606 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/4/2/iterations:10/manual_time",
+            "value": 28143423.5,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 279096.7000009914 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/5/2/iterations:10/manual_time",
+            "value": 14441375.099999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 242947.80000673197 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/6/2/iterations:10/manual_time",
+            "value": 8938762,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 253860.40000512367 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/7/2/iterations:10/manual_time",
+            "value": 21689612.6,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 258418.9000003789 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/8/2/iterations:10/manual_time",
+            "value": 9366862.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 237832.99999422525 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/9/2/iterations:10/manual_time",
+            "value": 2715449.1000000006,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 231528.59999981956 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/10/2/iterations:10/manual_time",
+            "value": 1288303.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 226551.29999975543 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/1/3/iterations:10/manual_time",
+            "value": 215613.7,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 175594.60000029503 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/2/3/iterations:10/manual_time",
+            "value": 1310180.4,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 181761.30000711055 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/3/3/iterations:10/manual_time",
+            "value": 280253565.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 272675.50000260596 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/4/3/iterations:10/manual_time",
+            "value": 6544152.1,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 260499.50000697206 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/5/3/iterations:10/manual_time",
+            "value": 16533518.1,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 256370.49999431838 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/6/3/iterations:10/manual_time",
+            "value": 7906161.199999998,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 240337.00000245514 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/7/3/iterations:10/manual_time",
+            "value": 21530275.2,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 257258.6000042065 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/8/3/iterations:10/manual_time",
+            "value": 9249427,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 234528.5000046715 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/9/3/iterations:10/manual_time",
+            "value": 2715484.9999999995,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 250041.00000387552 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-MP/10/3/iterations:10/manual_time",
+            "value": 1336288,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 219134.89999860758 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/1/0/iterations:10/manual_time",
+            "value": 128828.99999999997,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 54876.49999622591 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/2/0/iterations:10/manual_time",
+            "value": 23994352.000000004,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 79695.40000658526 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/3/0/iterations:10/manual_time",
+            "value": 1066524.3,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 84088.59999917695 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/4/0/iterations:10/manual_time",
+            "value": 27250818,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 118117.4000066676 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/5/0/iterations:10/manual_time",
+            "value": 3444774.5,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 111088.50000027815 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/6/0/iterations:10/manual_time",
+            "value": 8226236.900000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 99139.10000705073 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/7/0/iterations:10/manual_time",
+            "value": 13145371.3,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 98166.9999987389 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/8/0/iterations:10/manual_time",
+            "value": 3293098.3999999994,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 103862.1000020612 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/9/0/iterations:10/manual_time",
+            "value": 1020075.8,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 99451.00000550156 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/10/0/iterations:10/manual_time",
+            "value": 1190586.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 96108.20000034437 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/1/1/iterations:10/manual_time",
+            "value": 118551.5,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 63349.20000199417 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/2/1/iterations:10/manual_time",
+            "value": 1162114.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 77641.9999965583 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/3/1/iterations:10/manual_time",
+            "value": 94126446.1,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 100632.99999956143 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/4/1/iterations:10/manual_time",
+            "value": 5977862.9,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 103622.99999542302 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/5/1/iterations:10/manual_time",
+            "value": 5767639.700000001,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 108498.60000234912 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/6/1/iterations:10/manual_time",
+            "value": 6852732.4,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 103598.40000546683 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/7/1/iterations:10/manual_time",
+            "value": 13195979.1,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 106869.39999686729 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/8/1/iterations:10/manual_time",
+            "value": 3317165.599999999,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 106383.29999892449 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/9/1/iterations:10/manual_time",
+            "value": 1011838.6,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 97945.09999210277 ns\nthreads: 1"
+          },
+          {
+            "name": "ECDSA-MPC-Sign-2P/10/1/iterations:10/manual_time",
+            "value": 385561.3,
+            "unit": "ns/iter",
+            "extra": "iterations: 10\ncpu: 92933.29999309208 ns\nthreads: 1"
           }
         ]
       }
