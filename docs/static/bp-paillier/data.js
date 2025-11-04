@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1761668680636,
+  "lastUpdate": 1762279056909,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1386,6 +1386,72 @@ window.BENCHMARK_DATA = {
             "value": 8326.24830952357,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8325.343904761907 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d2a3b9b38f17b1fe41c3923e0a10d956adfdeffc",
+          "message": "chore: Enhance protocol validation and link to specs (#60)\n\nThis commit strengthens security checks in PVE and DKG protocols and adds traceability by linking KEM/DEM functions to the `basic-primitives-spec`.\n\n* PVE: Adds explicit point-on-curve checks in `pve_ac.cpp` and `pve_batch.cpp` to prevent invalid-curve attacks.\n* DKG: Adds a public key reconstruction check in `ec_dkg.cpp` to verify the new shares match the original group key.\n* PVE Batch: Validates the DRBG seed length and refactors RO hashing to use the generic `bitlen(SEC_P_COM)` instead of a hardcoded `bitlen128()`.\n* PKI: Adds `@specs` tags to `seal`, `open`, `encapsulate`, and `decapsulate` in `base_pki.h` and renames `pkR` to `pub_key` for clarity.",
+          "timestamp": "2025-11-04T09:19:52-08:00",
+          "tree_id": "70c88dc37f8ab1f777ee770ea4b6932f08052d64",
+          "url": "https://github.com/coinbase/cb-mpc/commit/d2a3b9b38f17b1fe41c3923e0a10d956adfdeffc"
+        },
+        "date": 1762279056403,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 59223.399166664116,
+            "unit": "us/iter",
+            "extra": "iterations: 12\ncpu: 59216.022999999994 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4514.874432257901,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4514.785806451611 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8589.308814817392,
+            "unit": "us/iter",
+            "extra": "iterations: 81\ncpu: 8588.693172839508 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4499.638941935347,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4499.308761290326 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.02194306504636,
+            "unit": "us/iter",
+            "extra": "iterations: 63353\ncpu: 11.021474657869408 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.8575214025686,
+            "unit": "us/iter",
+            "extra": "iterations: 54386\ncpu: 12.856111186702448 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8328.311988095937,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8327.869571428573 us\nthreads: 1"
           }
         ]
       }
