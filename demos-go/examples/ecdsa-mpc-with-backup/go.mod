@@ -7,12 +7,12 @@ toolchain go1.24.2
 replace github.com/coinbase/cb-mpc/demos-go/cb-mpc-go => ../../cb-mpc-go
 
 require (
-	github.com/coinbase/cb-mpc/demos-go/cb-mpc-go v0.0.0-20240501131245-1eee31b51009
 	github.com/btcsuite/btcd/btcec/v2 v2.3.5
+	github.com/coinbase/cb-mpc/demos-go/cb-mpc-go v0.0.0-20240501131245-1eee31b51009
 	golang.org/x/sync v0.15.0
 )
 
 require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
-	golang.org/x/crypto v0.42.0
+	golang.org/x/crypto v0.45.0
 )
