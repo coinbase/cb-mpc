@@ -10,6 +10,12 @@
 
 namespace coinbase::crypto {
 
+static thread_local int g_consttime_point_add_scope = 0;
+
+consttime_point_add_scope_t::consttime_point_add_scope_t() { g_consttime_point_add_scope++; }
+consttime_point_add_scope_t::~consttime_point_add_scope_t() { g_consttime_point_add_scope--; }
+bool is_consttime_point_add_scope() { return g_consttime_point_add_scope != 0; }
+
 class ecurve_ossl_t final : public ecurve_interface_t {
  public:
   ecurve_ossl_t(int code) noexcept;
@@ -250,17 +256,10 @@ void ecurve_ossl_t::add(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_
 }
 
 void ecurve_ossl_t::add_consttime(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const {
-  cb_assert(!P1.is_infinity());
-  cb_assert(!P2.is_infinity());
-
-  bn_t x1, y1, x2, y2;
-  get_coordinates(P1, x1, y1);
-  get_coordinates(P2, x2, y2);
-  cb_assert(!p().sub(x2, x1).is_zero() && "Degenerate addition: Δx = 0");
-  cb_assert(!p().sub(y2, y1).is_zero() && "Degenerate addition: Δy = 0");
-
-  int res = EC_POINT_add(group, R, P1, P2, bn_t::thread_local_storage_bn_ctx());
-  cb_assert(res);
+  cb_assert(
+      false &&
+      "OpenSSL addition is not constant-time. One needs to override this function with a custom constant-time addition "
+      "to use it");
 }
 
 void ecurve_ossl_t::mul_vartime(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const { mul(P, x, R); }
@@ -802,9 +801,13 @@ ecc_point_t ecc_point_t::add(const ecc_point_t& val1, const ecc_point_t& val2)  
 
 ecc_point_t ecc_point_t::add_consttime(const ecc_point_t& val1, const ecc_point_t& val2)  // static
 {
-  ecc_point_t result(val1.curve);
-  val1.curve.ptr->add_consttime(val1, val2, result);
-  return result;
+  if (!is_vartime_scope()) {
+    ecc_point_t result(val1.curve);
+    val1.curve.ptr->add_consttime(val1, val2, result);
+    return result;
+  } else {
+    return add(val1, val2);
+  }
 }
 
 ecc_point_t ecc_point_t::sub(const ecc_point_t& val1, const ecc_point_t& val2)  // static
@@ -824,7 +827,41 @@ ecc_point_t ecc_point_t::mul(const ecc_point_t& val1, const bn_t& val2)  // stat
   return result;
 }
 
-ecc_point_t operator+(const ecc_point_t& val1, const ecc_point_t& val2) { return ecc_point_t::add(val1, val2); }
+ecc_point_t ecc_point_t::weighted_sum(const bn_t& x0, const ecc_point_t& P0, const bn_t& x1, const ecc_point_t& P1) {
+  if (is_vartime_scope()) {
+    return x0 * P0 + x1 * P1;
+  } else {
+    auto curve = P0.get_curve();
+    switch (curve.ptr->ct_add_support()) {
+      case ct_add_support_e::Full: {
+        crypto::consttime_point_add_scope_t consttime_point_add_scope;
+        return x0 * P0 + x1 * P1;
+      }
+      case ct_add_support_e::Conditional: {
+        const mod_t& q = curve.order();
+        bn_t bias0 = bn_t::rand(q);
+        bn_t bias1 = bn_t::rand(q);
+        ecc_point_t Bias = bias0 * P0 + bias1 * P1;
+        bias0 = q.add(bias0, x0);
+        bias1 = q.add(bias1, x1);
+        crypto::consttime_point_add_scope_t consttime_point_add_scope;
+        return bias0 * P0 + bias1 * P1 - Bias;
+      }
+      case ct_add_support_e::None:
+      default: {
+        bn_t bias = bn_t::rand(curve.order());
+        return curve.mul_add(bias, P0, x0) + curve.mul_add(-bias, P1, x1);
+      }
+    }
+  }
+}
+
+ecc_point_t operator+(const ecc_point_t& val1, const ecc_point_t& val2) {
+  if (is_consttime_point_add_scope()) {
+    return ecc_point_t::add_consttime(val1, val2);
+  }
+  return ecc_point_t::add(val1, val2);
+}
 ecc_point_t operator-(const ecc_point_t& val1, const ecc_point_t& val2) { return ecc_point_t::sub(val1, val2); }
 
 ecc_point_t operator*(const bn_t& val1, const ecc_point_t& val2) { return ecc_point_t::mul(val2, val1); }
@@ -832,7 +869,11 @@ ecc_point_t operator*(const bn_t& val1, const ecc_point_t& val2) { return ecc_po
 ecc_point_t operator*(const bn_t& val1, const ecc_generator_point_t& val2) { return val2.curve.mul_to_generator(val1); }
 
 ecc_point_t& ecc_point_t::operator+=(const ecc_point_t& val) {
-  curve.ptr->add(val, *this, *this);
+  if (is_consttime_point_add_scope()) {
+    *this = ecc_point_t::add_consttime(*this, val);
+  } else {
+    curve.ptr->add(val, *this, *this);
+  }
   return *this;
 }
 
@@ -1012,14 +1053,6 @@ error_t ecdh_t::execute(void* ctx, cmem_t pub_key, cmem_t out_secret)  // static
   buf_t out = key->ecdh(P);
   memmove(out_secret.data, out.data(), out_secret.size);
   return SUCCESS;
-}
-
-ecc_point_t extended_ec_mul_add_ct(const bn_t& x0, const ecc_point_t& P0, const bn_t& x1, const ecc_point_t& P1) {
-  if (is_vartime_scope()) {
-    return x0 * P0 + x1 * P1;
-  } else {
-    return ecc_point_t::add_consttime(x0 * P0, x1 * P1);
-  }
 }
 
 }  // namespace coinbase::crypto

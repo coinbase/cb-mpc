@@ -129,7 +129,7 @@ void paillier_zero_t::prove(const crypto::paillier_t& paillier, const bn_t& c, c
           .bitlen(param::padded_log_alpha * param::t);  // use only 13 bits for each ei
 
   for (int i = 0; i < param::t; i++) {
-    bn_t ei = param::get_13_bits(e, i);
+    bn_t ei = param::get_log_alpha_bits(e, i);
     MODULO(N) z[i] = rho[i] * r.pow(ei);
   }
 }
@@ -161,7 +161,7 @@ error_t paillier_zero_t::verify(const crypto::paillier_t& paillier, const bn_t& 
   bn_t z_prod = 1;
   for (int i = 0; i < param::t; i++) {
     MODULO(N) z_prod *= z[i];
-    bn_t ei = param::get_13_bits(e, i);
+    bn_t ei = param::get_log_alpha_bits(e, i);
     MODULO(NN) a[i] = z[i].pow(N) * d.pow(ei);
   }
   if (z_prod == 0 || !mod_t::coprime(z_prod, N)) return coinbase::error(E_CRYPTO);
@@ -270,7 +270,7 @@ void two_paillier_equal_t::prove(const mod_t& q, const crypto::paillier_t& P0, c
           .bitlen(param::t * param::padded_log_alpha);  // only 13 bits are used for each ei
 
   for (int i = 0; i < param::t; i++) {
-    bn_t ei = param::get_13_bits(e, i);
+    bn_t ei = param::get_log_alpha_bits(e, i);
     d[i] = ei * x + tau[i];
     MODULO(N0) r0_hat[i] = r0.pow(ei) * R0_tilde[i];
     MODULO(N1) r1_hat[i] = r1.pow(ei) * R1_tilde[i];
@@ -331,7 +331,7 @@ error_t two_paillier_equal_t::verify(const mod_t& q, const crypto::paillier_t& P
   for (int i = 0; i < param::t; i++) {
     if (rv = coinbase::crypto::check_right_open_range(0, d[i], q_with_slack)) return rv;
 
-    bn_t ei = param::get_13_bits(e, i);
+    bn_t ei = param::get_log_alpha_bits(e, i);
 
     if (r0_hat[i] <= 0) return coinbase::error(E_CRYPTO);
     if (r1_hat[i] <= 0) return coinbase::error(E_CRYPTO);
@@ -399,7 +399,7 @@ error_t two_paillier_equal_interactive_t::prover_msg2(const crypto::paillier_t& 
   const mod_t& N1 = P1.get_N();
 
   for (int i = 0; i < param::t; i++) {
-    bn_t ei = param::get_13_bits(challenge_msg.e, i);
+    bn_t ei = param::get_log_alpha_bits(challenge_msg.e, i);
     msg2.d[i] = ei * x + tau[i];
     MODULO(N0) msg2.r0_hat[i] = r0.pow(ei) * R0_tilde[i];
     MODULO(N1) msg2.r1_hat[i] = r1.pow(ei) * R1_tilde[i];
@@ -472,7 +472,7 @@ error_t two_paillier_equal_interactive_t::verify(const mod_t& q, const crypto::p
     MODULO(N0) H0_test *= msg2.r0_hat[i] * msg2.c0_tilde[i];
     MODULO(N1) H1_test *= msg2.r1_hat[i] * msg2.c1_tilde[i];
 
-    bn_t ei = param::get_13_bits(e, i);
+    bn_t ei = param::get_log_alpha_bits(e, i);
     bn_t t0, t1;
     MODULO(NN0) t0 = c0.pow(ei) * msg2.c0_tilde[i];
     MODULO(NN1) t1 = c1.pow(ei) * msg2.c1_tilde[i];

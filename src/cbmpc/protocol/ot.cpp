@@ -63,14 +63,14 @@ error_t base_ot_protocol_pvw_ctx_t::step2_S2R(const std::vector<buf_t>& x0, cons
 
     bn_t s0 = bn_t::rand(q);
     bn_t t0 = bn_t::rand(q);
-    U0[i] = curve.mul_add(s0, H0, t0);                           // U0[i] = s0 * G[0] + t0 * H[0];
-    ecc_point_t X = extended_ec_mul_add_ct(s0, A[i], t0, B[i]);  // X     = s0 * A[i] + t0 * B[i];
+    U0[i] = curve.mul_add(s0, H0, t0);                              // U0[i] = s0 * G[0] + t0 * H[0];
+    ecc_point_t X = ecc_point_t::weighted_sum(s0, A[i], t0, B[i]);  // X     = s0 * A[i] + t0 * B[i];
     V0[i] = crypto::ro::hash_string(X).bitlen(l) ^ x0[i];
 
     bn_t s1 = bn_t::rand(q);
     bn_t t1 = bn_t::rand(q);
-    U1[i] = extended_ec_mul_add_ct(s1, G1, t1, H1);  // U1[i] = s1 * G[1] + t1 * H[1];
-    X = extended_ec_mul_add_ct(s1, A[i], t1, B[i]);  // X     = s1 * A[i] + t1 * B[i];
+    U1[i] = ecc_point_t::weighted_sum(s1, G1, t1, H1);  // U1[i] = s1 * G[1] + t1 * H[1];
+    X = ecc_point_t::weighted_sum(s1, A[i], t1, B[i]);  // X     = s1 * A[i] + t1 * B[i];
     V1[i] = crypto::ro::hash_string(X).bitlen(l) ^ x1[i];
   }
 

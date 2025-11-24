@@ -24,6 +24,7 @@ class ecurve_secp256k1_t final : public ecurve_interface_t {
   void invert_point(ecc_point_t& P) const override;
   void add(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const override;
   void add_consttime(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const override;
+  ct_add_support_e ct_add_support() const override { return ct_add_support_e::Conditional; }
   void mul(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const override;
   void mul_vartime(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const override;
   void mul_to_generator(const bn_t& val, ecc_point_t& P) const override;

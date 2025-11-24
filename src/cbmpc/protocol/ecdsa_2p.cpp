@@ -231,9 +231,7 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
 
   std::vector<bn_t> m(n_sigs);
   for (int i = 0; i < n_sigs; i++) {
-    mem_t bin = msgs[i];
-    bin.size = std::min(bin.size, curve.size());
-    m[i] = bn_t::from_bin(bin);
+    m[i] = curve_msg_to_bn(msgs[i], curve);
   }
 
   if (sid.empty())

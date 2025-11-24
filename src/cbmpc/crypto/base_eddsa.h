@@ -1,5 +1,6 @@
 #pragma once
 
+#include "base_ecc.h"
 #include "ec25519_core.h"
 
 namespace coinbase::crypto {
@@ -33,6 +34,7 @@ class ecurve_ed_t final : public ecurve_interface_t {
   void set_infinity(ecc_point_t& P) const override;
   void add(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const override;
   void add_consttime(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const override;
+  ct_add_support_e ct_add_support() const override { return ct_add_support_e::Full; }
   void mul(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const override;
   void mul_vartime(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const override;
   int to_compressed_bin(const ecc_point_t& P, byte_ptr out) const override;

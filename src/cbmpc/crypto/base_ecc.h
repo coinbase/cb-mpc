@@ -16,6 +16,13 @@ namespace secp256k1 {
 typedef struct point_t* point_ptr_t;
 }
 
+// Capability of constant-time point addition provided by a curve backend
+enum class ct_add_support_e {
+  None = 0,         // No constant-time add available
+  Conditional = 1,  // Constant-time for non-degenerate cases only
+  Full = 2          // Constant-time for all inputs
+};
+
 enum class ecurve_type_e {
   ossl = 1,
   ed25519 = 2,
@@ -54,6 +61,8 @@ class ecurve_interface_t {
   virtual void set_infinity(ecc_point_t& P) const = 0;
   virtual void add(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const = 0;
   virtual void add_consttime(const ecc_point_t& P, const ecc_point_t& x, ecc_point_t& R) const = 0;
+  // Report the support level for constant-time point addition
+  virtual ct_add_support_e ct_add_support() const { return ct_add_support_e::None; }
   virtual void mul(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const = 0;
   virtual void mul_vartime(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const = 0;
   virtual void mul_add(const bn_t& n, const ecc_point_t& P, const bn_t& m, ecc_point_t& R) const;  // R = G*n + P*m
@@ -106,6 +115,9 @@ class ecurve_t {
   ecc_point_t mul_add(const bn_t& n, const ecc_point_t& P, const bn_t& m) const;  // G*n + P*m
 
   const mod_t& order() const;
+
+  // Report the support level for constant-time point addition
+  ct_add_support_e ct_add_support() const { return ptr ? ptr->ct_add_support() : ct_add_support_e::None; }
 
   void get_params(bn_t& p, bn_t& a, bn_t& b) const;
   const mod_t& p() const;
@@ -203,6 +215,7 @@ class ecc_point_t {
   static ecc_point_t add_consttime(const ecc_point_t& val1, const ecc_point_t& val2);
   static ecc_point_t sub(const ecc_point_t& val1, const ecc_point_t& val2);
   static ecc_point_t mul(const ecc_point_t& val1, const bn_t& val2);
+  static ecc_point_t weighted_sum(const bn_t& x0, const ecc_point_t& P0, const bn_t& x1, const ecc_point_t& P1);
 
   ecc_point_t operator-() const;
 
@@ -225,7 +238,6 @@ class ecc_point_t {
   };
 };
 
-ecc_point_t extended_ec_mul_add_ct(const bn_t& x0, const ecc_point_t& P0, const bn_t& x1, const ecc_point_t& P1);
 std::ostream& operator<<(std::ostream& os, const ecc_point_t& p);
 
 ecc_point_t operator+(const ecc_point_t& val1, const ecc_point_t& val2);
@@ -358,5 +370,13 @@ struct allow_ecc_infinity_t {
   allow_ecc_infinity_t();
   ~allow_ecc_infinity_t();
 };
+
+class consttime_point_add_scope_t {
+ public:
+  consttime_point_add_scope_t();
+  ~consttime_point_add_scope_t();
+};
+
+bool is_consttime_point_add_scope();
 
 }  // namespace coinbase::crypto

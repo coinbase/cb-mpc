@@ -195,7 +195,7 @@ void uc_elgamal_com_mult_private_scalar_t::prove(const ecc_point_t& Q, const elg
           r1[i] = bn_t::rand(q);
           r2[i] = bn_t::rand(q);
           A1_tag[i] = curve.mul_add(r2[i], A1, r1[i]);
-          A2_tag[i] = crypto::extended_ec_mul_add_ct(r1[i], A2, r2[i], Q);
+          A2_tag[i] = ecc_point_t::weighted_sum(r1[i], A2, r2[i], Q);
         }
         common_hash = crypto::ro::hash_string(Q, A, B, A1_tag, A2_tag, session_id, aux).bitlen(2 * SEC_P_COM);
       },

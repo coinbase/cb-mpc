@@ -61,3 +61,8 @@ auto map_args_to_tuple(F f, Args&&... args) {
   std::tuple<Args...> tup(std::forward<Args>(args)...);
   return map_args_to_tuple_impl(f, tup, std::index_sequence_for<Args...>{});
 }
+
+inline bn_t curve_msg_to_bn(mem_t msg, const ecurve_t& curve) {
+  if (msg.size > curve.size()) msg.size = curve.size();
+  return bn_t::from_bin(msg);
+}

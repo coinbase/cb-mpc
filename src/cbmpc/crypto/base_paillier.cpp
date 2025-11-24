@@ -237,6 +237,19 @@ error_t paillier_t::verify_cipher(const mod_t& N, const mod_t& NN, const bn_t& c
   if (!mod_t::coprime(cipher, N)) return coinbase::error(E_CRYPTO);
   return SUCCESS;
 }
+// If the private key is present, we return a single uniform sample in Z_N,
+// which lands in Z_N^* with overwhelming probability; otherwise we resample
+// until gcd(sample, N) == 1.
+bn_t paillier_t::rand_N_star() const {
+  if (has_private) {
+    return bn_t::rand(N);
+  }
+  bn_t r;
+  do {
+    r = bn_t::rand(N);
+  } while (!mod_t::coprime(r, N));
+  return r;
+}
 
 error_t paillier_t::batch_verify_ciphers(const bn_t* ciphers, int n) const {
   if (n == 0) return SUCCESS;

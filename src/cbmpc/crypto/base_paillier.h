@@ -38,6 +38,8 @@ class paillier_t {
   bn_t encrypt(const bn_t& src) const;
   bn_t encrypt(const bn_t& src, const bn_t& rand) const;
 
+  bn_t rand_N_star() const;
+
   /**
    * @specs:
    * - basic-primitives-spec | Paillier-Decrypt-1P

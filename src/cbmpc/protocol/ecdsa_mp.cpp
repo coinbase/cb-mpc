@@ -408,9 +408,7 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
   if (W_eRHO_K != Z_eRHO_K.R) return coinbase::error(E_CRYPTO);
   if (W_eRHO_X != Z_eRHO_X.R) return coinbase::error(E_CRYPTO);
 
-  mem_t data_to_sign = msg;
-  if (data_to_sign.size > curve.size()) data_to_sign.size = curve.size();
-  bn_t m = bn_t::from_bin(data_to_sign);
+  bn_t m = curve_msg_to_bn(msg, curve);
   bn_t r_rho_x, rho_m, r_eR_RHO_X, r_eR_RHO_M, r_eB;
   auto beta = job.uniform_msg<bn_t>();
   MODULO(q) {
