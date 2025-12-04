@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762279060391,
+  "lastUpdate": 1764872752000,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -924,6 +924,48 @@ window.BENCHMARK_DATA = {
             "value": 13896.281259994794,
             "unit": "us/iter",
             "extra": "iterations: 50\ncpu: 13895.501279999999 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "33f98c9658d4b48463eba7b3e8dd06ffe5a8f8ee",
+          "message": "feat: Add constant-time curve operations and enhancements (#68)\n\nThis commit introduces constant-time elliptic curve operations and related improvements to the cryptographic primitives:\n\n- Add ct_add_support enum and consttime_point_add_scope for managing constant-time point addition capabilities across different curve backends\n- Implement weighted_sum() for secure multi-scalar multiplication\n- Replace extended_ec_mul_add_ct with ecc_point_t::weighted_sum for consistency\n- Add ct_add_support() implementation for Ed25519 (full support)\n- Enhance Paillier with rand_N_star() for sampling Z_N^*\n- Refactor ZK utilities: rename get_13_bits to get_log_alpha_bits and introduce uint_mem_array_t template for safer bit operations\n- Update curve_msg_to_bn usage in ECDSA 2-party implementation",
+          "timestamp": "2025-12-04T09:46:31-08:00",
+          "tree_id": "b2e208717ed56ef7a5e1f1788c6a10e92e506fe5",
+          "url": "https://github.com/coinbase/cb-mpc/commit/33f98c9658d4b48463eba7b3e8dd06ffe5a8f8ee"
+        },
+        "date": 1764872751106,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24490.72332142675,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24488.874571428572 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 105754.58428567278,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 105747.87142857142 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13791.880333330624,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13789.50929411764 us\nthreads: 1"
           }
         ]
       }
