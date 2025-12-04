@@ -62,24 +62,28 @@ struct mem_t {
   bool operator==(const buf_t& b2) const;
   bool operator!=(const buf_t& b2) const;
 
-  /**
-   * @notes:
-   * - The caller *must* ensure that 0 ≤ index < size().
-   * - This function intentionally does not perform this check to increase performance.
-   */
-  uint8_t operator[](int index) const { return data[index]; }
-  uint8_t& operator[](int index) { return data[index]; }
+  uint8_t operator[](int index) const {
+    cb_assert(index >= 0 && index < size);
+    return data[index];
+  }
+  uint8_t& operator[](int index) {
+    cb_assert(index >= 0 && index < size);
+    return data[index];
+  }
 
-  /**
-   * @warning:
-   * - These helpers perform no bounds checks. Callers must ensure:
-   *   0 ≤ offset ≤ this->size and 0 ≤ len ≤ (this->size - offset).
-   * - Misuse can create invalid views and cause OOB access in downstream operations.
-   * - Example: taking/skipping fixed sizes requires the source buffer to be long enough.
-   */
-  mem_t range(int offset, int size) const { return mem_t(data + offset, size); }
-  mem_t skip(int offset) const { return range(offset, size - offset); }
-  mem_t take(int size) const { return range(0, size); }
+  mem_t range(int offset, int len) const {
+    cb_assert(offset >= 0 && offset <= size);
+    cb_assert(len >= 0 && len <= size - offset);
+    return mem_t(data + offset, len);
+  }
+  mem_t skip(int offset) const {
+    cb_assert(offset >= 0 && offset <= size);
+    return mem_t(data + offset, size - offset);
+  }
+  mem_t take(int len) const {
+    cb_assert(len >= 0 && len <= size);
+    return mem_t(data, len);
+  }
   static mem_t from_string(const std::string& str) { return mem_t(const_byte_ptr(str.c_str()), int(str.length())); }
 
   size_t non_crypto_hash() const;
@@ -135,6 +139,10 @@ class buf_t {
   bool operator==(const buf_t& src) const;
   bool operator!=(const buf_t& src) const;
 
+  /**
+   * @notes:
+   * - Bounds checking: cb_assert(0 ≤ index < size()) is performed.
+   */
   uint8_t operator[](int index) const;
   uint8_t& operator[](int index);
 
@@ -143,16 +151,19 @@ class buf_t {
   cmem_t to_cmem() const { return mem_t(*this).to_cmem(); }
   static buf_t from_cmem(cmem_t cmem);
 
-  /**
-   * @warning:
-   * - These helpers perform no bounds checks. Callers must ensure:
-   *   0 ≤ offset ≤ size() and 0 ≤ len ≤ (size() - offset).
-   * - Misuse can create invalid views and cause OOB access in downstream operations.
-   * - Example: taking/skipping fixed sizes requires the source buffer to be long enough.
-   */
-  mem_t range(int offset, int size) const { return mem_t(data() + offset, size); }
-  mem_t skip(int offset) const { return range(offset, size() - offset); }
-  mem_t take(int size) const { return range(0, size); }
+  mem_t range(int offset, int len) const {
+    cb_assert(offset >= 0 && offset <= size());
+    cb_assert(len >= 0 && len <= size() - offset);
+    return mem_t(data() + offset, len);
+  }
+  mem_t skip(int offset) const {
+    cb_assert(offset >= 0 && offset <= size());
+    return mem_t(data() + offset, size() - offset);
+  }
+  mem_t take(int len) const {
+    cb_assert(len >= 0 && len <= size());
+    return mem_t(data(), len);
+  }
 
   explicit operator buf128_t() const;
   explicit operator buf256_t() const;
@@ -218,18 +229,6 @@ class bits_t {
 
   void convert(converter_t& converter);
 
-  /**
-   * @notes:
-   * - This comparison is NOT constant-time. Do NOT use for private values.
-   */
-  bool operator==(const bits_t& src2) const { return equ(*this, src2); }
-
-  /**
-   * @notes:
-   * - This comparison is NOT constant-time. Do NOT use for private values.
-   */
-  bool operator!=(const bits_t& src2) const { return !equ(*this, src2); }
-
   static bool get(const_byte_ptr data, int bit_index);
   static void set(byte_ptr data, int bit_index, bool bit);
   static void set_false(byte_ptr data, int bit_index);
@@ -272,12 +271,10 @@ class bits_t {
   };
 
  public:
-  /**
-   * @notes:
-   * - The caller *must* ensure that 0 ≤ index < size().
-   * - This function intentionally does not perform this check to increase performance.
-   */
-  bool operator[](int index) const { return get(index); }
+  bool operator[](int index) const {
+    cb_assert(index >= 0 && index < bits);
+    return get(index);
+  }
   ref_t operator[](int index);
 
   bool get(int index) const;

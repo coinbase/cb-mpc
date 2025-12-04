@@ -44,23 +44,15 @@ void buf256_t::save(byte_ptr dst) const {
   hi.save(dst + 16);
 }
 
-/**
- * @notes:
- * - The caller *must* ensure that 0 ≤ index < 256.
- * - This function intentionally does not perform this check to increase performance.
- */
 bool buf256_t::get_bit(int index) const {
+  cb_assert(index >= 0 && index < 256);
   int n = index / 64;
   index %= 64;
   return ((((const uint64_t*)(this))[n] >> index) & 1) != 0;
 }
 
-/**
- * @notes:
- * - The caller *must* ensure that 0 ≤ index < 256.
- * - This function intentionally does not perform this check to increase performance.
- */
 void buf256_t::set_bit(int index, bool value) {
+  cb_assert(index >= 0 && index < 256);
   int n = index / 64;
   index %= 64;
   uint64_t mask = uint64_t(1) << index;
@@ -71,9 +63,9 @@ void buf256_t::set_bit(int index, bool value) {
     ((uint64_t*)(this))[n] &= ~mask;
 }
 
-bool buf256_t::operator==(const buf256_t& src) const { return (src.lo == lo) && (src.hi == hi); }
+bool buf256_t::operator==(const buf256_t& src) const { return ((src.lo ^ lo) | (src.hi ^ hi)) == ZERO128; }
 
-bool buf256_t::operator!=(const buf256_t& src) const { return (src.lo != lo) || (src.hi != hi); }
+bool buf256_t::operator!=(const buf256_t& src) const { return ((src.lo ^ lo) | (src.hi ^ hi)) != ZERO128; }
 
 buf256_t buf256_t::operator~() const {
   buf256_t dst{};

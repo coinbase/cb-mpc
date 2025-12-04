@@ -1,4 +1,5 @@
 #pragma once
+#include <cbmpc/core/error.h>
 #include <cbmpc/core/macros.h>
 
 #define ZERO128 (coinbase::buf128_t::zero())
@@ -85,8 +86,14 @@ struct buf128_t {
   buf128_t operator>>(unsigned n) const;
   buf128_t& operator>>=(unsigned n) { return *this = *this >> n; }
 
-  byte_t operator[](int index) const { return (byte_ptr(this))[index]; }
-  byte_t& operator[](int index) { return (byte_ptr(this))[index]; }
+  byte_t operator[](int index) const {
+    cb_assert(index >= 0 && index < 16);
+    return (byte_ptr(this))[index];
+  }
+  byte_t& operator[](int index) {
+    cb_assert(index >= 0 && index < 16);
+    return (byte_ptr(this))[index];
+  }
 
   void convert(coinbase::converter_t& converter);
 

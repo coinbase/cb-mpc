@@ -57,9 +57,6 @@ T gen_random_int() {
   return result;
 }
 
-bool secure_equ(mem_t src1, mem_t src2);
-bool secure_equ(const_byte_ptr src1, const_byte_ptr src2, int size);
-
 class evp_cipher_ctx_t {
  public:
   explicit evp_cipher_ctx_t() : ctx(EVP_CIPHER_CTX_new()) {}
@@ -89,11 +86,6 @@ class drbg_aes_ctr_t {
   drbg_aes_ctr_t(mem_t seed);
   ~drbg_aes_ctr_t() {}
 
-  /**
-   * @notes:
-   * - Note: this must be followed by a call to seed
-   */
-  void init();
   /**
    * @specs:
    * - basic-primitives-spec | drbg-init-1P
@@ -151,6 +143,9 @@ class drbg_aes_ctr_t {
 
  private:
   aes_ctr_t ctr;
+  // Note: this must be followed by a call to seed. We separate the initialization from the seeding to enable reseeding
+  // without reinitialization.
+  void init();
 };
 
 class aes_gcm_t {

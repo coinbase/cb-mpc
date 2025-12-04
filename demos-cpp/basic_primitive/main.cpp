@@ -22,7 +22,7 @@ mem_t hash_string()
   bn_t r = bn_t::rand(q);
   ecc_point_t G = c.generator();
 
-  return coinbase::crypto::ro::hash_string(c, G, r, 42).bitlen(32).take(32);
+  return coinbase::crypto::ro::hash_string(c, G, r, 42).bitlen(256).take(32);
 }
 
 ecc_point_t hash_curve()

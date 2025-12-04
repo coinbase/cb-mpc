@@ -16,6 +16,7 @@ void drbg_aes_ctr_t::init() {
 drbg_aes_ctr_t::drbg_aes_ctr_t(mem_t s) { init(s); }
 
 void drbg_aes_ctr_t::init(mem_t s) {
+  cb_assert(coinbase::bytes_to_bits(s.size) >= SEC_P_COM && "DRBG requires SEC_P_COM bits of entropy");
   if (s.size == 32) {
     ctr.init(s.take(16), s.data + 16);
   } else {

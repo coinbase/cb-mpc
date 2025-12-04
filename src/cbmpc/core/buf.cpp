@@ -207,33 +207,28 @@ void buf_t::bzero() { coinbase::bzero(data(), s); }
 
 void buf_t::secure_bzero() { coinbase::secure_bzero(data(), s); }
 
-/**
- * @notes:
- * - This comparison is NOT constant-time. Do NOT use for private values.
- */
-bool buf_t::operator==(const buf_t& src) const { return s == src.s && 0 == memcmp(data(), src.data(), s); }
+bool buf_t::operator==(const buf_t& src) const {
+  if (s != src.s) return false;
+  byte_t x = 0;
+  byte_ptr p1 = data();
+  byte_ptr p2 = src.data();
+  for (int i = 0; i < s; i++) x |= p1[i] ^ p2[i];
+  return x == 0;
+}
 
-/**
- * @notes:
- * - This comparison is NOT constant-time. Do NOT use for private values.
- */
-bool buf_t::operator!=(const buf_t& src) const { return s != src.s || 0 != memcmp(data(), src.data(), s); }
+bool buf_t::operator!=(const buf_t& src) const { return !(*this == src); }
 
 buf_t::operator mem_t() const { return mem_t(data(), s); }
 
-/**
- * @notes:
- * - The caller *must* ensure that 0 ≤ index < size()
- * - This function intentionally does not perform this check to increase performance.
- */
-uint8_t buf_t::operator[](int index) const { return data()[index]; }
+uint8_t buf_t::operator[](int index) const {
+  cb_assert(index >= 0 && index < s);
+  return data()[index];
+}
 
-/**
- * @notes:
- * - The caller *must* ensure that 0 ≤ index < size()
- * - This function intentionally does not perform this check to increase performance.
- */
-uint8_t& buf_t::operator[](int index) { return data()[index]; }
+uint8_t& buf_t::operator[](int index) {
+  cb_assert(index >= 0 && index < s);
+  return data()[index];
+}
 
 buf_t operator^(mem_t src1, mem_t src2) {
   cb_assert(src1.size == src2.size);
@@ -253,24 +248,18 @@ buf_t& buf_t::operator^=(mem_t src2) {
   return *this;
 }
 
-/**
- * @notes:
- * - The caller *must* ensure that the sum of the sizes does not overflow.
- * - This function intentionally does not perform this check to increase performance.
- */
 buf_t operator+(mem_t src1, mem_t src2) {
+  cb_assert(src1.size >= 0 && src2.size >= 0);
+  cb_assert(src1.size <= INT_MAX - src2.size);  // overflow check
   buf_t out(src1.size + src2.size);
   memmove(out.data(), src1.data, src1.size);
   memmove(out.data() + src1.size, src2.data, src2.size);
   return out;
 }
 
-/**
- * @notes:
- * - The caller *must* ensure that the sum of the sizes does not overflow.
- * - This function intentionally does not perform this check to increase performance.
- */
 buf_t& buf_t::operator+=(mem_t src) {
+  cb_assert(src.size >= 0);
+  cb_assert(s <= INT_MAX - src.size);  // overflow check
   int old_size = s;
   byte_ptr new_ptr = resize(old_size + src.size);
   memmove(new_ptr + old_size, src.data, src.size);
@@ -405,30 +394,16 @@ buf_t mem_t::rev() const {
   return out;
 }
 
-bool mem_t::equal(mem_t m1, mem_t m2) { return m1.size == m2.size && 0 == memcmp(m1.data, m2.data, m1.size); }
+bool mem_t::equal(mem_t m1, mem_t m2) {
+  if (m1.size != m2.size) return false;
+  byte_t x = 0;
+  for (int i = 0; i < m1.size; i++) x |= m1.data[i] ^ m2.data[i];
+  return x == 0;
+}
 
-/**
- * @notes:
- * - This comparison is NOT constant-time. Do NOT use for private values.
- */
 bool mem_t::operator==(const mem_t& m2) const { return mem_t::equal(*this, m2); }
-
-/**
- * @notes:
- * - This comparison is NOT constant-time. Do NOT use for private values.
- */
 bool mem_t::operator!=(const mem_t& m2) const { return !mem_t::equal(*this, m2); }
-
-/**
- * @notes:
- * - This comparison is NOT constant-time. Do NOT use for private values.
- */
 bool mem_t::operator==(const buf_t& m2) const { return mem_t::equal(*this, mem_t(m2)); }
-
-/**
- * @notes:
- * - This comparison is NOT constant-time. Do NOT use for private values.
- */
 bool mem_t::operator!=(const buf_t& m2) const { return !mem_t::equal(*this, mem_t(m2)); }
 
 size_t mem_t::non_crypto_hash() const {
@@ -628,9 +603,15 @@ void bits_t::alloc(int count) {
 
 bits_t::ref_t::ref_t(limb_t* ptr, int index) : data(ptr + index / bits_in_limb), offset(index & (bits_in_limb - 1)) {}
 
-bool bits_t::get(int index) const { return ref_t(data, index).get(); }
+bool bits_t::get(int index) const {
+  cb_assert(index >= 0 && index < bits);
+  return ref_t(data, index).get();
+}
 
-void bits_t::set(int index, bool value) { ref_t(data, index).set(value); }
+void bits_t::set(int index, bool value) {
+  cb_assert(index >= 0 && index < bits);
+  ref_t(data, index).set(value);
+}
 
 void bits_t::append(bool value) {
   resize(bits + 1);
@@ -645,12 +626,10 @@ void bits_t::ref_t::set(bool value) {
 
 bool bits_t::ref_t::get() const { return 0 != ((*data >> offset) & 1); }
 
-/**
- * @notes:
- * - The caller *must* ensure that 0 ≤ index < size()
- * - This function intentionally does not perform this check to increase performance.
- */
-bits_t::ref_t bits_t::operator[](int index) { return ref_t(data, index); }
+bits_t::ref_t bits_t::operator[](int index) {
+  cb_assert(index >= 0 && index < bits);
+  return ref_t(data, index);
+}
 
 bool bits_t::equ(const bits_t& src1, const bits_t& src2) {
   if (src1.bits != src2.bits) return false;

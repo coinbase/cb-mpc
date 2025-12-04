@@ -59,19 +59,6 @@ TEST(BaseTest, TestGenRandomHelpers) {
   SUCCEED() << "Generated a random int: " << r_int;
 }
 
-TEST(BaseTest, TestSecureEqu) {
-  byte_t arr1[] = {0x01, 0x02, 0x03};
-  byte_t arr2[] = {0x01, 0x02, 0x03};
-  byte_t arr3[] = {0x01, 0x03, 0x03};
-
-  mem_t mem_a1(arr1, 3), mem_a2(arr2, 3), mem_a3(arr3, 3);
-
-  EXPECT_TRUE(secure_equ(mem_a1, mem_a2));
-  EXPECT_FALSE(secure_equ(mem_a1, mem_a3));
-  EXPECT_TRUE(secure_equ(arr1, arr2, 3));
-  EXPECT_FALSE(secure_equ(arr2, arr3, 3));
-}
-
 TEST(BaseTest, TestAES_CTR) {
   buf_t key = bn_t(0x00).to_bin(16);
   buf_t iv = bn_t(0x01).to_bin(16);
@@ -84,11 +71,9 @@ TEST(BaseTest, TestAES_CTR) {
 }
 
 TEST(BaseTest, TestDRBG) {
+  // Initialize and generate some data
   buf_t seed = bn_t(0xAB).to_bin(32);
   drbg_aes_ctr_t drbg(seed);
-
-  // Initialize and generate some data
-  drbg.init();
   buf_t random_data = drbg.gen(16);
   EXPECT_EQ(random_data.size(), 16);
 

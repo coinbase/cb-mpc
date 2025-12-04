@@ -105,9 +105,6 @@ class log_frame_t {
   log_data_t params[max_param];
 };
 
-#define LOG(x) log_data_t(#x, x)
-#define LOGSTR(x) log_data_t(#x, x)
-
 struct dylog_disable_scope_t {
   dylog_disable_scope_t(bool enabled = false);
   ~dylog_disable_scope_t();

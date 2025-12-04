@@ -13,7 +13,7 @@ u128_t u128_make(uint64_t lo, uint64_t hi) { return _mm_set_epi64x(hi, lo); }
 bool u128_lsb(u128_t x) { return (u128_lo(x) & 1) != 0; }
 bool u128_msb(u128_t x) { return short(_mm_movemask_epi8(x)) < 0; }
 u128_t u128_mask(bool x) { return _mm_set1_epi64x(-int64_t(x)); }
-bool u128_equ(u128_t x, u128_t y) { return _mm_movemask_epi8(_mm_cmpeq_epi8(x, y)) == 0xffff; }
+bool u128_equ(u128_t x, u128_t y) { return ((u128_lo(x) ^ u128_lo(y)) | (u128_hi(x) ^ u128_hi(y))) == 0; }
 u128_t u128_xor(u128_t x, u128_t y) { return _mm_xor_si128(x, y); }
 u128_t u128_and(u128_t x, u128_t y) { return _mm_and_si128(x, y); }
 u128_t u128_or(u128_t x, u128_t y) { return _mm_or_si128(x, y); }
@@ -31,7 +31,7 @@ u128_t u128_make(uint64_t lo, uint64_t hi) { return vcombine_u8(uint8x8_t(lo), u
 bool u128_msb(u128_t x) { return ((const int8_t*)(&x))[15] < 0; }
 u128_t u128_mask(bool x) { return u128_make(-int64_t(x), -int64_t(x)); }
 bool u128_lsb(u128_t x) { return (*const_byte_ptr(&x) & 1) != 0; }
-bool u128_equ(u128_t x, u128_t y) { return 0 == memcmp(&x, &y, 16); }
+bool u128_equ(u128_t x, u128_t y) { return 0 == vmaxvq_u8(x ^ y); }
 u128_t u128_xor(u128_t x, u128_t y) { return x ^ y; }
 u128_t u128_and(u128_t x, u128_t y) { return x & y; }
 u128_t u128_or(u128_t x, u128_t y) { return x | y; }
@@ -54,7 +54,7 @@ u128_t u128_make(uint64_t lo, uint64_t hi) {
 bool u128_lsb(u128_t x) { return (u128_lo(x) & 1) != 0; }
 bool u128_msb(u128_t x) { return int64_t(u128_hi(x)) < 0; }
 u128_t u128_mask(bool x) { return u128_make(-int64_t(x), -int64_t(x)); }
-bool u128_equ(u128_t x, u128_t y) { return u128_lo(x) == u128_lo(y) && u128_hi(x) == u128_hi(y); }
+bool u128_equ(u128_t x, u128_t y) { return ((u128_lo(x) ^ u128_lo(y)) | (u128_hi(x) ^ u128_hi(y))) == 0; }
 u128_t u128_xor(u128_t x, u128_t y) { return u128_make(u128_lo(x) ^ u128_lo(y), u128_hi(x) ^ u128_hi(y)); }
 u128_t u128_and(u128_t x, u128_t y) { return u128_make(u128_lo(x) & u128_lo(y), u128_hi(x) & u128_hi(y)); }
 u128_t u128_and(u128_t x, bool y) { return u128_make(u128_lo(x) & -int64_t(y), u128_hi(x) & -int64_t(y)); }
@@ -102,27 +102,20 @@ buf128_t buf128_t::load(mem_t src) {
 }
 
 buf128_t buf128_t::from_bit_index(int bit_index) {
+  cb_assert(bit_index >= 0 && bit_index < 128);
   if (bit_index < 64) return make(uint64_t(1) << bit_index, 0);
   return make(0, uint64_t(1) << (bit_index - 64));
 }
 
-/**
- * @notes:
- * - The caller *must* ensure that 0 ≤ index < 128.
- * - This function intentionally does not perform this check to increase performance.
- */
 bool buf128_t::get_bit(int index) const {
+  cb_assert(index >= 0 && index < 128);
   int n = index / 64;
   index %= 64;
   return ((((const uint64_t*)(this))[n] >> index) & 1) != 0;
 }
 
-/**
- * @notes:
- * - The caller *must* ensure that 0 ≤ index < 128.
- * - This function intentionally does not perform this check to increase performance.
- */
 void buf128_t::set_bit(int index, bool bit) {
+  cb_assert(index >= 0 && index < 128);
   uint64_t l = lo();
   uint64_t h = hi();
   if (index < 64)

@@ -129,20 +129,6 @@ coinbase::bits_t gen_random_bits(int count) {
   return out;
 }
 
-/**
- * Call through the next function which adds the check for equality of the sizes as well.
- */
-bool secure_equ(const_byte_ptr src1, const_byte_ptr src2, int size) {
-  byte_t x = 0;
-  while (size--) x |= (*src1++) ^ (*src2++);
-  return x == 0;
-}
-
-bool secure_equ(mem_t src1, mem_t src2) {
-  if (src1.size != src2.size) return false;
-  return secure_equ(src1.data, src2.data, src1.size);
-}
-
 int evp_cipher_ctx_t::update(mem_t in, byte_ptr out) const {
   if (in.size == 0) return 0;
 

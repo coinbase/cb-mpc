@@ -12,7 +12,7 @@ void test_message_buffer_t::free(test_message_buffer_t* buf) { ::free(buf); }
 std::atomic<int> test_channel_t::msg_counter = 0;
 bool test_channel_t::fuzzing = false;
 int test_channel_t::fuzzing_msg_counter = 0;
-crypto::drbg_aes_ctr_t test_channel_t::fuzzing_drbg = crypto::drbg_aes_ctr_t(buf_t());
+crypto::drbg_aes_ctr_t test_channel_t::fuzzing_drbg = crypto::drbg_aes_ctr_t(buf_t(16));
 
 void test_channel_t::send(test_channel_sync_t& sync, mem_t msg) {
   std::unique_lock lock(sync.mutex);
