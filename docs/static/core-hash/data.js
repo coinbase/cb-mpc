@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762279055190,
+  "lastUpdate": 1764872745072,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -4224,6 +4224,198 @@ window.BENCHMARK_DATA = {
             "value": 1.6438661430963355,
             "unit": "us/iter",
             "extra": "iterations: 427068\ncpu: 1.6437592678449353 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "33f98c9658d4b48463eba7b3e8dd06ffe5a8f8ee",
+          "message": "feat: Add constant-time curve operations and enhancements (#68)\n\nThis commit introduces constant-time elliptic curve operations and related improvements to the cryptographic primitives:\n\n- Add ct_add_support enum and consttime_point_add_scope for managing constant-time point addition capabilities across different curve backends\n- Implement weighted_sum() for secure multi-scalar multiplication\n- Replace extended_ec_mul_add_ct with ecc_point_t::weighted_sum for consistency\n- Add ct_add_support() implementation for Ed25519 (full support)\n- Enhance Paillier with rand_N_star() for sampling Z_N^*\n- Refactor ZK utilities: rename get_13_bits to get_log_alpha_bits and introduce uint_mem_array_t template for safer bit operations\n- Update curve_msg_to_bn usage in ECDSA 2-party implementation",
+          "timestamp": "2025-12-04T09:46:31-08:00",
+          "tree_id": "b2e208717ed56ef7a5e1f1788c6a10e92e506fe5",
+          "url": "https://github.com/coinbase/cb-mpc/commit/33f98c9658d4b48463eba7b3e8dd06ffe5a8f8ee"
+        },
+        "date": 1764872744264,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/Hash/SHA256/1",
+            "value": 0.31425527865223074,
+            "unit": "us/iter",
+            "extra": "iterations: 2232909\ncpu: 0.31422833532401007 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/4",
+            "value": 0.3133833651601331,
+            "unit": "us/iter",
+            "extra": "iterations: 2233445\ncpu: 0.3133398758420288 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/16",
+            "value": 0.3090084804363433,
+            "unit": "us/iter",
+            "extra": "iterations: 2266157\ncpu: 0.3089863636985433 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/64",
+            "value": 0.34731374885114313,
+            "unit": "us/iter",
+            "extra": "iterations: 2011899\ncpu: 0.3472714022920636 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/256",
+            "value": 0.46223394529374384,
+            "unit": "us/iter",
+            "extra": "iterations: 1512734\ncpu: 0.4621844131222009 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/1024",
+            "value": 0.9507901973310018,
+            "unit": "us/iter",
+            "extra": "iterations: 734147\ncpu: 0.9506889996145189 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/4096",
+            "value": 2.890895647483862,
+            "unit": "us/iter",
+            "extra": "iterations: 242917\ncpu: 2.8907275612657823 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/1",
+            "value": 0.31471004807015296,
+            "unit": "us/iter",
+            "extra": "iterations: 2220506\ncpu: 0.31466516505697334 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/4",
+            "value": 0.312696798215245,
+            "unit": "us/iter",
+            "extra": "iterations: 2220574\ncpu: 0.3126690008979659 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/16",
+            "value": 0.3089390457308996,
+            "unit": "us/iter",
+            "extra": "iterations: 2257791\ncpu: 0.30890129910164354 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/64",
+            "value": 0.3469658905975119,
+            "unit": "us/iter",
+            "extra": "iterations: 2015456\ncpu: 0.346937746098154 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/256",
+            "value": 0.46192041733865075,
+            "unit": "us/iter",
+            "extra": "iterations: 1492888\ncpu: 0.46187531281650035 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/1024",
+            "value": 0.9465151520068458,
+            "unit": "us/iter",
+            "extra": "iterations: 739539\ncpu: 0.9464139714065101 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/4096",
+            "value": 2.8933070795513744,
+            "unit": "us/iter",
+            "extra": "iterations: 243038\ncpu: 2.8928215340810928 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/1",
+            "value": 0.6877677851036971,
+            "unit": "us/iter",
+            "extra": "iterations: 1022260\ncpu: 0.6877202287089388 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/4",
+            "value": 0.6863955516041177,
+            "unit": "us/iter",
+            "extra": "iterations: 1023515\ncpu: 0.6863075812274366 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/16",
+            "value": 0.6874520287449188,
+            "unit": "us/iter",
+            "extra": "iterations: 1020705\ncpu: 0.6873618371615704 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/64",
+            "value": 0.6998942035593207,
+            "unit": "us/iter",
+            "extra": "iterations: 1004306\ncpu: 0.6998037410908631 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/256",
+            "value": 0.7506882117937548,
+            "unit": "us/iter",
+            "extra": "iterations: 935401\ncpu: 0.7505735112534611 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/1024",
+            "value": 0.9446331706889585,
+            "unit": "us/iter",
+            "extra": "iterations: 730018\ncpu: 0.9445633504927293 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/4096",
+            "value": 1.659519853988925,
+            "unit": "us/iter",
+            "extra": "iterations: 422434\ncpu: 1.6593471666579878 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/1",
+            "value": 0.6859729664821199,
+            "unit": "us/iter",
+            "extra": "iterations: 1020141\ncpu: 0.6859011352352259 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/4",
+            "value": 0.6867693142748271,
+            "unit": "us/iter",
+            "extra": "iterations: 1019738\ncpu: 0.6866844856227771 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/16",
+            "value": 0.6921752871785919,
+            "unit": "us/iter",
+            "extra": "iterations: 1018791\ncpu: 0.692114370857221 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/64",
+            "value": 0.701246097744222,
+            "unit": "us/iter",
+            "extra": "iterations: 987762\ncpu: 0.7012259005711878 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/256",
+            "value": 0.7543888072543399,
+            "unit": "us/iter",
+            "extra": "iterations: 930978\ncpu: 0.7542776671414362 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/1024",
+            "value": 0.9534346163218346,
+            "unit": "us/iter",
+            "extra": "iterations: 734457\ncpu: 0.9533060941620839 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/4096",
+            "value": 1.6704056572732524,
+            "unit": "us/iter",
+            "extra": "iterations: 416349\ncpu: 1.6701445181806618 us\nthreads: 1"
           }
         ]
       }
