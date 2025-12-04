@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762279053318,
+  "lastUpdate": 1764872742794,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2124,6 +2124,114 @@ window.BENCHMARK_DATA = {
             "value": 78.08221673772667,
             "unit": "us/iter",
             "extra": "iterations: 8914\ncpu: 78.07719564729638 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "33f98c9658d4b48463eba7b3e8dd06ffe5a8f8ee",
+          "message": "feat: Add constant-time curve operations and enhancements (#68)\n\nThis commit introduces constant-time elliptic curve operations and related improvements to the cryptographic primitives:\n\n- Add ct_add_support enum and consttime_point_add_scope for managing constant-time point addition capabilities across different curve backends\n- Implement weighted_sum() for secure multi-scalar multiplication\n- Replace extended_ec_mul_add_ct with ecc_point_t::weighted_sum for consistency\n- Add ct_add_support() implementation for Ed25519 (full support)\n- Enhance Paillier with rand_N_star() for sampling Z_N^*\n- Refactor ZK utilities: rename get_13_bits to get_log_alpha_bits and introduce uint_mem_array_t template for safer bit operations\n- Update curve_msg_to_bn usage in ECDSA 2-party implementation",
+          "timestamp": "2025-12-04T09:46:31-08:00",
+          "tree_id": "b2e208717ed56ef7a5e1f1788c6a10e92e506fe5",
+          "url": "https://github.com/coinbase/cb-mpc/commit/33f98c9658d4b48463eba7b3e8dd06ffe5a8f8ee"
+        },
+        "date": 1764872741975,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.35573201678502286,
+            "unit": "us/iter",
+            "extra": "iterations: 1961037\ncpu: 0.3557080881186842 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.3091860371438344,
+            "unit": "us/iter",
+            "extra": "iterations: 2269020\ncpu: 0.30917792086451434 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 0.3514262956444134,
+            "unit": "us/iter",
+            "extra": "iterations: 1997616\ncpu: 0.35140508035578427 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.3129270819533126,
+            "unit": "us/iter",
+            "extra": "iterations: 2241777\ncpu: 0.3129232242992947 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.588807102076984,
+            "unit": "us/iter",
+            "extra": "iterations: 16812\ncpu: 41.585964965500835 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 63.720031831458826,
+            "unit": "us/iter",
+            "extra": "iterations: 10964\ncpu: 63.7178587194454 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 32.174532085809666,
+            "unit": "us/iter",
+            "extra": "iterations: 21910\ncpu: 32.17158662711091 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 64.94273910666148,
+            "unit": "us/iter",
+            "extra": "iterations: 10970\ncpu: 64.9376216955333 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 19.942767172291962,
+            "unit": "us/iter",
+            "extra": "iterations: 34940\ncpu: 19.941073325701225 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.218528151171581,
+            "unit": "us/iter",
+            "extra": "iterations: 48950\ncpu: 14.217861736465764 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 19.96547981667241,
+            "unit": "us/iter",
+            "extra": "iterations: 35128\ncpu: 19.963796601002073 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.401991032568411,
+            "unit": "us/iter",
+            "extra": "iterations: 95122\ncpu: 7.401285033956402 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61.893082943614075,
+            "unit": "us/iter",
+            "extra": "iterations: 11333\ncpu: 61.890073502161705 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 78.64838869573609,
+            "unit": "us/iter",
+            "extra": "iterations: 8917\ncpu: 78.64538163059319 us\nthreads: 1"
           }
         ]
       }
