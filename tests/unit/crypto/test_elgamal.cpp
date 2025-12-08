@@ -7,6 +7,13 @@ using namespace coinbase::crypto;
 
 namespace {
 
+// Helper functions for testing (moved from the library as they are test-only)
+bool check_zero(const ec_elgamal_commitment_t& E, const bn_t& d) { return E.R == d * E.L; }
+
+bool check_equ(const ec_elgamal_commitment_t& E1, const ec_elgamal_commitment_t& E2, const bn_t& d) {
+  return check_zero(E1 - E2, d);
+}
+
 class ElGamal : public testing::Test {
  protected:
   void SetUp() override {
@@ -47,16 +54,16 @@ TEST_F(ElGamal, API) {
   ec_elgamal_commitment_t A_plus_B_test =
       ec_elgamal_commitment_t::random_commit(P, a) + ec_elgamal_commitment_t::random_commit(P, b);
 
-  EXPECT_TRUE(ec_elgamal_commitment_t::check_equ(A_plus_B, A_plus_B_test, d));
-  EXPECT_TRUE(ec_elgamal_commitment_t::check_equ(A_plus_B_test, A_plus_b, d));
+  EXPECT_TRUE(check_equ(A_plus_B, A_plus_B_test, d));
+  EXPECT_TRUE(check_equ(A_plus_B_test, A_plus_b, d));
 
   ec_elgamal_commitment_t A1 = A;
   A1.randomize(P);
-  EXPECT_TRUE(ec_elgamal_commitment_t::check_equ(A, A1, d));
+  EXPECT_TRUE(check_equ(A, A1, d));
 
   ec_elgamal_commitment_t A_mul_c = c * A;
   ec_elgamal_commitment_t A_mul_c_test = ec_elgamal_commitment_t::random_commit(P, a * c);
-  EXPECT_TRUE(ec_elgamal_commitment_t::check_equ(A_mul_c_test, A_mul_c, d));
+  EXPECT_TRUE(check_equ(A_mul_c_test, A_mul_c, d));
 
   int p = 17;
   const mod_t& q = ec_elgamal_commitment_t::order(curve);
@@ -77,7 +84,7 @@ TEST_F(ElGamal, API) {
         bn_t r = bn_t::rand(q);
         X = X * r;
         X.randomize(P);
-        bool t = X.check_zero(d);
+        bool t = check_zero(X, d);
         EXPECT_EQ(t, test);
       }
     }

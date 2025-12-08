@@ -77,14 +77,4 @@ ec_elgamal_commitment_t ec_elgamal_commitment_t::rerand(const ecc_point_t& pub_k
   return UV;
 }
 
-bool ec_elgamal_commitment_t::check_zero(const bn_t& d) const  // d is the private key
-{
-  return R == d * L;
-}
-
-bool ec_elgamal_commitment_t::check_equ(const ec_elgamal_commitment_t& E1, const ec_elgamal_commitment_t& E2,
-                                        const bn_t& d) {
-  return (E1 - E2).check_zero(d);
-}
-
 }  // namespace coinbase::crypto

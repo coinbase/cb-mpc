@@ -81,8 +81,6 @@ class ec_elgamal_commitment_t {
    * - basic-primitives-spec | EC-ElGamal-Commit-ReRand-1P
    */
   void randomize(const bn_t& r, const ecc_point_t& pub_key);
-  bool check_zero(const bn_t& prv_key) const;
-  static bool check_equ(const ec_elgamal_commitment_t& E1, const ec_elgamal_commitment_t& E2, const bn_t& d);
   template <class T>
   void update_state(T& state) const {
     state.update(L);
