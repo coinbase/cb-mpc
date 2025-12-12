@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764872742794,
+  "lastUpdate": 1765505730447,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2232,6 +2232,114 @@ window.BENCHMARK_DATA = {
             "value": 78.64838869573609,
             "unit": "us/iter",
             "extra": "iterations: 8917\ncpu: 78.64538163059319 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6493b1df0ce2622bde41eeebead94a91926c964e",
+          "message": "fix: Correct benchmark function references, entropy seeds (#72)\n\n- Fix BENCHMARK() macros to reference correct functions (BM_HMAC_SHA256, BM_AES_GCM_128, BM_AES_GCM_256) instead of wrong ones\n- Fix typo: BM_AEC_GCM -> BM_AES_GCM\n- Add benchmark::DoNotOptimize() to prevent compiler from optimizing out hash/encryption results\n- Use proper DRBG seeds with sufficient entropy (16 bytes) instead of short \"test\" string that doesn't meet SEC_P_COM requirement\n- Adjust benchmark input ranges for more meaningful measurements",
+          "timestamp": "2025-12-11T17:35:43-08:00",
+          "tree_id": "6e499c524dbf2e11241e3493897fa826b8e77a71",
+          "url": "https://github.com/coinbase/cb-mpc/commit/6493b1df0ce2622bde41eeebead94a91926c964e"
+        },
+        "date": 1765505729706,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.35675881878121934,
+            "unit": "us/iter",
+            "extra": "iterations: 1959908\ncpu: 0.35674971121093435 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.3101238576485969,
+            "unit": "us/iter",
+            "extra": "iterations: 2258609\ncpu: 0.3100959550767751 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 0.3502032122964889,
+            "unit": "us/iter",
+            "extra": "iterations: 2000189\ncpu: 0.35016828659691646 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.31194669821138493,
+            "unit": "us/iter",
+            "extra": "iterations: 2248236\ncpu: 0.3119353146199952 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.48393628611302,
+            "unit": "us/iter",
+            "extra": "iterations: 16888\ncpu: 41.48195783988629 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 64.09673300348346,
+            "unit": "us/iter",
+            "extra": "iterations: 10914\ncpu: 64.09182957669051 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 31.749011653080693,
+            "unit": "us/iter",
+            "extra": "iterations: 21711\ncpu: 31.74696904794805 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 64.07228515267059,
+            "unit": "us/iter",
+            "extra": "iterations: 10938\ncpu: 64.06924611446334 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 19.999701932713194,
+            "unit": "us/iter",
+            "extra": "iterations: 34925\ncpu: 19.99783055118112 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.269797094055788,
+            "unit": "us/iter",
+            "extra": "iterations: 49003\ncpu: 14.26904207905637 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 20.03239659611182,
+            "unit": "us/iter",
+            "extra": "iterations: 34960\ncpu: 20.031447139588092 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.284110295338098,
+            "unit": "us/iter",
+            "extra": "iterations: 96296\ncpu: 7.283708316025588 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61.762509575496075,
+            "unit": "us/iter",
+            "extra": "iterations: 11331\ncpu: 61.76061936280999 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 78.60748082957635,
+            "unit": "us/iter",
+            "extra": "iterations: 8920\ncpu: 78.60463699551563 us\nthreads: 1"
           }
         ]
       }
