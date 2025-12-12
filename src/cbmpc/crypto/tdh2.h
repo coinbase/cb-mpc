@@ -36,16 +36,6 @@ struct ciphertext_t {
   error_t verify(const public_key_t& pub_key, mem_t label) const;
 };
 
-template <class T>
-T& update_state(T& state, const ciphertext_t& v) {
-  update_state(state, v.c);
-  update_state(state, v.R1);
-  update_state(state, v.R2);
-  update_state(state, v.e);
-  update_state(state, v.f);
-  return state;
-}
-
 struct public_key_t {
   ecc_point_t Q, Gamma;
 
