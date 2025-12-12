@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764872747376,
+  "lastUpdate": 1765505735187,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1518,6 +1518,72 @@ window.BENCHMARK_DATA = {
             "value": 8327.588547618212,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8326.516821428566 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6493b1df0ce2622bde41eeebead94a91926c964e",
+          "message": "fix: Correct benchmark function references, entropy seeds (#72)\n\n- Fix BENCHMARK() macros to reference correct functions (BM_HMAC_SHA256, BM_AES_GCM_128, BM_AES_GCM_256) instead of wrong ones\n- Fix typo: BM_AEC_GCM -> BM_AES_GCM\n- Add benchmark::DoNotOptimize() to prevent compiler from optimizing out hash/encryption results\n- Use proper DRBG seeds with sufficient entropy (16 bytes) instead of short \"test\" string that doesn't meet SEC_P_COM requirement\n- Adjust benchmark input ranges for more meaningful measurements",
+          "timestamp": "2025-12-11T17:35:43-08:00",
+          "tree_id": "6e499c524dbf2e11241e3493897fa826b8e77a71",
+          "url": "https://github.com/coinbase/cb-mpc/commit/6493b1df0ce2622bde41eeebead94a91926c964e"
+        },
+        "date": 1765505734362,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 54630.620526304,
+            "unit": "us/iter",
+            "extra": "iterations: 19\ncpu: 54626.30857894737 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4525.606380646482,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4525.208161290321 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8573.39068292964,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8573.104597560978 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4507.329651612728,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4506.93515483871 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.049703037870323,
+            "unit": "us/iter",
+            "extra": "iterations: 63301\ncpu: 11.048795485063419 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.902415554573526,
+            "unit": "us/iter",
+            "extra": "iterations: 54402\ncpu: 12.885456214845034 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8345.935904761365,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8345.767845238095 us\nthreads: 1"
           }
         ]
       }
