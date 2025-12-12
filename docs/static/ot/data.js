@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764872752000,
+  "lastUpdate": 1765505739736,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -966,6 +966,48 @@ window.BENCHMARK_DATA = {
             "value": 13791.880333330624,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13789.50929411764 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6493b1df0ce2622bde41eeebead94a91926c964e",
+          "message": "fix: Correct benchmark function references, entropy seeds (#72)\n\n- Fix BENCHMARK() macros to reference correct functions (BM_HMAC_SHA256, BM_AES_GCM_128, BM_AES_GCM_256) instead of wrong ones\n- Fix typo: BM_AEC_GCM -> BM_AES_GCM\n- Add benchmark::DoNotOptimize() to prevent compiler from optimizing out hash/encryption results\n- Use proper DRBG seeds with sufficient entropy (16 bytes) instead of short \"test\" string that doesn't meet SEC_P_COM requirement\n- Adjust benchmark input ranges for more meaningful measurements",
+          "timestamp": "2025-12-11T17:35:43-08:00",
+          "tree_id": "6e499c524dbf2e11241e3493897fa826b8e77a71",
+          "url": "https://github.com/coinbase/cb-mpc/commit/6493b1df0ce2622bde41eeebead94a91926c964e"
+        },
+        "date": 1765505738894,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24506.80728570985,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24504.15807142857 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 107041.29971424793,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 107036.67342857142 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13776.46523528978,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13774.40588235294 us\nthreads: 1"
           }
         ]
       }
