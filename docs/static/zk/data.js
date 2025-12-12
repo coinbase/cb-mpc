@@ -10664,37 +10664,37 @@ window.BENCHMARK_DATA = {
             "extra": "iterations: 571\ncpu: 1229.9685499124348 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Prover/3/4",
+            "name": "UC-ZK / Batch-DL (n = 4) / secp256k1 / Prover",
             "value": 1681.1462966498682,
             "unit": "us/iter",
             "extra": "iterations: 418\ncpu: 1680.953444976077 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Prover/4/4",
+            "name": "UC-ZK / Batch-DL (n = 4) / Ed25519 / Prover",
             "value": 1583.4769886113006,
             "unit": "us/iter",
             "extra": "iterations: 439\ncpu: 1583.3185489749428 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Prover/3/16",
+            "name": "UC-ZK / Batch-DL (n = 16) / secp256k1 / Prover",
             "value": 3831.4654058815318,
             "unit": "us/iter",
             "extra": "iterations: 170\ncpu: 3831.0050529411783 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Prover/4/16",
+            "name": "UC-ZK / Batch-DL (n = 16) / Ed25519 / Prover",
             "value": 3809.1064699456883,
             "unit": "us/iter",
             "extra": "iterations: 183\ncpu: 3808.6616939890714 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Prover/3/64",
+            "name": "UC-ZK / Batch-DL (n = 64) / secp256k1 / Prover",
             "value": 11670.762677421144,
             "unit": "us/iter",
             "extra": "iterations: 62\ncpu: 11669.476338709683 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Prover/4/64",
+            "name": "UC-ZK / Batch-DL (n = 64) / Ed25519 / Prover",
             "value": 11709.944315785642,
             "unit": "us/iter",
             "extra": "iterations: 57\ncpu: 11708.596333333338 us\nthreads: 1"
@@ -10712,235 +10712,235 @@ window.BENCHMARK_DATA = {
             "extra": "iterations: 113\ncpu: 6180.538592920351 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Verify/3/4",
+            "name": "UC-ZK / Batch-DL (n = 4) / secp256k1 / Verifier",
             "value": 2253.2437170423564,
             "unit": "us/iter",
             "extra": "iterations: 311\ncpu: 2253.112739549839 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Verify/4/4",
+            "name": "UC-ZK / Batch-DL (n = 4) / Ed25519 / Verifier",
             "value": 14703.29795745087,
             "unit": "us/iter",
             "extra": "iterations: 47\ncpu: 14702.3135744681 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Verify/3/16",
+            "name": "UC-ZK / Batch-DL (n = 16) / secp256k1 / Verifier",
             "value": 5648.341406505666,
             "unit": "us/iter",
             "extra": "iterations: 123\ncpu: 5647.741536585367 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Verify/4/16",
+            "name": "UC-ZK / Batch-DL (n = 16) / Ed25519 / Verifier",
             "value": 48738.587214269755,
             "unit": "us/iter",
             "extra": "iterations: 14\ncpu: 48734.54292857142 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Verify/3/64",
+            "name": "UC-ZK / Batch-DL (n = 64) / secp256k1 / Verifier",
             "value": 28261.119039998444,
             "unit": "us/iter",
             "extra": "iterations: 25\ncpu: 28260.046559999948 us\nthreads: 1"
           },
           {
-            "name": "ZK/Batch-DL/Verify/4/64",
+            "name": "UC-ZK / Batch-DL (n = 64) / Ed25519 / Verifier",
             "value": 272759.32633331954,
             "unit": "us/iter",
             "extra": "iterations: 3\ncpu: 272745.6780000003 us\nthreads: 1"
           },
           {
-            "name": "ZK/ValidPaillier-Int/V1",
+            "name": "ZK (Interactive) / Valid-Paillier / Verifier's Challenge (1st round)",
             "value": 0.7654690448385812,
             "unit": "us/iter",
             "extra": "iterations: 899010\ncpu: 0.7654449817020941 us\nthreads: 1"
           },
           {
-            "name": "ZK/ValidPaillier-Int/P2",
+            "name": "ZK (Interactive) / Valid-Paillier / Prover Message (2nd round)",
             "value": 9764.113013893115,
             "unit": "us/iter",
             "extra": "iterations: 72\ncpu: 9764.002083333364 us\nthreads: 1"
           },
           {
-            "name": "ZK/ValidPaillier-Int/Verify",
+            "name": "ZK (Interactive) / Valid-Paillier / Final Verification",
             "value": 9234.193293335313,
             "unit": "us/iter",
             "extra": "iterations: 75\ncpu: 9233.757853333296 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierZero-Int/P1",
+            "name": "ZK (Interactive) / Paillier-Zero / Prover's 1st Message (1st round)",
             "value": 33346.375047607406,
             "unit": "us/iter",
             "extra": "iterations: 21\ncpu: 33344.85161904764 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierZero-Int/V2",
+            "name": "ZK (Interactive) / Paillier-Zero / Verifier's Challenge (2nd round)",
             "value": 3.0245613283003396,
             "unit": "us/iter",
             "extra": "iterations: 230008\ncpu: 3.024336179611156 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierZero-Int/P3",
+            "name": "ZK (Interactive) / Paillier-Zero / Prover's 2nd Message (3rd round)",
             "value": 350.88702511317433,
             "unit": "us/iter",
             "extra": "iterations: 1991\ncpu: 350.8718864892049 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierZero-Int/Verify",
+            "name": "ZK (Interactive) / Paillier-Zero / Final Verification (3rd round)",
             "value": 35110.26394999135,
             "unit": "us/iter",
             "extra": "iterations: 20\ncpu: 35107.81370000018 us\nthreads: 1"
           },
           {
-            "name": "ZK/TwoPaillierEqual-Int/P1",
+            "name": "ZK (Interactive) / Two-Paillier-Equal / Prover's 1st Message (1st round)",
             "value": 35577.24089998828,
             "unit": "us/iter",
             "extra": "iterations: 20\ncpu: 35576.16085000035 us\nthreads: 1"
           },
           {
-            "name": "ZK/TwoPaillierEqual-Int/V2",
+            "name": "ZK (Interactive) / Two-Paillier-Equal / Verifier's Challenge (2nd round)",
             "value": 0.8421363425627948,
             "unit": "us/iter",
             "extra": "iterations: 830423\ncpu: 0.8421023984162042 us\nthreads: 1"
           },
           {
-            "name": "ZK/TwoPaillierEqual-Int/P3",
+            "name": "ZK (Interactive) / Two-Paillier-Equal / Prover's 2nd Message (3rd round)",
             "value": 706.0261846622361,
             "unit": "us/iter",
             "extra": "iterations: 991\ncpu: 705.9999303733522 us\nthreads: 1"
           },
           {
-            "name": "ZK/TwoPaillierEqual-Int/Verify",
+            "name": "ZK (Interactive) / Two Paillier Equal / Final Verification (3rd round)",
             "value": 73435.05588889659,
             "unit": "us/iter",
             "extra": "iterations: 9\ncpu: 73431.47311111251 us\nthreads: 1"
           },
           {
-            "name": "ZK/RangePedersenInt/P1/3",
+            "name": "ZK (Interactive) / Range-Pedersen / secp256k1 / Prover's 1st Message (1st round)",
             "value": 129532.46619999847,
             "unit": "us/iter",
             "extra": "iterations: 5\ncpu: 129525.86960000191 us\nthreads: 1"
           },
           {
-            "name": "ZK/RangePedersenInt/P1/4",
+            "name": "ZK (Interactive) / Range-Pedersen / Ed25519 / Prover's 1st Message (1st round)",
             "value": 129571.51659993544,
             "unit": "us/iter",
             "extra": "iterations: 5\ncpu: 129560.71620000103 us\nthreads: 1"
           },
           {
-            "name": "ZK/RangePedersenInt/V2/3",
+            "name": "ZK (Interactive) / Range-Pedersen / secp256k1 / Verifier's Challenge (2nd round)",
             "value": 0.7968617885913629,
             "unit": "us/iter",
             "extra": "iterations: 909129\ncpu: 0.7968479577705818 us\nthreads: 1"
           },
           {
-            "name": "ZK/RangePedersenInt/V2/4",
+            "name": "ZK (Interactive) / Range-Pedersen / Ed25519 / Verifier's Challenge (2nd round)",
             "value": 0.7726227860815056,
             "unit": "us/iter",
             "extra": "iterations: 910038\ncpu: 0.7725665994167307 us\nthreads: 1"
           },
           {
-            "name": "ZK/RangePedersenInt/P3/3",
+            "name": "ZK (Interactive) / Range-Pedersen / secp256k1 / Prover's 2nd Message (3rd round)",
             "value": 6.664215789858275,
             "unit": "us/iter",
             "extra": "iterations: 110172\ncpu: 6.663715690012067 us\nthreads: 1"
           },
           {
-            "name": "ZK/RangePedersenInt/P3/4",
+            "name": "ZK (Interactive) / Range-Pedersen / Ed25519 / Prover's 2nd Message (3rd round)",
             "value": 5.540244073880448,
             "unit": "us/iter",
             "extra": "iterations: 122635\ncpu: 5.5400102662370845 us\nthreads: 1"
           },
           {
-            "name": "ZK/RangePedersenInt/Verify/3",
+            "name": "ZK (Interactive) / Range-Pedersen / secp256k1 / Final Verification (3rd round)",
             "value": 6.128474820002339,
             "unit": "us/iter",
             "extra": "iterations: 100000\ncpu: 6.128279020000207 us\nthreads: 1"
           },
           {
-            "name": "ZK/RangePedersenInt/Verify/4",
+            "name": "ZK (Interactive) / Range-Pedersen / Ed25519 / Final Verification (3rd round)",
             "value": 6.102130879506032,
             "unit": "us/iter",
             "extra": "iterations: 114678\ncpu: 6.1021733113588015 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierPedersenEq-Int/P1/3",
+            "name": "ZK (Interactive) / Paillier-Pedersen-Equal / secp256k1 / Prover's 1st Message (1st round)",
             "value": 20466.15988235638,
             "unit": "us/iter",
             "extra": "iterations: 34\ncpu: 20465.617647058774 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierPedersenEq-Int/P1/4",
+            "name": "ZK (Interactive) / Paillier-Pedersen-Equal / Ed25519 / Prover's 1st Message (1st round)",
             "value": 20472.788235298034,
             "unit": "us/iter",
             "extra": "iterations: 34\ncpu: 20471.532500000012 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierPedersenEq-Int/V2/3",
+            "name": "ZK (Interactive) / Paillier-Pedersen-Equal / secp256k1 / Verifier's Challenge (2nd round)",
             "value": 0.914477808892257,
             "unit": "us/iter",
             "extra": "iterations: 758119\ncpu: 0.9144550881853929 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierPedersenEq-Int/V2/4",
+            "name": "ZK (Interactive) / Paillier-Pedersen-Equal / Ed25519 / Verifier's Challenge (2nd round)",
             "value": 0.9198465839118221,
             "unit": "us/iter",
             "extra": "iterations: 762495\ncpu: 0.9198236316303514 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierPedersenEq-Int/P3/3",
+            "name": "ZK (Interactive) / Paillier-Pedersen-Equal / secp256k1 / Prover's 2nd Message (3rd round)",
             "value": 353.3579696664413,
             "unit": "us/iter",
             "extra": "iterations: 1978\ncpu: 353.3466223458082 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierPedersenEq-Int/P3/4",
+            "name": "ZK (Interactive) / Paillier-Pedersen-Equal / Ed25519 / Prover's 2nd Message (3rd round)",
             "value": 354.94614611883026,
             "unit": "us/iter",
             "extra": "iterations: 1971\ncpu: 354.9423084728568 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierPedersenEq-Int/Verifier/3",
+            "name": "ZK (Interactive) / Paillier-Pedersen-Equal / secp256k1 / Final Verification (3rd round)",
             "value": 43743.38549999379,
             "unit": "us/iter",
             "extra": "iterations: 16\ncpu: 43741.71899999979 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierPedersenEq-Int/Verifier/4",
+            "name": "ZK (Interactive) / Paillier-Pedersen-Equal / Ed25519 / Final Verification (3rd round)",
             "value": 43746.14418750866,
             "unit": "us/iter",
             "extra": "iterations: 16\ncpu: 43745.36975000254 us\nthreads: 1"
           },
           {
-            "name": "ZK/DL/Prover/3",
+            "name": "UC-ZK / DL / secp256k1 / Prover",
             "value": 977.5263165966777,
             "unit": "us/iter",
             "extra": "iterations: 717\ncpu: 977.4497810320124 us\nthreads: 1"
           },
           {
-            "name": "ZK/DL/Prover/4",
+            "name": "UC-ZK / DL / Ed25519 / Prover",
             "value": 900.9420654685284,
             "unit": "us/iter",
             "extra": "iterations: 779\ncpu: 900.9419794608602 us\nthreads: 1"
           },
           {
-            "name": "ZK/DL/Verify/3",
+            "name": "UC-ZK / DL / secp256k1 / Verifier",
             "value": 770.9338832595845,
             "unit": "us/iter",
             "extra": "iterations: 908\ncpu: 770.8987632158929 us\nthreads: 1"
           },
           {
-            "name": "ZK/DL/Verify/4",
+            "name": "UC-ZK / DL / Ed25519 / Verifier",
             "value": 4493.9595256425655,
             "unit": "us/iter",
             "extra": "iterations: 156\ncpu: 4493.509692307585 us\nthreads: 1"
           },
           {
-            "name": "ZK/DH/Prove/3",
+            "name": "ZK / DH / secp256k1 / Prover",
             "value": 77.81675852493188,
             "unit": "us/iter",
             "extra": "iterations: 9003\ncpu: 77.81295756969752 us\nthreads: 1"
           },
           {
-            "name": "ZK/DH/Verify/3",
+            "name": "ZK / DH / secp256k1 / Verifier",
             "value": 137.67587012727105,
             "unit": "us/iter",
             "extra": "iterations: 5028\ncpu: 137.665432975336 us\nthreads: 1"
@@ -10958,13 +10958,13 @@ window.BENCHMARK_DATA = {
             "extra": "iterations: 650\ncpu: 1078.4195461537995 us\nthreads: 1"
           },
           {
-            "name": "ZK/ElGamalPubShareEqual/Prover/3",
+            "name": "ZK / ElGamal-PubShare-Equal / secp256k1 / Prover",
             "value": 78.44488826941901,
             "unit": "us/iter",
             "extra": "iterations: 8968\ncpu: 78.44384600802594 us\nthreads: 1"
           },
           {
-            "name": "ZK/ElGamalPubShareEqual/Verify/3",
+            "name": "ZK / ElGamal-PubShare-Equal / secp256k1 / Verifier",
             "value": 143.45920779219873,
             "unit": "us/iter",
             "extra": "iterations: 4851\ncpu: 143.4499014636064 us\nthreads: 1"
@@ -10994,97 +10994,97 @@ window.BENCHMARK_DATA = {
             "extra": "iterations: 699\ncpu: 1001.3084177396256 us\nthreads: 1"
           },
           {
-            "name": "ZK/ValidPaillier/Prover",
+            "name": "ZK / Valid-Paillier / Prover",
             "value": 23448.476033324067,
             "unit": "us/iter",
             "extra": "iterations: 30\ncpu: 23447.942699999658 us\nthreads: 1"
           },
           {
-            "name": "ZK/ValidPaillier/Verify",
+            "name": "ZK / Valid-Paillier / Verifier",
             "value": 22549.65664515992,
             "unit": "us/iter",
             "extra": "iterations: 31\ncpu: 22547.97174193498 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierZero/Prover",
+            "name": "ZK / Paillier-Zero / Prover",
             "value": 92480.10200002455,
             "unit": "us/iter",
             "extra": "iterations: 8\ncpu: 92473.9356250015 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierZero/Verify",
+            "name": "ZK / Paillier-Zero / Verifier",
             "value": 87792.18037500413,
             "unit": "us/iter",
             "extra": "iterations: 8\ncpu: 87781.43512500236 us\nthreads: 1"
           },
           {
-            "name": "ZK/TwoPaillierEqual/Prover",
+            "name": "ZK / Two-Paillier-Equal / Prover",
             "value": 90719.6037500171,
             "unit": "us/iter",
             "extra": "iterations: 8\ncpu: 90714.27824999744 us\nthreads: 1"
           },
           {
-            "name": "ZK/TwoPaillierEqual/Verify",
+            "name": "ZK / Two-Paillier-Equal / Verifier",
             "value": 183217.9357500081,
             "unit": "us/iter",
             "extra": "iterations: 4\ncpu: 183216.01150000788 us\nthreads: 1"
           },
           {
-            "name": "ZK/RangePedersen/Prover/3",
+            "name": "ZK / Range-Pedersen / secp256k1 / Prover",
             "value": 331898.4625000212,
             "unit": "us/iter",
             "extra": "iterations: 2\ncpu: 331876.0740000073 us\nthreads: 1"
           },
           {
-            "name": "ZK/RangePedersen/Verify/3",
+            "name": "ZK / Range-Pedersen / secp256k1 / Verifier",
             "value": 17550.831225003094,
             "unit": "us/iter",
             "extra": "iterations: 40\ncpu: 17549.46052499946 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierPedersenEq/Prover/3",
+            "name": "ZK / Paillier-Pedersen-Equal / secp256k1 / Prover",
             "value": 48203.91686665364,
             "unit": "us/iter",
             "extra": "iterations: 15\ncpu: 48200.2469333338 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierPedersenEq/Verify/3",
+            "name": "ZK / Paillier-Pedersen-Equal / secp256k1 / Verifier",
             "value": 98735.97614283166,
             "unit": "us/iter",
             "extra": "iterations: 7\ncpu: 98726.2451428543 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierRangeExpSlack/Prover/3",
+            "name": "ZK / Paillier-Range-Exp-Slack / secp256k1 / Prover",
             "value": 382331.3604998475,
             "unit": "us/iter",
             "extra": "iterations: 2\ncpu: 382303.3904999988 us\nthreads: 1"
           },
           {
-            "name": "ZK/PaillierRangeExpSlack/Verify/3",
+            "name": "ZK / Paillier-Range-Exp-Slack / secp256k1 / Verifier",
             "value": 116833.70816664743,
             "unit": "us/iter",
             "extra": "iterations: 6\ncpu: 116827.1731666645 us\nthreads: 1"
           },
           {
-            "name": "ZK/PDL/Prover",
+            "name": "ZK / PDL / Prover",
             "value": 387161.2924999681,
             "unit": "us/iter",
             "extra": "iterations: 2\ncpu: 387136.1265000246 us\nthreads: 1"
           },
           {
-            "name": "ZK/PDL/Verify",
+            "name": "ZK / PDL / Verifier",
             "value": 126799.54320001343,
             "unit": "us/iter",
             "extra": "iterations: 5\ncpu: 126787.3838000014 us\nthreads: 1"
           },
           {
-            "name": "ZK/UnknownOrderDL/Prove",
+            "name": "ZK / Unknown-Order-DL / Prover",
             "value": 296952.6365000092,
             "unit": "us/iter",
             "extra": "iterations: 2\ncpu: 296900.71799998917 us\nthreads: 1"
           },
           {
-            "name": "ZK/UnknownOrderDL/Verify",
+            "name": "ZK / Unknown-Order-DL / Verifier",
             "value": 297754.4914999726,
             "unit": "us/iter",
             "extra": "iterations: 2\ncpu: 297722.7904999893 us\nthreads: 1"
