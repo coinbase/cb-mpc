@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765505739736,
+  "lastUpdate": 1765557545942,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1008,6 +1008,48 @@ window.BENCHMARK_DATA = {
             "value": 13776.46523528978,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13774.40588235294 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1bc6a7de5b9004d246325a30ab9a63344ffb351e",
+          "message": "chore: remove update function in TDH2 (#73)",
+          "timestamp": "2025-12-12T07:59:40-08:00",
+          "tree_id": "d638d2cbcb63c4b843602a8601e465a937103925",
+          "url": "https://github.com/coinbase/cb-mpc/commit/1bc6a7de5b9004d246325a30ab9a63344ffb351e"
+        },
+        "date": 1765557545481,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24526.080749995217,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24524.805892857144 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 106000.00428569599,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 105993.70900000002 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13865.597901953794,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13865.654098039216 us\nthreads: 1"
           }
         ]
       }
