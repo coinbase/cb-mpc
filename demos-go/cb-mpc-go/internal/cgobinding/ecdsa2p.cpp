@@ -6,6 +6,7 @@
 #include <cbmpc/crypto/base.h>
 #include <cbmpc/protocol/ecdsa_2p.h>
 #include <cbmpc/protocol/mpc_job_session.h>
+#include <cbmpc/ffi/cmem_adapter.h>
 
 #include "curve.h"
 #include "network.h"
@@ -42,7 +43,7 @@ int mpc_ecdsa2p_refresh(job_2p_ref* j, mpc_ecdsa2pc_key_ref* k, mpc_ecdsa2pc_key
 int mpc_ecdsa2p_sign(job_2p_ref* j, cmem_t sid_mem, mpc_ecdsa2pc_key_ref* k, cmems_t msgs, cmems_t* sigs) {
   job_2p_t* job = static_cast<job_2p_t*>(j->opaque);
   ecdsa2pc::key_t* key = static_cast<ecdsa2pc::key_t*>(k->opaque);
-  buf_t sid = mem_t(sid_mem);
+  buf_t sid = coinbase::ffi::view(sid_mem);
   // Reconstruct messages from cmems_t explicitly and copy into owned buffers
   int count = msgs.count;
   std::vector<buf_t> owned_msgs;
@@ -61,7 +62,7 @@ int mpc_ecdsa2p_sign(job_2p_ref* j, cmem_t sid_mem, mpc_ecdsa2pc_key_ref* k, cme
   std::vector<buf_t> signatures;
   error_t err = ecdsa2pc::sign_batch(*job, sid, *key, messages, signatures);
   if (err) return err;
-  *sigs = coinbase::mems_t(signatures).to_cmems();
+  *sigs = coinbase::ffi::copy_to_cmems(buf_t::to_mems(signatures));
 
   return 0;
 }
@@ -100,7 +101,7 @@ cmem_t mpc_ecdsa2p_key_get_x_share(mpc_ecdsa2pc_key_ref* key) {
   // Serialize bn_t to bytes (minimal length) preserving order size
   int bin_size = std::max(k->x_share.get_bin_size(), k->curve.order().get_bin_size());
   buf_t x_buf = k->x_share.to_bin(bin_size);
-  return x_buf.to_cmem();
+  return coinbase::ffi::copy_to_cmem(x_buf);
 }
 
 int mpc_ecdsa2p_key_get_curve_code(mpc_ecdsa2pc_key_ref* key) {

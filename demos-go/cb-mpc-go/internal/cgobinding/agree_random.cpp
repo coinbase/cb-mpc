@@ -5,6 +5,7 @@
 #include <cbmpc/crypto/base.h>
 #include <cbmpc/protocol/agree_random.h>
 #include <cbmpc/protocol/mpc_job_session.h>
+#include <cbmpc/ffi/cmem_adapter.h>
 
 using namespace coinbase;
 using namespace coinbase::mpc;
@@ -35,7 +36,7 @@ int mpc_agree_random(job_2p_ref* job, int bit_len, cmem_t* out) {
 
     if (err) return static_cast<int>(err);
 
-    *out = out_buf.to_cmem();
+    *out = coinbase::ffi::copy_to_cmem(out_buf);
     return SUCCESS_CODE;
 
   } catch (const std::exception& e) {

@@ -99,7 +99,7 @@ TEST_F(ECDSA2PC, KeygenBatchSignRefreshBatchSign) {
 
     std::vector<buf_t> sig_bufs(DATA_COUNT);
     buf_t session_id;
-    rv = sign_batch(job, session_id, key, coinbase::mems_t(data).mems(), sig_bufs);
+    rv = sign_batch(job, session_id, key, buf_t::to_mems(data), sig_bufs);
     ASSERT_EQ(rv, 0);
     EXPECT_EQ(session_id.size(), SEC_P_COM / 8);
 
@@ -113,10 +113,10 @@ TEST_F(ECDSA2PC, KeygenBatchSignRefreshBatchSign) {
     EXPECT_NE(new_key.x_share, key.x_share);
 
     std::vector<buf_t> new_sig_bufs(DATA_COUNT);
-    rv = sign_batch(job, session_id, new_key, coinbase::mems_t(data).mems(), new_sig_bufs);
+    rv = sign_batch(job, session_id, new_key, buf_t::to_mems(data), new_sig_bufs);
     ASSERT_EQ(rv, 0);
 
-    rv = sign_with_global_abort_batch(job, session_id, new_key, coinbase::mems_t(data).mems(), new_sig_bufs);
+    rv = sign_with_global_abort_batch(job, session_id, new_key, buf_t::to_mems(data), new_sig_bufs);
     ASSERT_EQ(rv, 0);
   });
 
@@ -206,7 +206,7 @@ TEST_F(ECDSA2PC, ParallelKSRS8) {
 
     std::vector<buf_t> sig_bufs;
     buf_t session_id;
-    rv = sign_batch(job, session_id, key, coinbase::mems_t(data[th_i]).mems(), sig_bufs);
+    rv = sign_batch(job, session_id, key, buf_t::to_mems(data[th_i]), sig_bufs);
     ASSERT_EQ(rv, 0);
 
     ecdsa2pc::key_t& new_key = new_keys[th_i][party_index];
@@ -219,9 +219,9 @@ TEST_F(ECDSA2PC, ParallelKSRS8) {
     EXPECT_NE(new_key.x_share, key.x_share);
 
     std::vector<buf_t> new_sig_bufs;
-    rv = sign_batch(job, session_id, key, coinbase::mems_t(data[th_i]).mems(), new_sig_bufs);
+    rv = sign_batch(job, session_id, key, buf_t::to_mems(data[th_i]), new_sig_bufs);
     ASSERT_EQ(rv, 0);
-    rv = sign_with_global_abort_batch(job, session_id, key, coinbase::mems_t(data[th_i]).mems(), new_sig_bufs);
+    rv = sign_with_global_abort_batch(job, session_id, key, buf_t::to_mems(data[th_i]), new_sig_bufs);
     ASSERT_EQ(rv, 0);
   });
 

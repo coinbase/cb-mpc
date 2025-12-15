@@ -7,6 +7,7 @@
 #include <cbmpc/core/buf.h>
 #include <cbmpc/protocol/ecdsa_mp.h>
 #include <cbmpc/protocol/mpc_job_session.h>
+#include <cbmpc/ffi/cmem_adapter.h>
 
 #include "curve.h"
 #include "network.h"
@@ -22,11 +23,11 @@ int mpc_ecdsampc_sign(job_mp_ref* j, mpc_eckey_mp_ref* k, cmem_t msg_mem, int si
   job_mp_t* job = static_cast<job_mp_t*>(j->opaque);
   ecdsampc::key_t* key = static_cast<ecdsampc::key_t*>(k->opaque);
 
-  buf_t msg = coinbase::mem_t(msg_mem);
+  buf_t msg = coinbase::ffi::view(msg_mem);
   buf_t sig;
   error_t err = ecdsampc::sign(*job, *key, msg, party_idx_t(sig_receiver), sig);
   if (err) return err;
-  *sig_mem = sig.to_cmem();
+  *sig_mem = coinbase::ffi::copy_to_cmem(sig);
   return 0;
 }
 
@@ -35,8 +36,8 @@ int mpc_ecdsampc_sign_with_ot_roles(job_mp_ref* j, mpc_eckey_mp_ref* k, cmem_t m
   job_mp_t* job = static_cast<job_mp_t*>(j->opaque);
   ecdsampc::key_t* key = static_cast<ecdsampc::key_t*>(k->opaque);
 
-  buf_t msg = coinbase::mem_t(msg_mem);
-  std::vector<buf_t> role_bufs = coinbase::mems_t(ot_role_map).bufs();
+  buf_t msg = coinbase::ffi::view(msg_mem);
+  std::vector<buf_t> role_bufs = coinbase::ffi::bufs_from_cmems(ot_role_map);
   std::vector<std::vector<int>> ot_roles(n_parties, std::vector<int>(n_parties));
 
   for (int i = 0; i < n_parties; i++) {
@@ -52,6 +53,6 @@ int mpc_ecdsampc_sign_with_ot_roles(job_mp_ref* j, mpc_eckey_mp_ref* k, cmem_t m
   error_t err = ecdsampc::sign(*job, *key, msg, party_idx_t(sig_receiver), ot_roles, sig);
   if (err) return err;
 
-  *sig_mem = sig.to_cmem();
+  *sig_mem = coinbase::ffi::copy_to_cmem(sig);
   return 0;
 } 

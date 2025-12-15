@@ -6,6 +6,7 @@
 #include <cbmpc/crypto/base.h>
 #include <cbmpc/protocol/ec_dkg.h>
 #include <cbmpc/protocol/mpc_job_session.h>
+#include <cbmpc/ffi/cmem_adapter.h>
 
 #include "curve.h"
 #include "network.h"
@@ -28,7 +29,7 @@ int mpc_eckey_mp_get_party_name(mpc_eckey_mp_ref* k, cmem_t* party_name_mem) {
   }
 
   eckey::key_share_mp_t* key = static_cast<eckey::key_share_mp_t*>(k->opaque);
-  *party_name_mem = coinbase::mem_t(key->party_name).to_cmem();
+  *party_name_mem = coinbase::ffi::copy_to_cmem(coinbase::mem_t(key->party_name));
   return 0;
 }
 
@@ -38,7 +39,7 @@ int mpc_eckey_mp_get_x_share(mpc_eckey_mp_ref* k, cmem_t* x_share_mem) {
   }
   eckey::key_share_mp_t* key = static_cast<eckey::key_share_mp_t*>(k->opaque);
   buf_t x_buf = key->x_share.to_bin(key->curve.order().get_bin_size());
-  *x_share_mem = x_buf.to_cmem();
+  *x_share_mem = coinbase::ffi::copy_to_cmem(x_buf);
   return 0;
 }
 
@@ -77,8 +78,8 @@ int mpc_eckey_mp_get_Qis(mpc_eckey_mp_ref* k, cmems_t* party_names_mem, cmems_t*
     point_bufs.push_back(coinbase::ser(kv.second));
   }
 
-  *party_names_mem = coinbase::mems_t(name_bufs).to_cmems();
-  *points_mem = coinbase::mems_t(point_bufs).to_cmems();
+  *party_names_mem = coinbase::ffi::copy_to_cmems(buf_t::to_mems(name_bufs));
+  *points_mem = coinbase::ffi::copy_to_cmems(buf_t::to_mems(point_bufs));
   return 0;
 }
 
@@ -111,7 +112,7 @@ int mpc_eckey_mp_refresh(job_mp_ref* j, cmem_t sid_mem, mpc_eckey_mp_ref* k, mpc
   // Allocate new key with automatic cleanup on error.
   std::unique_ptr<eckey::key_share_mp_t> new_key(new eckey::key_share_mp_t());
 
-  buf_t sid = coinbase::mem_t(sid_mem);
+  buf_t sid = coinbase::ffi::view(sid_mem);
   error_t err = eckey::key_share_mp_t::refresh(*job, sid, *key, *new_key);
   if (err) {
     return err;  // unique_ptr frees memory
@@ -130,7 +131,7 @@ int eckey_dkg_mp_threshold_dkg(job_mp_ref* job_ptr, ecurve_ref* curve_ref, cmem_
     return 1;  // Invalid curve reference
   }
 
-  buf_t sid_buf = mem_t(sid);
+  buf_t sid_buf = coinbase::ffi::view(sid);
   crypto::ss::ac_t* ac_obj = static_cast<crypto::ss::ac_t*>(ac->opaque);
   party_set_t* quorum_set = static_cast<party_set_t*>(quorum->opaque);
 
@@ -150,7 +151,7 @@ int eckey_key_share_mp_to_additive_share(mpc_eckey_mp_ref* key, crypto_ss_ac_ref
   eckey::key_share_mp_t* key_share = static_cast<eckey::key_share_mp_t*>(key->opaque);
   crypto::ss::ac_t* ac_obj = static_cast<crypto::ss::ac_t*>(ac->opaque);
 
-  std::vector<buf_t> name_bufs = coinbase::mems_t(quorum_party_names).bufs();
+  std::vector<buf_t> name_bufs = coinbase::ffi::bufs_from_cmems(quorum_party_names);
   std::set<crypto::pname_t> quorum_names;
   for (const auto& name_buf : name_bufs) {
     quorum_names.insert(name_buf.to_string());
@@ -178,13 +179,13 @@ int serialize_mpc_eckey_mp(mpc_eckey_mp_ref* k, cmems_t* ser) {
   auto party_name = coinbase::ser(key->party_name);
 
   auto out = std::vector<mem_t>{x, Q, Qis, curve, party_name};
-  *ser = coinbase::mems_t(out).to_cmems();
+  *ser = coinbase::ffi::copy_to_cmems(out);
   return 0;
 }
 
 int deserialize_mpc_eckey_mp(cmems_t sers, mpc_eckey_mp_ref* k) {
   std::unique_ptr<eckey::key_share_mp_t> key(new eckey::key_share_mp_t());
-  std::vector<buf_t> sers_vec = coinbase::mems_t(sers).bufs();
+  std::vector<buf_t> sers_vec = coinbase::ffi::bufs_from_cmems(sers);
 
   if (coinbase::deser(sers_vec[0], key->x_share)) return 1;
   if (coinbase::deser(sers_vec[1], key->Q)) return 1;

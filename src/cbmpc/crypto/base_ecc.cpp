@@ -1032,17 +1032,14 @@ error_t ecdh_t::execute(const ecc_point_t& P, buf_t& out) const {
     return SUCCESS;
   } else {
     buf_t pub_oct = P.to_oct();
-    int size = P.get_curve().size();
-    return exec(ctx, cmem_t(pub_oct), cmem_t{out.alloc(size), size});
+    return exec(ctx, mem_t(pub_oct.data(), pub_oct.size()), out);
   }
 }
 
-error_t ecdh_t::execute(void* ctx, cmem_t pub_key, cmem_t out_secret)  // static
-{
+error_t ecdh_t::execute(void* ctx, mem_t pub_key, buf_t& out_secret) {  // static
   error_t rv = UNINITIALIZED_ERROR;
   const ecc_prv_key_t* key = (const ecc_prv_key_t*)ctx;
   ecurve_t curve = key->get_curve();
-  if (out_secret.size != curve.size()) return coinbase::error(E_BADARG, "Bad ECDH size");
 
   ecc_point_t P;
   {
@@ -1050,8 +1047,7 @@ error_t ecdh_t::execute(void* ctx, cmem_t pub_key, cmem_t out_secret)  // static
     if (rv = P.from_oct(curve, pub_key)) return rv;
   }
 
-  buf_t out = key->ecdh(P);
-  memmove(out_secret.data, out.data(), out_secret.size);
+  out_secret = key->ecdh(P);
   return SUCCESS;
 }
 

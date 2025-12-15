@@ -1,28 +1,29 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base_pki.h>
+#include <cbmpc/ffi/cmem_adapter.h>
+#include <cbmpc/ffi/pki.h>
 
 #include "utils/test_macros.h"
 
 extern "C" {
 // Override weak symbols for FFI KEM to provide simple deterministic stubs
 static int test_kem_encap(cmem_t /*ek_bytes*/, cmem_t rho, cmem_t* kem_ct_out, cmem_t* kem_ss_out) {
-  buf_t ss = mem_t(rho).take(32);
+  buf_t ss = coinbase::ffi::view(rho).take(32);
   buf_t ct = ss;  // trivial ct for stub
-  *kem_ct_out = ct.to_cmem();
-  *kem_ss_out = ss.to_cmem();
+  *kem_ct_out = coinbase::ffi::copy_to_cmem(ct);
+  *kem_ss_out = coinbase::ffi::copy_to_cmem(ss);
   return 0;
 }
 
 static int test_kem_decap(const void* /*dk_handle*/, cmem_t kem_ct, cmem_t* kem_ss_out) {
-  *kem_ss_out = mem_t(kem_ct).to_cmem();
+  *kem_ss_out = coinbase::ffi::copy_to_cmem(coinbase::ffi::view(kem_ct));
   return 0;
 }
 
 static int test_kem_dk_to_ek(const void* dk_handle, cmem_t* out_ek) {
   if (dk_handle) {
     const cmem_t* cm = static_cast<const cmem_t*>(dk_handle);
-    *out_ek = mem_t(*cm).to_cmem();
+    *out_ek = coinbase::ffi::copy_to_cmem(coinbase::ffi::view(*cm));
   } else {
     *out_ek = cmem_t{nullptr, 0};
   }

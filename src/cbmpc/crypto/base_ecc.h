@@ -352,13 +352,13 @@ class ecdsa_signature_t {
 
 class ecdh_t {
  public:
-  typedef error_t (*exec_t)(void* ctx, cmem_t pub_key, cmem_t out_secret);
+  typedef error_t (*exec_t)(void* ctx, mem_t pub_key, buf_t& out_secret);
 
   ecdh_t(const ecc_prv_key_t& _key) : key(&_key), exec(nullptr), ctx(nullptr) {}
   ecdh_t(exec_t _exec, void* _ctx) : key(nullptr), exec(_exec), ctx(_ctx) {}
 
   error_t execute(const ecc_point_t& P, buf_t& out) const;
-  static error_t execute(void* ctx, cmem_t pub_key, cmem_t out_secret);
+  static error_t execute(void* ctx, mem_t pub_key, buf_t& out_secret);
 
  private:
   exec_t exec;

@@ -1,6 +1,7 @@
 #include "network.h"
 
 #include <iostream>
+#include <cstdlib>
 #include <memory>
 #include <string_view>
 #include <vector>
@@ -10,6 +11,7 @@
 #include <cbmpc/crypto/lagrange.h>
 #include <cbmpc/protocol/ecdsa_2p.h>
 #include <cbmpc/protocol/mpc_job_session.h>
+#include <cbmpc/ffi/cmem_adapter.h>
 
 using namespace coinbase;
 using namespace coinbase::mpc;
@@ -104,7 +106,7 @@ class callback_data_transport_t : public data_transport_interface_t {
   }
 
   error_t send(const party_idx_t receiver, mem_t msg) override {
-    cmem_t cmsg = static_cast<cmem_t>(msg);
+    cmem_t cmsg{msg.data, msg.size};
     int result = callbacks.send_fun(go_impl_ptr, receiver, cmsg);
     return error_t(result);
   }
@@ -113,7 +115,7 @@ class callback_data_transport_t : public data_transport_interface_t {
     cmem_t cmsg{nullptr, 0};
     error_t rv = UNINITIALIZED_ERROR;
     if (rv = error_t(callbacks.receive_fun(go_impl_ptr, sender, &cmsg))) return rv;
-    msg = buf_t::from_cmem(cmsg);
+    msg = coinbase::ffi::copy_from_cmem_and_free(cmsg);
     return SUCCESS;
   }
 
@@ -135,7 +137,7 @@ class callback_data_transport_t : public data_transport_interface_t {
 
     cmems_t cmsgs;
     int result = callbacks.receive_all_fun(go_impl_ptr, const_cast<int*>(c_senders.data()), n, &cmsgs);
-    msgs = mems_t::from_cmems(cmsgs).bufs();
+    msgs = coinbase::ffi::bufs_from_cmems(cmsgs);
 
     return SUCCESS;
   }
@@ -210,7 +212,7 @@ int mpc_2p_send(job_2p_ref* job, int receiver, cmem_t msg) {
 
   try {
     job_2p_t* j = GET_JOB_2P(job);
-    buf_t msg_buf{mem_t(msg)};
+    buf_t msg_buf{coinbase::ffi::view(msg)};
     error_t result = j->send(party_idx_t(receiver), msg_buf);
     return static_cast<int>(result);
   } catch (const std::exception& e) {

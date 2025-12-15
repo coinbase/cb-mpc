@@ -8,6 +8,8 @@
 #include <cbmpc/core/buf.h>
 #include <cbmpc/crypto/base.h>
 #include <cbmpc/crypto/base_pki.h>
+#include <cbmpc/ffi/pki.h>
+#include <cbmpc/ffi/cmem_adapter.h>
 #include <cbmpc/crypto/secret_sharing.h>
 #include <cbmpc/protocol/ec_dkg.h>
 #include <cbmpc/protocol/mpc_job_session.h>
@@ -69,10 +71,10 @@ int pve_encrypt(cmem_t pub_key_cmem, cmem_t x_cmem, const char* label_ptr, int c
 
   // Wrap public key bytes into FFI PKI key type (opaque buffer).
   ffi_kem_ek_t pub_key;
-  pub_key = coinbase::mem_t(pub_key_cmem);
+  pub_key = coinbase::ffi::view(pub_key_cmem);
 
   // Deserialize secret scalar x
-  bn_t x = bn_t::from_bin(coinbase::mem_t(x_cmem));
+  bn_t x = bn_t::from_bin(coinbase::ffi::view(x_cmem));
 
   // Resolve curve
   ecurve_t curve = ecurve_t::find(curve_code);
@@ -87,7 +89,7 @@ int pve_encrypt(cmem_t pub_key_cmem, cmem_t x_cmem, const char* label_ptr, int c
   }
 
   buf_t out = coinbase::convert(pve);
-  *out_ptr = out.to_cmem();
+  *out_ptr = coinbase::ffi::copy_to_cmem(out);
   return SUCCESS;
 }
 
@@ -107,7 +109,7 @@ int pve_decrypt(cmem_t prv_key_cmem, cmem_t pve_bundle_cmem, const char* label_p
 
   // Deserialize ciphertext bundle
   ec_pve_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
-  rv = coinbase::deser(coinbase::mem_t(pve_bundle_cmem), pve);
+  rv = coinbase::deser(coinbase::ffi::view(pve_bundle_cmem), pve);
   if (rv) return rv;
 
   // Resolve curve
@@ -120,7 +122,7 @@ int pve_decrypt(cmem_t prv_key_cmem, cmem_t pve_bundle_cmem, const char* label_p
   if (rv) return rv;
 
   buf_t x_buf = x_out.to_bin(curve.order().get_bin_size());
-  *out_x_ptr = x_buf.to_cmem();
+  *out_x_ptr = coinbase::ffi::copy_to_cmem(x_buf);
   return SUCCESS;
 }
 
@@ -132,14 +134,14 @@ int pve_verify(cmem_t pub_key_cmem, cmem_t pve_bundle_cmem, cmem_t Q_cmem, const
 
   // Deserialize inputs
   ffi_kem_ek_t pub_key;
-  pub_key = coinbase::mem_t(pub_key_cmem);
+  pub_key = coinbase::ffi::view(pub_key_cmem);
 
   ecc_point_t Q;
-  rv = coinbase::deser(coinbase::mem_t(Q_cmem), Q);
+  rv = coinbase::deser(coinbase::ffi::view(Q_cmem), Q);
   if (rv) return rv;
 
   ec_pve_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
-  rv = coinbase::deser(coinbase::mem_t(pve_bundle_cmem), pve);
+  rv = coinbase::deser(coinbase::ffi::view(pve_bundle_cmem), pve);
   if (rv) return rv;
 
   // Verify
@@ -165,7 +167,7 @@ int pve_ac_encrypt(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub
   crypto::ss::node_t* root = const_cast<node_t*>(ac->root);
 
   // Deserialize names
-  std::vector<buf_t> name_bufs = coinbase::mems_t(names_list_ptr).bufs();
+  std::vector<buf_t> name_bufs = coinbase::ffi::bufs_from_cmems(names_list_ptr);
   if (name_bufs.size() != (size_t)pub_keys_count) {
     return coinbase::error(E_CRYPTO, "names list and key list size mismatch");
   }
@@ -175,14 +177,14 @@ int pve_ac_encrypt(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub
   }
 
   // Deserialize public keys (opaque FFI KEM ek)
-  std::vector<buf_t> pub_bufs = coinbase::mems_t(pub_keys_list_ptr).bufs();
+  std::vector<buf_t> pub_bufs = coinbase::ffi::bufs_from_cmems(pub_keys_list_ptr);
   std::vector<crypto::ffi_kem_ek_t> pub_keys_list(pub_keys_count);
   for (int i = 0; i < pub_keys_count; i++) {
     pub_keys_list[i] = pub_bufs[i];
   }
 
   // Deserialize xs
-  std::vector<buf_t> xs_bufs = coinbase::mems_t(xs_list_ptr).bufs();
+  std::vector<buf_t> xs_bufs = coinbase::ffi::bufs_from_cmems(xs_list_ptr);
   std::vector<bn_t> xs(xs_count);
   for (int i = 0; i < xs_count; i++) {
     xs[i] = bn_t::from_bin(xs_bufs[i]);
@@ -228,7 +230,7 @@ int pve_ac_encrypt(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub
   }
   pve.encrypt(ac_owned, ac_pks, std::string(label_ptr), curve, xs);
   buf_t out = coinbase::convert(pve);
-  *out_ptr = out.to_cmem();
+  *out_ptr = coinbase::ffi::copy_to_cmem(out);
   return SUCCESS;
 }
 
@@ -240,7 +242,7 @@ extern "C" int pve_ac_party_decrypt_row(crypto_ss_ac_ref* ac_ptr, cmem_t prv_key
 
   // Deserialize PVE bundle
   ec_pve_ac_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
-  error_t rv = coinbase::deser(coinbase::mem_t(pve_bundle_cmem), pve);
+  error_t rv = coinbase::deser(coinbase::ffi::view(pve_bundle_cmem), pve);
   if (rv) return rv;
 
   // Access structure
@@ -259,7 +261,7 @@ extern "C" int pve_ac_party_decrypt_row(crypto_ss_ac_ref* ac_ptr, cmem_t prv_key
   if (rv) return rv;
 
   buf_t share_buf = share.to_bin();
-  *out_share_ptr = share_buf.to_cmem();
+  *out_share_ptr = coinbase::ffi::copy_to_cmem(share_buf);
   return SUCCESS;
 }
 
@@ -272,7 +274,7 @@ extern "C" int pve_ac_aggregate_to_restore_row(crypto_ss_ac_ref* ac_ptr, cmem_t 
 
   // Deserialize PVE bundle
   ec_pve_ac_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
-  error_t rv = coinbase::deser(coinbase::mem_t(pve_bundle_cmem), pve);
+  error_t rv = coinbase::deser(coinbase::ffi::view(pve_bundle_cmem), pve);
   if (rv) return rv;
 
   // Access structure
@@ -280,8 +282,8 @@ extern "C" int pve_ac_aggregate_to_restore_row(crypto_ss_ac_ref* ac_ptr, cmem_t 
   ss::ac_owned_t ac_owned(const_cast<node_t*>(ac->root));
 
   // Build quorum shares map: path -> bn share
-  std::vector<buf_t> name_bufs = coinbase::mems_t(paths_list_ptr).bufs();
-  std::vector<buf_t> share_bufs = coinbase::mems_t(shares_list_ptr).bufs();
+  std::vector<buf_t> name_bufs = coinbase::ffi::bufs_from_cmems(paths_list_ptr);
+  std::vector<buf_t> share_bufs = coinbase::ffi::bufs_from_cmems(shares_list_ptr);
   if ((int)name_bufs.size() != quorum_count || (int)share_bufs.size() != quorum_count) {
     return coinbase::error(E_CRYPTO, "quorum lists size mismatch");
   }
@@ -304,7 +306,7 @@ extern "C" int pve_ac_aggregate_to_restore_row(crypto_ss_ac_ref* ac_ptr, cmem_t 
   int fixed_size = curve.order().get_bin_size();
   std::vector<buf_t> out(x.size());
   for (size_t i = 0; i < x.size(); i++) out[i] = x[i].to_bin(fixed_size);
-  *out_values_ptr = coinbase::mems_t(out).to_cmems();
+  *out_values_ptr = coinbase::ffi::copy_to_cmems(buf_t::to_mems(out));
   return SUCCESS;
 }
 
@@ -319,7 +321,7 @@ int pve_ac_verify(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub_
   crypto::ss::node_t* root = const_cast<node_t*>(ac->root);
 
   // Deserialize names
-  std::vector<buf_t> name_bufs = coinbase::mems_t(names_list_ptr).bufs();
+  std::vector<buf_t> name_bufs = coinbase::ffi::bufs_from_cmems(names_list_ptr);
   if (name_bufs.size() != (size_t)pub_keys_count) {
     return coinbase::error(E_CRYPTO, "names list and key list size mismatch");
   }
@@ -329,14 +331,14 @@ int pve_ac_verify(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub_
   }
 
   // Deserialize public keys (opaque FFI KEM ek)
-  std::vector<buf_t> pub_bufs = coinbase::mems_t(pub_keys_list_ptr).bufs();
+  std::vector<buf_t> pub_bufs = coinbase::ffi::bufs_from_cmems(pub_keys_list_ptr);
   std::vector<crypto::ffi_kem_ek_t> pub_keys_list(pub_keys_count);
   for (int i = 0; i < pub_keys_count; i++) {
     pub_keys_list[i] = pub_bufs[i];
   }
 
   // Deserialize Xs (public shares)
-  std::vector<buf_t> Xs_bufs = coinbase::mems_t(Xs_list_ptr).bufs();
+  std::vector<buf_t> Xs_bufs = coinbase::ffi::bufs_from_cmems(Xs_list_ptr);
   std::vector<ecc_point_t> Xs(xs_count);
   for (int i = 0; i < xs_count; i++) {
     rv = coinbase::deser(Xs_bufs[i], Xs[i]);
@@ -345,7 +347,7 @@ int pve_ac_verify(crypto_ss_ac_ref* ac_ptr, cmems_t names_list_ptr, cmems_t pub_
 
   // Deserialize the PVE bundle
   ec_pve_ac_t pve(mpc::kem_pve_base_pke<coinbase::crypto::kem_policy_ffi_t>());
-  buf_t pve_bundle = coinbase::mem_t(pve_bundle_cmem);
+  buf_t pve_bundle = coinbase::ffi::view(pve_bundle_cmem);
   rv = coinbase::deser(pve_bundle, pve);
   if (rv) return rv;
 

@@ -108,13 +108,13 @@ class rsa_prv_key_t : public scoped_ptr_t<RSA_BASE> {
 
 class rsa_oaep_t {
  public:
-  typedef error_t (*exec_t)(void *ctx, int hash_alg, int mgf_alg, cmem_t label, cmem_t input, cmem_t *output);
+  typedef error_t (*exec_t)(void *ctx, int hash_alg, int mgf_alg, mem_t label, mem_t input, buf_t &output);
 
   rsa_oaep_t(const rsa_prv_key_t &_key) : key(&_key), exec(nullptr), ctx(nullptr) {}
   rsa_oaep_t(exec_t _exec, void *_ctx) : key(nullptr), exec(_exec), ctx(_ctx) {}
 
   error_t execute(hash_e hash_alg, hash_e mgf_alg, mem_t label, mem_t in, buf_t &out) const;
-  static error_t execute(void *ctx, int hash_alg, int mgf_alg, cmem_t label, cmem_t in, cmem_t *out);
+  static error_t execute(void *ctx, int hash_alg, int mgf_alg, mem_t label, mem_t in, buf_t &out);
 
  private:
   exec_t exec;

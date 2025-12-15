@@ -235,23 +235,17 @@ error_t rsa_oaep_t::execute(hash_e hash_alg, hash_e mgf_alg, mem_t label, mem_t 
     return SUCCESS;
   }
 
-  cmem_t cmem;
-  if (rv = exec(ctx, int(hash_alg), int(mgf_alg), cmem_t(label), cmem_t(in), &cmem)) return rv;
-
-  out = buf_t::from_cmem(cmem);
+  if (rv = exec(ctx, int(hash_alg), int(mgf_alg), label, in, out)) return rv;
   return SUCCESS;
 }
 
-error_t rsa_oaep_t::execute(void *ctx, int hash_alg, int mgf_alg, cmem_t label, cmem_t in, cmem_t *out) {
+error_t rsa_oaep_t::execute(void *ctx, int hash_alg, int mgf_alg, mem_t label, mem_t in, buf_t &out) {
   error_t rv = UNINITIALIZED_ERROR;
   if (!hash_alg_t::get(hash_e(hash_alg)).valid()) return coinbase::error(E_BADARG);
   if (!hash_alg_t::get(hash_e(mgf_alg)).valid()) return coinbase::error(E_BADARG);
 
-  buf_t buf;
   const rsa_prv_key_t *key = (const rsa_prv_key_t *)ctx;
-  if (rv = key->decrypt_oaep(mem_t(in), hash_e(hash_alg), hash_e(mgf_alg), mem_t(label), buf)) return rv;
-
-  *out = buf.to_cmem();
+  if (rv = key->decrypt_oaep(in, hash_e(hash_alg), hash_e(mgf_alg), label, out)) return rv;
   return SUCCESS;
 }
 

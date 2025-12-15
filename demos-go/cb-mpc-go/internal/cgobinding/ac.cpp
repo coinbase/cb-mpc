@@ -1,6 +1,7 @@
 #include "ac.h"
 
 #include <cbmpc/core/buf.h>
+#include <cbmpc/ffi/cmem_adapter.h>
 #include <cbmpc/crypto/secret_sharing.h>
 
 using namespace coinbase;
@@ -14,7 +15,7 @@ extern "C" {
 
 // ============ PVE (Access Structure) utilities ================
 crypto_ss_node_ref new_node(int node_type, cmem_t node_name, int threshold) {
-  std::string name = mem_t(node_name).to_string();
+  std::string name = coinbase::ffi::view(node_name).to_string();
   node_t* node = new node_t(node_e(node_type), name, threshold);
   return crypto_ss_node_ref{node};
 }

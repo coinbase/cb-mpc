@@ -1,13 +1,10 @@
 #pragma once
-#include <cbmpc/core/cmem.h>
 #include <cbmpc/core/error.h>
 #include <cbmpc/core/macros.h>
 
 namespace coinbase {
 
 void memmove_reverse(byte_ptr dst, const_byte_ptr src, int size);
-void cgo_free(void* ptr);
-
 inline void bzero(byte_ptr pointer, int size) { memset(pointer, 0, size); }
 
 inline void secure_bzero(byte_ptr pointer, int size) {
@@ -40,8 +37,6 @@ struct mem_t {
   int size;
   mem_t() noexcept(true) : data(0), size(0) {}
   mem_t(const_byte_ptr the_data, int the_size) noexcept(true) : data(byte_ptr(the_data)), size(the_size) {}
-  mem_t(cmem_t cmem) noexcept(true) : data(cmem.data), size(cmem.size) {}
-
   mem_t(const std::string& s) noexcept(true) : data(byte_ptr(s.data())), size(int(s.size())) {
     cb_assert(s.size() <= INT_MAX);
   }
@@ -54,8 +49,6 @@ struct mem_t {
   void secure_bzero() { coinbase::secure_bzero(data, size); }
   void reverse();
   buf_t rev() const;
-  cmem_t to_cmem() const;
-  operator cmem_t() const { return cmem_t{data, size}; }
 
   bool operator==(const mem_t& b2) const;
   bool operator!=(const mem_t& b2) const;
@@ -147,9 +140,6 @@ class buf_t {
   uint8_t& operator[](int index);
 
   operator mem_t() const;
-  operator cmem_t() const { return cmem_t{data(), size()}; }
-  cmem_t to_cmem() const { return mem_t(*this).to_cmem(); }
-  static buf_t from_cmem(cmem_t cmem);
 
   mem_t range(int offset, int len) const {
     cb_assert(offset >= 0 && offset <= size());
@@ -289,27 +279,6 @@ class bits_t {
 
   limb_t* data = nullptr;
   int bits = 0;
-};
-
-class mems_t {
- public:
-  mems_t() {}
-  mems_t(cmems_t cmems);
-  mems_t(const std::vector<mem_t>& mems) { init(mems); }
-  mems_t(const std::vector<buf_t>& bufs) { init(buf_t::to_mems(bufs)); }
-  mems_t(const std::vector<std::string>& strings) { init(buf_t::to_mems(strings)); }
-  operator cmems_t() const;
-
-  static mems_t from_cmems(cmems_t cmems);
-  cmems_t to_cmems() const;
-
-  std::vector<mem_t> mems() const;
-  std::vector<buf_t> bufs() const { return buf_t::from_mems(mems()); }
-
- private:
-  std::vector<int> sizes;
-  buf_t buffer;
-  void init(const std::vector<mem_t>& mems);
 };
 
 }  // namespace coinbase

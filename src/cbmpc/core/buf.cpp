@@ -5,9 +5,6 @@
 
 namespace coinbase {
 
-static byte_ptr cgo_malloc(int size) { return (uint8_t*)::malloc(size); }  // NOLINT:cppcoreguidelines-no-malloc
-void cgo_free(void* ptr) { ::free(ptr); }                                  // NOLINT:cppcoreguidelines-no-malloc
-
 buf_t::buf_t() noexcept(true) : s(0) { static_assert(sizeof(buf_t) == 40, "Invalid buf_t size."); }
 
 buf_t::buf_t(int new_size) : s(new_size) {  // NOLINT(*init*)
@@ -352,23 +349,6 @@ void buf_t::convert_last(converter_t& converter) {
     memmove(alloc(s), converter.current(), s);
   }
   converter.forward(size());
-}
-
-buf_t buf_t::from_cmem(cmem_t cmem) {
-  buf_t buf(cmem.data, cmem.size);
-  cgo_free(cmem.data);
-  return buf;
-}
-
-// ----------------------- mem_t ------------------
-
-cmem_t mem_t::to_cmem() const {
-  cmem_t out{nullptr, size};
-  if (size) {
-    out.data = cgo_malloc(size);
-    memmove(out.data, data, size);
-  }
-  return out;
 }
 
 void memmove_reverse(byte_ptr dst, const_byte_ptr src, int size) {
@@ -721,94 +701,6 @@ std::vector<buf_t> buf_t::from_mems(const std::vector<mem_t>& in) {
   std::vector<buf_t> out(count);
   for (size_t i = 0; i < count; i++) out[i] = in[i];
   return out;
-}
-
-mems_t::mems_t(cmems_t cmems) : sizes(cmems.sizes, cmems.sizes + cmems.count) {
-  int n = 0;
-  for (int i = 0; i < cmems.count; i++) n += cmems.sizes[i];
-  buffer = mem_t(cmems.data, n);
-}
-
-mems_t::operator cmems_t() const {
-  cmems_t out{0, nullptr, nullptr};
-  if (!sizes.empty()) {
-    size_t count_sz = sizes.size();
-    cb_assert(count_sz <= INT_MAX);
-    out.count = int(count_sz);
-    out.data = buffer.data();
-    out.sizes = (int*)sizes.data();
-  }
-  return out;
-}
-
-mems_t mems_t::from_cmems(cmems_t cmems) {  // static
-  mems_t out;
-  if (cmems.count) {
-    out.sizes.assign(cmems.sizes, cmems.sizes + cmems.count);
-    int n = 0;
-    for (int i = 0; i < cmems.count; i++) n += cmems.sizes[i];
-    out.buffer = mem_t(cmems.data, n);
-
-    cgo_free(cmems.data);
-    cgo_free(cmems.sizes);
-  }
-  return out;
-}
-
-cmems_t mems_t::to_cmems() const {
-  cmems_t out{0, nullptr, nullptr};
-  size_t count_sz = sizes.size();
-
-  // Check for overflow when casting size_t to int
-  if (count_sz > INT_MAX) {
-    return out;  // Return empty result on overflow
-  }
-  int count = int(count_sz);
-
-  if (count) {
-    // Check for multiplication overflow before allocating
-    constexpr size_t int_size = sizeof(int);
-    if (count > INT_MAX / int_size) {
-      return out;  // Return empty result on overflow
-    }
-
-    out.count = count;
-    out.data = cgo_malloc(buffer.size());
-    memmove(out.data, buffer.data(), buffer.size());
-    out.sizes = (int*)cgo_malloc(count * int_size);
-    memmove(out.sizes, sizes.data(), count * int_size);
-  }
-  return out;
-}
-
-std::vector<mem_t> mems_t::mems() const {
-  size_t count_sz = sizes.size();
-  cb_assert(count_sz <= INT_MAX);
-  int count = int(count_sz);
-  std::vector<mem_t> out(count);
-  int n = 0;
-  for (int i = 0; i < count; i++) {
-    out[i] = buffer.range(n, sizes[i]);
-    n += sizes[i];
-  }
-  return out;
-}
-
-void mems_t::init(const std::vector<mem_t>& mems) {
-  size_t count_sz = mems.size();
-  cb_assert(count_sz <= INT_MAX);
-  int count = int(count_sz);
-  int n = 0;
-  for (int i = 0; i < count; i++) n += mems[i].size;
-  buffer.alloc(n);
-  sizes.resize(count);
-  n = 0;
-  for (int i = 0; i < count; i++) {
-    int size = mems[i].size;
-    sizes[i] = size;
-    memmove(buffer.data() + n, mems[i].data, size);
-    n += size;
-  }
 }
 
 }  // namespace coinbase

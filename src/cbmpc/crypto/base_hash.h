@@ -51,7 +51,6 @@ class hash_alg_t {
 class ecc_point_t;
 class ecc_generator_point_t;
 
-inline int get_bin_size(cmem_t mem) { return mem.size; }
 inline int get_bin_size(mem_t mem) { return mem.size; }
 inline int get_bin_size(const buf_t& buf) { return buf.size(); }
 inline int get_bin_size(const buf256_t& v) { return 32; }
@@ -82,10 +81,6 @@ int get_bin_size(const V& v) {
 template <class T>
 T& update_state(T& state, const buf_t& v) {
   return state.update(v.data(), v.size());
-}
-template <class T>
-T& update_state(T& state, cmem_t v) {
-  return state.update(v.data, v.size);
 }
 template <class T>
 T& update_state(T& state, mem_t v) {
