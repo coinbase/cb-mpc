@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765564587426,
+  "lastUpdate": 1765819040692,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1092,6 +1092,48 @@ window.BENCHMARK_DATA = {
             "value": 13816.698860000542,
             "unit": "us/iter",
             "extra": "iterations: 50\ncpu: 13816.046699999997 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "44d3ccf04218bb59833b7977431596a7e4ee490a",
+          "message": "refactor: extract FFI memory adapters into separate cbmpc/ffi module (#75)\n\nMove C memory allocation/deallocation utilities (cmem_t, cmems_t) from core/buf and crypto/base_pki into a dedicated ffi module. This separates FFI-specific concerns from core library types and provides cleaner abstraction for Go bindings.\n\nChanges:\n- Create src/cbmpc/ffi with cmem_adapter.cpp/h for C memory management\n- Move ffi_kem_ek_t and ffi_kem_dk_t types to ffi/pki.h\n- Update all CGO bindings to use ffi::view() and ffi::copy_to_cmem()\n- Remove to_cmem/from_cmem methods from buf_t and mem_t\n- Remove mems_t class and related FFI conversions from core",
+          "timestamp": "2025-12-15T08:38:15-08:00",
+          "tree_id": "905b8807be03707b75fc8497009f55950b9087d1",
+          "url": "https://github.com/coinbase/cb-mpc/commit/44d3ccf04218bb59833b7977431596a7e4ee490a"
+        },
+        "date": 1765819040037,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24507.73292857126,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24506.311035714287 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 105587.17428570423,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 105575.13571428573 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 14075.188843132006,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 14072.681117647056 us\nthreads: 1"
           }
         ]
       }
