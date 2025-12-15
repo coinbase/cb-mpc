@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765564579579,
+  "lastUpdate": 1765819032300,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2568,6 +2568,126 @@ window.BENCHMARK_DATA = {
             "value": 63.674905581359624,
             "unit": "us/iter",
             "extra": "iterations: 10983\ncpu: 63.67312674132749 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "44d3ccf04218bb59833b7977431596a7e4ee490a",
+          "message": "refactor: extract FFI memory adapters into separate cbmpc/ffi module (#75)\n\nMove C memory allocation/deallocation utilities (cmem_t, cmems_t) from core/buf and crypto/base_pki into a dedicated ffi module. This separates FFI-specific concerns from core library types and provides cleaner abstraction for Go bindings.\n\nChanges:\n- Create src/cbmpc/ffi with cmem_adapter.cpp/h for C memory management\n- Move ffi_kem_ek_t and ffi_kem_dk_t types to ffi/pki.h\n- Update all CGO bindings to use ffi::view() and ffi::copy_to_cmem()\n- Remove to_cmem/from_cmem methods from buf_t and mem_t\n- Remove mems_t class and related FFI conversions from core",
+          "timestamp": "2025-12-15T08:38:15-08:00",
+          "tree_id": "905b8807be03707b75fc8497009f55950b9087d1",
+          "url": "https://github.com/coinbase/cb-mpc/commit/44d3ccf04218bb59833b7977431596a7e4ee490a"
+        },
+        "date": 1765819031746,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.3564329592288423,
+            "unit": "us/iter",
+            "extra": "iterations: 1962910\ncpu: 0.35640916700205316 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.31127608905958143,
+            "unit": "us/iter",
+            "extra": "iterations: 2241016\ncpu: 0.31125994281165326 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 0.35574233156341567,
+            "unit": "us/iter",
+            "extra": "iterations: 1963112\ncpu: 0.3557133367836375 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.3136816437952647,
+            "unit": "us/iter",
+            "extra": "iterations: 2228331\ncpu: 0.31367106592333016 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.440031433830335,
+            "unit": "us/iter",
+            "extra": "iterations: 16829\ncpu: 41.43944173747695 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 63.43633846153439,
+            "unit": "us/iter",
+            "extra": "iterations: 11050\ncpu: 63.43533520361996 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 32.26773621179818,
+            "unit": "us/iter",
+            "extra": "iterations: 21794\ncpu: 32.26687271726165 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 63.29319563643098,
+            "unit": "us/iter",
+            "extra": "iterations: 11046\ncpu: 63.290752489589046 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 19.96719936268065,
+            "unit": "us/iter",
+            "extra": "iterations: 35147\ncpu: 19.96552257660682 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.216490793689609,
+            "unit": "us/iter",
+            "extra": "iterations: 49314\ncpu: 14.216107109542925 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 19.996286222117945,
+            "unit": "us/iter",
+            "extra": "iterations: 34882\ncpu: 19.995213605871232 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.452137037670816,
+            "unit": "us/iter",
+            "extra": "iterations: 93602\ncpu: 7.451748926304989 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 61.72097106451949,
+            "unit": "us/iter",
+            "extra": "iterations: 11301\ncpu: 61.717352535173895 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 77.85833218186714,
+            "unit": "us/iter",
+            "extra": "iterations: 8974\ncpu: 77.85079061733904 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/secp256k1",
+            "value": 1.9985509165518949,
+            "unit": "us/iter",
+            "extra": "iterations: 351153\ncpu: 1.9984226505255518 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/Ed25519",
+            "value": 63.72867849325391,
+            "unit": "us/iter",
+            "extra": "iterations: 10964\ncpu: 63.72539137176206 us\nthreads: 1"
           }
         ]
       }
