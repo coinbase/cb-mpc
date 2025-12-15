@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765564576546,
+  "lastUpdate": 1765819029170,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -3120,6 +3120,126 @@ window.BENCHMARK_DATA = {
             "value": 1300.9736567162133,
             "unit": "us/iter",
             "extra": "iterations: 536\ncpu: 1300.8383395522253 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "44d3ccf04218bb59833b7977431596a7e4ee490a",
+          "message": "refactor: extract FFI memory adapters into separate cbmpc/ffi module (#75)\n\nMove C memory allocation/deallocation utilities (cmem_t, cmems_t) from core/buf and crypto/base_pki into a dedicated ffi module. This separates FFI-specific concerns from core library types and provides cleaner abstraction for Go bindings.\n\nChanges:\n- Create src/cbmpc/ffi with cmem_adapter.cpp/h for C memory management\n- Move ffi_kem_ek_t and ffi_kem_dk_t types to ffi/pki.h\n- Update all CGO bindings to use ffi::view() and ffi::copy_to_cmem()\n- Remove to_cmem/from_cmem methods from buf_t and mem_t\n- Remove mems_t class and related FFI conversions from core",
+          "timestamp": "2025-12-15T08:38:15-08:00",
+          "tree_id": "905b8807be03707b75fc8497009f55950b9087d1",
+          "url": "https://github.com/coinbase/cb-mpc/commit/44d3ccf04218bb59833b7977431596a7e4ee490a"
+        },
+        "date": 1765819027698,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.06780241136756104,
+            "unit": "us/iter",
+            "extra": "iterations: 10275414\ncpu: 0.06779676526901982 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.2806407877673209,
+            "unit": "us/iter",
+            "extra": "iterations: 2493782\ncpu: 0.2806255755314628 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.06697833801107793,
+            "unit": "us/iter",
+            "extra": "iterations: 10479047\ncpu: 0.06697010424707538 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.323097299651808,
+            "unit": "us/iter",
+            "extra": "iterations: 2178682\ncpu: 0.32309059146768665 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.14944987816902575,
+            "unit": "us/iter",
+            "extra": "iterations: 4721705\ncpu: 0.14944536412164677 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 10.972093708917187,
+            "unit": "us/iter",
+            "extra": "iterations: 63900\ncpu: 10.97166187793435 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 16.335810449405546,
+            "unit": "us/iter",
+            "extra": "iterations: 42701\ncpu: 16.335213390787256 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16679.46364285572,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16679.23564285716 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 18.13872774079457,
+            "unit": "us/iter",
+            "extra": "iterations: 38456\ncpu: 18.137175577283013 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 688.0556208291097,
+            "unit": "us/iter",
+            "extra": "iterations: 989\ncpu: 688.0235712841177 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 22.880539048052544,
+            "unit": "us/iter",
+            "extra": "iterations: 30296\ncpu: 22.880167744916434 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1140.4184911146408,
+            "unit": "us/iter",
+            "extra": "iterations: 619\ncpu: 1140.3826122778862 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 23.03104093238559,
+            "unit": "us/iter",
+            "extra": "iterations: 30245\ncpu: 23.03069118862625 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1133.1911479673424,
+            "unit": "us/iter",
+            "extra": "iterations: 615\ncpu: 1133.107853658567 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 26.046611367633545,
+            "unit": "us/iter",
+            "extra": "iterations: 27288\ncpu: 26.044674435649576 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1306.4907792207516,
+            "unit": "us/iter",
+            "extra": "iterations: 539\ncpu: 1306.4082634508613 us\nthreads: 1"
           }
         ]
       }
