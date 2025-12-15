@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765564583408,
+  "lastUpdate": 1765819036545,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1716,6 +1716,72 @@ window.BENCHMARK_DATA = {
             "value": 8324.500750001378,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8323.62838095238 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "44d3ccf04218bb59833b7977431596a7e4ee490a",
+          "message": "refactor: extract FFI memory adapters into separate cbmpc/ffi module (#75)\n\nMove C memory allocation/deallocation utilities (cmem_t, cmems_t) from core/buf and crypto/base_pki into a dedicated ffi module. This separates FFI-specific concerns from core library types and provides cleaner abstraction for Go bindings.\n\nChanges:\n- Create src/cbmpc/ffi with cmem_adapter.cpp/h for C memory management\n- Move ffi_kem_ek_t and ffi_kem_dk_t types to ffi/pki.h\n- Update all CGO bindings to use ffi::view() and ffi::copy_to_cmem()\n- Remove to_cmem/from_cmem methods from buf_t and mem_t\n- Remove mems_t class and related FFI conversions from core",
+          "timestamp": "2025-12-15T08:38:15-08:00",
+          "tree_id": "905b8807be03707b75fc8497009f55950b9087d1",
+          "url": "https://github.com/coinbase/cb-mpc/commit/44d3ccf04218bb59833b7977431596a7e4ee490a"
+        },
+        "date": 1765819035901,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 45061.73928571332,
+            "unit": "us/iter",
+            "extra": "iterations: 21\ncpu: 45058.04809523809 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4595.407458065248,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4595.166632258066 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8586.708378377783,
+            "unit": "us/iter",
+            "extra": "iterations: 74\ncpu: 8585.74672972973 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4505.442571429113,
+            "unit": "us/iter",
+            "extra": "iterations: 154\ncpu: 4505.195207792203 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.02395750547436,
+            "unit": "us/iter",
+            "extra": "iterations: 63467\ncpu: 11.023327146391035 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.847817804393639,
+            "unit": "us/iter",
+            "extra": "iterations: 54436\ncpu: 12.846973106032772 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8323.627619047005,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8323.152333333328 us\nthreads: 1"
           }
         ]
       }
