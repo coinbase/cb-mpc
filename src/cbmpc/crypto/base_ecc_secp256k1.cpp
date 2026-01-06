@@ -117,12 +117,21 @@ void ecurve_secp256k1_t::add(const ecc_point_t& P1, const ecc_point_t& P2, ecc_p
 // This function does not work for some special cases, like when a or b is infinity, or a and b have the same z
 // coordinate. When points are random, the probability of these cases is negligible.
 static void secp256k1_gej_add_const(secp256k1_gej* r, const secp256k1_gej* a, const secp256k1_gej* b) {
-  cb_assert(!a->infinity);
-  cb_assert(!b->infinity);
-
   secp256k1_fe z22, z12, u1, u2, s1, s2, h, i, h2, h3, t;
   SECP256K1_GEJ_VERIFY(a);
   SECP256K1_GEJ_VERIFY(b);
+
+  const bool vartime = is_vartime_scope();
+  if (!vartime) {
+    cb_assert(!a->infinity);
+    cb_assert(!b->infinity);
+  } else {
+    // In verifier code paths we intentionally allow variable-time operations for robustness.
+    if (a->infinity || b->infinity) {
+      secp256k1_gej_add_var(r, a, b, nullptr);
+      return;
+    }
+  }
 
   secp256k1_fe_sqr(&z22, &b->z);
   secp256k1_fe_sqr(&z12, &a->z);
@@ -137,8 +146,16 @@ static void secp256k1_gej_add_const(secp256k1_gej* r, const secp256k1_gej* a, co
   secp256k1_fe_negate(&i, &s2, 1);
   secp256k1_fe_add(&i, &s1);
 
-  cb_assert(!secp256k1_fe_normalizes_to_zero(&h));
-  cb_assert(!secp256k1_fe_normalizes_to_zero(&i));
+  if (!vartime) {
+    cb_assert(!secp256k1_fe_normalizes_to_zero(&h));
+    cb_assert(!secp256k1_fe_normalizes_to_zero(&i));
+  } else {
+    // In verifier code paths we can handle degenerate inputs (rare) via the generic addition.
+    if (secp256k1_fe_normalizes_to_zero(&h) || secp256k1_fe_normalizes_to_zero(&i)) {
+      secp256k1_gej_add_var(r, a, b, nullptr);
+      return;
+    }
+  }
 
   r->infinity = 0;
   secp256k1_fe_mul(&t, &h, &b->z);
@@ -208,6 +225,14 @@ void ecurve_secp256k1_t::mul_add(const bn_t& n, const ecc_point_t& P, const bn_t
   secp256k1_scalar scalar_m;
   secp256k1_scalar_set_b32(&scalar_n, bin_n.data(), nullptr);
   secp256k1_scalar_set_b32(&scalar_m, bin_m.data(), nullptr);
+
+  if (is_vartime_scope()) {
+    // Verifier code paths allow variable-time operations and require robustness for all inputs.
+    secp256k1_ecmult((secp256k1_gej*)R.secp256k1, (const secp256k1_gej*)P.secp256k1, &scalar_m, &scalar_n);
+    secp256k1_scalar_clear(&scalar_m);
+    secp256k1_scalar_clear(&scalar_n);
+    return;
+  }
 
   secp256k1_gej Rn;
   secp256k1_ecmult_gen(&secp256k1_ecmult_gen_ctx, &Rn, &scalar_n);

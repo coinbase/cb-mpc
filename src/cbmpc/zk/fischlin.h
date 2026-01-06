@@ -43,11 +43,11 @@ struct fischlin_params_t {
   int rho, b, t;
 
   int e_max() const {
-    assert(t < 32);
+    cb_assert(t < 32);
     return 1 << t;
   }
   uint32_t b_mask() const {
-    assert(b < 32);
+    cb_assert(b < 32);
     return (1 << b) - 1;
   }
   void convert(coinbase::converter_t& c) { c.convert(rho, b); }  // t is not sent

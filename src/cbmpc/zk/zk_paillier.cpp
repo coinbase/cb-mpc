@@ -528,8 +528,15 @@ error_t pdl_t::verify(const bn_t& c_key, const crypto::paillier_t& paillier, con
 
   const mod_t& N = paillier.get_N();
   ecurve_t curve = Q1.get_curve();
+  if (!curve) return coinbase::error(E_CRYPTO, "pdl_t::verify: Q1 curve is null");
   const mod_t& q = curve.order();
   const auto& G = curve.generator();
+
+  if (rv = curve.check(Q1)) return coinbase::error(rv, "pdl_t::verify: Q1 is not a valid curve point");
+  {
+    crypto::allow_ecc_infinity_t allow_infinity;
+    if (rv = curve.check(R)) return coinbase::error(rv, "pdl_t::verify: R is not a valid curve point");
+  }
 
   bn_t e = crypto::ro::hash_number(c_key, N, Q1, c_r, R, sid, aux).mod(q);
 

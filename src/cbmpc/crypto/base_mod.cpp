@@ -24,7 +24,7 @@ void mod_t::convert(coinbase::converter_t& converter) {
   converter.convert(m);
   if (!converter.is_write()) {
     if (converter.is_error()) return;
-    if (m <= 0) {
+    if (m <= 1) {
       converter.set_error();
       return;
     }

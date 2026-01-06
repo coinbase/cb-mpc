@@ -336,34 +336,43 @@ error_t paillier_pedersen_equal_t::verify(const crypto::paillier_t& paillier, co
     paillier_no_small_factors = zk_flag::verified;
   }
 
+  if (e < 0) return coinbase::error(E_CRYPTO, "paillier_pedersen_equal_t::verify: e < 0");
+  if (nu < 0) return coinbase::error(E_CRYPTO, "paillier_pedersen_equal_t::verify: nu < 0");
+
   // The following verification of `paillier.verify_cipher(c))` is removed and instead done with `D_prod`
   // later on to increase efficiency and save a GCD operation.
 
   bn_t q_with_slack = q << (param::log_alpha + SEC_P_STAT);
   const mod_t& NN = paillier.get_NN();
 
-  crypto::paillier_t::elem_t c_tilde[param::t];
-  bn_t c_inv = NN.inv(c);
-
   bn_t e_temp = e;
   bn_t radix = 1 << param::log_alpha;
+
+  if (rv = coinbase::crypto::check_open_range(0, c, NN))
+    return coinbase::error(rv, "paillier_pedersen_equal_t::verify: invalid ciphertext c");
 
   bn_t D_prod = c;
   bn_t d = 0;
   for (int i = 0; i < param::t; i++) {
     MODULO(N) D_prod *= D[i];
 
+    if (rv = coinbase::crypto::check_open_range(0, D[i], N)) return rv;
+
     if (rv = coinbase::crypto::check_open_range(0, di[i], q_with_slack)) return rv;
     d += di[i] << (i * param::log_alpha);
-
-    bn_t ei = mod_t::mod(e_temp, radix);
-    e_temp >>= param::log_alpha;
-
-    crypto::paillier_t::elem_t c_tag(paillier, c_inv.pow_mod(ei, NN));
-    c_tilde[i] = c_tag + paillier.enc(di[i], D[i]);
   }
   if (D_prod == 0) return coinbase::error(E_CRYPTO);
   if (!mod_t::coprime(D_prod, N)) return coinbase::error(E_CRYPTO);
+
+  bn_t c_inv = NN.inv(c);
+  crypto::paillier_t::elem_t c_tilde[param::t];
+  e_temp = e;
+  for (int i = 0; i < param::t; i++) {
+    bn_t ei = mod_t::mod(e_temp, radix);
+    e_temp >>= param::log_alpha;
+    crypto::paillier_t::elem_t c_tag(paillier, c_inv.pow_mod(ei, NN));
+    c_tilde[i] = c_tag + paillier.enc(di[i], D[i]);
+  }
 
   buf_t e_buf =
       crypto::ro::hash_string(N, c, p, q, g, h, Com, c_tilde, Com_tilde, session_id, aux).bitlen(param::lambda);
@@ -451,6 +460,9 @@ error_t paillier_pedersen_equal_interactive_t::verify(const crypto::paillier_t& 
     paillier_no_small_factors = zk_flag::verified;
   }
 
+  if (e < 0) return coinbase::error(E_CRYPTO, "paillier_pedersen_equal_interactive_t::verify: e < 0");
+  if (nu < 0) return coinbase::error(E_CRYPTO, "paillier_pedersen_equal_interactive_t::verify: nu < 0");
+
   const pedersen_commitment_params_t& params = pedersen_commitment_params_t::get();
   const mod_t& p = params.p;
   const bn_t& g = params.g;
@@ -473,15 +485,20 @@ error_t paillier_pedersen_equal_interactive_t::verify(const crypto::paillier_t& 
 
   bn_t d = 0;
   bn_t CD = c;
-  bn_t e_temp = e;
-  bn_t radix = 1 << param::log_alpha;
   bn_t q_with_slack = q << (param::log_alpha + SEC_P_STAT);
 
   for (int i = 0; i < param::t; i++) {
-    MODULO(N) CD *= Di[i] * c_tilde[i];
-
     if (rv = coinbase::crypto::check_right_open_range(0, di[i], q_with_slack)) return rv;
+    if (rv = coinbase::crypto::check_open_range(0, Di[i], N)) return rv;
+    MODULO(N) CD *= Di[i] * c_tilde[i];
+  }
 
+  if (CD == 0) return coinbase::error(E_CRYPTO);
+  if (!mod_t::coprime(CD, N)) return coinbase::error(E_CRYPTO);
+
+  bn_t e_temp = e;
+  bn_t radix = 1 << param::log_alpha;
+  for (int i = 0; i < param::t; i++) {
     bn_t ei = mod_t::mod(e_temp, radix);
     e_temp >>= param::log_alpha;
 
@@ -491,9 +508,6 @@ error_t paillier_pedersen_equal_interactive_t::verify(const crypto::paillier_t& 
 
     d += di[i] << (i * param::log_alpha);
   }
-
-  if (CD == 0) return coinbase::error(E_CRYPTO);
-  if (!mod_t::coprime(CD, N)) return coinbase::error(E_CRYPTO);
 
   bn_t C1, C2;
   MODULO(p) {
