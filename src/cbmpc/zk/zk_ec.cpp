@@ -56,8 +56,8 @@ void uc_dl_t::prove(const ecc_point_t& Q, const bn_t& w, mem_t session_id, uint6
 error_t uc_dl_t::verify(const ecc_point_t& Q, mem_t session_id, uint64_t aux) const {
   error_t rv = UNINITIALIZED_ERROR;
   crypto::vartime_scope_t vartime_scope;
+  if (rv = params.check()) return rv;
   int rho = params.rho;
-  if (params.b * rho < SEC_P_COM) return coinbase::error(E_CRYPTO, "uc_dl_t::verify: b * rho < SEC_P_COM");
   if (int(A.size()) != rho) return coinbase::error(E_CRYPTO, "uc_dl_t::verify: A.size() != rho");
   if (int(e.size()) != rho) return coinbase::error(E_CRYPTO, "uc_dl_t::verify: e.size() != rho");
   if (int(z.size()) != rho) return coinbase::error(E_CRYPTO, "uc_dl_t::verify: z.size() != rho");
@@ -214,11 +214,11 @@ error_t uc_batch_dl_finite_difference_impl_t::verify(const std::vector<ecc_point
                                                      uint64_t aux) const {
   error_t rv = UNINITIALIZED_ERROR;
   int n = int(Q.size());
+  if (n <= 0) return coinbase::error(E_CRYPTO, "uc_batch_dl_t::verify: Q.size() <= 0");
   crypto::vartime_scope_t vartime_scope;
+  const int b_minus_log2n = params.b - int_log2(n);
+  if (rv = params.check_with_effective_b(b_minus_log2n)) return rv;
   int rho = params.rho;
-  if (rho * (params.b - int_log2(n)) < SEC_P_COM)
-    return coinbase::error(E_CRYPTO,
-                           "uc_batch_dl_finite_difference_impl_t::verify: rho * (params.b - int_log2(n)) < SEC_P_COM");
   if (int(R.size()) != rho)
     return coinbase::error(E_CRYPTO, "uc_batch_dl_finite_difference_impl_t::verify: R.size() != rho");
   if (int(e.size()) != rho)
@@ -236,6 +236,10 @@ error_t uc_batch_dl_finite_difference_impl_t::verify(const std::vector<ecc_point
 
   const auto& G = curve.generator();
   uint32_t b_mask = params.b_mask();
+  for (int i = 0; i < rho; i++) {
+    if (rv = curve.check(R[i]))
+      return coinbase::error(rv, "uc_batch_dl_finite_difference_impl_t::verify: R[i] is not on the curve");
+  }
   buf_t common_hash = crypto::ro::hash_string(G, Q, R, session_id, aux).bitlen(2 * SEC_P_COM);
 
   std::vector<ecc_point_t> PQ(n + 1);
@@ -243,9 +247,6 @@ error_t uc_batch_dl_finite_difference_impl_t::verify(const std::vector<ecc_point
   for (int i = 0; i < n; i++) PQ[i + 1] = Q[i];
 
   for (int i = 0; i < rho; i++) {
-    if (rv = curve.check(R[i]))
-      return coinbase::error(rv, "uc_batch_dl_finite_difference_impl_t::verify: R[i] is not on the curve");
-
     bn_t ei = e[i];
     if (ei < 0) ei += q;
 
@@ -290,6 +291,9 @@ error_t dh_t::verify(const ecc_point_t& Q, const ecc_point_t& A, const ecc_point
 
   const auto& G = curve.generator();
   const mod_t& q = curve.order();
+
+  if (rv = crypto::check_right_open_range(0, e, q)) return rv;
+  if (rv = crypto::check_right_open_range(0, z, q)) return rv;
 
   ecc_point_t X = z * G - e * A;
   ecc_point_t Y = z * Q - e * B;

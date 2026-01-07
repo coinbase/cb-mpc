@@ -63,8 +63,8 @@ void uc_elgamal_com_t::prove(const ecc_point_t& Q, elg_com_t UV, const bn_t& x, 
 error_t uc_elgamal_com_t::verify(const ecc_point_t& Q, const elg_com_t& UV, mem_t session_id, uint64_t aux) const {
   error_t rv = UNINITIALIZED_ERROR;
   crypto::vartime_scope_t vartime_scope;
+  if (rv = params.check()) return rv;
   int rho = params.rho;
-  if (params.b * rho < SEC_P_COM) return coinbase::error(E_CRYPTO);
   if (int(AB.size()) != rho) return coinbase::error(E_CRYPTO);
   if (int(e.size()) != rho) return coinbase::error(E_CRYPTO);
   if (int(z1.size()) != rho) return coinbase::error(E_CRYPTO);
@@ -160,6 +160,11 @@ error_t elgamal_com_mult_t::verify(const ecc_point_t& Q, const elg_com_t& A, con
 
   const mod_t& q = curve.order();
 
+  if (rv = crypto::check_right_open_range(0, e, q)) return rv;
+  if (rv = crypto::check_right_open_range(0, z1, q)) return rv;
+  if (rv = crypto::check_right_open_range(0, z2, q)) return rv;
+  if (rv = crypto::check_right_open_range(0, z3, q)) return rv;
+
   auto R = crypto::ec_elgamal_commitment_t::commit(Q, z1).rand(z2) - e * B;
   auto A_tag = (z1 * A).rerand(Q, z3) - e * C;
   bn_t e_tag = crypto::ro::hash_number(Q, R, A_tag, A, B, C, session_id, aux).mod(q);
@@ -231,8 +236,8 @@ error_t uc_elgamal_com_mult_private_scalar_t::verify(const ecc_point_t& Q, const
                                                      mem_t session_id, uint64_t aux) {
   error_t rv = UNINITIALIZED_ERROR;
   crypto::vartime_scope_t vartime_scope;
+  if (rv = params.check()) return rv;
   int rho = params.rho;
-  if (params.b * rho < SEC_P_COM) return coinbase::error(E_CRYPTO);
   if (int(A1_tag.size()) != rho) return coinbase::error(E_CRYPTO);
   if (int(A2_tag.size()) != rho) return coinbase::error(E_CRYPTO);
   if (int(e.size()) != rho) return coinbase::error(E_CRYPTO);
@@ -249,6 +254,16 @@ error_t uc_elgamal_com_mult_private_scalar_t::verify(const ecc_point_t& Q, const
   const mod_t& q = curve.order();
   const auto& G = curve.generator();
   uint16_t b_mask = params.b_mask();
+
+  for (int i = 0; i < rho; i++) {
+    if (rv = curve.check(A1_tag[i]))
+      return coinbase::error(rv, "uc_elgamal_com_mult_private_scalar_t::verify: check A1_tag failed");
+    if (rv = curve.check(A2_tag[i]))
+      return coinbase::error(rv, "uc_elgamal_com_mult_private_scalar_t::verify: check A2_tag failed");
+    if (rv = crypto::check_right_open_range(0, z1[i], q)) return rv;
+    if (rv = crypto::check_right_open_range(0, z2[i], q)) return rv;
+  }
+
   buf_t common_hash = crypto::ro::hash_string(Q, A, B, A1_tag, A2_tag, session_id, aux).bitlen(2 * SEC_P_COM);
 
   bn_t z1_sum = 0;
@@ -258,11 +273,6 @@ error_t uc_elgamal_com_mult_private_scalar_t::verify(const ecc_point_t& Q, const
   ecc_point_t A2_sum = curve.infinity();
 
   for (int i = 0; i < rho; i++) {
-    if (rv = curve.check(A1_tag[i]))
-      return coinbase::error(rv, "uc_elgamal_com_mult_private_scalar_t::verify: check A1_tag failed");
-    if (rv = curve.check(A2_tag[i]))
-      return coinbase::error(rv, "uc_elgamal_com_mult_private_scalar_t::verify: check A2_tag failed");
-
     bn_t sigma = bn_t::rand_bitlen(SEC_P_STAT);
     MODULO(q) {
       z1_sum += sigma * z1[i];

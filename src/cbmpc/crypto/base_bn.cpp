@@ -503,6 +503,8 @@ std::vector<bn_t> bn_t::vector_from_bin(mem_t mem, int n, int size, const mod_t&
 
 bn_t bn_t::from_bin_bitlen(mem_t mem, int bits) {  // static
   cb_assert(mem.size == coinbase::bits_to_bytes(bits));
+  // Handle the 0-bit / empty-input case without indexing into `mem`.
+  if (mem.size == 0) return from_bin(mem);
   int unused_bits = bytes_to_bits(mem.size) - bits;
   byte_t mask = 0xff >> unused_bits;
   if (mem[0] == (mem[0] & mask)) return from_bin(mem);

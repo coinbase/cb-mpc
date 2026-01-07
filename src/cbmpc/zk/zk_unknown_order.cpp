@@ -29,6 +29,28 @@ void unknown_order_dl_t::prove(const bn_t& a, const bn_t& b, const mod_t& N, con
 error_t unknown_order_dl_t::verify(const bn_t& a, const bn_t& b, const mod_t& N, const int l, mem_t sid,
                                    uint64_t aux) const {
   crypto::vartime_scope_t vartime_scope;
+  error_t rv = UNINITIALIZED_ERROR;
+
+  if (l <= 0) return coinbase::error(E_CRYPTO, "unknown_order_dl_t::verify: l <= 0");
+  if (e.size() != coinbase::bits_to_bytes(SEC_P_COM))
+    return coinbase::error(E_CRYPTO, "unknown_order_dl_t::verify: invalid e size");
+
+  // Ensure `b` is invertible mod N before attempting BN_mod_inverse (which asserts on failure).
+  if (rv = coinbase::crypto::check_open_range(0, b, N))
+    return coinbase::error(rv, "unknown_order_dl_t::verify: invalid b");
+  if (!mod_t::coprime(b, N)) return coinbase::error(E_CRYPTO, "unknown_order_dl_t::verify: gcd(b, N) != 1");
+
+  const int max_z_bits = l + SEC_P_STAT + 2;
+  for (int i = 0; i < SEC_P_COM; i++) {
+    if (z[i] < 0) return coinbase::error(E_CRYPTO, "unknown_order_dl_t::verify: z[i] < 0");
+    if (z[i].get_bits_count() > max_z_bits)
+      return coinbase::error(E_CRYPTO, "unknown_order_dl_t::verify: z[i] too large");
+  }
+
+  bn_t gcd_test;
+  MODULO(N) gcd_test = a * b;
+  if (!mod_t::coprime(gcd_test, N)) return coinbase::error(E_CRYPTO, "unknown_order_dl_t::verify: gcd(a*b, N) != 1");
+
   bn_t b_inv = N.inv(b);
 
   bn_t R_tag;

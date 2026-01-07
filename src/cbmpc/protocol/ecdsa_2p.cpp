@@ -102,6 +102,7 @@ error_t dkg(job_2p_t& job, ecurve_t curve, key_t& key) {
   }
 
   if (rv = job.p1_to_p2(ec_dkg.msg1, paillier_gen.msg1, key.c_key)) return rv;
+  if (paillier_gen.c_key != key.c_key) return coinbase::error(E_CRYPTO, "paillier_gen.c_key != key.c_key");
 
   if (job.is_p2()) {
     ec_dkg.step2_p2_to_p1(key.x_share);
@@ -268,6 +269,7 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
   }
 
   if (rv = job.p2_to_p1(R2, pi_2)) return rv;
+  if (job.is_p1() && R2.size() != n_sigs) return coinbase::error(E_CRYPTO, "ecdsa_2p: inconsistent batch size (R2)");
 
   std::vector<ecc_point_t> R(n_sigs);
 
@@ -289,6 +291,7 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
   if (job.is_p2()) {
     const mod_t& N = key.paillier.get_N();
 
+    if (R1.size() != n_sigs) return coinbase::error(E_CRYPTO, "ecdsa_2p: inconsistent batch size (R1)");
     if (rv = com.open(msgs, R1, pi_1)) return rv;
 
     // Checking that R1 values are valid is done in the verify function.
@@ -331,6 +334,9 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
   }
 
   if (job.is_p1()) {
+    if (c.size() != n_sigs) return coinbase::error(E_CRYPTO, "ecdsa_2p: inconsistent batch size (c)");
+    if (!global_abort_mode && zk_ecdsa.size() != n_sigs)
+      return coinbase::error(E_CRYPTO, "ecdsa_2p: inconsistent batch size (zk_ecdsa)");
     for (int i = 0; i < n_sigs; i++) {
       r[i] = R[i].get_x() % q;
 

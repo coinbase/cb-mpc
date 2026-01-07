@@ -167,7 +167,11 @@ T& update_state(T& state, const V (&v)[N]) {
 }
 template <class T, typename V>
 T& update_state(T& state, const std::vector<V>& v) {
-  for (std::size_t i = 0; i < (int)v.size(); i++) update_state(state, v[i]);
+  update_state(state, uint64_t(v.size()));
+  for (std::size_t i = 0; i < v.size(); i++) {
+    update_state(state, uint64_t(get_bin_size(v[i])));
+    update_state(state, v[i]);
+  }
   return state;
 }
 template <class T, typename V>
@@ -178,7 +182,11 @@ T& update_state(T& state, const V& v) {
 
 template <class T, typename V>
 T& update_state(T& state, const coinbase::array_view_t<V>& v) {
-  for (int i = 0; i < v.count; i++) update_state(state, v.ptr[i]);
+  update_state(state, uint64_t(v.count));
+  for (int i = 0; i < v.count; i++) {
+    update_state(state, uint64_t(get_bin_size(v.ptr[i])));
+    update_state(state, v.ptr[i]);
+  }
   return state;
 }
 

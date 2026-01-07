@@ -104,6 +104,8 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
 
     if (sid._j != sid._i) return coinbase::error(E_CRYPTO);
     if (h._j != h._i) return coinbase::error(E_CRYPTO);
+    if (Ri._j.size() != msgs.size())
+      return coinbase::error(E_CRYPTO, "schnorrmp::sign_batch: inconsistent batch size (Ri)");
     // Verification of Ri._j is done in the zk verify function
     if (rv = pi._j.verify(Ri._j, sid._i, j)) return coinbase::error(rv, "schnorr_mp_t::sign_batch: verify pi failed");
 
@@ -151,6 +153,8 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
   if (job.is_party_idx(sig_receiver)) {
     std::vector<bn_t> ss(msgs.size(), 0);
     for (int j = 0; j < n; j++) {
+      if (ssi._j.size() != msgs.size())
+        return coinbase::error(E_CRYPTO, "schnorrmp::sign_batch: inconsistent batch size (ssi)");
       for (size_t l = 0; l < msgs.size(); l++) MODULO(q) ss[l] += ssi._j[l];
     }
 
