@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765819040692,
+  "lastUpdate": 1767814591704,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1134,6 +1134,48 @@ window.BENCHMARK_DATA = {
             "value": 14075.188843132006,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 14072.681117647056 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f36b009747054b1dba30b9affde4409f76976af0",
+          "message": "fix: security hardening for ZK proofs and protocol input validation (#84)",
+          "timestamp": "2026-01-07T10:55:24-08:00",
+          "tree_id": "22191982796070d833dd23436687c56cc6289f7b",
+          "url": "https://github.com/coinbase/cb-mpc/commit/f36b009747054b1dba30b9affde4409f76976af0"
+        },
+        "date": 1767814591137,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24709.004749995856,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24706.70635714286 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 107253.44842856949,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 107246.20942857141 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13964.569720001236,
+            "unit": "us/iter",
+            "extra": "iterations: 50\ncpu: 13964.034720000003 us\nthreads: 1"
           }
         ]
       }
