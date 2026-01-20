@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1767814584650,
+  "lastUpdate": 1768925442789,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2808,6 +2808,126 @@ window.BENCHMARK_DATA = {
             "value": 64.39032706767212,
             "unit": "us/iter",
             "extra": "iterations: 10906\ncpu: 64.38123565010082 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "82e269131b125cec6164c70a1a68fe67b7160816",
+          "message": "fix: constant-time hardening and input validation across crypto primitives (#88)\n\nSecurity improvements for side-channel resistance:\n- Fix Edwards curve identity detection to use (X=0 && Y==Z), avoiding confusion with torsion points like (0,-1)\n- Upgrade secp256k1 point addition to fully constant-time using affine conversion + cmov pattern, removing conditional CT fallback\n- Add constant-time conditional copy (cnd_copy_point) for secp256k1 and Ed25519\n- Fix bn_cmp_ct to properly handle comparison of negative numbers\n- Add constant_time_select_bytes/ct_select_buf utilities\n- Enforce CT-capable curves for ElGamal operations; reduce scalars mod q\n\nInput validation hardening:\n- Add range checks for Paillier encrypt/decrypt inputs\n- Change paillier_t::rand_N_star to return error on gcd(r,N)!=1 by default\n- Convert commitment::verify asserts to proper error returns\n- Add ro_t::get_buf_checked with output length validation\n- Validate share indices and threshold in secret sharing\n- Add input validation across ZK proofs (Paillier, ElGamal, Pedersen)\n- Add protocol-level validation in ECDSA 2P/MP, OT, PVE, Schnorr, DKG\n\nOther fixes:\n- Fix memory leak and uninitialized cmems_t in Go FFI transport\n- Add verify_out_of_band for MPC session transport verification\n- Remove unused pbkdf2, ct_add_support_e::Conditional, ZK batch functions",
+          "timestamp": "2026-01-20T07:34:06-08:00",
+          "tree_id": "a5f10c451a147e4d1d376ad62b26dd7c32364835",
+          "url": "https://github.com/coinbase/cb-mpc/commit/82e269131b125cec6164c70a1a68fe67b7160816"
+        },
+        "date": 1768925442283,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.35728428934961154,
+            "unit": "us/iter",
+            "extra": "iterations: 1952268\ncpu: 0.3572620475262618 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.35450004133901675,
+            "unit": "us/iter",
+            "extra": "iterations: 1886836\ncpu: 0.3545001171272967 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 2.259332645633303,
+            "unit": "us/iter",
+            "extra": "iterations: 308274\ncpu: 2.259185974165841 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.35670201461088846,
+            "unit": "us/iter",
+            "extra": "iterations: 1960180\ncpu: 0.3566800538726034 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.48047397649034,
+            "unit": "us/iter",
+            "extra": "iterations: 16927\ncpu: 41.47799474212796 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 65.1281532670434,
+            "unit": "us/iter",
+            "extra": "iterations: 10759\ncpu: 65.12330876475514 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 31.529111011853114,
+            "unit": "us/iter",
+            "extra": "iterations: 21268\ncpu: 31.527375070528503 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 65.49631307188635,
+            "unit": "us/iter",
+            "extra": "iterations: 10710\ncpu: 65.49097114845945 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 19.98262845410472,
+            "unit": "us/iter",
+            "extra": "iterations: 35067\ncpu: 19.980537913137717 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.20266047085253,
+            "unit": "us/iter",
+            "extra": "iterations: 49442\ncpu: 14.201353343311327 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 20.043642651460686,
+            "unit": "us/iter",
+            "extra": "iterations: 35075\ncpu: 20.04030782608698 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.182342820155564,
+            "unit": "us/iter",
+            "extra": "iterations: 97328\ncpu: 7.181733016192672 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 63.600258023451495,
+            "unit": "us/iter",
+            "extra": "iterations: 10999\ncpu: 63.59859650877347 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 78.78812580172387,
+            "unit": "us/iter",
+            "extra": "iterations: 8887\ncpu: 78.78229717564989 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/secp256k1",
+            "value": 1.9998494234784987,
+            "unit": "us/iter",
+            "extra": "iterations: 349510\ncpu: 1.9996705788103377 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/Ed25519",
+            "value": 64.47156697990819,
+            "unit": "us/iter",
+            "extra": "iterations: 10854\ncpu: 64.46057259996323 us\nthreads: 1"
           }
         ]
       }
