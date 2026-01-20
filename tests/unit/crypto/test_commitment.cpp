@@ -17,13 +17,13 @@ TEST(CryptoCommitment, AdditionalInputSid) {
   commitment_t com2(sid, pid);
   bn_t a = bn_t::rand_bitlen(256);
   bn_t b = bn_t::rand_bitlen(256);
-  ASSERT_CB_ASSERT(com1.open(a), "msg.size() == HASH_SIZE");
-  ASSERT_CB_ASSERT(com2.open(a), "msg.size() == HASH_SIZE");
+  EXPECT_ER(com1.open(a));
+  EXPECT_ER(com2.open(a));
 
   com1.gen(a);
   EXPECT_OK(com1.open(a));
-  EXPECT_ER(com1.open(b));                                    // Wrong opening
-  ASSERT_CB_ASSERT(com2.open(a), "msg.size() == HASH_SIZE");  // no commitment
+  EXPECT_ER(com1.open(b));  // Wrong opening
+  EXPECT_ER(com2.open(a));  // no commitment
 }
 
 TEST(CryptoCommitment, LocalSid) {
@@ -32,13 +32,13 @@ TEST(CryptoCommitment, LocalSid) {
   commitment_t com2(pid);
   bn_t a = bn_t::rand_bitlen(256);
   bn_t b = bn_t::rand_bitlen(256);
-  ASSERT_CB_ASSERT(com1.open(a), "msg.size() == HASH_SIZE + LOCAL_SID_SIZE");
-  ASSERT_CB_ASSERT(com2.open(a), "msg.size() == HASH_SIZE + LOCAL_SID_SIZE");
+  EXPECT_ER(com1.open(a));
+  EXPECT_ER(com2.open(a));
 
   com1.gen(a);
   EXPECT_OK(com1.open(a));
   EXPECT_ER(com1.open(b));  // Wrong opening
-  ASSERT_CB_ASSERT(com2.open(a), "msg.size() == HASH_SIZE + LOCAL_SID_SIZE");
+  EXPECT_ER(com2.open(a));
 }
 
 TEST(CryptoCommitment, LocalSidAndReceiverPid) {
@@ -49,9 +49,9 @@ TEST(CryptoCommitment, LocalSidAndReceiverPid) {
   commitment_t com3(pid, pid_from_name("test3"));
   bn_t a = bn_t::rand_bitlen(256);
   bn_t b = bn_t::rand_bitlen(256);
-  ASSERT_CB_ASSERT(com1.open(a), "msg.size() == HASH_SIZE + LOCAL_SID_SIZE");
-  ASSERT_CB_ASSERT(com2.open(a), "msg.size() == HASH_SIZE + LOCAL_SID_SIZE");
-  ASSERT_CB_ASSERT(com3.open(a), "msg.size() == HASH_SIZE + LOCAL_SID_SIZE");
+  EXPECT_ER(com1.open(a));
+  EXPECT_ER(com2.open(a));
+  EXPECT_ER(com3.open(a));
 
   com1.gen(a);
   com2.set(com1.rand, com1.msg);
@@ -70,8 +70,8 @@ TEST(CryptoCommitment, AdditionalInputSid_AlternativeFormat) {
   com2.id(sid, pid);
   bn_t a = bn_t::rand_bitlen(256);
   bn_t b = bn_t::rand_bitlen(256);
-  ASSERT_CB_ASSERT(com1.open(a), "msg.size() == HASH_SIZE");
-  ASSERT_CB_ASSERT(com2.open(a), "msg.size() == HASH_SIZE");
+  EXPECT_ER(com1.open(a));
+  EXPECT_ER(com2.open(a));
 
   com1.gen(a);
 
@@ -82,8 +82,8 @@ TEST(CryptoCommitment, AdditionalInputSid_AlternativeFormat) {
   com1_alt.set(com1.rand, com1.msg);
   com2_alt.set(com2.rand, com2.msg);
   EXPECT_OK(com1_alt.open(a));
-  EXPECT_ER(com1_alt.open(b));                                    // Wrong opening
-  ASSERT_CB_ASSERT(com2_alt.open(a), "msg.size() == HASH_SIZE");  // No commitment
+  EXPECT_ER(com1_alt.open(b));  // Wrong opening
+  EXPECT_ER(com2_alt.open(a));  // No commitment
 }
 
 TEST(CryptoCommitment, LocalSid_AlternativeFormat) {
@@ -94,8 +94,8 @@ TEST(CryptoCommitment, LocalSid_AlternativeFormat) {
   com2.id(pid);
   bn_t a = bn_t::rand_bitlen(256);
   bn_t b = bn_t::rand_bitlen(256);
-  ASSERT_CB_ASSERT(com1.open(a), "msg.size() == HASH_SIZE");
-  ASSERT_CB_ASSERT(com2.open(a), "msg.size() == HASH_SIZE");
+  EXPECT_ER(com1.open(a));
+  EXPECT_ER(com2.open(a));
 
   com1.gen(a);
 
@@ -106,8 +106,8 @@ TEST(CryptoCommitment, LocalSid_AlternativeFormat) {
   com1_alt.set(com1.rand, com1.msg);
   com2_alt.set(com2.rand, com2.msg);
   EXPECT_OK(com1_alt.open(a));
-  EXPECT_ER(com1_alt.open(b));                                    // Wrong opening
-  ASSERT_CB_ASSERT(com2_alt.open(a), "msg.size() == HASH_SIZE");  // No commitment
+  EXPECT_ER(com1_alt.open(b));  // Wrong opening
+  EXPECT_ER(com2_alt.open(a));  // No commitment
 }
 
 }  // namespace

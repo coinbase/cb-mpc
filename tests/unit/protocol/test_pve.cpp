@@ -226,6 +226,11 @@ TEST_F(PVEBatch, Completeness) {
   }
 }
 
+TEST_F(PVEBatch, RejectsHugeBatchCount) {
+  dylog_disable_scope_t no_log_err;
+  EXPECT_CB_ASSERT(pve_batch_t(200000000), "batch_count");
+}
+
 TEST_F(PVEBatch, VerifyWithWrongLabel) {
   for (const auto &[pub_key, prv_key] : valid_unified) {
     pve_batch_t pve_batch(1);

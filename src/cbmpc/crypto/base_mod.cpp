@@ -86,10 +86,9 @@ mod_t& mod_t::operator=(mod_t&& src) {
   return *this;
 }
 
-void mod_t::check(const bn_t& a) const {
-  assert(a >= 0 && "out of range for constant-time operations");
-  assert(a < m && "out of range for constant-time operations");
-}
+void mod_t::check(const bn_t& a) const { assert(is_in_range(a) && "out of range for constant-time operations"); }
+
+bool mod_t::is_in_range(const bn_t& a) const { return a.sign() >= 0 && a < m; }
 
 void mod_t::_add(bn_t& r, const bn_t& a, const bn_t& b) const {
   if (vartime_scope) {

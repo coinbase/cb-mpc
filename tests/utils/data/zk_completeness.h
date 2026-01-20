@@ -274,36 +274,6 @@ struct test_nizk_paillier_zero : public test_nizk_t {
   uint64_t proof_size() override { return coinbase::converter_t::convert_write(zk, 0); }
 };
 
-struct test_3rzk_paillier_zero : public test_3rzk_t {
-  coinbase::zk::paillier_zero_interactive_t zk{crypto::pid_from_name("test")};
-  coinbase::crypto::paillier_t p_p, v_p;
-  mod_t N;
-  bn_t x, r, c;
-  buf_t sid;
-
-  test_3rzk_paillier_zero() {}
-
-  void setup() override {
-    zk.paillier_valid_key = coinbase::zk::zk_flag::verified;
-
-    p_p.generate();
-    N = p_p.get_N();
-    v_p.create_pub(N);
-
-    x = 0;
-    r = bn_t::rand(N);
-    c = p_p.encrypt(x, r);
-  }
-
-  void p1() override { zk.prover_msg1(p_p); }
-  uint64_t p1_size() override { return coinbase::convert(zk.msg1).size(); }
-  void v2() override { zk.verifier_challenge(); }
-  uint64_t v2_size() override { return coinbase::convert(zk.challenge).size(); }
-  void p3() override { zk.prover_msg2(p_p, r); }
-  uint64_t p3_size() override { return coinbase::convert(zk.msg2).size(); }
-  error_t verify() override { return zk.verify(v_p, c); }
-};
-
 struct test_nizk_two_paillier_equal : public test_nizk_t {
   coinbase::zk::two_paillier_equal_t zk;
   const int q_size = 256;
@@ -354,7 +324,7 @@ struct test_3rzk_two_paillier_equal : public test_3rzk_t {
   void setup() override {
     zk.p0_valid_key = coinbase::zk::zk_flag::verified;
     zk.p1_valid_key = coinbase::zk::zk_flag::verified;
-    zk.c1_plaintext_range = coinbase::zk::zk_flag::verified;
+    zk.c0_plaintext_range = coinbase::zk::zk_flag::verified;
 
     q = bn_t::generate_prime(q_size, false, nullptr, nullptr);
     p_p1.generate();
@@ -375,7 +345,7 @@ struct test_3rzk_two_paillier_equal : public test_3rzk_t {
   uint64_t p1_size() override { return coinbase::convert(msg1).size(); }
   void v2() override { zk.verifier_challenge_msg(msg2); }
   uint64_t v2_size() override { return coinbase::convert(msg2).size(); }
-  void p3() override { zk.prover_msg2(p_p1, p_p2, x, r1, r2, msg2, msg3); }
+  void p3() override { ASSERT_EQ(zk.prover_msg2(p_p1, p_p2, x, r1, r2, msg2, msg3), SUCCESS); }
   uint64_t p3_size() override { return coinbase::convert(msg3).size(); }
   error_t verify() override { return zk.verify(q, v_p1, c1, v_p2, c2, msg1, msg3); }
 };

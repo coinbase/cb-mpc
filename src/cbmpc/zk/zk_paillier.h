@@ -80,37 +80,6 @@ struct paillier_zero_t {
   error_t verify(const crypto::paillier_t& paillier, const bn_t& c, mem_t session_id, uint64_t aux);
 };
 
-/**
- * @specs:
- * - zk-proofs-spec | ZK-Paillier-Zero-Interactive-2P
- */
-struct paillier_zero_interactive_t {
-  using param = paillier_interactive_param_t;
-
-  const crypto::mpc_pid_t prover_pid;
-  paillier_zero_interactive_t() = delete;
-  paillier_zero_interactive_t(const crypto::mpc_pid_t& pid) : prover_pid(pid) {}
-
-  zk_flag paillier_valid_key = zk_flag::unverified;
-  zk_flag paillier_valid_ciphertext = zk_flag::unverified;
-  zk_flag paillier_no_small_factors = zk_flag::unverified;
-
-  bn_t rho[param::t];
-  std::array<bn_t, param::t> a;
-  std::array<uint16_t, param::t> e;
-  std::array<bn_t, param::t> z;
-  coinbase::crypto::commitment_t com;
-
-  AUTO(msg1, std::tie(com.msg));
-  AUTO(challenge, std::tie(e));
-  AUTO(msg2, std::tie(a, z, com.rand));
-
-  void prover_msg1(const crypto::paillier_t& paillier);
-  void verifier_challenge();
-  void prover_msg2(const crypto::paillier_t& paillier, const bn_t& r);
-  error_t verify(const crypto::paillier_t& paillier, const bn_t& c);
-};
-
 struct two_paillier_equal_t {
   using param = paillier_non_interactive_param_t;
 

@@ -20,6 +20,7 @@ error_t sign(job_2p_t& job, key_t& key, const mem_t& msg, buf_t& sig, variant_e 
 error_t sign_batch(job_2p_t& job, key_t& key, const std::vector<mem_t>& msgs, std::vector<buf_t>& sigs,
                    variant_e variant) {
   int n_sigs = msgs.size();
+  if (n_sigs <= 0) return coinbase::error(E_BADARG, "schnorr_2p: empty batch");
   sigs.resize(n_sigs);
 
   error_t rv = UNINITIALIZED_ERROR;

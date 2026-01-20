@@ -19,7 +19,7 @@ struct uc_elgamal_com_t {
    * @specs:
    * - zk-proofs-spec | Prove-UC-ZK-ElGamalCom-1P
    */
-  void prove(const ecc_point_t& Q, elg_com_t UV, const bn_t& x, const bn_t& r, mem_t session_id, uint64_t aux);
+  void prove(const ecc_point_t& Q, const elg_com_t& UV, const bn_t& x, const bn_t& r, mem_t session_id, uint64_t aux);
 
   /**
    * @specs:
@@ -37,14 +37,14 @@ struct elgamal_com_pub_share_equ_t {
    * @specs:
    * - zk-proofs-spec | Prove-ZK-ElGamalCom-PubShare-Equal-1P
    */
-  void prove(const ecc_point_t& Q, const ecc_point_t& A, const elg_com_t B, const bn_t& r, mem_t session_id,
+  void prove(const ecc_point_t& Q, const ecc_point_t& A, const elg_com_t& eA, const bn_t& r, mem_t session_id,
              uint64_t aux);
 
   /**
    * @specs:
    * - zk-proofs-spec | Verify-ZK-ElGamalCom-PubShare-Equal-1P
    */
-  error_t verify(const ecc_point_t& Q, const ecc_point_t& A, const elg_com_t B, mem_t session_id, uint64_t aux) const;
+  error_t verify(const ecc_point_t& Q, const ecc_point_t& A, const elg_com_t& B, mem_t session_id, uint64_t aux) const;
 };
 
 struct elgamal_com_mult_t {

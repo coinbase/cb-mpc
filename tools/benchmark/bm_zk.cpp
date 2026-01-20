@@ -160,54 +160,6 @@ static void ZK_PaillierZero_Verify(benchmark::State& state) {
   for (auto _ : state) zk.verify(input.v_p, input.c, input.sid, input.aux);
 }
 
-static void ZK_PaillierZeroInteractive_P1(benchmark::State& state) {
-  test::input_generator_t<test::paillier_zero_input_t> input_generator;
-  auto input = input_generator.generate();
-  zk::paillier_zero_interactive_t zk(input.pid);
-
-  for (auto _ : state) zk.prover_msg1(input.p_p);
-}
-BENCHMARK(ZK_PaillierZeroInteractive_P1)->Name("ZK/PaillierZero-Int/P1");
-static void ZK_PaillierZeroInteractive_V2(benchmark::State& state) {
-  test::input_generator_t<test::paillier_zero_input_t> input_generator;
-  auto input = input_generator.generate();
-  zk::paillier_zero_interactive_t zk(input.pid);
-  zk.prover_msg1(input.p_p);
-
-  zk.paillier_valid_key = zk::zk_flag::verified;
-  state.counters["size"] = converter_t::convert_write(zk.msg1, 0);
-
-  for (auto _ : state) zk.verifier_challenge();
-}
-BENCHMARK(ZK_PaillierZeroInteractive_V2)->Name("ZK/PaillierZero-Int/V2");
-static void ZK_PaillierZeroInteractive_P3(benchmark::State& state) {
-  test::input_generator_t<test::paillier_zero_input_t> input_generator;
-  auto input = input_generator.generate();
-  zk::paillier_zero_interactive_t zk(input.pid);
-  zk.paillier_valid_key = zk::zk_flag::verified;
-  zk.prover_msg1(input.p_p);
-  zk.verifier_challenge();
-
-  state.counters["size"] = converter_t::convert_write(zk.challenge, 0);
-
-  for (auto _ : state) zk.prover_msg2(input.p_p, input.r);
-}
-BENCHMARK(ZK_PaillierZeroInteractive_P3)->Name("ZK/PaillierZero-Int/P3");
-static void ZK_PaillierZeroInteractive_Verify(benchmark::State& state) {
-  test::input_generator_t<test::paillier_zero_input_t> input_generator;
-  auto input = input_generator.generate();
-  zk::paillier_zero_interactive_t zk(input.pid);
-  zk.paillier_valid_key = zk::zk_flag::verified;
-  zk.prover_msg1(input.p_p);
-  zk.verifier_challenge();
-  zk.prover_msg2(input.p_p, input.r);
-
-  state.counters["size"] = converter_t::convert_write(zk.msg2, 0);
-
-  for (auto _ : state) zk.verify(input.v_p, input.c);
-}
-BENCHMARK(ZK_PaillierZeroInteractive_Verify)->Name("ZK/PaillierZero-Int/Verify");
-
 static void ZK_TwoPaillierEqual_Proof(benchmark::State& state) {
   test::input_generator_t<test::two_paillier_equal_input_t> input_generator;
   auto input = input_generator.generate();

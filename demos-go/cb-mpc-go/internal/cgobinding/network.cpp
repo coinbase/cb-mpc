@@ -135,10 +135,19 @@ class callback_data_transport_t : public data_transport_interface_t {
       c_senders.push_back(sender);
     }
 
-    cmems_t cmsgs;
-    int result = callbacks.receive_all_fun(go_impl_ptr, const_cast<int*>(c_senders.data()), n, &cmsgs);
-    msgs = coinbase::ffi::bufs_from_cmems(cmsgs);
+    // Ensure cmsgs is initialized so that error paths never leave us with
+    // uninitialized pointers/count.
+    cmems_t cmsgs{0, nullptr, nullptr};
+    const int result = callbacks.receive_all_fun(go_impl_ptr, const_cast<int*>(c_senders.data()), n, &cmsgs);
+    if (error_t rv = error_t(result)) {
+      msgs.clear();
+      return rv;
+    }
 
+    // Copy results out of the cgo-owned buffers, then free them (Go side uses C.malloc).
+    msgs = coinbase::ffi::bufs_from_cmems(cmsgs);
+    cgo_free(cmsgs.data);
+    cgo_free(cmsgs.sizes);
     return SUCCESS;
   }
 };

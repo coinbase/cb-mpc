@@ -9,6 +9,7 @@ namespace coinbase::crypto::ro {  // random oracle
  * - basic-primitives-spec | drbg-sample-string-1P
  */
 buf_t drbg_sample_string(mem_t seed, int bits) {
+  cb_assert(bits > 0);
   crypto::drbg_aes_ctr_t drbg(seed);
   return drbg.gen(coinbase::bits_to_bytes(bits));
 }
@@ -58,6 +59,7 @@ buf256_t hash_string_t::bitlen256() {
 }
 
 buf_t hash_string_t::bitlen(int bits) {
+  cb_assert(bits > 0);
   buf_t h = final();
   int bytes = coinbase::bits_to_bytes(bits);
 
@@ -75,6 +77,7 @@ bn_t hash_number_t::mod(const mod_t& p) {
 }
 
 std::vector<bn_t> hash_numbers_t::mod(const mod_t& p) {
+  cb_assert(l > 0 && "hash_numbers_t::mod(): call count(l) with l > 0 before mod()");
   buf_t h = final();
 
   int bits_per_value = p.get_bits_count() + SEC_P_STAT;

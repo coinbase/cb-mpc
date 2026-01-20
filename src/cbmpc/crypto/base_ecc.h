@@ -18,9 +18,8 @@ typedef struct point_t* point_ptr_t;
 
 // Capability of constant-time point addition provided by a curve backend
 enum class ct_add_support_e {
-  None = 0,         // No constant-time add available
-  Conditional = 1,  // Constant-time for non-degenerate cases only
-  Full = 2          // Constant-time for all inputs
+  None = 0,  // No constant-time add available
+  Full = 1   // Constant-time for all inputs
 };
 
 enum class ecurve_type_e {
@@ -63,6 +62,11 @@ class ecurve_interface_t {
   virtual void add_consttime(const ecc_point_t& P, const ecc_point_t& x, ecc_point_t& R) const = 0;
   // Report the support level for constant-time point addition
   virtual ct_add_support_e ct_add_support() const { return ct_add_support_e::None; }
+  // Constant-time conditional copy:
+  // - if flag is true, assign dst = src
+  // - if flag is false, dst is unchanged
+  // Returns true iff the operation is supported and implemented constant-time (w.r.t. flag and point values).
+  virtual bool cnd_copy_point(bool /*flag*/, const ecc_point_t& /*src*/, ecc_point_t& /*dst*/) const { return false; }
   virtual void mul(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const = 0;
   virtual void mul_vartime(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const = 0;
   virtual void mul_add(const bn_t& n, const ecc_point_t& P, const bn_t& m, ecc_point_t& R) const;  // R = G*n + P*m
@@ -118,6 +122,9 @@ class ecurve_t {
 
   // Report the support level for constant-time point addition
   ct_add_support_e ct_add_support() const { return ptr ? ptr->ct_add_support() : ct_add_support_e::None; }
+  bool cnd_copy_point(bool flag, const ecc_point_t& src, ecc_point_t& dst) const {
+    return ptr && ptr->cnd_copy_point(flag, src, dst);
+  }
 
   void get_params(bn_t& p, bn_t& a, bn_t& b) const;
   const mod_t& p() const;

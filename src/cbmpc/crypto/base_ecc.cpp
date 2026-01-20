@@ -837,16 +837,6 @@ ecc_point_t ecc_point_t::weighted_sum(const bn_t& x0, const ecc_point_t& P0, con
         crypto::consttime_point_add_scope_t consttime_point_add_scope;
         return x0 * P0 + x1 * P1;
       }
-      case ct_add_support_e::Conditional: {
-        const mod_t& q = curve.order();
-        bn_t bias0 = bn_t::rand(q);
-        bn_t bias1 = bn_t::rand(q);
-        ecc_point_t Bias = bias0 * P0 + bias1 * P1;
-        bias0 = q.add(bias0, x0);
-        bias1 = q.add(bias1, x1);
-        crypto::consttime_point_add_scope_t consttime_point_add_scope;
-        return bias0 * P0 + bias1 * P1 - Bias;
-      }
       case ct_add_support_e::None:
       default: {
         bn_t bias = bn_t::rand(curve.order());

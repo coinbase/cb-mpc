@@ -9,6 +9,31 @@ using namespace coinbase::crypto;
 
 namespace {
 
+TEST(CryptoEdDSA, RejectTorsionPointsAndFixInfinityEquality) {
+  crypto::vartime_scope_t vartime_scope;
+  ecurve_t curve = crypto::curve_ed25519;
+
+  // Compressed encoding of the Ed25519 order-2 point (x=0, y=-1):
+  // y = p-1 = 2^255-20, sign bit = 0.
+  uint8_t order2[32];
+  order2[0] = 0xec;
+  for (int i = 1; i < 31; i++) order2[i] = 0xff;
+  order2[31] = 0x7f;
+
+  ecc_point_t P(curve);
+  EXPECT_EQ(P.from_bin(curve, mem_t(order2, 32)), SUCCESS);
+  EXPECT_TRUE(P.is_on_curve());
+  EXPECT_FALSE(P.is_infinity());
+  EXPECT_FALSE(P.is_in_subgroup());
+  EXPECT_NE(curve.check(P), SUCCESS);
+
+  // Sanity: infinity should not compare equal to the generator.
+  const ecc_point_t G = curve.generator();
+  const ecc_point_t I = curve.infinity();
+  EXPECT_FALSE(G == I);
+  EXPECT_TRUE(I.is_infinity());
+}
+
 TEST(CryptoEdDSA, from_bin) {
   int n = 1000;
   error_t rv = UNINITIALIZED_ERROR;
@@ -76,6 +101,133 @@ TEST(CryptoEdDSA, hash_to_point) {
   // all points should be on the curve and in the subgroup
   EXPECT_EQ(on_curve_counter, point_counter);
   EXPECT_EQ(in_group_counter, point_counter);
+}
+
+TEST(CryptoEdDSA, mul_by_order_is_infinity_for_subgroup_points) {
+  crypto::vartime_scope_t vartime_scope;
+  ecurve_t curve = crypto::curve_ed25519;
+  const bn_t q = curve.order().value();
+  const bn_t q_minus_1 = q - 1;
+
+  // Generator and infinity are in the prime-order subgroup.
+  const ecc_point_t G = curve.generator();
+  const ecc_point_t I = curve.infinity();
+  {
+    ecc_point_t R = G;
+    R *= q;
+    EXPECT_TRUE(R.is_infinity());
+    EXPECT_TRUE(R == I);
+  }
+  {
+    ecc_point_t R = G;
+    R *= q_minus_1;
+    EXPECT_TRUE(R == -G);
+  }
+  {
+    ecc_point_t R = I;
+    R *= q;
+    EXPECT_TRUE(R.is_infinity());
+    EXPECT_TRUE(R == I);
+  }
+  {
+    ecc_point_t R = I;
+    R *= q_minus_1;
+    EXPECT_TRUE(R == -I);
+    EXPECT_TRUE(R.is_infinity());
+  }
+
+  // Additional coverage: for many subgroup points (hash_to_point clears cofactor),
+  // multiplying by the subgroup order yields infinity.
+  const int want = 64;
+  const int max_tries = 10000;
+  int got = 0;
+
+  for (int i = 0; i < max_tries && got < want; i++) {
+    ro::hash_string_t h;
+    h.encode_and_update(i);
+    buf_t bin = h.bitlen(curve.bits());
+
+    ecc_point_t P(curve);
+    {
+      dylog_disable_scope_t no_log_err;
+      if (!curve.hash_to_point(bin, P)) continue;
+    }
+
+    ASSERT_TRUE(P.is_on_curve());
+    ASSERT_TRUE(P.is_in_subgroup());
+
+    ecc_point_t R = P;
+    R *= q;
+    EXPECT_TRUE(R.is_infinity());
+    EXPECT_TRUE(R == I);
+
+    ecc_point_t R2 = P;
+    R2 *= q_minus_1;
+    EXPECT_TRUE(R2 == -P);
+
+    got++;
+  }
+
+  EXPECT_EQ(got, want);
+}
+
+TEST(CryptoEdDSA, subgroup_check) {
+  crypto::vartime_scope_t vartime_scope;
+  ecurve_t curve = crypto::curve_ed25519;
+
+  const ecc_point_t G = curve.generator();
+  const ecc_point_t I = curve.infinity();
+
+  EXPECT_TRUE(G.is_on_curve());
+  EXPECT_TRUE(G.is_in_subgroup());
+  EXPECT_EQ(curve.check(G), SUCCESS);
+
+  EXPECT_TRUE(I.is_infinity());
+  EXPECT_TRUE(I.is_in_subgroup());
+  // By default, curve.check() rejects infinity unless allow_ecc_infinity_t is in scope.
+  EXPECT_NE(curve.check(I), SUCCESS);
+
+  // Known torsion point: compressed encoding of the Ed25519 order-2 point (x=0, y=-1):
+  // y = p-1 = 2^255-20, sign bit = 0.
+  uint8_t order2[32];
+  order2[0] = 0xec;
+  for (int i = 1; i < 31; i++) order2[i] = 0xff;
+  order2[31] = 0x7f;
+
+  ecc_point_t T(curve);
+  ASSERT_EQ(T.from_bin(curve, mem_t(order2, 32)), SUCCESS);
+  EXPECT_TRUE(T.is_on_curve());
+  EXPECT_FALSE(T.is_infinity());
+  EXPECT_FALSE(T.is_in_subgroup());
+  EXPECT_NE(curve.check(T), SUCCESS);
+
+  // hash_to_point is required to clear cofactor, so outputs should always be subgroup points.
+  // Some inputs may map to torsion points that become infinity after cofactor clearing; those
+  // are still in the subgroup but will be rejected by curve.check().
+  const int want = 64;  // non-infinity subgroup points
+  const int max_tries = 10000;
+  int got = 0;
+  for (int i = 0; i < max_tries && got < want; i++) {
+    ro::hash_string_t h;
+    h.encode_and_update(i);
+    buf_t bin = h.bitlen(curve.bits());
+
+    ecc_point_t P(curve);
+    {
+      dylog_disable_scope_t no_log_err;
+      if (!curve.hash_to_point(bin, P)) continue;
+    }
+    EXPECT_TRUE(P.is_in_subgroup());
+    if (P.is_infinity()) {
+      EXPECT_NE(curve.check(P), SUCCESS);
+      continue;
+    }
+
+    EXPECT_TRUE(P.is_on_curve());
+    EXPECT_EQ(curve.check(P), SUCCESS);
+    got++;
+  }
+  EXPECT_EQ(got, want);
 }
 
 }  // namespace

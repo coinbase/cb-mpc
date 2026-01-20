@@ -345,12 +345,6 @@ typedef hmac_template_t<hash_e::sha384> hmac_sha384_t;
 typedef hmac_template_t<hash_e::sha512> hmac_sha512_t;
 
 /**
- * @specs:
- * - basic-primitives-spec | KDF-1P
- */
-buf_t pbkdf2(hash_e type, mem_t password, mem_t salt, int iter, int out_size);
-
-/**
  * RFC 5869 HKDF (HMAC-based Extract-and-Expand Key Derivation Function)
  */
 buf_t hkdf_extract(hash_e type, mem_t salt, mem_t ikm);

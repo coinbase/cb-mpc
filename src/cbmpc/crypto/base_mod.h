@@ -71,6 +71,8 @@ class mod_t {
   bn_t operator<<(int val2) const { return m << val2; }
   bn_t operator>>(int val2) const { return m >> val2; }
 
+  bool is_in_range(const bn_t& a) const;
+
   bn_t to_mont(const bn_t& x) const;
   bn_t from_mont(const bn_t& x) const;
   bn_t mul_mont(const bn_t& x, const bn_t& y) const;

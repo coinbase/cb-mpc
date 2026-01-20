@@ -2,9 +2,13 @@
 
 namespace coinbase::mpc {
 
-ec_pve_batch_t::ec_pve_batch_t(int batch_count) : base_pke(pve_base_pke_unified()), n(batch_count), rows(kappa), Q(n) {}
+ec_pve_batch_t::ec_pve_batch_t(int batch_count) : base_pke(pve_base_pke_unified()), n(batch_count), rows(kappa) {
+  cb_assert(batch_count > 0 && batch_count <= MAX_BATCH_COUNT);
+  Q.resize(n);
+}
 
 void ec_pve_batch_t::encrypt(const void* ek, mem_t label, ecurve_t curve, const std::vector<bn_t>& _x) {
+  cb_assert(n > 0 && n <= MAX_BATCH_COUNT);
   cb_assert(int(_x.size()) == n);
 
   const mod_t& q = curve.order();
@@ -69,6 +73,7 @@ void ec_pve_batch_t::encrypt(const void* ek, mem_t label, ecurve_t curve, const 
 
 error_t ec_pve_batch_t::verify(const void* ek, const std::vector<ecc_point_t>& Q, mem_t label) const {
   error_t rv = UNINITIALIZED_ERROR;
+  if (n <= 0 || n > MAX_BATCH_COUNT) return coinbase::error(E_BADARG);
   if (int(Q.size()) != n) return coinbase::error(E_BADARG);
 
   // This verifies that the input Q values are the same as backed up Q values (step 2 of spec)

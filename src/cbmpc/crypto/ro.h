@@ -23,18 +23,21 @@ struct hmac_state_t {
 
   template <typename T, size_t s>
   void encode_and_update(const std::array<T, s>& v) {
+    static_assert(s <= INT_MAX, "array size exceeds INT_MAX");
     hmac.update(int(s));
     hmac.update(v);
   }
 
   template <typename V, std::size_t N>
   void encode_and_update(const V (&v)[N]) {
+    static_assert(N <= INT_MAX, "array size exceeds INT_MAX");
     hmac.update(int(N));
     for (std::size_t i = 0; i < N; i++) encode_and_update(v[i]);
   }
 
   template <typename V>
   void encode_and_update(const std::vector<V>& v) {
+    cb_assert(v.size() <= INT_MAX);
     hmac.update(int(v.size()));
     for (std::size_t i = 0; i < v.size(); i++) encode_and_update(v[i]);
   }
@@ -101,11 +104,12 @@ hash_number_t hash_number(const ARGS&... args) {
 class hash_numbers_t : public hmac_state_t {
  public:
   template <typename... ARGS>
-  hash_numbers_t(const ARGS&... args) {
+  hash_numbers_t(const ARGS&... args) : l(-1) {
     encode_and_update(args...);
   }
 
   hash_numbers_t& count(int l) {
+    cb_assert(l > 0 && "hash_numbers_t::count(l): l must be > 0");
     this->l = l;
     return *this;
   }

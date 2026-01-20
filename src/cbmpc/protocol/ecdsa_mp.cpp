@@ -44,6 +44,27 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
   int peer_index = job.get_party_idx();
   int i = peer_index;
   int n = peers_count;
+
+  // Validate ot_role_map dimensions and values up-front to avoid UB / OOB access via operator[].
+  if ((int)ot_role_map.size() != n) return coinbase::error(E_BADARG, "invalid ot_role_map: row count mismatch");
+  for (int r = 0; r < n; r++) {
+    if ((int)ot_role_map[r].size() != n) return coinbase::error(E_BADARG, "invalid ot_role_map: column count mismatch");
+  }
+  for (int r = 0; r < n; r++) {
+    for (int c = 0; c < n; c++) {
+      int role = ot_role_map[r][c];
+      if (r == c) {
+        if (role != ot_no_role) return coinbase::error(E_BADARG, "invalid ot_role_map: diagonal must be ot_no_role");
+        continue;
+      }
+      if (role != ot_sender && role != ot_receiver)
+        return coinbase::error(E_BADARG, "invalid ot_role_map: entries must be ot_sender or ot_receiver");
+      int opp = ot_role_map[c][r];
+      if ((role == ot_sender && opp != ot_receiver) || (role == ot_receiver && opp != ot_sender))
+        return coinbase::error(E_BADARG, "invalid ot_role_map: roles must be anti-symmetric");
+    }
+  }
+
   auto sid_i = job.uniform_msg<buf_t>(crypto::gen_random_bitlen(SEC_P_COM));
 
   ecurve_t curve = key.curve;
@@ -267,6 +288,10 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
     bn_t a[4] = {k_i, rho_i, x_i, rho_i};
 
     std::array<bn_t, 4> v[theta];
+    for (int t = 0; t < 4; t++) {
+      const bn_t& vt = v_theta._j[t];
+      if (!q.is_in_range(vt)) return coinbase::error(E_CRYPTO, "invalid v_theta");
+    }
     v[theta - 1] = v_theta._j;
     crypto::drbg_aes_ctr_t drbg(seed._j);
 

@@ -26,6 +26,7 @@ class ecurve_ed_t final : public ecurve_interface_t {
   void init_point(ecc_point_t& P) const override;
   void free_point(ecc_point_t& P) const override;
   void copy_point(ecc_point_t& Dst, const ecc_point_t& Src) const override;
+  bool cnd_copy_point(bool flag, const ecc_point_t& src, ecc_point_t& dst) const override;
   bool is_on_curve(const ecc_point_t& P) const override;
   bool is_in_subgroup(const ecc_point_t& P) const override;
   bool is_infinity(const ecc_point_t& P) const override;

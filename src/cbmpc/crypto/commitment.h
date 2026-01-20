@@ -82,10 +82,10 @@ struct commitment_t {
     state.encode_and_update(args...);
     if (external_sid.size == 0) {
       // Means that local_sid was used and therefore it should be extracted out of the hash parameter
-      cb_assert(msg.size() == HASH_SIZE + LOCAL_SID_SIZE);
+      if (msg.size() != HASH_SIZE + LOCAL_SID_SIZE) return coinbase::error(E_FORMAT);
       local_sid = msg.skip(HASH_SIZE);
     } else {
-      cb_assert(msg.size() == HASH_SIZE);
+      if (msg.size() != HASH_SIZE) return coinbase::error(E_FORMAT);
     }
     buf_t m = final(state);
     if (m != msg) return coinbase::error(E_CRYPTO);

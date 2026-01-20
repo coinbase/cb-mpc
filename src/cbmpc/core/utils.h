@@ -12,6 +12,7 @@ static std::mutex coutMutex;
   } while (0)
 #endif
 
+#include <cbmpc/core/buf.h>
 #include <cbmpc/core/macros.h>
 
 namespace coinbase {
@@ -110,6 +111,27 @@ static inline uint64_t constant_time_mask_64(uint64_t flag) { return constant_ti
 static inline uint64_t constant_time_select_u64(bool flag, uint64_t y, uint64_t z) {
   uint64_t mask = constant_time_mask_64(flag);
   return MASKED_SELECT(mask, y, z);
+}
+
+// Constant-time selection for a byte array.
+// Writes `y` to `out` when flag == true, else writes `z` to `out`.
+static inline void constant_time_select_bytes(bool flag, const_byte_ptr y, const_byte_ptr z, byte_ptr out, int size) {
+  // `size` is public; `flag` is assumed potentially secret.
+  cb_assert(size >= 0);
+  uint8_t mask = static_cast<uint8_t>(constant_time_mask_64(static_cast<uint64_t>(flag)));
+  uint8_t inv_mask = static_cast<uint8_t>(~mask);
+  for (int i = 0; i < size; i++) {
+    out[i] = static_cast<uint8_t>((y[i] & mask) | (z[i] & inv_mask));
+  }
+}
+
+// Constant-time selection between two same-sized buffers.
+// Returns `y` when flag == true, else returns `z`.
+static inline buf_t ct_select_buf(bool flag, mem_t y, mem_t z) {
+  cb_assert(y.size == z.size);
+  buf_t out(y.size);
+  constant_time_select_bytes(flag, y.data, z.data, out.data(), y.size);
+  return out;
 }
 
 }  // namespace coinbase

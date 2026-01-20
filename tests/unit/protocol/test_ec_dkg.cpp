@@ -149,7 +149,7 @@ TEST(ECDKG, ReconstructPubAdditiveShares_ORNode) {
 TEST(ECDKG, ReconstructPubAdditiveShares_Threshold2of3) {
   // THRESHOLD[2](p0, p1, p2) with additive quorum {p0, p2}
   ss::node_t* root_node =
-      new ss::node_t(ss::node_e::THRESHOLD, "th-root", 2,
+      new ss::node_t(ss::node_e::THRESHOLD, "", 2,
                      {new ss::node_t(ss::node_e::LEAF, "p0"), new ss::node_t(ss::node_e::LEAF, "p1"),
                       new ss::node_t(ss::node_e::LEAF, "p2")});
 
@@ -162,7 +162,7 @@ TEST(ECDKG, ReconstructPubAdditiveShares_Threshold2of3) {
 TEST(ECDKG, ReconstructPubAdditiveShares_ThresholdNofN_ANDEquivalent) {
   // THRESHOLD[3](p0, p1, p2) with additive quorum {p0, p1, p2} (equivalent to AND)
   ss::node_t* root_node =
-      new ss::node_t(ss::node_e::THRESHOLD, "th-all", 3,
+      new ss::node_t(ss::node_e::THRESHOLD, "", 3,
                      {new ss::node_t(ss::node_e::LEAF, "p0"), new ss::node_t(ss::node_e::LEAF, "p1"),
                       new ss::node_t(ss::node_e::LEAF, "p2")});
 
@@ -175,7 +175,7 @@ TEST(ECDKG, ReconstructPubAdditiveShares_ThresholdNofN_ANDEquivalent) {
 TEST(ECDKG, ReconstructPubAdditiveShares_Threshold3of4_LargerLeaves) {
   // THRESHOLD[3](p0, p1, p2, p3) with additive quorum {p0, p1, p2}
   ss::node_t* root_node =
-      new ss::node_t(ss::node_e::THRESHOLD, "th-3of4", 3,
+      new ss::node_t(ss::node_e::THRESHOLD, "", 3,
                      {new ss::node_t(ss::node_e::LEAF, "p0"), new ss::node_t(ss::node_e::LEAF, "p1"),
                       new ss::node_t(ss::node_e::LEAF, "p2"), new ss::node_t(ss::node_e::LEAF, "p3")});
 
@@ -183,6 +183,33 @@ TEST(ECDKG, ReconstructPubAdditiveShares_Threshold3of4_LargerLeaves) {
   std::set<int> dkg_quorum_indices = {0, 1, 2};
   std::set<crypto::pname_t> additive_quorum = {"p3", "p1", "p2"};
   RunDkgAndAdditiveShareTest(root_node, pnames, dkg_quorum_indices, additive_quorum);
+}
+
+TEST(ECDKG, ThresholdDkgRejectsInvalidAccessStructureDuplicateLeaves) {
+  dylog_disable_scope_t dylog_disable_scope;
+
+  ecurve_t curve = crypto::curve_secp256k1;
+  const auto& G = curve.generator();
+
+  // Malformed access structure: THRESHOLD[2](p1, p1, p2)
+  // Duplicate leaf names can incorrectly satisfy enough_for_quorum() unless validated.
+  node_t root(node_e::THRESHOLD, "", 2,
+              {new node_t(node_e::LEAF, "p1"), new node_t(node_e::LEAF, "p1"), new node_t(node_e::LEAF, "p2")});
+
+  ss::ac_t ac;
+  ac.G = G;
+  ac.root = &root;
+
+  std::vector<crypto::pname_t> pnames = {"p0", "p1", "p2"};
+  mpc::job_mp_t job(/*index=*/0, pnames, /*tptr=*/nullptr);
+
+  mpc::party_set_t quorum_party_set;
+  quorum_party_set.add(1);  // only p1 in quorum
+
+  buf_t sid = crypto::gen_random(16);
+  key_share_mp_t key;
+  error_t rv = key_share_mp_t::threshold_dkg(job, curve, sid, ac, quorum_party_set, key);
+  EXPECT_EQ(uint32_t(rv), uint32_t(E_BADARG));
 }
 
 }  // namespace

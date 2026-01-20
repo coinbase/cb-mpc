@@ -33,6 +33,36 @@ namespace secp256k1 {
 point_ptr_t new_point(const point_ptr_t src) { return point_ptr_t(new secp256k1_gej(*(const secp256k1_gej*)src)); }
 }  // namespace secp256k1
 
+// Constant-time addition for secp256k1_gej points for all inputs (including infinity).
+// Implementation strategy:
+// - Use libsecp256k1's `secp256k1_gej_add_ge` (side-channel resistant, handles degeneracy),
+//   which requires the second operand in affine form and non-infinity.
+// - If the second operand is infinity, cmov it to generator (any fixed non-infinity point),
+//   perform the addition, then cmov the result back to `a`.
+static void secp256k1_gej_add_consttime_full(secp256k1_gej* r, const secp256k1_gej* a, const secp256k1_gej* b) {
+  SECP256K1_GEJ_VERIFY(a);
+  SECP256K1_GEJ_VERIFY(b);
+
+  const int b_is_inf = b->infinity;
+
+  secp256k1_gej b_noninf = *b;
+  secp256k1_gej_cmov(&b_noninf, &G, b_is_inf);  // ensure non-infinity for affine conversion
+
+  // Convert a copy of b_noninf to affine (constant-time inversion via secp256k1_fe_inv).
+  secp256k1_ge b_ge;
+  secp256k1_gej b_tmp = b_noninf;
+  secp256k1_ge_set_gej(&b_ge, &b_tmp);
+  VERIFY_CHECK(!b_ge.infinity);
+
+  // Add in (side-channel resistant) constant-time.
+  secp256k1_gej_add_ge(r, a, &b_ge);
+
+  // If original `b` was infinity, the result should be `a`.
+  secp256k1_gej_cmov(r, a, b_is_inf);
+
+  SECP256K1_GEJ_VERIFY(r);
+}
+
 ecurve_secp256k1_t::ecurve_secp256k1_t() noexcept {
   name = "SECP256K1";
   type = ecurve_type_e::bitcoin;
@@ -81,6 +111,11 @@ void ecurve_secp256k1_t::copy_point(ecc_point_t& Dst, const ecc_point_t& Src) co
   Dst.secp256k1 = secp256k1::new_point(Src.secp256k1);
 }
 
+bool ecurve_secp256k1_t::cnd_copy_point(bool flag, const ecc_point_t& Src, ecc_point_t& Dst) const {
+  secp256k1_gej_cmov((secp256k1_gej*)Dst.secp256k1, (const secp256k1_gej*)Src.secp256k1, static_cast<int>(flag));
+  return true;
+}
+
 bool ecurve_secp256k1_t::is_on_curve(const ecc_point_t& P) const {
   secp256k1_ge ge;
   secp256k1_ge_set_gej(&ge, (secp256k1_gej*)P.secp256k1);
@@ -114,74 +149,9 @@ void ecurve_secp256k1_t::add(const ecc_point_t& P1, const ecc_point_t& P2, ecc_p
                         (const secp256k1_gej*)P2.secp256k1, nullptr);
 }
 
-// This function does not work for some special cases, like when a or b is infinity, or a and b have the same z
-// coordinate. When points are random, the probability of these cases is negligible.
-static void secp256k1_gej_add_const(secp256k1_gej* r, const secp256k1_gej* a, const secp256k1_gej* b) {
-  secp256k1_fe z22, z12, u1, u2, s1, s2, h, i, h2, h3, t;
-  SECP256K1_GEJ_VERIFY(a);
-  SECP256K1_GEJ_VERIFY(b);
-
-  const bool vartime = is_vartime_scope();
-  if (!vartime) {
-    cb_assert(!a->infinity);
-    cb_assert(!b->infinity);
-  } else {
-    // In verifier code paths we intentionally allow variable-time operations for robustness.
-    if (a->infinity || b->infinity) {
-      secp256k1_gej_add_var(r, a, b, nullptr);
-      return;
-    }
-  }
-
-  secp256k1_fe_sqr(&z22, &b->z);
-  secp256k1_fe_sqr(&z12, &a->z);
-  secp256k1_fe_mul(&u1, &a->x, &z22);
-  secp256k1_fe_mul(&u2, &b->x, &z12);
-  secp256k1_fe_mul(&s1, &a->y, &z22);
-  secp256k1_fe_mul(&s1, &s1, &b->z);
-  secp256k1_fe_mul(&s2, &b->y, &z12);
-  secp256k1_fe_mul(&s2, &s2, &a->z);
-  secp256k1_fe_negate(&h, &u1, 1);
-  secp256k1_fe_add(&h, &u2);
-  secp256k1_fe_negate(&i, &s2, 1);
-  secp256k1_fe_add(&i, &s1);
-
-  if (!vartime) {
-    cb_assert(!secp256k1_fe_normalizes_to_zero(&h));
-    cb_assert(!secp256k1_fe_normalizes_to_zero(&i));
-  } else {
-    // In verifier code paths we can handle degenerate inputs (rare) via the generic addition.
-    if (secp256k1_fe_normalizes_to_zero(&h) || secp256k1_fe_normalizes_to_zero(&i)) {
-      secp256k1_gej_add_var(r, a, b, nullptr);
-      return;
-    }
-  }
-
-  r->infinity = 0;
-  secp256k1_fe_mul(&t, &h, &b->z);
-  secp256k1_fe_mul(&r->z, &a->z, &t);
-
-  secp256k1_fe_sqr(&h2, &h);
-  secp256k1_fe_negate(&h2, &h2, 1);
-  secp256k1_fe_mul(&h3, &h2, &h);
-  secp256k1_fe_mul(&t, &u1, &h2);
-
-  secp256k1_fe_sqr(&r->x, &i);
-  secp256k1_fe_add(&r->x, &h3);
-  secp256k1_fe_add(&r->x, &t);
-  secp256k1_fe_add(&r->x, &t);
-
-  secp256k1_fe_add(&t, &r->x);
-  secp256k1_fe_mul(&r->y, &t, &i);
-  secp256k1_fe_mul(&h3, &h3, &s1);
-  secp256k1_fe_add(&r->y, &h3);
-
-  SECP256K1_GEJ_VERIFY(r);
-}
-
 void ecurve_secp256k1_t::add_consttime(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const {
-  secp256k1_gej_add_const((secp256k1_gej*)R.secp256k1, (const secp256k1_gej*)P1.secp256k1,
-                          (const secp256k1_gej*)P2.secp256k1);
+  secp256k1_gej_add_consttime_full((secp256k1_gej*)R.secp256k1, (const secp256k1_gej*)P1.secp256k1,
+                                   (const secp256k1_gej*)P2.secp256k1);
 }
 
 void ecurve_secp256k1_t::mul_vartime(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const {
@@ -237,19 +207,28 @@ void ecurve_secp256k1_t::mul_add(const bn_t& n, const ecc_point_t& P, const bn_t
   secp256k1_gej Rn;
   secp256k1_ecmult_gen(&secp256k1_ecmult_gen_ctx, &Rn, &scalar_n);
 
-  // Convert P to affine coordinates for secp256k1_ecmult_const
-  // This involves a field inversion, which is variable-time. Since P is public,
-  // this is usually acceptable. If P is secret, you'll need a constant-time inversion method.
+  // Convert P to affine coordinates for secp256k1_ecmult_const.
+  // Use the constant-time conversion (secp256k1_fe_inv via secp256k1_ge_set_gej).
+  // Also ensure we never feed infinity into secp256k1_ge_set_gej by cmov'ing to generator.
+  secp256k1_gej Pj = *(const secp256k1_gej*)P.secp256k1;
+  const int P_is_inf = Pj.infinity;
+  secp256k1_gej_cmov(&Pj, &G, P_is_inf);
+
   secp256k1_ge P_ge;
-  secp256k1_ge_set_gej(&P_ge, (secp256k1_gej*)P.secp256k1);
+  secp256k1_ge_set_gej(&P_ge, &Pj);
+  VERIFY_CHECK(!P_ge.infinity);
 
   // Compute Rm = mP in constant-time
   secp256k1_gej Rm;
   secp256k1_ecmult_const(&Rm, &P_ge, &scalar_m);
 
-  secp256k1_gej R_sum;
-  secp256k1_gej_add_const(&R_sum, &Rm, &Rn);
+  // If original P was infinity, mP is infinity.
+  secp256k1_gej inf;
+  secp256k1_gej_set_infinity(&inf);
+  secp256k1_gej_cmov(&Rm, &inf, P_is_inf);
 
+  secp256k1_gej R_sum;
+  secp256k1_gej_add_consttime_full(&R_sum, &Rm, &Rn);
   memcpy(R.secp256k1, &R_sum, sizeof(R_sum));
 
   secp256k1_scalar_clear(&scalar_m);

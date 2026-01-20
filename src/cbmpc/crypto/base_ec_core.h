@@ -34,6 +34,16 @@ struct edwards_projective_t {
 
   using fe_t = FE;
   static fe_t get_d();
+
+  // Edwards identity in projective coords is (X=0, Y=Z) (affine (0,1)).
+  // Do NOT use X==0 alone: there exist non-identity torsion points with X==0
+  // (e.g., (0,-1) of order 2 on Ed25519).
+  static bool is_infinity(const fe_t& x, const fe_t& y, const fe_t& z) { return x.is_zero() & (y == z); }
+  static void set_infinity(fe_t& x, fe_t& y, fe_t& z) {
+    x = fe_t::zero();
+    y = fe_t::one();
+    z = fe_t::one();
+  }
   struct precomp_t  // affine
   {
     fe_t y_minus_x, y_plus_x, kt;
@@ -242,8 +252,8 @@ struct edwards_projective_t {
 
   static void add(fe_t& rx, fe_t& ry, fe_t& rz, const fe_t& ax, const fe_t& ay, const fe_t& az, const fe_t& bx,
                   const fe_t& by, const fe_t& bz) {
-    bool a_is_inf = ax.is_zero();
-    bool b_is_inf = bx.is_zero();
+    bool a_is_inf = is_infinity(ax, ay, az);
+    bool b_is_inf = is_infinity(bx, by, bz);
 
     fe_t save_ax = ax;
     fe_t save_ay = ay;
@@ -295,7 +305,7 @@ struct edwards_projective_t {
     const fe_t& X1 = X3;
     const fe_t& Y1 = Y3;
     const fe_t& Z1 = Z3;
-    bool a_is_inf = X1.is_zero();
+    bool a_is_inf = is_infinity(X1, Y1, Z1);
     static const fe_t d = get_d();
 
     fe_t B, C, D, E, F, G, H;
@@ -326,6 +336,14 @@ struct edwards_projective_t {
   }
 };
 
+// NOTE(future-proofing): `ecurve_core_t::point_t` delegates identity handling to the formula:
+// - FORMULA::is_infinity(x, y, z)
+// - FORMULA::set_infinity(x, y, z)
+//
+// Edwards uses a non-standard identity check (X=0 && Y==Z) to avoid confusing torsion points with identity.
+// If/when we add a short-Weierstrass backend based on Jacobian/projective coords, it should implement
+// these hooks too (commonly: infinity iff Z==0).
+
 template <typename FORMULA, bool USE_GLV = false>
 struct ecurve_core_t {
   using fe_t = typename FORMULA::fe_t;
@@ -343,8 +361,8 @@ struct ecurve_core_t {
 
     fe_t x, y, z;
 
-    bool is_infinity() const { return z.is_zero(); }
-    void set_infinity() { x = y = z = fe_t::zero(); }
+    bool is_infinity() const { return FORMULA::is_infinity(x, y, z); }
+    void set_infinity() { FORMULA::set_infinity(x, y, z); }
 
     void get_xy(fe_t& affine_x, fe_t& affine_y) const { FORMULA::get_xy(x, y, z, affine_x, affine_y); }
 
@@ -387,7 +405,12 @@ struct ecurve_core_t {
 
     void cnd_negate(bool flag) { FORMULA::cnd_neg(flag, x, y, z); }
 
-    bool operator==(const point_t& P) const { return FORMULA::equ(x, y, z, P.x, P.y, P.z); }
+    bool operator==(const point_t& P) const {
+      // Avoid degenerate projective representations accidentally comparing equal to all points.
+      if (is_infinity()) return P.is_infinity();
+      if (P.is_infinity()) return false;
+      return FORMULA::equ(x, y, z, P.x, P.y, P.z);
+    }
     bool operator!=(const point_t& P) const { return !(*this == P); }
   };
 
@@ -646,7 +669,14 @@ struct ecurve_core_t {
     }
 
     A.get_xyz(R.x, R.y, R.z);
-    R.z.cnd_assign(r_is_inf, fe_t::zero());
+    // Preserve a *valid* Edwards identity representation when the scalar is zero.
+    // Using Z=0 as a sentinel breaks downstream is_infinity() checks (which intentionally
+    // use X=0 && Y==Z for Edwards to avoid confusing torsion points with the identity).
+    fe_t inf_x, inf_y, inf_z;
+    FORMULA::set_infinity(inf_x, inf_y, inf_z);
+    R.x.cnd_assign(r_is_inf, inf_x);
+    R.y.cnd_assign(r_is_inf, inf_y);
+    R.z.cnd_assign(r_is_inf, inf_z);
   }
 
   static point_t mul_to_generator(const bn_t& x) {

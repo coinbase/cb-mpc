@@ -54,6 +54,7 @@ class parallel_data_transport_t : public data_transport_interface_t {
   std::mutex receive_ready_mtx;
   std::condition_variable receive_done_cv;
   std::condition_variable receive_start_cv;
+  error_t last_receive_rv = SUCCESS;
 
   std::vector<buf_t> receive_msg;
   std::mutex receive_msg_mutex;
@@ -67,6 +68,7 @@ class parallel_data_transport_t : public data_transport_interface_t {
   std::mutex receive_all_ready_mtx;
   std::condition_variable receive_all_done_cv;
   std::condition_variable receive_all_start_cv;
+  error_t last_receive_all_rv = SUCCESS;
 
   std::unordered_map<party_idx_t, std::vector<buf_t>> receive_all_msgs;
   std::mutex receive_all_msgs_mutex;

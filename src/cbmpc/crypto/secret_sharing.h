@@ -92,7 +92,10 @@ class ac_t {
   const node_t *get_root() const { return root; }
   bool has_root() const { return root != nullptr; }
 
-  error_t validate_tree() const { return root->validate_tree(); }
+  error_t validate_tree() const {
+    if (!root) return coinbase::error(E_BADARG, "missing root");
+    return root->validate_tree();
+  }
 
   const node_t *find(const pname_t &name) const { return root->find(name); }
   std::set<pname_t> list_leaf_names() const { return root->list_leaf_names(); }
@@ -106,12 +109,12 @@ class ac_t {
       return 0;
   }
 
-  bool enough_for_quorum(const std::set<pname_t> names) const { return root->enough_for_quorum(names); }
+  bool enough_for_quorum(const std::set<pname_t> names) const { return root ? root->enough_for_quorum(names) : false; }
   template <typename T>
   bool enough_for_quorum(const party_map_t<T> &map) const {
     std::set<pname_t> names;
     for (const auto &[name, value] : map) names.insert(name);
-    return root->enough_for_quorum(names);
+    return root ? root->enough_for_quorum(names) : false;
   }
 
   /**

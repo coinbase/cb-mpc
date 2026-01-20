@@ -25,7 +25,7 @@ error_t base_ot_protocol_pvw_ctx_t::step1_R2S(const coinbase::bits_t& b) {
 
   for (int i = 0; i < m; i++) {
     r[i] = bn_t::rand(q);
-    int bi = b[i] ? 1 : 0;
+    int bi = static_cast<int>(b[i]);
     A[i] = r[i] * G[bi];
     B[i] = r[i] * H[bi];
   }
@@ -89,10 +89,22 @@ error_t base_ot_protocol_pvw_ctx_t::output_R(std::vector<buf_t>& x) {
   for (int i = 0; i < m; i++) {
     if (rv = curve.check(U0[i])) return coinbase::error(rv, "base_ot_protocol_pvw_ctx_t::output_R: check U0[i] failed");
     if (rv = curve.check(U1[i])) return coinbase::error(rv, "base_ot_protocol_pvw_ctx_t::output_R: check U1[i] failed");
-    mem_t Vbi = b[i] ? V1[i] : V0[i];
-    const ecc_point_t& Ubi = b[i] ? U1[i] : U0[i];
-
-    x[i] = crypto::ro::hash_string(r[i] * Ubi).bitlen(l) ^ Vbi;
+    // Optimization: if the curve backend supports constant-time point cmov, select U_b and V_b and do
+    // a single scalar-mul/hash. Otherwise (e.g., OpenSSL EC_POINT curves), fall back to the dual-computation path.
+    ecc_point_t Ubi = U0[i];
+    if (curve.cnd_copy_point(b[i], U1[i], Ubi)) {
+      const buf_t Vbi = ct_select_buf(b[i], V1[i], V0[i]);
+      x[i] = crypto::ro::hash_string(r[i] * Ubi).bitlen(l) ^ Vbi;
+    } else {
+      // NOTE: This fallback is intentionally NOT constant-time w.r.t. the choice bit b[i].
+      // On backends where we can't do a constant-time point-select (e.g., OpenSSL EC_POINT curves),
+      // computing both branches is ~2x slower here (extra scalar-mul + hash). We choose the fast
+      // single-branch computation, and assume this timing difference is not practically exploitable
+      // in our threat model for this code path.
+      mem_t Vbi = b[i] ? mem_t(V1[i]) : mem_t(V0[i]);
+      const ecc_point_t& Ubi = b[i] ? U1[i] : U0[i];
+      x[i] = crypto::ro::hash_string(r[i] * Ubi).bitlen(l) ^ Vbi;
+    }
   }
 
   return SUCCESS;
@@ -303,6 +315,7 @@ error_t ot_ext_protocol_ctx_t::step2_S2R_helper(mem_t sid, const coinbase::bits_
   ot_matrix_transpose(Q_tmp, Q);
 
   buf_t e = crypto::ro::hash_string(sid, U).bitlen(8 * u * d);
+  uint8_t any_fail = 0;
   for (int i = 0; i < u; i++) {
     for (int j = 0; j < d; j++) {
       int index = d * i + j;
@@ -310,12 +323,15 @@ error_t ot_ext_protocol_ctx_t::step2_S2R_helper(mem_t sid, const coinbase::bits_
       unsigned alpha = i;
       unsigned beta = e[index];
       bool b = s[alpha] ^ s[beta];
-      buf128_t vbz = b ? v1[index] : v0[index];
+      // Select vbz = (b ? v1[index] : v0[index]) in constant-time.
+      buf128_t vbz = (v1[index] & b) | (v0[index] & !b);
       buf128_t t = crypto::ro::hash_string(Q_tmp.get_row(alpha) ^ Q_tmp.get_row(beta)).bitlen128();
 
-      if (t != vbz) return coinbase::error(E_CRYPTO);
+      // Avoid early exit here; otherwise the position of the first mismatch leaks via timing.
+      any_fail |= static_cast<uint8_t>(t != vbz);
     }
   }
+  if (any_fail) return coinbase::error(E_CRYPTO);
 
   buf256_t s_buf;
   for (int i = 0; i < 256; i++) s_buf.set_bit(i, s[i]);
@@ -347,22 +363,25 @@ error_t ot_ext_protocol_ctx_t::output_R(int m, std::vector<buf_t>& x) {
 
   if (m != int(w1.size())) return coinbase::error(E_FORMAT);
 
+  buf_t w_zero(coinbase::bits_to_bytes(l));
+  w_zero.bzero();
+
   x.resize(m);
   for (int i = 0; i < m; i++) {
     x[i] = hash_matrix_line(i, T[i], l);
 
     if (sender_one_input_random_mode) {
-      if (r[i]) {
-        buf_t& w = w1[i];
-        if (bytes_to_bits(w.size()) != l)
-          return coinbase::error(E_BADARG, "sender_one_input_random_mode: w1[i] size mismatch");
-        x[i] ^= w;
-      }
+      if (bytes_to_bits(w1[i].size()) != l)
+        return coinbase::error(E_BADARG, "sender_one_input_random_mode: w1[i] size mismatch");
+
+      const buf_t w_sel = coinbase::ct_select_buf(r[i], w1[i], w_zero);
+      x[i] ^= w_sel;
     } else {
-      buf_t& w = r[i] ? w1[i] : w0[i];
-      if (bytes_to_bits(w.size()) != l)
-        return coinbase::error(E_BADARG, "non-sender_one_input_random_mode: w1[i] size mismatch");
-      x[i] ^= w;
+      if (bytes_to_bits(w0[i].size()) != l || bytes_to_bits(w1[i].size()) != l)
+        return coinbase::error(E_BADARG, "non-sender_one_input_random_mode: w0[i]/w1[i] size mismatch");
+
+      const buf_t w_sel = coinbase::ct_select_buf(r[i], w1[i], w0[i]);
+      x[i] ^= w_sel;
     }
   }
   return SUCCESS;

@@ -5,11 +5,13 @@
 
 namespace coinbase::zk {
 
-void uc_elgamal_com_t::prove(const ecc_point_t& Q, elg_com_t UV, const bn_t& x, const bn_t& r, mem_t session_id,
+void uc_elgamal_com_t::prove(const ecc_point_t& Q, const elg_com_t& UV, const bn_t& x, const bn_t& r, mem_t session_id,
                              uint64_t aux) {
   std::vector<bn_t> r1(params.rho);
   std::vector<bn_t> r2(params.rho);
   ecurve_t curve = Q.get_curve();
+  // Public input sanity checks. We hard-fail on infinity to avoid producing proofs for invalid statements.
+  cb_assert(!Q.is_infinity());
   const auto& G = curve.generator();
   const mod_t& q = curve.order();
   int rho = params.rho;
@@ -110,14 +112,14 @@ error_t uc_elgamal_com_t::verify(const ecc_point_t& Q, const elg_com_t& UV, mem_
   return SUCCESS;
 }
 
-void elgamal_com_pub_share_equ_t::prove(const ecc_point_t& Q, const ecc_point_t& A, const elg_com_t eA, const bn_t& r,
+void elgamal_com_pub_share_equ_t::prove(const ecc_point_t& Q, const ecc_point_t& A, const elg_com_t& eA, const bn_t& r,
                                         mem_t session_id, uint64_t aux) {
   ecc_point_t eaR_minus_A;
   eaR_minus_A = eA.R - A;
   return zk_dh.prove(Q, eA.L, eaR_minus_A, r, session_id, aux);
 }
 
-error_t elgamal_com_pub_share_equ_t::verify(const ecc_point_t& Q, const ecc_point_t& A, const elg_com_t B,
+error_t elgamal_com_pub_share_equ_t::verify(const ecc_point_t& Q, const ecc_point_t& A, const elg_com_t& B,
                                             mem_t session_id, uint64_t aux) const {
   crypto::vartime_scope_t vartime_scope;
   error_t rv = UNINITIALIZED_ERROR;
@@ -177,6 +179,8 @@ void uc_elgamal_com_mult_private_scalar_t::prove(const ecc_point_t& Q, const elg
   std::vector<bn_t> r1(params.rho);
   std::vector<bn_t> r2(params.rho);
   ecurve_t curve = Q.get_curve();
+  // Public input sanity checks. We hard-fail on infinity to avoid producing proofs for invalid statements.
+  cb_assert(!Q.is_infinity());
   const mod_t& q = curve.order();
   int rho = params.rho;
 

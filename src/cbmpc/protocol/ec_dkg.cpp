@@ -271,6 +271,10 @@ error_t key_share_mp_t::threshold_dkg_or_refresh(job_mp_t& job, const ecurve_t& 
   const auto& G = curve.generator();
   const mod_t& q = curve.order();
 
+  if (rv = ac.validate_tree()) {
+    return coinbase::error(rv, "Invalid access structure");
+  }
+
   int n = job.get_n_parties();
   int quorum_count = 0;
   int i = job.get_party_idx();

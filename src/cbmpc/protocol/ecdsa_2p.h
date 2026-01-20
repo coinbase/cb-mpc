@@ -103,9 +103,10 @@ struct zk_ecdsa_sign_2pc_integer_commit_t {
    * @notes:
    * - The integer commitment is implemented inline
    */
-  void prove(const crypto::paillier_t& paillier, const crypto::paillier_t::elem_t& ckey,
-             const crypto::paillier_t::elem_t& c, const ecc_point_t& Q2, const ecc_point_t& R2, const bn_t& m_tag,
-             const bn_t& r, const bn_t& k2, const bn_t& x2, const bn_t& rho, const bn_t& rc, mem_t sid, uint64_t aux);
+  error_t prove(const crypto::paillier_t& paillier, const crypto::paillier_t::elem_t& ckey,
+                const crypto::paillier_t::elem_t& c, const ecc_point_t& Q2, const ecc_point_t& R2, const bn_t& m_tag,
+                const bn_t& r, const bn_t& k2, const bn_t& x2, const bn_t& rho, const bn_t& rc, mem_t sid,
+                uint64_t aux);
 
   /**
    * @specs:

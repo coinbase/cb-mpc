@@ -1,3 +1,4 @@
+#include <cbmpc/core/utils.h>
 #include <cbmpc/crypto/base.h>
 
 namespace coinbase::crypto {
@@ -96,6 +97,17 @@ void ecurve_ed_t::free_point(ecc_point_t& P) const { ec25519_core::free_point(P.
 
 void ecurve_ed_t::copy_point(ecc_point_t& Dst, const ecc_point_t& Src) const {
   Dst.storage = ec25519_core::new_point(Src.storage);
+}
+
+bool ecurve_ed_t::cnd_copy_point(bool flag, const ecc_point_t& Src, ecc_point_t& Dst) const {
+  const uint64_t mask = coinbase::constant_time_mask_64(static_cast<uint64_t>(flag));
+  const uint64_t inv_mask = ~mask;
+  for (int i = 0; i < 4; i++) {
+    Dst.storage->x[i] = (Dst.storage->x[i] & inv_mask) | (Src.storage->x[i] & mask);
+    Dst.storage->y[i] = (Dst.storage->y[i] & inv_mask) | (Src.storage->y[i] & mask);
+    Dst.storage->z[i] = (Dst.storage->z[i] & inv_mask) | (Src.storage->z[i] & mask);
+  }
+  return true;
 }
 
 bool ecurve_ed_t::is_on_curve(const ecc_point_t& P) const { return ec25519_core::is_on_curve(P.storage); }

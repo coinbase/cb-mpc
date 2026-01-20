@@ -50,6 +50,51 @@ std::vector<std::vector<int>> test_ot_role(int n) {
 
 class ECDSAMPC : public NetworkMPC {};
 
+TEST_F(ECDSA4PC, RejectsInvalidOtRoleMapDimensions) {
+  buf_t data = crypto::gen_random(32);
+  std::vector<ecdsampc::key_t> keys(4);
+
+  mpc_runner->run_mpc([&](job_mp_t& job) {
+    error_t rv = UNINITIALIZED_ERROR;
+    auto party_index = job.get_party_idx();
+    ecdsampc::key_t& key = keys[party_index];
+    ecurve_t curve = crypto::curve_secp256k1;
+    buf_t sid;
+    rv = ecdsampc::dkg(job, curve, key, sid);
+    ASSERT_EQ(rv, 0);
+
+    // Wrong outer dimension (should be 4).
+    std::vector<std::vector<int>> bad_map(1, std::vector<int>(1, ot_no_role));
+    buf_t sig;
+    rv = sign(job, key, data, party_idx_t(0), bad_map, sig);
+    EXPECT_EQ(rv, E_BADARG);
+  });
+}
+
+TEST_F(ECDSA4PC, RejectsInvalidOtRoleMapValues) {
+  buf_t data = crypto::gen_random(32);
+  std::vector<ecdsampc::key_t> keys(4);
+
+  mpc_runner->run_mpc([&](job_mp_t& job) {
+    error_t rv = UNINITIALIZED_ERROR;
+    auto party_index = job.get_party_idx();
+    ecdsampc::key_t& key = keys[party_index];
+    ecurve_t curve = crypto::curve_secp256k1;
+    buf_t sid;
+    rv = ecdsampc::dkg(job, curve, key, sid);
+    ASSERT_EQ(rv, 0);
+
+    auto bad_map = test_ot_role(4);
+    // Break invariants: invalid diagonal and invalid role value.
+    bad_map[0][0] = ot_sender;
+    bad_map[0][1] = 12345;
+
+    buf_t sig;
+    rv = sign(job, key, data, party_idx_t(0), bad_map, sig);
+    EXPECT_EQ(rv, E_BADARG);
+  });
+}
+
 TEST_P(ECDSAMPC, KeygenSignRefreshSign) {
   const int m = GetParam();
 

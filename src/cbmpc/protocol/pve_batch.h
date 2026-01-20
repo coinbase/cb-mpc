@@ -10,8 +10,10 @@ class ec_pve_batch_t {
  public:
   // Default to unified PKE when not provided explicitly
   explicit ec_pve_batch_t(int batch_count);
-  ec_pve_batch_t(int batch_count, const pve_base_pke_i& base_pke)
-      : base_pke(base_pke), n(batch_count), rows(kappa), Q(n) {}
+  ec_pve_batch_t(int batch_count, const pve_base_pke_i& base_pke) : base_pke(base_pke), n(batch_count), rows(kappa) {
+    cb_assert(batch_count > 0 && batch_count <= MAX_BATCH_COUNT);
+    Q.resize(n);
+  }
 
   // Custom copy/move ctors bind the reference member correctly
   ec_pve_batch_t(const ec_pve_batch_t& other)
@@ -44,6 +46,9 @@ class ec_pve_batch_t {
   }
 
   const static int kappa = SEC_P_COM;
+  // Upper bound to prevent integer-overflow and unbounded memory allocation when `n` is untrusted.
+  // This is a defensive limit; callers should treat any larger batch as invalid input.
+  static constexpr int MAX_BATCH_COUNT = 100000;
   // We assume the base encryption scheme requires 32 bytes of randomness. If it needs more, it can be changed to use
   // DRBG with 32 bytes of randomness as the seed.
   const static int rho_size = 32;

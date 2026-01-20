@@ -221,13 +221,6 @@ const uint64_t sha512_k[80] = {  // ULL = uint64
     0x113f9804bef90dae, 0x1b710b35131c471b, 0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc,
     0x431d67c49c100d4c, 0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817};
 
-buf_t pbkdf2(hash_e type, mem_t password, mem_t salt, int iter, int out_size) {
-  buf_t out(out_size);
-  PKCS5_PBKDF2_HMAC(const_char_ptr(password.data), password.size, salt.data, salt.size, iter, hash_alg_t::get(type).md,
-                    out_size, out.data());
-  return out;
-}
-
 // -------------------------- RFC 5869 HKDF ----------------------------
 
 buf_t hkdf_extract(hash_e type, mem_t salt, mem_t ikm) {

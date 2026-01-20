@@ -651,7 +651,9 @@ static int bn_cmp_ct(const BIGNUM& a, const BIGNUM& b) {
     lt |= xlt;
     gt |= xgt;
   }
-  return int(lt - gt);
+  int res = int(lt - gt);
+  int m = 1 - 2 * int(a.neg & b.neg);
+  return m * res;
 }
 
 extern "C" int BN_cmpCT(const BIGNUM* a, const BIGNUM* b) {

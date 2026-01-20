@@ -56,8 +56,11 @@ void node_t::add_child_node(node_t *node) {
 error_t node_t::validate_tree(std::set<pname_t> &names) const {
   error_t rv = UNINITIALIZED_ERROR;
   if (name.empty() && parent) return coinbase::error(E_BADARG, "unnamed node");
-  if (!name.empty() && !parent) return coinbase::error(E_BADARG, "named root node");
+  if (!parent && !name.empty()) return coinbase::error(E_BADARG, "named root node");
   int n = int(children.size());
+
+  if (names.count(name) > 0) return coinbase::error(E_BADARG, "name duplication");
+  names.insert(name);
 
   switch (type) {
     case node_e::LEAF:
@@ -79,10 +82,6 @@ error_t node_t::validate_tree(std::set<pname_t> &names) const {
     default:
       return coinbase::error(E_BADARG, "invalid node type");
   }
-
-  if (names.count(name) > 0) return coinbase::error(E_BADARG, "name duplication");
-
-  names.insert(name);
 
   for (const node_t *child : children)
     if (rv = child->validate_tree(names)) return rv;

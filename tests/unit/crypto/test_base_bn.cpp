@@ -130,6 +130,49 @@ TEST(BigNumber, RangeCheck) {
   EXPECT_ER_MSG(check_open_range(bn_t(3), bn_t(5), bn_t(5)), "check_open_range failed");
 }
 
+TEST(BigNumber, CompareMatchesOpenSSL) {
+  auto expect_cmp = [](const bn_t& a, const bn_t& b) {
+    int ct = bn_t::compare(a, b);
+    int ref = BN_cmp((const BIGNUM*)a, (const BIGNUM*)b);
+    EXPECT_EQ((ct < 0), (ref < 0));
+    EXPECT_EQ((ct == 0), (ref == 0));
+    EXPECT_EQ((ct > 0), (ref > 0));
+  };
+
+  // Same sign / positive
+  expect_cmp(bn_t(0), bn_t(0));
+  expect_cmp(bn_t(1), bn_t(2));
+  expect_cmp(bn_t(2), bn_t(1));
+
+  // Mixed sign
+  expect_cmp(bn_t(-1), bn_t(0));
+  expect_cmp(bn_t(0), bn_t(-1));
+  expect_cmp(bn_t(-5), bn_t(7));
+  expect_cmp(bn_t(7), bn_t(-5));
+
+  // Both negative (this is where a naive magnitude compare is wrong)
+  expect_cmp(bn_t(-1), bn_t(-2));
+  expect_cmp(bn_t(-2), bn_t(-1));
+
+  // Multi-limb pattern similar to the report (constructed via shifts/adds).
+  bn_t a;
+  BN_zero(a);
+  BN_set_word(a, (BN_ULONG)2);
+  BN_lshift(a, a, 64);
+  BN_add_word(a, (BN_ULONG)0);
+  BN_set_negative(a, 1);
+
+  bn_t b;
+  BN_zero(b);
+  BN_set_word(b, (BN_ULONG)1);
+  BN_lshift(b, b, 64);
+  BN_add_word(b, (BN_ULONG)0xFFFFFFFFFFFFFFFFULL);
+  BN_set_negative(b, 1);
+
+  expect_cmp(a, b);
+  expect_cmp(b, a);
+}
+
 TEST(BigNumber, GetBinSize) {
   // Test basic cases
   EXPECT_EQ(bn_t(0).get_bin_size(), 0);  // Zero takes 0 bytes in binary representation

@@ -299,6 +299,11 @@ void paillier_pedersen_equal_t::prove(const crypto::paillier_t& paillier, const 
 
     e_temp >>= param::log_alpha;
 
+    // Side-channel note:
+    // - `ei` is a small public challenge chunk (mod alpha) extracted from a RO hash, and `x` is modulo `q`.
+    // - The dominant timing signal in typical bignum multiplication is operand length; for valid inputs,
+    //   `x` has a fixed bit-length (bounded by `q`), so this is not a meaningful leak in our threat model.
+    // - If a strong local side-channel threat model is required, consider fixed-top arithmetic for `x`.
     di[i] = ei * x + ri[i];
 
     MODULO(N) D[i] = R.pow(ei) * R_tilde[i];

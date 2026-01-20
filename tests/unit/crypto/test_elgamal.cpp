@@ -17,7 +17,8 @@ bool check_equ(const ec_elgamal_commitment_t& E1, const ec_elgamal_commitment_t&
 class ElGamal : public testing::Test {
  protected:
   void SetUp() override {
-    curve = curve_p256;
+    // ElGamal requires a curve backend with constant-time point addition when not in vartime scope.
+    curve = curve_secp256k1;
     q = curve.order();
     G = curve.generator();
   }

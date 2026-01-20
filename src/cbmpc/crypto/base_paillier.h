@@ -19,7 +19,7 @@ class paillier_t {
     static void set(rerand_e mode);
   };
 
-  static const int bit_size = 2048;
+  static constexpr int bit_size = 2048;
   paillier_t() : has_private(false) {}
   ~paillier_t() {}
 
@@ -38,7 +38,10 @@ class paillier_t {
   bn_t encrypt(const bn_t& src) const;
   bn_t encrypt(const bn_t& src, const bn_t& rand) const;
 
-  bn_t rand_N_star() const;
+  // Samples r in Z_N. If the private key is not present, either:
+  // - keep resampling until gcd(r, N) == 1 (resample_until_coprime=true), or
+  // - return an error if gcd(r, N) != 1 (resample_until_coprime=false).
+  error_t rand_N_star(bn_t& r, bool resample_until_coprime = false) const;
 
   /**
    * @specs:
