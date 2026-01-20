@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1767814581949,
+  "lastUpdate": 1768925439798,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -3360,6 +3360,126 @@ window.BENCHMARK_DATA = {
             "value": 1337.0566146620963,
             "unit": "us/iter",
             "extra": "iterations: 532\ncpu: 1336.964881578945 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "82e269131b125cec6164c70a1a68fe67b7160816",
+          "message": "fix: constant-time hardening and input validation across crypto primitives (#88)\n\nSecurity improvements for side-channel resistance:\n- Fix Edwards curve identity detection to use (X=0 && Y==Z), avoiding confusion with torsion points like (0,-1)\n- Upgrade secp256k1 point addition to fully constant-time using affine conversion + cmov pattern, removing conditional CT fallback\n- Add constant-time conditional copy (cnd_copy_point) for secp256k1 and Ed25519\n- Fix bn_cmp_ct to properly handle comparison of negative numbers\n- Add constant_time_select_bytes/ct_select_buf utilities\n- Enforce CT-capable curves for ElGamal operations; reduce scalars mod q\n\nInput validation hardening:\n- Add range checks for Paillier encrypt/decrypt inputs\n- Change paillier_t::rand_N_star to return error on gcd(r,N)!=1 by default\n- Convert commitment::verify asserts to proper error returns\n- Add ro_t::get_buf_checked with output length validation\n- Validate share indices and threshold in secret sharing\n- Add input validation across ZK proofs (Paillier, ElGamal, Pedersen)\n- Add protocol-level validation in ECDSA 2P/MP, OT, PVE, Schnorr, DKG\n\nOther fixes:\n- Fix memory leak and uninitialized cmems_t in Go FFI transport\n- Add verify_out_of_band for MPC session transport verification\n- Remove unused pbkdf2, ct_add_support_e::Conditional, ZK batch functions",
+          "timestamp": "2026-01-20T07:34:06-08:00",
+          "tree_id": "a5f10c451a147e4d1d376ad62b26dd7c32364835",
+          "url": "https://github.com/coinbase/cb-mpc/commit/82e269131b125cec6164c70a1a68fe67b7160816"
+        },
+        "date": 1768925438592,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.06531961452269414,
+            "unit": "us/iter",
+            "extra": "iterations: 11604626\ncpu: 0.06530283078489561 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.25096737618157994,
+            "unit": "us/iter",
+            "extra": "iterations: 2749954\ncpu: 0.250937156039701 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.06601428837910742,
+            "unit": "us/iter",
+            "extra": "iterations: 10609111\ncpu: 0.06601002911554092 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.32260821619703284,
+            "unit": "us/iter",
+            "extra": "iterations: 2179013\ncpu: 0.3225706758059772 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.1506718666910659,
+            "unit": "us/iter",
+            "extra": "iterations: 4667414\ncpu: 0.15065873050901435 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 11.498963782991844,
+            "unit": "us/iter",
+            "extra": "iterations: 60883\ncpu: 11.497588505822684 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 16.21060245220072,
+            "unit": "us/iter",
+            "extra": "iterations: 43308\ncpu: 16.20985489978735 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16535.541309524757,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16533.439166666412 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 17.63574682366023,
+            "unit": "us/iter",
+            "extra": "iterations: 39747\ncpu: 17.63312896570804 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 670.7765938698287,
+            "unit": "us/iter",
+            "extra": "iterations: 1044\ncpu: 670.720038314181 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 23.06264913294695,
+            "unit": "us/iter",
+            "extra": "iterations: 31140\ncpu: 23.061204720616622 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1109.5403264657034,
+            "unit": "us/iter",
+            "extra": "iterations: 631\ncpu: 1109.5131838351733 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 23.02425698045056,
+            "unit": "us/iter",
+            "extra": "iterations: 30084\ncpu: 23.022482316181392 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1107.3865094936427,
+            "unit": "us/iter",
+            "extra": "iterations: 632\ncpu: 1107.3249794303704 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 25.44158703286247,
+            "unit": "us/iter",
+            "extra": "iterations: 27053\ncpu: 25.43910948878155 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1280.184455373408,
+            "unit": "us/iter",
+            "extra": "iterations: 549\ncpu: 1280.126551912587 us\nthreads: 1"
           }
         ]
       }
