@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1767814588145,
+  "lastUpdate": 1768925446604,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1848,6 +1848,72 @@ window.BENCHMARK_DATA = {
             "value": 8327.665630953821,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8327.354333333336 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "82e269131b125cec6164c70a1a68fe67b7160816",
+          "message": "fix: constant-time hardening and input validation across crypto primitives (#88)\n\nSecurity improvements for side-channel resistance:\n- Fix Edwards curve identity detection to use (X=0 && Y==Z), avoiding confusion with torsion points like (0,-1)\n- Upgrade secp256k1 point addition to fully constant-time using affine conversion + cmov pattern, removing conditional CT fallback\n- Add constant-time conditional copy (cnd_copy_point) for secp256k1 and Ed25519\n- Fix bn_cmp_ct to properly handle comparison of negative numbers\n- Add constant_time_select_bytes/ct_select_buf utilities\n- Enforce CT-capable curves for ElGamal operations; reduce scalars mod q\n\nInput validation hardening:\n- Add range checks for Paillier encrypt/decrypt inputs\n- Change paillier_t::rand_N_star to return error on gcd(r,N)!=1 by default\n- Convert commitment::verify asserts to proper error returns\n- Add ro_t::get_buf_checked with output length validation\n- Validate share indices and threshold in secret sharing\n- Add input validation across ZK proofs (Paillier, ElGamal, Pedersen)\n- Add protocol-level validation in ECDSA 2P/MP, OT, PVE, Schnorr, DKG\n\nOther fixes:\n- Fix memory leak and uninitialized cmems_t in Go FFI transport\n- Add verify_out_of_band for MPC session transport verification\n- Remove unused pbkdf2, ct_add_support_e::Conditional, ZK batch functions",
+          "timestamp": "2026-01-20T07:34:06-08:00",
+          "tree_id": "a5f10c451a147e4d1d376ad62b26dd7c32364835",
+          "url": "https://github.com/coinbase/cb-mpc/commit/82e269131b125cec6164c70a1a68fe67b7160816"
+        },
+        "date": 1768925446013,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 56525.919846150755,
+            "unit": "us/iter",
+            "extra": "iterations: 13\ncpu: 56520.991307692304 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4515.673516129203,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4515.497509677419 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8586.64171951149,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8585.676121951217 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4738.602114864657,
+            "unit": "us/iter",
+            "extra": "iterations: 148\ncpu: 4738.203425675673 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.568973197796861,
+            "unit": "us/iter",
+            "extra": "iterations: 60107\ncpu: 11.568544728567398 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 13.373036765408065,
+            "unit": "us/iter",
+            "extra": "iterations: 52223\ncpu: 13.371858070198957 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8340.068190475016,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8339.955511904764 us\nthreads: 1"
           }
         ]
       }
