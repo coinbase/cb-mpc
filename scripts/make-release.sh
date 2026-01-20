@@ -12,7 +12,7 @@ cd $ROOT_PATH
 
 if [ "$#" -ne 1 ]; then
   echo "Usage: $0 <ref_name>"
-  echo "  ref_name: The release tag name (e.g. cb-mpc-1.0.0)"
+  echo "  ref_name: The release tag name (e.g. v1.0.0)"
   exit 1
 fi
 
@@ -22,7 +22,7 @@ make clean
 make clean-demos
 make clean-bench
 
-tar -czf "${REF_NAME}.tar.gz" \
+tar -czf "cb-mpc-${REF_NAME}.tar.gz" \
   --exclude='.git' \
   --exclude='.github' \
   --exclude='.buildkite' \
