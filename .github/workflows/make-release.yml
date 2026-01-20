@@ -3,7 +3,7 @@ name: "Make release"
 on:
   push:
     tags:
-      - "cb-mpc-*"
+      - "v[0-9]*.[0-9]*.[0-9]*"
 
 permissions:
   contents: read
