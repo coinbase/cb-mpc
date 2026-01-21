@@ -24,7 +24,7 @@ jobs:
         egress-policy: audit
 
     - name: checkout
-      uses: "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2"
+      uses: "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683" # v4.2.2
       with:
         fetch-depth: 1
         ref: ${{ github.ref_name }}
@@ -37,7 +37,7 @@ jobs:
 
     - name: attestation
       id: attestation
-      uses: "actions/attest-build-provenance@db473fddc028af60658334401dc6fa3ffd8669fd # v2.3.0"
+      uses: "actions/attest-build-provenance@db473fddc028af60658334401dc6fa3ffd8669fd" # v2.3.0
       with:
         subject-path: ${{ github.ref_name }}/cb-mpc-${{ github.ref_name }}.tar.gz
 
