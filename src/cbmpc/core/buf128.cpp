@@ -1,4 +1,4 @@
-#include <cbmpc/core/convert.h>
+#include <cbmpc/internal/core/convert.h>
 
 namespace coinbase {
 
@@ -89,6 +89,8 @@ buf128_t& buf128_t::operator=(mem_t src) {
   return *this = load(src.data);
 }
 
+buf128_t::operator mem_t() const { return mem_t(byte_ptr(this), sizeof(buf128_t)); }
+
 uint64_t buf128_t::lo() const { return u128_lo(value); }
 uint64_t buf128_t::hi() const { return u128_hi(value); }
 buf128_t buf128_t::load(const_byte_ptr src) noexcept(true) { return u128(u128_load(src)); }
@@ -111,7 +113,8 @@ bool buf128_t::get_bit(int index) const {
   cb_assert(index >= 0 && index < 128);
   int n = index / 64;
   index %= 64;
-  return ((((const uint64_t*)(this))[n] >> index) & 1) != 0;
+  const uint64_t limb = (n == 0) ? lo() : hi();
+  return ((limb >> index) & 1) != 0;
 }
 
 void buf128_t::set_bit(int index, bool bit) {
@@ -181,6 +184,7 @@ buf128_t::reverse_bytes() const {
 
 buf128_t buf128_t::operator<<(unsigned n) const {
   cb_assert(n < 128);
+  if (n == 0) return *this;
   uint64_t l = lo();
   uint64_t r = hi();
   if (n == 64) {
@@ -199,6 +203,7 @@ buf128_t buf128_t::operator<<(unsigned n) const {
 
 buf128_t buf128_t::operator>>(unsigned n) const {
   cb_assert(n < 128);
+  if (n == 0) return *this;
   uint64_t l = lo();
   uint64_t r = hi();
   if (n == 64) {

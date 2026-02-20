@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/crypto/tdh2.h>
+#include <cbmpc/internal/crypto/tdh2.h>
 
 #include "data/tdh2.h"
 

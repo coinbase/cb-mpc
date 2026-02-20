@@ -1,12 +1,13 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/base_pki.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_pki.h>
 
 #include "utils/test_macros.h"
 
 namespace {
 using namespace coinbase::crypto;
+using coinbase::buf_t;
 
 class ECC : public ::testing::Test {
  protected:
@@ -21,8 +22,8 @@ class ECC : public ::testing::Test {
 
 TEST_F(ECC, secp256k1) {
   ecurve_t curve = curve_secp256k1;
-  const mod_t &q = curve.order();
-  const auto &G = curve.generator();
+  const mod_t& q = curve.order();
+  const auto& G = curve.generator();
   EXPECT_TRUE(G.is_on_curve());
 
   ecc_point_t GG = G;
@@ -76,7 +77,7 @@ TEST_F(ECC, SigningScheme2) {
     std::cout << "======================================== len: " << len << std::endl;
     for (int i = 0; i < 5; i++) {
       ecurve_t curve = curve_ed25519;
-      const mod_t &q = curve.order();
+      const mod_t& q = curve.order();
 
       ecc_prv_key_t prv_key;
       prv_key.generate(curve);

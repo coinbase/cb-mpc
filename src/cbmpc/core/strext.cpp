@@ -1,6 +1,6 @@
 #include <cbmpc/core/buf.h>
 #include <cbmpc/core/macros.h>
-#include <cbmpc/core/strext.h>
+#include <cbmpc/internal/core/strext.h>
 
 namespace coinbase {
 size_t insensitive_hasher_t::operator()(const std::string& key) const {
@@ -64,7 +64,7 @@ std::vector<std::string> strext::split_to_words(const std::string& str) {
 
 std::vector<std::string> strext::tokenize(const std::string& str, const std::string& delim) {  // static
   std::vector<std::string> out;
-  buf_t buf(const_byte_ptr(str.c_str()), int(str.length()) + 1);
+  coinbase::buf_t buf(const_byte_ptr(str.c_str()), int(str.length()) + 1);
   char_ptr dup = char_ptr(buf.data());
   char* save = nullptr;
   const_char_ptr token = strtok_r(dup, delim.c_str(), &save);
@@ -124,8 +124,11 @@ void strext::print_hex_byte(char_ptr str, uint8_t value) {
   *str++ = hex[value & 15];
 }
 
-std::string strext::to_hex(mem_t mem) {
-  std::string out(mem.size * 2, char(0));
+std::string strext::to_hex(coinbase::mem_t mem) {
+  if (mem.size <= 0 || !mem.data) return "";
+
+  const size_t n = static_cast<size_t>(mem.size);
+  std::string out(n * 2, char(0));
   char_ptr s = buffer(out);
   for (int i = 0; i < mem.size; i++, s += 2) print_hex_byte(s, mem.data[i]);
   return out;
@@ -146,7 +149,7 @@ std::string strext::to_hex(uint32_t src) { return print_hex(src, 4); }
 
 std::string strext::to_hex(uint64_t src) { return print_hex(src, 8); }
 
-bool strext::from_hex(buf_t& dst, const std::string& src) {
+bool strext::from_hex(coinbase::buf_t& dst, const std::string& src) {
   int length = (int)src.length();
   if (length & 1) return false;
   int dst_size = length / 2;

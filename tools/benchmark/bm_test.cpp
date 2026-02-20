@@ -2,8 +2,8 @@
 
 #include <local_network/mpc_runner.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/protocol/agree_random.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/protocol/agree_random.h>
 
 #include "mpc_util.h"
 

@@ -1,10 +1,8 @@
-#include "schnorr_2p.h"
-
-#include <cbmpc/crypto/base_ecc_secp256k1.h>
-#include <cbmpc/protocol/agree_random.h>
-#include <cbmpc/protocol/ec_dkg.h>
-
-#include "util.h"
+#include <cbmpc/internal/crypto/base_ecc_secp256k1.h>
+#include <cbmpc/internal/protocol/agree_random.h>
+#include <cbmpc/internal/protocol/ec_dkg.h>
+#include <cbmpc/internal/protocol/schnorr_2p.h>
+#include <cbmpc/internal/protocol/util.h>
 
 namespace coinbase::mpc::schnorr2p {
 
@@ -76,6 +74,8 @@ error_t sign_batch(job_2p_t& job, key_t& key, const std::vector<mem_t>& msgs, st
   if (variant == variant_e::BIP340) {
     if (curve != crypto::curve_secp256k1) return coinbase::error(E_BADARG, "BIP340 variant requires secp256k1 curve");
     for (int i = 0; i < n_sigs; i++) {
+      if (msgs[i].size != 32) return coinbase::error(E_BADARG, "schnorr_2p: BIP340 msg size != 32");
+      if (!msgs[i].data) return coinbase::error(E_BADARG, "schnorr_2p: BIP340 msg is null");
       bn_t rx, ry;
       R[i].get_coordinates(rx, ry);
       if (ry.is_odd()) {

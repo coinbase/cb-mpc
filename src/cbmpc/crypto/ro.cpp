@@ -1,6 +1,5 @@
-#include "ro.h"
-
-#include <cbmpc/core/log.h>
+#include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/crypto/ro.h>
 
 namespace coinbase::crypto::ro {  // random oracle
 

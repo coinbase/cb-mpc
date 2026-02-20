@@ -1,9 +1,9 @@
 #pragma once
 #include <local_network/mpc_runner.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/protocol/mpc_job.h>
-#include <cbmpc/protocol/mpc_job_session.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/protocol/mpc_job.h>
+#include "mpc_job_session.h"
 
 //
 

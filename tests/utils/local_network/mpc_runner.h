@@ -10,10 +10,8 @@ class partner_t;
 typedef std::function<void(mpc::party_idx_t role)> lambda_role_t;
 typedef std::function<void(mpc::job_2p_t& job)> lambda_2p_t;
 typedef std::function<void(mpc::job_mp_t& job)> lambda_mp_t;
-typedef std::function<void(mpc::job_parallel_2p_t& job, int th_i)> lambda_2p_parallel_t;
-typedef std::function<void(mpc::job_parallel_mp_t& job, int th_i)> lambda_mp_parallel_t;
 
-class local_data_transport_t : public mpc::data_transport_interface_t {
+class local_data_transport_t : public coinbase::api::data_transport_i {
  public:
   local_data_transport_t(const std::shared_ptr<mpc_net_context_t>& nc_ptr) : net_context_ptr(nc_ptr) {}
   error_t send(const mpc::party_idx_t receiver, mem_t msg) override;
@@ -42,8 +40,6 @@ class mpc_runner_t {
 
   void run_2pc(lambda_2p_t f);
   void run_mpc(lambda_mp_t f);
-  void run_2pc_parallel(int n_threads, lambda_2p_parallel_t f);
-  void run_mpc_parallel(int n_threads, lambda_mp_parallel_t f);
 
   // In-class declaration (no initializer):
   static const std::vector<crypto::pname_t> test_pnames;
@@ -65,10 +61,6 @@ class mpc_runner_t {
   void set_new_network_mp();
 
   void run_mpc_role(lambda_role_t f);
-  static void run_2pc_parallel_helper(std::shared_ptr<mpc::parallel_data_transport_t> network, mpc::party_t role,
-                                      int th_i, lambda_2p_parallel_t f);
-  static void run_mpc_parallel_helper(int n, std::shared_ptr<mpc::parallel_data_transport_t> network,
-                                      mpc::party_idx_t party_index, int th_i, lambda_mp_parallel_t f);
 };  // namespace coinbase::testutils
 
 }  // namespace coinbase::testutils

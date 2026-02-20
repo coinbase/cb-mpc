@@ -1,14 +1,12 @@
-#include "schnorr_mp.h"
-
 #include <iostream>
 #include <vector>
 
-#include <cbmpc/crypto/base_ecc_secp256k1.h>
-#include <cbmpc/crypto/ro.h>
-#include <cbmpc/zk/zk_elgamal_com.h>
-#include <cbmpc/zk/zk_pedersen.h>
-
-#include "util.h"
+#include <cbmpc/internal/crypto/base_ecc_secp256k1.h>
+#include <cbmpc/internal/crypto/ro.h>
+#include <cbmpc/internal/protocol/schnorr_mp.h>
+#include <cbmpc/internal/protocol/util.h>
+#include <cbmpc/internal/zk/zk_elgamal_com.h>
+#include <cbmpc/internal/zk/zk_pedersen.h>
 
 #define _i msg
 #define _j received(j)
@@ -26,14 +24,14 @@ error_t refresh(job_mp_t& job, buf_t& sid, key_t& key, key_t& new_key) {
   return eckey::key_share_mp_t::refresh(job, sid, key, new_key);
 }
 
-error_t threshold_dkg(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::ac_t ac,
-                      const party_set_t& quorum_party_set, key_t& key) {
-  return eckey::key_share_mp_t::threshold_dkg(job, curve, sid, ac, quorum_party_set, key);
+error_t dkg_ac(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::ac_t ac,
+               const party_set_t& quorum_party_set, key_t& key) {
+  return eckey::key_share_mp_t::dkg_ac(job, curve, sid, ac, quorum_party_set, key);
 }
 
-error_t threshold_refresh(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::ac_t ac,
-                          const party_set_t& quorum_party_set, key_t& key, key_t& new_key) {
-  return eckey::key_share_mp_t::threshold_refresh(job, curve, sid, ac, quorum_party_set, key, new_key);
+error_t refresh_ac(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::ac_t ac,
+                   const party_set_t& quorum_party_set, key_t& key, key_t& new_key) {
+  return eckey::key_share_mp_t::refresh_ac(job, curve, sid, ac, quorum_party_set, key, new_key);
 }
 
 static bn_t calc_eddsa_HRAM(const ecc_point_t& R, const ecc_point_t& Q, mem_t in) {
@@ -133,6 +131,8 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
       return coinbase::error(E_BADARG, "BIP340 variant requires secp256k1 curve");
     bn_t rx, ry;
     for (size_t l = 0; l < msgs.size(); l++) {
+      if (msgs[l].size != 32) return coinbase::error(E_BADARG, "schnorr_mp: BIP340 msg size != 32");
+      if (!msgs[l].data) return coinbase::error(E_BADARG, "schnorr_mp: BIP340 msg is null");
       R[l].get_coordinates(rx, ry);
       if (ry.is_odd()) ki[l] = q - ki[l];
       e[l] = crypto::bip340::hash_message(rx, key.Q, msgs[l]);

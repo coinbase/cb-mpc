@@ -1,9 +1,9 @@
 #include <gtest/gtest-spi.h>
 #include <gtest/gtest.h>
 
-#include <cbmpc/core/log.h>
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
+#include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/ro.h>
 
 #include "utils/test_macros.h"
 
@@ -52,8 +52,8 @@ TEST(Mod, Add) {
   EXPECT_EQ(c, 13);
 
 #ifdef _DEBUG
-  EXPECT_DEATH(q.add(overflow_a, b), "out of range for constant-time operations");
-  EXPECT_DEATH(q.add(a, overflow_b), "out of range for constant-time operations");
+  EXPECT_CB_ASSERT(q.add(overflow_a, b), "out of range for constant-time operations");
+  EXPECT_CB_ASSERT(q.add(a, overflow_b), "out of range for constant-time operations");
 #endif
 
   {

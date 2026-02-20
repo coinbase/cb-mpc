@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/ro.h>
+
+#include "test_macros.h"
 
 using namespace coinbase;
 using namespace coinbase::crypto;

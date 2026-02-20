@@ -1,4 +1,4 @@
-#include "pve_ac.h"
+#include <cbmpc/internal/protocol/pve_ac.h>
 
 using namespace coinbase::crypto;
 
@@ -20,10 +20,10 @@ static error_t batch_from_bin(ecurve_t curve, int batch_size, mem_t bin, std::ve
   return SUCCESS;
 }
 
-ec_pve_ac_t::ec_pve_ac_t() : base_pke(pve_base_pke_unified()), rows(kappa) {}
-
-void ec_pve_ac_t::encrypt_row(const ss::ac_t& ac, const pks_t& ac_pks, mem_t L, ecurve_t curve, mem_t seed, mem_t plain,
-                              buf_t& c, std::vector<ciphertext_adapter_t>& quorum_c) const {
+error_t ec_pve_ac_t::encrypt_row(const pve_base_pke_i& base_pke, const ss::ac_t& ac, const pks_t& ac_pks, mem_t L,
+                                 ecurve_t curve, mem_t seed, mem_t plain, buf_t& c,
+                                 std::vector<ciphertext_adapter_t>& quorum_c) const {
+  error_t rv = UNINITIALIZED_ERROR;
   const mod_t& q = curve.order();
   crypto::drbg_aes_ctr_t drbg(seed);
   bn_t K = drbg.gen_bn(q);
@@ -32,7 +32,7 @@ void ec_pve_ac_t::encrypt_row(const ss::ac_t& ac, const pks_t& ac_pks, mem_t L, 
   for (const auto& [path, pub_key_ptr] : ac_pks) {
     ciphertext_adapter_t item;
     buf_t ct_ser;
-    base_pke.encrypt(pub_key_ptr, L, K_shares[path].to_bin(), drbg.gen(32), ct_ser);
+    if (rv = base_pke.encrypt(pub_key_ptr, L, K_shares[path].to_bin(), drbg.gen(32), ct_ser)) return rv;
     item.ct_ser = ct_ser;
     quorum_c.push_back(std::move(item));
   }
@@ -42,35 +42,38 @@ void ec_pve_ac_t::encrypt_row(const ss::ac_t& ac, const pks_t& ac_pks, mem_t L, 
   mem_t iv = k_and_iv.skip(32);
 
   crypto::aes_gcm_t::encrypt(k_aes, iv, L, tag_size, plain, c);
+  return SUCCESS;
 }
 
-void ec_pve_ac_t::encrypt_row0(const ss::ac_t& ac, const pks_t& ac_pks, mem_t L, ecurve_t curve, mem_t r0_1, mem_t r0_2,
-                               int batch_size, std::vector<bn_t>& x0, buf_t& c0,
-                               std::vector<ciphertext_adapter_t>& quorum_c0) const {
+error_t ec_pve_ac_t::encrypt_row0(const pve_base_pke_i& base_pke, const ss::ac_t& ac, const pks_t& ac_pks, mem_t L,
+                                  ecurve_t curve, mem_t r0_1, mem_t r0_2, int batch_size, std::vector<bn_t>& x0,
+                                  buf_t& c0, std::vector<ciphertext_adapter_t>& quorum_c0) const {
   const mod_t& q = curve.order();
   x0.resize(batch_size);
   crypto::drbg_aes_ctr_t drbg(r0_1);
   for (int j = 0; j < batch_size; j++) x0[j] = drbg.gen_bn(q);
-  encrypt_row(ac, ac_pks, L, curve,
-              r0_2,      // seed
-              r0_1,      // plain
-              c0,        // output
-              quorum_c0  // output
+  return encrypt_row(base_pke, ac, ac_pks, L, curve,
+                     r0_2,      // seed
+                     r0_1,      // plain
+                     c0,        // output
+                     quorum_c0  // output
   );
 }
 
-void ec_pve_ac_t::encrypt_row1(const ss::ac_t& ac, const pks_t& ac_pks, mem_t L, ecurve_t curve, mem_t r1, mem_t x1_bin,
-                               buf_t& c1, std::vector<ciphertext_adapter_t>& quorum_c1) const {
-  encrypt_row(ac, ac_pks, L, curve,
-              r1,        // seed
-              x1_bin,    // plain
-              c1,        // output
-              quorum_c1  // output
+error_t ec_pve_ac_t::encrypt_row1(const pve_base_pke_i& base_pke, const ss::ac_t& ac, const pks_t& ac_pks, mem_t L,
+                                  ecurve_t curve, mem_t r1, mem_t x1_bin, buf_t& c1,
+                                  std::vector<ciphertext_adapter_t>& quorum_c1) const {
+  return encrypt_row(base_pke, ac, ac_pks, L, curve,
+                     r1,        // seed
+                     x1_bin,    // plain
+                     c1,        // output
+                     quorum_c1  // output
   );
 }
 
-void ec_pve_ac_t::encrypt(const ss::ac_t& ac, const pks_t& ac_pks, mem_t label, ecurve_t curve,
-                          const std::vector<bn_t>& _x) {
+error_t ec_pve_ac_t::encrypt(const pve_base_pke_i& base_pke, const ss::ac_t& ac, const pks_t& ac_pks, mem_t label,
+                             ecurve_t curve, const std::vector<bn_t>& _x) {
+  error_t rv = UNINITIALIZED_ERROR;
   int batch_size = int(_x.size());
   const auto& G = curve.generator();
   const mod_t& q = curve.order();
@@ -102,14 +105,15 @@ void ec_pve_ac_t::encrypt(const ss::ac_t& ac, const pks_t& ac_pks, mem_t label, 
     r1[i] = crypto::gen_random_bitlen(SEC_P_COM);
 
     std::vector<bn_t> x0;
-    encrypt_row0(ac, ac_pks, L, curve, r0_1[i], r0_2[i], batch_size, x0, c0[i], quorum_c0[i]);
+    if (rv = encrypt_row0(base_pke, ac, ac_pks, L, curve, r0_1[i], r0_2[i], batch_size, x0, c0[i], quorum_c0[i]))
+      return rv;
 
     std::vector<bn_t> x1(batch_size);
     for (int j = 0; j < batch_size; j++) MODULO(q) x1[j] = x[j] - x0[j];
 
     row_t& row = rows[i];
     row.x_bin = batch_to_bin(curve, x1);
-    encrypt_row1(ac, ac_pks, L, curve, r1[i], row.x_bin, c1[i], quorum_c1[i]);
+    if (rv = encrypt_row1(base_pke, ac, ac_pks, L, curve, r1[i], row.x_bin, c1[i], quorum_c1[i])) return rv;
 
     for (int j = 0; j < batch_size; j++) {
       X0[i][j] = x0[j] * G;
@@ -126,10 +130,11 @@ void ec_pve_ac_t::encrypt(const ss::ac_t& ac, const pks_t& ac_pks, mem_t label, 
     rows[i].quorum_c = bit ? quorum_c0[i] : quorum_c1[i];
     if (!bit) rows[i].x_bin.free();  // clear output
   }
+  return SUCCESS;
 }
 
-error_t ec_pve_ac_t::verify(const ss::ac_t& ac, const pks_t& ac_pks, const std::vector<ecc_point_t>& Q,
-                            mem_t label) const {
+error_t ec_pve_ac_t::verify(const pve_base_pke_i& base_pke, const ss::ac_t& ac, const pks_t& ac_pks,
+                            const std::vector<ecc_point_t>& Q, mem_t label) const {
   error_t rv = UNINITIALIZED_ERROR;
   int batch_size = int(Q.size());
   if (batch_size == 0) return coinbase::error(E_BADARG);
@@ -164,14 +169,14 @@ error_t ec_pve_ac_t::verify(const ss::ac_t& ac, const pks_t& ac_pks, const std::
       quorum_c0[i] = row.quorum_c;
       if (rv = batch_from_bin(curve, batch_size, row.x_bin, xb)) return rv;
       mem_t r1 = row.r;
-      encrypt_row1(ac, ac_pks, L, curve, r1, row.x_bin, c1[i], quorum_c1[i]);
+      if (rv = encrypt_row1(base_pke, ac, ac_pks, L, curve, r1, row.x_bin, c1[i], quorum_c1[i])) return rv;
     } else {
       c1[i] = row.c;
       quorum_c1[i] = row.quorum_c;
       if (row.r.size() != 32) return coinbase::error(E_CRYPTO);
       mem_t r0_1 = row.r.take(16);
       mem_t r0_2 = row.r.skip(16);
-      encrypt_row0(ac, ac_pks, L, curve, r0_1, r0_2, batch_size, xb, c0[i], quorum_c0[i]);
+      if (rv = encrypt_row0(base_pke, ac, ac_pks, L, curve, r0_1, r0_2, batch_size, xb, c0[i], quorum_c0[i])) return rv;
     }
 
     for (int j = 0; j < batch_size; j++) {
@@ -200,8 +205,9 @@ error_t ec_pve_ac_t::find_quorum_ciphertext(const std::vector<std::string>& sort
   return SUCCESS;
 }
 
-error_t ec_pve_ac_t::party_decrypt_row(const ss::ac_t& ac, int row_index, const std::string& path,
-                                       const void* prv_key_ptr, mem_t label, bn_t& out_share) const {
+error_t ec_pve_ac_t::party_decrypt_row(const pve_base_pke_i& base_pke, const ss::ac_t& ac, int row_index,
+                                       const std::string& path, pve_keyref_t prv_key, mem_t label,
+                                       bn_t& out_share) const {
   error_t rv = UNINITIALIZED_ERROR;
   if (row_index < 0 || row_index >= kappa) return coinbase::error(E_RANGE);
   if (Q.empty()) return coinbase::error(E_BADARG);
@@ -217,20 +223,23 @@ error_t ec_pve_ac_t::party_decrypt_row(const ss::ac_t& ac, int row_index, const 
   if (rv = find_quorum_ciphertext(sorted_leaves, path, row, c)) return rv;
 
   buf_t plain;
-  if (rv = base_pke.decrypt(prv_key_ptr, L, c->ct_ser, plain)) return rv;
+  if (rv = base_pke.decrypt(prv_key, L, c->ct_ser, plain)) return rv;
   out_share = bn_t::from_bin(plain);
   return SUCCESS;
 }
 
-error_t ec_pve_ac_t::aggregate_to_restore_row(const ss::ac_t& ac, int row_index, mem_t label,
-                                              const std::map<std::string, bn_t>& quorum_decrypted, std::vector<bn_t>& x,
-                                              bool skip_verify, const pks_t& all_ac_pks) const {
+error_t ec_pve_ac_t::aggregate_to_restore_row(const pve_base_pke_i& base_pke, const ss::ac_t& ac, int row_index,
+                                              mem_t label, const std::map<std::string, bn_t>& quorum_decrypted,
+                                              std::vector<bn_t>& x, bool skip_verify, const pks_t& all_ac_pks) const {
   error_t rv = UNINITIALIZED_ERROR;
   if (row_index < 0 || row_index >= kappa) return coinbase::error(E_RANGE);
   if (Q.empty()) return coinbase::error(E_BADARG);
 
-  if (!skip_verify && !all_ac_pks.empty()) {
-    if (rv = verify(ac, all_ac_pks, Q, label)) return rv;
+  if (!skip_verify) {
+    if (all_ac_pks.empty()) {
+      return coinbase::error(E_BADARG, "all_ac_pks is required when skip_verify is false");
+    }
+    if (rv = verify(base_pke, ac, all_ac_pks, Q, label)) return rv;
   }
 
   const row_t& row = rows[row_index];

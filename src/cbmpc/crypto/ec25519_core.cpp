@@ -1,10 +1,8 @@
 
-#include "ec25519_core.h"
-
-#include <cbmpc/core/extended_uint.h>
-#include <cbmpc/core/utils.h>
-
-#include "base_ec_core.h"
+#include <cbmpc/internal/core/extended_uint.h>
+#include <cbmpc/internal/core/utils.h>
+#include <cbmpc/internal/crypto/base_ec_core.h>
+#include <cbmpc/internal/crypto/ec25519_core.h>
 
 #define EXTENDED_COORD
 
@@ -27,10 +25,10 @@ static void fe_freeze(uint256_t& r) {
   t2 = addx(t2, 0, c);
   t3 = addx(t3, hi, c);
   uint64_t mask = constant_time_mask_64(c);
-  t0 = r0 = MASKED_SELECT(mask, t0, r0);
-  t1 = r1 = MASKED_SELECT(mask, t1, r1);
-  t2 = r2 = MASKED_SELECT(mask, t2, r2);
-  t3 = r3 = MASKED_SELECT(mask, t3, r3);
+  t0 = r0 = masked_select(mask, t0, r0);
+  t1 = r1 = masked_select(mask, t1, r1);
+  t2 = r2 = masked_select(mask, t2, r2);
+  t3 = r3 = masked_select(mask, t3, r3);
 
   c = 0;
   t0 = addx(t0, 19, c);
@@ -38,10 +36,10 @@ static void fe_freeze(uint256_t& r) {
   t2 = addx(t2, 0, c);
   t3 = addx(t3, hi, c);
   mask = constant_time_mask_64(c);
-  r.w0 = MASKED_SELECT(mask, t0, r0);
-  r.w1 = MASKED_SELECT(mask, t1, r1);
-  r.w2 = MASKED_SELECT(mask, t2, r2);
-  r.w3 = MASKED_SELECT(mask, t3, r3);
+  r.w0 = masked_select(mask, t0, r0);
+  r.w1 = masked_select(mask, t1, r1);
+  r.w2 = masked_select(mask, t2, r2);
+  r.w3 = masked_select(mask, t3, r3);
 }
 
 static void fe_add(uint256_t& r, const uint256_t& x, const uint256_t& y) {
@@ -1005,6 +1003,7 @@ extern "C" int ED25519_sign_with_scalar(uint8_t* out_sig, const uint8_t* message
   for (int i = 0; i < 32; i++) az[i] = scalar_bin[31 - i];
 
   sign_with_nonce(out_sig, message, message_len, public_key, az, nonce);
+  OPENSSL_cleanse(nonce, sizeof(nonce));
   OPENSSL_cleanse(az, sizeof(az));
   return 1;
 }

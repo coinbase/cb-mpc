@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/protocol/int_commitment.h>
-#include <cbmpc/zk/small_primes.h>
-#include <cbmpc/zk/zk_paillier.h>
+#include <cbmpc/internal/protocol/int_commitment.h>
+#include <cbmpc/internal/zk/small_primes.h>
+#include <cbmpc/internal/zk/zk_paillier.h>
 
 #include "utils/test_macros.h"
 

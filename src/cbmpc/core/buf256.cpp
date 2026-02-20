@@ -1,4 +1,4 @@
-#include <cbmpc/core/convert.h>
+#include <cbmpc/internal/core/convert.h>
 
 namespace coinbase {
 
@@ -6,6 +6,8 @@ buf256_t& buf256_t::operator=(mem_t src) {
   cb_assert(src.size == sizeof(buf256_t));
   return *this = load(src.data);
 }
+
+buf256_t::operator mem_t() const { return mem_t(byte_ptr(this), sizeof(buf256_t)); }
 
 buf256_t& buf256_t::operator=(const buf_t& src) {
   cb_assert(src.size() == sizeof(buf256_t));
@@ -46,21 +48,16 @@ void buf256_t::save(byte_ptr dst) const {
 
 bool buf256_t::get_bit(int index) const {
   cb_assert(index >= 0 && index < 256);
-  int n = index / 64;
-  index %= 64;
-  return ((((const uint64_t*)(this))[n] >> index) & 1) != 0;
+  if (index < 128) return lo.get_bit(index);
+  return hi.get_bit(index - 128);
 }
 
 void buf256_t::set_bit(int index, bool value) {
   cb_assert(index >= 0 && index < 256);
-  int n = index / 64;
-  index %= 64;
-  uint64_t mask = uint64_t(1) << index;
-
-  if (value)
-    ((uint64_t*)(this))[n] |= mask;
+  if (index < 128)
+    lo.set_bit(index, value);
   else
-    ((uint64_t*)(this))[n] &= ~mask;
+    hi.set_bit(index - 128, value);
 }
 
 bool buf256_t::operator==(const buf256_t& src) const { return ((src.lo ^ lo) | (src.hi ^ hi)) == ZERO128; }
@@ -149,6 +146,7 @@ void buf256_t::convert(coinbase::converter_t& converter) {
 
 buf256_t buf256_t::operator<<(unsigned n) const {
   cb_assert(n < 256);
+  if (n == 0) return *this;
   buf128_t l = lo;
   buf128_t r = hi;
   if (n == 128) {
@@ -167,6 +165,7 @@ buf256_t buf256_t::operator<<(unsigned n) const {
 
 buf256_t buf256_t::operator>>(unsigned n) const {
   cb_assert(n < 256);
+  if (n == 0) return *this;
   buf128_t l = lo;
   buf128_t r = hi;
   if (n == 128) {
@@ -236,7 +235,7 @@ buf256_t::caryless_mul(buf128_t a, buf128_t b) {
   buf256_t m = buf256_t::make(a, ZERO128);
 
   for (int i = 0; i < 128; i++) {
-    if (b.get_bit(i)) r ^= m;
+    r ^= m & b.get_bit(i);
     m <<= 1;
   }
 

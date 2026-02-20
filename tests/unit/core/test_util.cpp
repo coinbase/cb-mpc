@@ -2,9 +2,14 @@
 #include <map>
 #include <vector>
 
-#include <cbmpc/core/utils.h>
+#include <cbmpc/internal/core/utils.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/protocol/util.h>
+
+#include "utils/test_macros.h"
 
 using namespace coinbase;
+using namespace coinbase::crypto;
 
 // Test bits_to_bytes and bytes_to_bits
 TEST(CoreUtils, BitAndByteConversions) {
@@ -75,10 +80,12 @@ TEST(CoreUtils, LookupInMap) {
 
   auto [found1, value1] = lookup(sampleMap, 2);
   EXPECT_TRUE(found1);
-  EXPECT_EQ(value1, "two");
+  ASSERT_NE(value1, nullptr);
+  EXPECT_EQ(*value1, "two");
 
   auto [found2, value2] = lookup(sampleMap, 99);
   EXPECT_FALSE(found2);
+  EXPECT_EQ(value2, nullptr);
 }
 
 // Test has in container
@@ -121,4 +128,15 @@ TEST(CoreUtils, ConstantTimeSelectU64) {
 
   EXPECT_EQ(result1, val1);
   EXPECT_EQ(result2, val2);
+}
+
+TEST(ProtocolUtil, SUMCrashesOnEmpty) {
+  std::vector<int> empty_vec;
+  EXPECT_NO_FATAL_FAILURE({ (void)SUM(empty_vec); });
+
+  std::vector<std::reference_wrapper<int>> empty_refs;
+  EXPECT_NO_FATAL_FAILURE({ (void)SUM(empty_refs); });
+
+  std::map<pname_t, int> empty_map;
+  EXPECT_NO_FATAL_FAILURE({ (void)SUM(empty_map); });
 }

@@ -1,8 +1,7 @@
-#include "zk_ec.h"
-
-#include <cbmpc/crypto/base_mod.h>
-#include <cbmpc/crypto/lagrange.h>
-#include <cbmpc/crypto/ro.h>
+#include <cbmpc/internal/crypto/base_mod.h>
+#include <cbmpc/internal/crypto/lagrange.h>
+#include <cbmpc/internal/crypto/ro.h>
+#include <cbmpc/internal/zk/zk_ec.h>
 
 namespace coinbase::zk {
 
@@ -78,6 +77,8 @@ error_t uc_dl_t::verify(const ecc_point_t& Q, mem_t session_id, uint64_t aux) co
   ecc_point_t A_sum = curve.infinity();
 
   for (int i = 0; i < rho; i++) {
+    if (rv = crypto::check_right_open_range(0, z[i], q)) return rv;
+
     bn_t sigma = bn_t::rand_bitlen(SEC_P_STAT);
     MODULO(q) {
       z_sum += sigma * z[i];
@@ -247,6 +248,8 @@ error_t uc_batch_dl_finite_difference_impl_t::verify(const std::vector<ecc_point
   for (int i = 0; i < n; i++) PQ[i + 1] = Q[i];
 
   for (int i = 0; i < rho; i++) {
+    if (rv = crypto::check_right_open_range(0, z[i], q)) return rv;
+
     bn_t ei = e[i];
     if (ei < 0) ei += q;
 

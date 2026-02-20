@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/zk/zk_elgamal_com.h>
-#include <cbmpc/zk/zk_paillier.h>
+#include <cbmpc/internal/zk/zk_elgamal_com.h>
+#include <cbmpc/internal/zk/zk_paillier.h>
 
 #include "data/zk_data_generator.h"
 #include "util.h"

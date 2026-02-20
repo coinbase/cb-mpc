@@ -15,6 +15,7 @@ a.out
 
 # CMake generated files
 **build/
+cmake_test_discovery_*.json
 
 # ctest files
 **Testing/

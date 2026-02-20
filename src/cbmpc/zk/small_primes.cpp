@@ -1,6 +1,8 @@
-#include "small_primes.h"
+#include <cbmpc/internal/zk/small_primes.h>
 
 // NOLINTBEGIN(*avoid-magic-numbers*)
+namespace coinbase::zk {
+
 const unsigned small_primes[small_primes_count] = {
     2,      3,      5,      7,      11,     13,     17,     19,     23,     29,     31,     37,     41,     43,
     47,     53,     59,     61,     67,     71,     73,     79,     83,     89,     97,     101,    103,    107,
@@ -719,3 +721,5 @@ const unsigned small_primes[small_primes_count] = {
     104711, 104717, 104723, 104729,
 };
 // NOLINTEND(*avoid-magic-numbers*)
+
+}  // namespace coinbase::zk

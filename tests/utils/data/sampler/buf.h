@@ -2,8 +2,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/ro.h>
 
 #include "base.h"
 

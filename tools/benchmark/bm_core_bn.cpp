@@ -1,7 +1,7 @@
 
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/crypto/base.h>
 
 #define bit_len_lb 1 << 8
 #define bit_len_ub 1 << 12

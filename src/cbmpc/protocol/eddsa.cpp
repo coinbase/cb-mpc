@@ -1,4 +1,4 @@
-#include "eddsa.h"
+#include <cbmpc/internal/protocol/eddsa.h>
 
 namespace coinbase::mpc::eddsa2pc {
 

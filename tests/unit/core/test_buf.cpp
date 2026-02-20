@@ -1,5 +1,6 @@
 
 #include <gtest/gtest.h>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -34,6 +35,34 @@ TEST(Buf, ConstructFromMem) {
 
   EXPECT_EQ(buf.size(), (int)test_str.size());
   EXPECT_EQ(buf.to_string(), test_str);
+}
+
+TEST(Mem, NegativeSizeToStringIsSafe) {
+  const coinbase::mem_t mem(nullptr, -1);
+  EXPECT_EQ(mem.to_string(), "");
+}
+
+TEST(Mem, NegativeSizeStreamIsSafe) {
+  const coinbase::mem_t mem(nullptr, -1);
+  std::ostringstream oss;
+  oss << mem;
+#ifdef _DEBUG
+  EXPECT_EQ(oss.str(), "");
+#else
+  EXPECT_EQ(oss.str(), "<mem_t size=-1>");
+#endif
+}
+
+TEST(Mem, NullDataPositiveSizeIsSafe) {
+  const coinbase::mem_t mem(nullptr, 5);
+  EXPECT_EQ(mem.to_string(), "");
+  std::ostringstream oss;
+  oss << mem;
+#ifdef _DEBUG
+  EXPECT_EQ(oss.str(), "");
+#else
+  EXPECT_EQ(oss.str(), "<mem_t size=5>");
+#endif
 }
 
 TEST(Buf, CopyConstructor) {
@@ -88,7 +117,8 @@ TEST(Buf, Resize) {
   for (int i = 0; i < 5; ++i) {
     EXPECT_EQ(buf[i], static_cast<uint8_t>(i));
   }
-  // The remaining bytes might be uninitialized, but ensure no crash occurs.
+  // Note: `resize()` preserves previous bytes but does not guarantee initialization
+  // of newly-grown regions.
 }
 
 TEST(Buf, PlusOperator) {
@@ -164,6 +194,14 @@ TEST(Buf, BzeroAndSecureBzero) {
   for (int i = 0; i < buf.size(); ++i) {
     EXPECT_EQ(buf[i], 0);
   }
+}
+
+TEST(Buf, ConstructorRejectsNegativeSize) {
+  // buf_t constructor should validate that size >= 0
+  // Negative sizes would bypass guards like `if (buf.size() > 0)`
+  // and could cause downstream memory corruption
+  EXPECT_THROW({ coinbase::buf_t buf(-1); }, coinbase::assertion_failed_t);
+  EXPECT_THROW({ coinbase::buf_t buf(-100); }, coinbase::assertion_failed_t);
 }
 
 }  // namespace

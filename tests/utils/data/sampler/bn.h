@@ -2,10 +2,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
-#include <cbmpc/zk/zk_pedersen.h>
-#include <cbmpc/zk/zk_unknown_order.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/ro.h>
+#include <cbmpc/internal/zk/zk_pedersen.h>
+#include <cbmpc/internal/zk/zk_unknown_order.h>
 
 #include "base.h"
 
