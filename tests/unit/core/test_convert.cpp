@@ -2,8 +2,8 @@
 #include <map>
 
 #include <cbmpc/core/buf.h>
-#include <cbmpc/core/convert.h>
-#include <cbmpc/protocol/util.h>
+#include <cbmpc/internal/core/convert.h>
+#include <cbmpc/internal/protocol/util.h>
 
 #include "utils/test_macros.h"
 
@@ -120,6 +120,39 @@ TEST(CoreConvert, CustomStruct) {
   EXPECT_EQ(in.b, out.b);
   EXPECT_NE(in.s, out.s);
   EXPECT_EQ(out.s, "");
+}
+
+TEST(CoreConvert, ConvertLenRejectsOversizedLengths) {
+  // Encode a 4-byte length prefix > converter_t::MAX_CONVERT_LEN (64 MiB).
+  // len = 0x04000001 -> bytes: 0xE4 0x00 0x00 0x01
+  byte_t bin[] = {0xE4, 0x00, 0x00, 0x01};
+  converter_t converter(mem_t(bin, sizeof(bin)));
+  uint32_t len = 0;
+  converter.convert_len(len);
+  EXPECT_NE(converter.get_rv(), SUCCESS);
+  EXPECT_EQ(len, 0u);
+}
+
+TEST(CoreConvert, ConvertLenAllowsMaxValue) {
+  // len = 0x04000000 (64 MiB) -> bytes: 0xE4 0x00 0x00 0x00
+  byte_t bin[] = {0xE4, 0x00, 0x00, 0x00};
+  converter_t converter(mem_t(bin, sizeof(bin)));
+  uint32_t len = 0;
+  converter.convert_len(len);
+  EXPECT_EQ(converter.get_rv(), SUCCESS);
+  EXPECT_EQ(len, converter_t::MAX_CONVERT_LEN);
+}
+
+TEST(CoreConvert, ConvertLastRejectsNegRemainingSize) {
+  byte_t bin[] = {0x42};
+  converter_t converter(mem_t(bin, sizeof(bin)));
+  // Simulate parser-state corruption / misuse: offset moved past the source size.
+  converter.forward(2);
+
+  buf_t out;
+  out.convert_last(converter);
+  EXPECT_NE(converter.get_rv(), SUCCESS);
+  EXPECT_EQ(out.size(), 0);
 }
 
 }  // namespace

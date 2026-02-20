@@ -1,15 +1,12 @@
 #include <cbmpc/core/precompiled.h>
-
-#include "hd_keyset_eddsa_2p.h"
-
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/commitment.h>
-#include <cbmpc/protocol/agree_random.h>
-#include <cbmpc/protocol/sid.h>
-#include <cbmpc/zk/zk_ec.h>
-#include <cbmpc/zk/zk_paillier.h>
-
-#include "ec_dkg.h"
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/commitment.h>
+#include <cbmpc/internal/protocol/agree_random.h>
+#include <cbmpc/internal/protocol/ec_dkg.h>
+#include <cbmpc/internal/protocol/hd_keyset_eddsa_2p.h>
+#include <cbmpc/internal/protocol/sid.h>
+#include <cbmpc/internal/zk/zk_ec.h>
+#include <cbmpc/internal/zk/zk_paillier.h>
 
 using namespace coinbase;
 

@@ -1,43 +1,14 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/ffi/cmem_adapter.h>
-#include <cbmpc/ffi/pki.h>
+#include <cbmpc/internal/crypto/base_pki.h>
 
 #include "utils/test_macros.h"
-
-extern "C" {
-// Override weak symbols for FFI KEM to provide simple deterministic stubs
-static int test_kem_encap(cmem_t /*ek_bytes*/, cmem_t rho, cmem_t* kem_ct_out, cmem_t* kem_ss_out) {
-  buf_t ss = coinbase::ffi::view(rho).take(32);
-  buf_t ct = ss;  // trivial ct for stub
-  *kem_ct_out = coinbase::ffi::copy_to_cmem(ct);
-  *kem_ss_out = coinbase::ffi::copy_to_cmem(ss);
-  return 0;
-}
-
-static int test_kem_decap(const void* /*dk_handle*/, cmem_t kem_ct, cmem_t* kem_ss_out) {
-  *kem_ss_out = coinbase::ffi::copy_to_cmem(coinbase::ffi::view(kem_ct));
-  return 0;
-}
-
-static int test_kem_dk_to_ek(const void* dk_handle, cmem_t* out_ek) {
-  if (dk_handle) {
-    const cmem_t* cm = static_cast<const cmem_t*>(dk_handle);
-    *out_ek = coinbase::ffi::copy_to_cmem(coinbase::ffi::view(*cm));
-  } else {
-    *out_ek = cmem_t{nullptr, 0};
-  }
-  return 0;
-}
-
-ffi_kem_encap_fn get_ffi_kem_encap_fn(void) { return test_kem_encap; }
-ffi_kem_decap_fn get_ffi_kem_decap_fn(void) { return test_kem_decap; }
-ffi_kem_dk_to_ek_fn get_ffi_kem_dk_to_ek_fn(void) { return test_kem_dk_to_ek; }
-}
 
 namespace {
 
 using namespace coinbase::crypto;
+using coinbase::buf_t;
+using coinbase::mem_t;
 
 class PKI : public ::testing::Test {
  protected:
@@ -93,59 +64,17 @@ TEST_F(PKI, ECDH_P256_KEM_EncapDecap_HPKE) {
   EXPECT_EQ(ss1, ss2);
 }
 
-TEST_F(PKI, HybrideRSAEncryptDecrypt) {
-  prv_key_t prv_key = prv_key_t::from(rsa_prv_key);
-  pub_key_t pub_key = pub_key_t::from(rsa_pub_key);
-
+TEST_F(PKI, RSA_KEM_AEAD_EncryptDecrypt) {
   drbg_aes_ctr_t drbg(gen_random(32));
 
-  ciphertext_t ciphertext;
-  ciphertext.encrypt(pub_key, label, plaintext, &drbg);
-  EXPECT_EQ(ciphertext.key_type, key_type_e::RSA);
+  rsa_pke_t::ct_t c1, c2;
+  EXPECT_OK(c1.encrypt(rsa_pub_key, label, plaintext, &drbg));
+  EXPECT_OK(c2.encrypt(rsa_pub_key, label, plaintext, &drbg));
+  EXPECT_NE(coinbase::convert(c1), coinbase::convert(c2));
 
-  {
-    buf_t decrypted;
-    EXPECT_OK(ciphertext.decrypt(prv_key, label, decrypted));
-    EXPECT_EQ(decrypted, plaintext);
-  }
-  {
-    buf_t decrypted;
-    EXPECT_OK(ciphertext.decrypt(prv_key, label, decrypted));
-    EXPECT_EQ(decrypted, plaintext);
-  }
-
-  {
-    buf_t decrypted;
-    EXPECT_OK(ciphertext.decrypt(prv_key, label, decrypted));
-    EXPECT_EQ(decrypted, plaintext);
-  }
-  {
-    buf_t decrypted;
-    EXPECT_OK(ciphertext.decrypt(prv_key, label, decrypted));
-    EXPECT_EQ(decrypted, plaintext);
-  }
-}
-
-TEST_F(PKI, POINT_CONVERSION_HYBRID) {
-  prv_key_t prv_key = prv_key_t::from(ecc_prv_key);
-  pub_key_t pub_key = pub_key_t::from(ecc_pub_key);
-
-  drbg_aes_ctr_t drbg(gen_random(32));
-
-  ciphertext_t ciphertext;
-  ciphertext.encrypt(pub_key, label, plaintext, &drbg);
-  EXPECT_EQ(ciphertext.key_type, key_type_e::ECC);
-
-  {
-    buf_t decrypted;
-    EXPECT_OK(ciphertext.decrypt(prv_key, label, decrypted));
-    EXPECT_EQ(decrypted, plaintext);
-  }
-  {
-    buf_t decrypted;
-    EXPECT_OK(ciphertext.decrypt(prv_key, label, decrypted));
-    EXPECT_EQ(decrypted, plaintext);
-  }
+  buf_t decrypted;
+  EXPECT_OK(c1.decrypt(rsa_prv_key, label, decrypted));
+  EXPECT_EQ(decrypted, plaintext);
 }
 
 // -----------------------------------------------------------------------------
@@ -183,27 +112,6 @@ TEST(HPKE_KEM_P256, DeterministicVector) {
   EXPECT_EQ(ss2, shared_secret);
 
   SUCCEED();
-}
-
-TEST(FFI_KEM, EncryptDecrypt) {
-  ffi_kem_ek_t ek;
-  ek = buf_t("dummy-ek");
-
-  cmem_t dk_bytes{reinterpret_cast<uint8_t*>(const_cast<char*>("dummy-dk")), 8};
-  ffi_kem_dk_t dk;
-  dk.handle = static_cast<void*>(&dk_bytes);
-
-  buf_t label = buf_t("label");
-  buf_t plaintext = buf_t("plaintext for FFI KEM");
-
-  drbg_aes_ctr_t drbg(gen_random(32));
-
-  kem_aead_ciphertext_t<kem_policy_ffi_t> ct;
-  EXPECT_OK(ct.encrypt(ek, label, plaintext, &drbg));
-
-  buf_t decrypted;
-  EXPECT_OK(ct.decrypt(dk, label, decrypted));
-  EXPECT_EQ(decrypted, plaintext);
 }
 
 }  // namespace

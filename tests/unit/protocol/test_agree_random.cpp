@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/protocol/agree_random.h>
-#include <cbmpc/protocol/util.h>
+#include <cbmpc/internal/protocol/agree_random.h>
+#include <cbmpc/internal/protocol/util.h>
 
 #include "utils/local_network/mpc_tester.h"
 #include "utils/test_macros.h"

@@ -84,20 +84,56 @@ else()
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR}/${CMAKE_BUILD_TYPE})
 endif()
 
+include_directories(${ROOT_DIR}/include)
+include_directories(${ROOT_DIR}/include-internal)
 include_directories(${SRC_DIR})
 
 add_subdirectory(src/cbmpc/core)
 add_subdirectory(src/cbmpc/crypto)
 add_subdirectory(src/cbmpc/zk)
 add_subdirectory(src/cbmpc/protocol)
-add_subdirectory(src/cbmpc/ffi)
+add_subdirectory(src/cbmpc/api)
+add_subdirectory(src/cbmpc/capi)
 
 add_library(
   cbmpc STATIC $<TARGET_OBJECTS:cbmpc_core> $<TARGET_OBJECTS:cbmpc_crypto>
                $<TARGET_OBJECTS:cbmpc_zk> $<TARGET_OBJECTS:cbmpc_protocol>
-               $<TARGET_OBJECTS:cbmpc_ffi>)
+               $<TARGET_OBJECTS:cbmpc_api>
+               $<TARGET_OBJECTS:cbmpc_capi>)
 
 link_openssl(cbmpc)
+
+# ------------- Public headers smoke check ---------------------------
+#
+# Compile a TU that includes all public headers with include paths limited to
+# `include/` (plus OpenSSL headers). This ensures public headers do not
+# accidentally depend on `include-internal/`.
+#
+if(NOT DEFINED CBMPC_OPENSSL_ROOT)
+  if(DEFINED ENV{CBMPC_OPENSSL_ROOT})
+    set(CBMPC_OPENSSL_ROOT $ENV{CBMPC_OPENSSL_ROOT})
+  else()
+    set(CBMPC_OPENSSL_ROOT "/usr/local/opt/openssl@3.6.1")
+  endif()
+endif()
+
+set(_cbmpc_public_headers_smoke_src "${ROOT_DIR}/tests/public_headers_smoke.cpp")
+set(_cbmpc_public_headers_smoke_obj "${CMAKE_BINARY_DIR}/cbmpc_public_headers_smoke.o")
+
+add_custom_command(
+  OUTPUT "${_cbmpc_public_headers_smoke_obj}"
+  COMMAND "${CMAKE_CXX_COMPILER}"
+          -std=c++17
+          "-I${ROOT_DIR}/include"
+          "-I${CBMPC_OPENSSL_ROOT}/include"
+          -c "${_cbmpc_public_headers_smoke_src}"
+          -o "${_cbmpc_public_headers_smoke_obj}"
+  DEPENDS "${_cbmpc_public_headers_smoke_src}"
+  COMMENT "Compiling public headers smoke TU"
+  VERBATIM
+)
+
+add_custom_target(public-only-check DEPENDS "${_cbmpc_public_headers_smoke_obj}")
 
 # ------------- Tests ---------------------------
 
@@ -107,5 +143,7 @@ endif()
 
 if(BUILD_TESTS)
   enable_testing()
+  add_test(NAME PublicHeadersSmoke COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target public-only-check)
+  set_tests_properties(PublicHeadersSmoke PROPERTIES RUN_SERIAL TRUE LABELS "unit")
   add_subdirectory(tests)
 endif()

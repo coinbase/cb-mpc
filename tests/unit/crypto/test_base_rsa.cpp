@@ -1,13 +1,14 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/base_hash.h>
-#include <cbmpc/crypto/base_pki.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_hash.h>
+#include <cbmpc/internal/crypto/base_pki.h>
 
 #include "utils/test_macros.h"
 
 namespace {
 using namespace coinbase::crypto;
+using coinbase::buf_t;
 
 TEST(RSA, EncryptDecrypt) {
   rsa_prv_key_t prv_key;

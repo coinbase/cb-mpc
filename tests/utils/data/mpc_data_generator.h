@@ -1,6 +1,6 @@
 #pragma once
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/ro.h>
 
 #include "data/data_generator.h"
 

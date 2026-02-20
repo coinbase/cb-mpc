@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/elgamal.h>
+#include <cbmpc/internal/crypto/elgamal.h>
 
 using namespace coinbase;
 using namespace coinbase::crypto;

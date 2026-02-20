@@ -2,7 +2,7 @@
 #include <map>
 #include <vector>
 
-#include <cbmpc/core/utils.h>
+#include <cbmpc/internal/core/utils.h>
 
 using namespace coinbase;
 
@@ -75,10 +75,12 @@ TEST(CoreUtils, LookupInMap) {
 
   auto [found1, value1] = lookup(sampleMap, 2);
   EXPECT_TRUE(found1);
-  EXPECT_EQ(value1, "two");
+  ASSERT_NE(value1, nullptr);
+  EXPECT_EQ(*value1, "two");
 
   auto [found2, value2] = lookup(sampleMap, 99);
   EXPECT_FALSE(found2);
+  EXPECT_EQ(value2, nullptr);
 }
 
 // Test has in container

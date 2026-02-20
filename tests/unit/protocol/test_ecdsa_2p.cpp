@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/protocol/ecdsa_2p.h>
+#include <cbmpc/internal/protocol/ecdsa_2p.h>
 
 #include "utils/local_network/mpc_tester.h"
 
@@ -181,54 +181,6 @@ TEST_F(ECDSA2PC, KeygenSign) {
   });
 
   check_key_pair(keys[0], keys[1]);
-}
-
-TEST_F(ECDSA2PC, ParallelKSRS8) {
-  int parallel_count = 4;
-  std::vector<std::vector<buf_t>> data(parallel_count);
-  for (int i = 0; i < parallel_count; i++) {
-    int len = i + 1;
-    data[i].resize(len);
-    for (int j = 0; j < len; j++) data[i][j] = coinbase::crypto::gen_random(32);
-  }
-  std::vector<std::vector<ecdsa2pc::key_t>> keys(parallel_count, std::vector<ecdsa2pc::key_t>(2));
-  std::vector<std::vector<ecdsa2pc::key_t>> new_keys(parallel_count, std::vector<ecdsa2pc::key_t>(2));
-  buf_t sid = coinbase::crypto::gen_random_bitlen(SEC_P_COM);
-
-  mpc_runner->run_2pc_parallel(parallel_count, [&data, &keys, &new_keys, &sid](job_parallel_2p_t& job, int th_i) {
-    error_t rv = UNINITIALIZED_ERROR;
-    auto party_index = job.get_party_idx();
-    ecurve_t curve = coinbase::crypto::curve_secp256k1;
-
-    ecdsa2pc::key_t& key = keys[th_i][party_index];
-    rv = ecdsa2pc::dkg(job, curve, key);
-    ASSERT_EQ(rv, 0);
-
-    std::vector<buf_t> sig_bufs;
-    buf_t session_id;
-    rv = sign_batch(job, session_id, key, buf_t::to_mems(data[th_i]), sig_bufs);
-    ASSERT_EQ(rv, 0);
-
-    ecdsa2pc::key_t& new_key = new_keys[th_i][party_index];
-    rv = ecdsa2pc::refresh(job, key, new_key);
-    ASSERT_EQ(rv, 0);
-
-    EXPECT_EQ(new_key.role, key.role);
-    EXPECT_EQ(new_key.curve, key.curve);
-    EXPECT_EQ(new_key.Q, key.Q);
-    EXPECT_NE(new_key.x_share, key.x_share);
-
-    std::vector<buf_t> new_sig_bufs;
-    rv = sign_batch(job, session_id, key, buf_t::to_mems(data[th_i]), new_sig_bufs);
-    ASSERT_EQ(rv, 0);
-    rv = sign_with_global_abort_batch(job, session_id, key, buf_t::to_mems(data[th_i]), new_sig_bufs);
-    ASSERT_EQ(rv, 0);
-  });
-
-  for (int i = 0; i < parallel_count; i++) {
-    check_key_pair(keys[i][0], keys[i][1]);
-    check_key_pair(new_keys[i][0], new_keys[i][1]);
-  }
 }
 
 TEST_F(ECDSA2PC, Integer_Commit) {

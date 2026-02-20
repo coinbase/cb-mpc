@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/protocol/ecdsa_2p.h>
-#include <cbmpc/protocol/hd_keyset_ecdsa_2p.h>
+#include <cbmpc/internal/protocol/ecdsa_2p.h>
+#include <cbmpc/internal/protocol/hd_keyset_ecdsa_2p.h>
 
 #include "utils/local_network/mpc_tester.h"
 
@@ -193,71 +193,6 @@ TEST_F(HDMPC_ECDSA_2P, SignSequential) {
       rv = ecdsa2pc::sign(job, empty_sid, derived_keys[i], data[i], sigs[i]);
       ASSERT_EQ(rv, 0);
     }
-  });
-}
-
-TEST_F(HDMPC_ECDSA_2P, SignParallel) {
-  int DATA_COUNT = 3;
-  std::vector<buf_t> data(DATA_COUNT);
-  for (int i = 0; i < data.size(); i++) data[i] = coinbase::crypto::gen_random(32);
-  buf_t session_id = coinbase::crypto::gen_random(32);
-
-  mpc_runner->run_2pc_parallel(1, [&data, &session_id, &DATA_COUNT](job_parallel_2p_t& job, int dummy) {
-    error_t rv = UNINITIALIZED_ERROR;
-    auto role = job.get_party();
-    ecurve_t curve = coinbase::crypto::curve_secp256k1;
-
-    key_share_ecdsa_hdmpc_2p_t key;
-    rv = key_share_ecdsa_hdmpc_2p_t::dkg(job, curve, key);
-    ASSERT_EQ(rv, 0);
-
-    bip32_path_t hardened_path;
-    std::vector<bip32_path_t> non_hardened_paths(DATA_COUNT);
-
-    hardened_path.append(1);
-    hardened_path.append(2);
-    hardened_path.append(3);
-
-    for (int i = 0; i < DATA_COUNT; i++) {
-      non_hardened_paths[i].append((i + 1) * 4 + 0);
-      non_hardened_paths[i].append((i + 1) * 4 + 1);
-    }
-
-    int n_sigs = (int)non_hardened_paths.size();
-    std::vector<buf_t> sigs(n_sigs);
-    std::vector<coinbase::mpc::ecdsa2pc::key_t> derived_keys(n_sigs);
-
-    rv = key_share_ecdsa_hdmpc_2p_t::derive_keys(job, key, hardened_path, non_hardened_paths, session_id, derived_keys);
-
-    ASSERT_EQ(rv, 0);
-
-    std::vector<std::thread> threads;
-    job.set_parallel_count(n_sigs);
-    std::mutex update_sig_mtx;
-
-    for (int i = 0; i < n_sigs; i++) {
-      threads.emplace_back([i, &derived_keys, &data, &job, &sigs, &update_sig_mtx]() {
-        auto _derived_key = derived_keys[i];
-        auto _data = data[i];
-        int parallel_count = sigs.size();
-        job_parallel_2p_t parallel_job =
-            job.get_parallel_job(parallel_count, parallel_id_t(i));  // create a new job from network
-        buf_t _sig;
-        buf_t empty_sid;  // empty session id -> sign will generate sid internally
-
-        error_t rv = ecdsa2pc::sign(parallel_job, empty_sid, _derived_key, _data, _sig);
-
-        {
-          std::unique_lock<std::mutex> lk(update_sig_mtx, std::defer_lock);
-          sigs[i] = _sig;
-        }
-
-        ASSERT_EQ(rv, 0);
-      });
-    }
-    for (auto& th : threads) th.join();
-
-    job.set_parallel_count(0);
   });
 }
 

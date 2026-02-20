@@ -1,5 +1,5 @@
 
-#include "base_ec_core.h"
+#include <cbmpc/internal/crypto/base_ec_core.h>
 
 namespace coinbase::crypto {
 

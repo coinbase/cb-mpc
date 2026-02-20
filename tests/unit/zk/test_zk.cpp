@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/zk/zk_ec.h>
+#include <cbmpc/internal/zk/zk_ec.h>
 
 #include "utils/data/zk_completeness.h"
 #include "utils/test_macros.h"

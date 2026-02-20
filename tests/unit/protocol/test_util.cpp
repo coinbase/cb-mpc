@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "cbmpc/protocol/util.h"
+#include <cbmpc/internal/protocol/util.h>
 
 using namespace coinbase::crypto;
 

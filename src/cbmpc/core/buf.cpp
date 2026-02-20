@@ -1,13 +1,16 @@
-#include "buf.h"
+#include <cstring>
 
-#include <cbmpc/core/convert.h>
-#include <cbmpc/core/strext.h>
+#include <cbmpc/core/buf.h>
+#include <cbmpc/internal/core/convert.h>
+#include <cbmpc/internal/core/strext.h>
 
 namespace coinbase {
 
 buf_t::buf_t() noexcept(true) : s(0) { static_assert(sizeof(buf_t) == 40, "Invalid buf_t size."); }
 
 buf_t::buf_t(int new_size) : s(new_size) {  // NOLINT(*init*)
+  // NOTE: `buf_t(int)` intentionally leaves the buffer contents uninitialized.
+  // Callers must fully overwrite `size()` bytes before reading from `data()`.
   if (new_size > short_size) set_long_ptr(new byte_t[new_size]);
 }
 
@@ -267,22 +270,24 @@ void buf_t::reverse() { mem_t(*this).reverse(); }
 
 std::string buf_t::to_string() const { return std::string(const_char_ptr(data()), s); }
 
-byte_ptr buf_t::get_long_ptr() const { return ((byte_ptr*)m)[0]; }
+byte_ptr buf_t::get_long_ptr() const {
+  byte_ptr ptr;
+  std::memcpy(&ptr, m, sizeof(ptr));
+  return ptr;
+}
 
-void buf_t::set_long_ptr(byte_ptr ptr) { ((byte_ptr*)m)[0] = ptr; }
+void buf_t::set_long_ptr(byte_ptr ptr) { std::memcpy(m, &ptr, sizeof(ptr)); }
 
 void buf_t::assign_short(const_byte_ptr src, int src_size) {
   for (int i = 0; i < src_size; i++) m[i] = src[i];
   s = src_size;
 }
 
-/**
- * @notes:
- * - Even though the size of m is 36, the next 4 bytes is used to store the size of the buffer (`s`).
- * - Therefore, override ((uint64_t*)m)[4] is safe, even though it is seemingly out of bounds.
- */
 void buf_t::assign_short(const buf_t& src) {
-  for (int i = 0; i < 5; i++) ((uint64_t*)m)[i] = ((uint64_t*)src.m)[i];
+  // Copy the entire short inline storage and the size. Keep this UB-free: `m` is byte-aligned,
+  // so type-punning via `(uint64_t*)` / `(byte_ptr*)` can violate strict-aliasing and alignment.
+  std::memcpy(m, src.m, short_size);
+  s = src.s;
 }
 
 void buf_t::assign_long_ptr(byte_ptr ptr, int size) {
@@ -345,7 +350,11 @@ void buf_t::convert_last(converter_t& converter) {
     if (!converter.is_calc_size()) memmove(converter.current(), data(), size());
   } else {
     if (converter.is_error()) return;
-    int s = converter.get_size() - converter.get_offset();
+    const int s = converter.get_size() - converter.get_offset();
+    if (s < 0 || !converter.at_least(s)) {
+      converter.set_error();
+      return;
+    }
     memmove(alloc(s), converter.current(), s);
   }
   converter.forward(size());
@@ -359,10 +368,11 @@ void memmove_reverse(byte_ptr dst, const_byte_ptr src, int size) {
 void mem_t::reverse() {
   int l = 0;
   int r = size - 1;
+  byte_ptr p = const_cast<byte_ptr>(data);
   while (l < r) {
-    uint8_t t = data[l];
-    data[l] = data[r];
-    data[r] = t;
+    uint8_t t = p[l];
+    p[l] = p[r];
+    p[r] = t;
     l++;
     r--;
   }
@@ -392,7 +402,9 @@ size_t mem_t::non_crypto_hash() const {
   uint32_t x = 1;
 
   while (n >= 4) {
-    x ^= *(const uint32_t*)p;
+    uint32_t chunk;
+    std::memcpy(&chunk, p, sizeof(chunk));
+    x ^= chunk;
     x ^= x << 13;
     x ^= x >> 17;
     x ^= x << 5;
@@ -412,7 +424,10 @@ size_t mem_t::non_crypto_hash() const {
   return x;
 }
 
-std::string mem_t::to_string() const { return std::string(const_char_ptr(data), size); }
+std::string mem_t::to_string() const {
+  if (size <= 0 || !data) return "";
+  return std::string(const_char_ptr(data), static_cast<size_t>(size));
+}
 
 // ------------------------- bits_t ---------------------
 
@@ -476,9 +491,16 @@ void bits_t::free() {
 void bits_t::copy_from(const bits_t& src) {
   if (&src == this) return;
 
+  if (src.bits == 0) {
+    free();
+    return;
+  }
+
   alloc(src.bits);
 
   int n = bits_to_limbs(bits);
+  cb_assert(n > 0);
+  cb_assert(data && src.data);
   memmove(data, src.data, n * sizeof(limb_t));
 }
 
@@ -541,10 +563,17 @@ bits_t bits_t::from_bin(mem_t src) {
 }
 
 void bits_t::resize(int count) {
+  cb_assert(count >= 0 && "bits_t::resize: count must be non-negative");
+  if (count == bits) return;
+
+  // If we're growing, ensure the currently-unused tail bits are cleared before they become "visible".
+  if (count > bits && bits > 0) bzero_unused();
+
   int n_old = bits_to_limbs(bits);
   int n_new = bits_to_limbs(count);
   if (n_old == n_new) {
     bits = count;
+    if (bits > 0) bzero_unused();
     return;
   }
 
@@ -554,11 +583,14 @@ void bits_t::resize(int count) {
   }
 
   limb_t* old_data = data;
-  data = new limb_t[n_new];
   bits = count;
+
+  data = new limb_t[n_new];
+  memset(data, 0, n_new * sizeof(limb_t));
 
   int n_copy = std::min(n_old, n_new);
   if (n_copy) memmove(data, old_data, n_copy * sizeof(limb_t));
+  bzero_unused();
 
   if (n_old) {
     secure_bzero((byte_ptr)old_data, n_old * int(sizeof(limb_t)));
@@ -594,6 +626,8 @@ void bits_t::set(int index, bool value) {
 }
 
 void bits_t::append(bool value) {
+  cb_assert(bits >= 0 && "bits_t::append: invalid bit count");
+  cb_assert(bits < INT_MAX && "bits_t::append: bit count overflow");
   resize(bits + 1);
   set(bits - 1, value);
 }
@@ -609,21 +643,6 @@ bool bits_t::ref_t::get() const { return 0 != ((*data >> offset) & 1); }
 bits_t::ref_t bits_t::operator[](int index) {
   cb_assert(index >= 0 && index < bits);
   return ref_t(data, index);
-}
-
-bool bits_t::equ(const bits_t& src1, const bits_t& src2) {
-  if (src1.bits != src2.bits) return false;
-
-  int n = src1.bits / 64;
-  if (n > 0) {
-    if (0 != memcmp(src1.data, src2.data, n * sizeof(uint64_t))) return false;
-  }
-
-  for (int i = n * 64; i < src1.bits; i++) {
-    if (src1[i] != src2[i]) return false;
-  }
-
-  return true;
 }
 
 bits_t& bits_t::operator^=(const bits_t& src) {
@@ -648,14 +667,32 @@ bits_t operator^(const bits_t& src1, const bits_t& src2) {
 bits_t& bits_t::operator+=(const bits_t& src2) {
   int n1 = count();
   int n2 = src2.count();
+  cb_assert(n1 >= 0 && n2 >= 0);
+  cb_assert(n2 <= INT_MAX - n1 && "bits_t::operator+=: size overflow");
+  const int new_count = n1 + n2;
+
+  // Special-case self-append: `to_bin()` returns a view into `data`, and `resize()` may reallocate + free the old
+  // buffer, turning that view into a dangling pointer. This can trigger UAF for `x += x` on the byte-aligned fast path.
+  if (&src2 == this) {
+    resize(new_count);
+    if ((n1 % 8) == 0) {
+      const int bytes = bits_to_bytes(n1);
+      // Append the original bytes by copying within the resized buffer.
+      memmove(byte_ptr(data) + bytes, data, bytes);
+    } else {
+      // Bit-level append (no overlap: read from [0..n1), write to [n1..n1+n2)).
+      for (int i = 0; i < n2; i++) (*this)[n1 + i] = (*this)[i];
+    }
+    return *this;
+  }
 
   mem_t src1_mem = to_bin();
   mem_t src2_mem = src2.to_bin();
 
-  resize(n1 + n2);
-  if ((n1 % 8) == 0)
+  resize(new_count);
+  if ((n1 % 8) == 0) {
     memmove(byte_ptr(data) + src1_mem.size, src2_mem.data, src2_mem.size);
-  else {
+  } else {
     for (int i = 0; i < n2; i++) (*this)[n1 + i] = src2[i];
   }
   return *this;
@@ -664,7 +701,10 @@ bits_t& bits_t::operator+=(const bits_t& src2) {
 bits_t bits_t::operator+(const bits_t& src2) const {
   int n1 = count();
   int n2 = src2.count();
-  bits_t dst(n1 + n2);
+  cb_assert(n1 >= 0 && n2 >= 0);
+  cb_assert(n2 <= INT_MAX - n1 && "bits_t::operator+: size overflow");
+  const int new_count = n1 + n2;
+  bits_t dst(new_count);
 
   mem_t dst_mem = dst.to_bin();
   mem_t src1_mem = to_bin();
@@ -705,7 +745,20 @@ std::vector<buf_t> buf_t::from_mems(const std::vector<mem_t>& in) {
 
 }  // namespace coinbase
 
+namespace coinbase {
+
 std::ostream& operator<<(std::ostream& os, mem_t mem) {
+  // NOTE: `mem_t` is frequently used to carry opaque blobs, including secrets (key shares, plaintexts, etc.).
+  // Dumping full hex in production is a common source of accidental secret leakage via logs.
+  //
+  // In Debug builds, keep the full hex dump for developer ergonomics.
+  // In non-Debug builds, redact content and print only the size.
+#ifdef _DEBUG
   os << strext::to_hex(mem);
+#else
+  os << "<mem_t size=" << mem.size << ">";
+#endif
   return os;
 }
+
+}  // namespace coinbase

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cbmpc/crypto/secret_sharing.h>
-#include <cbmpc/crypto/tdh2.h>
+#include <cbmpc/internal/crypto/secret_sharing.h>
+#include <cbmpc/internal/crypto/tdh2.h>
 
 using namespace coinbase::crypto;
 
@@ -20,13 +20,13 @@ void generate_additive_shares(int n, tdh2::public_key_t& enc_key, tdh2::pub_shar
   for (int i = 0; i < n; i++) {
     pub_shares[i] = prv_shares[i] * G;
   }
-  enc_key.Q = x * G;
-  enc_key.Gamma = ro::hash_curve(mem_t("TDH2-Gamma"), enc_key.Q).curve(curve);
+  const buf_t sid = gen_random(32);
+  enc_key = tdh2::public_key_t(x * G, sid);
 
   dec_shares.resize(n);
   for (int i = 0; i < n; i++) {
     dec_shares[i].x = prv_shares[i];
-    dec_shares[i].pid = i + 1;
+    dec_shares[i].rid = i + 1;
     dec_shares[i].pub_key = enc_key;
   }
 }
@@ -37,16 +37,17 @@ void generate_ac_shares(const ss::ac_t& ac, tdh2::public_key_t& enc_key, ss::ac_
   const mod_t& q = curve.order();
 
   bn_t x = curve.get_random_value();
-  enc_key.Q = x * G;
-  enc_key.Gamma = ro::hash_curve(mem_t("TDH2-Gamma"), enc_key.Q).curve(curve);
+  const buf_t sid = gen_random(32);
+  enc_key = tdh2::public_key_t(x * G, sid);
   ss::ac_shares_t prv_shares = ac.share(q, x);
 
   pub_shares.clear();
   dec_shares.clear();
+  int rid = 1;
   for (const auto& [name, xi] : prv_shares) {
     pub_shares[name] = xi * G;
     dec_shares[name].x = xi;
-    dec_shares[name].pid = ss::node_t::pid_from_path(name);
+    dec_shares[name].rid = rid++;
     dec_shares[name].pub_key = enc_key;
   }
 }

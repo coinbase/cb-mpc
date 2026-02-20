@@ -1,4 +1,4 @@
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/crypto/base.h>
 
 namespace coinbase::dudect {
 

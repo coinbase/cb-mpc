@@ -1,10 +1,13 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/ro.h>
+#include <cbmpc/internal/crypto/ro.h>
 
 using namespace coinbase::crypto;
 
 namespace {
+
+using coinbase::buf_t;
+using coinbase::mem_t;
 
 TEST(RandomOracle, EncodeAndUpdateHappyPath) {
   ro::hmac_state_t s1;

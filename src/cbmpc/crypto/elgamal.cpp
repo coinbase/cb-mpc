@@ -1,7 +1,6 @@
-#include "elgamal.h"
-
-#include <cbmpc/crypto/base_ecc.h>
-#include <cbmpc/crypto/base_mod.h>
+#include <cbmpc/internal/crypto/base_ecc.h>
+#include <cbmpc/internal/crypto/base_mod.h>
+#include <cbmpc/internal/crypto/elgamal.h>
 
 namespace coinbase::crypto {
 

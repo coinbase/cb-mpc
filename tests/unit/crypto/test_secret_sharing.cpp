@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/lagrange.h>
-#include <cbmpc/crypto/secret_sharing.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/lagrange.h>
+#include <cbmpc/internal/crypto/secret_sharing.h>
 
 #include "utils/data/ac.h"
 #include "utils/test_macros.h"
@@ -258,6 +258,59 @@ TEST_F(SecretSharing, ACEnoughQuorumAndReconstruct) {
   }
   EXPECT_TRUE(ac.enough_for_quorum(malicious_shares));
   EXPECT_FALSE(correctly_reconstructable(ac, malicious_shares, test_root));
+}
+
+TEST_F(SecretSharing, ACReconstructExponentEd25519) {
+  vartime_scope_t vartime_scope;
+  ecurve_t curve = curve_ed25519;
+  const mod_t q = curve.order();
+  const bn_t x = bn_t::rand(q);
+
+  ac_t ac(test_root);
+  ac.curve = curve;
+
+  const ac_shares_t shares = ac.share(q, x, nullptr);
+  ac_pub_shares_t pub_shares;
+  for (const auto &[name, si] : shares) {
+    pub_shares[name] = si * curve.generator();
+  }
+
+  ecc_point_t P;
+  EXPECT_OK(ac.reconstruct_exponent(pub_shares, P));
+  EXPECT_EQ(P, x * curve.generator());
+}
+
+TEST_F(SecretSharing, ReconstructExpRejectsNonSubgroup) {
+  vartime_scope_t vartime_scope;
+  ecurve_t curve = curve_ed25519;
+  const mod_t q = curve.order();
+  const bn_t x = bn_t::rand(q);
+
+  ac_t ac(test_root);
+  ac.curve = curve;
+
+  const ac_shares_t shares = ac.share(q, x, nullptr);
+  ac_pub_shares_t pub_shares;
+  for (const auto &[name, si] : shares) {
+    pub_shares[name] = si * curve.generator();
+  }
+
+  // Ed25519 order-2 torsion point (x=0, y=-1): on-curve but not in the prime-order subgroup.
+  uint8_t order2[32];
+  order2[0] = 0xec;
+  for (int i = 1; i < 31; i++) order2[i] = 0xff;
+  order2[31] = 0x7f;
+
+  ecc_point_t T(curve);
+  ASSERT_EQ(T.from_bin(curve, coinbase::mem_t(order2, 32)), SUCCESS);
+  ASSERT_TRUE(T.is_on_curve());
+  ASSERT_FALSE(T.is_infinity());
+  ASSERT_FALSE(T.is_in_subgroup());
+
+  pub_shares["leaf1"] = T;
+
+  ecc_point_t P;
+  EXPECT_ER(ac.reconstruct_exponent(pub_shares, P));
 }
 
 }  // namespace

@@ -1,4 +1,4 @@
-#include "lagrange.h"
+#include <cbmpc/internal/crypto/lagrange.h>
 
 namespace coinbase::crypto {
 

@@ -1,8 +1,6 @@
-#include "zk_paillier.h"
-
-#include <cbmpc/crypto/elgamal.h>
-
-#include "small_primes.h"
+#include <cbmpc/internal/crypto/elgamal.h>
+#include <cbmpc/internal/zk/small_primes.h>
+#include <cbmpc/internal/zk/zk_paillier.h>
 
 namespace coinbase::zk {
 
@@ -13,7 +11,7 @@ void valid_paillier_t::prove(const crypto::paillier_t& paillier, mem_t session_i
 
   bn_t N_inv = mod_t::N_inv_mod_phiN_2048(N, phi_N);
 
-  assert(SEC_P_COM == 128 && "security parameter changed, please update the code");
+  static_assert(SEC_P_COM == 128, "security parameter changed, please update the code");
   buf128_t k = crypto::ro::hash_string(N, session_id, aux).bitlen128();
   crypto::drbg_aes_ctr_t drbg(k);
 
@@ -506,7 +504,7 @@ error_t pdl_t::verify(const bn_t& c_key, const crypto::paillier_t& paillier, con
   }
 
   bn_t qq = q * q;
-  if (N.get_bits_count() < 2048 || N < ((qq << (SEC_P_STAT + 1)) + (qq << 1))) return coinbase::error(E_CRYPTO);
+  if (N.get_bits_count() < 2048 || N <= ((qq << (SEC_P_STAT + 1)) + (qq << 1))) return coinbase::error(E_CRYPTO);
 
   const mod_t& NN = paillier.get_NN();
   if (rv = coinbase::crypto::check_open_range(0, c_r, NN)) return rv;

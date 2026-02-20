@@ -1,6 +1,5 @@
-#include "ot.h"
-
-#include <cbmpc/crypto/ro.h>
+#include <cbmpc/internal/crypto/ro.h>
+#include <cbmpc/internal/protocol/ot.h>
 
 namespace coinbase::mpc {
 
@@ -162,7 +161,8 @@ static void matrix_transposition(uint8_t const* inp, uint8_t* out, int nrows, in
   for (int rr = 0; rr < nrows; rr += 16) {
     for (int cc = 0; cc < ncols; cc += 8) {
       for (int i = 0; i < 16; ++i) tmp.b[i] = INP_BYTE(rr + i, cc);
-      for (int i = 8; --i >= 0; tmp = lshift64x2(tmp)) *(uint16_t*)&OUT_BYTE(rr, cc + i) = high16x8(tmp);
+      for (int i = 8; --i >= 0; tmp = lshift64x2(tmp))
+        coinbase::le_set_2(byte_ptr(&OUT_BYTE(rr, cc + i)), high16x8(tmp));
     }
   }
 }

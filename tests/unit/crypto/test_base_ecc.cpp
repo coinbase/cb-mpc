@@ -1,12 +1,13 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/base_pki.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_pki.h>
 
 #include "utils/test_macros.h"
 
 namespace {
 using namespace coinbase::crypto;
+using coinbase::buf_t;
 
 class ECC : public ::testing::Test {
  protected:

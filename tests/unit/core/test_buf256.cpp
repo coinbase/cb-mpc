@@ -116,6 +116,14 @@ TEST(Buf256Test, BitwiseOperations) {
 }
 
 TEST(Buf256Test, Shifts) {
+  // Shift by 0 should be a no-op.
+  {
+    auto z = buf256_t::make(buf128_t::make(0x0123456789ABCDEFULL, 0x0011223344556677ULL),
+                            buf128_t::make(0x8899AABBCCDDEEFFULL, 0xFEDCBA9876543210ULL));
+    EXPECT_EQ((z << 0), z);
+    EXPECT_EQ((z >> 0), z);
+  }
+
   // left shift
   auto lo = buf128_t::make(0x00000000000000FFULL, 0ULL);
   auto hi = buf128_t::make(0ULL, 0ULL);

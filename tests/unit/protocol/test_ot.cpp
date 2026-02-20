@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
-#include <cbmpc/protocol/ot.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/ro.h>
+#include <cbmpc/internal/protocol/ot.h>
 
 #include "utils/test_macros.h"
 

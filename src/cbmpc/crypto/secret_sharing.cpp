@@ -1,9 +1,8 @@
-#include "secret_sharing.h"
-
-#include <cbmpc/core/log.h>
-#include <cbmpc/core/utils.h>
-#include <cbmpc/crypto/base_pki.h>
-#include <cbmpc/crypto/lagrange.h>
+#include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/core/utils.h>
+#include <cbmpc/internal/crypto/base_pki.h>
+#include <cbmpc/internal/crypto/lagrange.h>
+#include <cbmpc/internal/crypto/secret_sharing.h>
 
 namespace coinbase::crypto::ss {
 
@@ -119,6 +118,14 @@ void ac_owned_t::convert(coinbase::converter_t &c)  // static
   error_t rv = UNINITIALIZED_ERROR;
 
   if (exists) {
+    c.convert(curve);
+    if (!c.is_write() && !curve.valid()) {
+      rv = coinbase::error(E_FORMAT, "access structure: invalid curve");
+      c.set_error(rv);
+      delete root;
+      root = nullptr;
+      return;
+    }
     if (!c.is_write()) {
       delete root;
       root = new node_t();
@@ -128,9 +135,11 @@ void ac_owned_t::convert(coinbase::converter_t &c)  // static
     if (c.is_write()) return;
 
     if (!c.is_error()) {
-      rv = root->validate_tree();
+      rv = validate_tree();
       if (rv == 0) return;
     }
+  } else if (!c.is_write()) {
+    curve = nullptr;
   }
 
   delete root;
@@ -313,26 +322,33 @@ ac_shares_t ac_t::share(const mod_t &q, const bn_t &x, drbg_aes_ctr_t *drbg) con
   ac_internal_pub_shares_t dummy_pub;
 
   bool output_additional_data = false;
-  share_recursive(q, G, root, x, output_additional_data, shares, dummy, dummy_pub, drbg);
+  ecc_point_t dummy_G;
+  share_recursive(q, dummy_G, root, x, output_additional_data, shares, dummy, dummy_pub, drbg);
   return shares;
 }
 
 error_t ac_t::share_with_internals(const mod_t &q, const bn_t &x, ac_shares_t &shares,
                                    ac_internal_shares_t &ac_internal_shares,
                                    ac_internal_pub_shares_t &ac_internal_pub_shares, drbg_aes_ctr_t *drbg) const {
+  if (!root) return coinbase::error(E_BADARG, "missing root");
+  if (!curve.valid()) return coinbase::error(E_BADARG, "missing curve");
+  if (q != curve.order()) return coinbase::error(E_BADARG, "invalid modulus");
   bool output_additional_data = true;
-  share_recursive(q, G, root, x, output_additional_data, shares, ac_internal_shares, ac_internal_pub_shares, drbg);
+  share_recursive(q, curve.generator(), root, x, output_additional_data, shares, ac_internal_shares,
+                  ac_internal_pub_shares, drbg);
   return SUCCESS;
 }
 
 error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t &Q, const bn_t &si,
                                                       const ac_internal_pub_shares_t &pub_data,
                                                       const pname_t &leaf) const {
-  vartime_scope_t vartime_scope;
+  if (!curve.valid()) return coinbase::error(E_BADARG, "missing curve");
+  if (Q.get_curve() != curve) return coinbase::error(E_BADARG, "curve mismatch");
   auto node = find(leaf);
   if (node == nullptr || node->type != node_e::LEAF) return coinbase::error(E_NOT_FOUND);
 
-  ecc_point_t expected_pub_share = si * G;
+  ecc_point_t expected_pub_share = si * curve.generator();
+  vartime_scope_t vartime_scope;
   const node_t *child = nullptr;
 
   while (node != nullptr) {
@@ -346,7 +362,7 @@ error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t &Q, cons
         return coinbase::error(E_CRYPTO);
       }
     } else if (node->type == node_e::AND) {
-      ecc_point_t expected_sum = Q.get_curve().infinity();
+      ecc_point_t expected_sum = curve.infinity();
       for (size_t i = 0; i < sorted_children.size(); i++) {
         auto child_pub_shares = pub_data.at(sorted_children[i]->name);
         expected_sum += child_pub_shares;
@@ -392,9 +408,12 @@ static error_t reconstruct_recursive(const mod_t &q, const node_t *node, const a
     case node_e::LEAF: {
       const auto &[found, share] = lookup(shares, node->name);
       if (!found) {
+        // Missing leaf shares are expected in threshold/OR reconstructions.
+        // Do not emit stack traces / dylog output for this control-flow condition.
+        dylog_disable_scope_t dylog_disable_scope;
         return coinbase::error(E_INSUFFICIENT);
       }
-      x = share;
+      x = *share;
     } break;
     case node_e::OR:
       for (int i = 0; i < n; i++) {
@@ -465,7 +484,7 @@ static error_t reconstruct_exponent_recursive(const node_t *node, const ac_pub_s
         dylog_disable_scope_t dylog_disable_scope;
         return coinbase::error(E_INSUFFICIENT, "missing share for leaf node " + name);
       }
-      P = share;
+      P = *share;
     } break;
 
     case node_e::OR:
@@ -526,6 +545,14 @@ static error_t reconstruct_exponent_recursive(const node_t *node, const ac_pub_s
 }
 
 error_t ac_t::reconstruct_exponent(const ac_pub_shares_t &shares, ecc_point_t &P) const {
+  if (!root) return coinbase::error(E_BADARG, "missing root");
+  if (!curve.valid()) return coinbase::error(E_BADARG, "missing curve");
+  allow_ecc_infinity_t allow_ecc_infinity;
+  for (const auto &[name, share] : shares) {
+    error_t rv = curve.check(share);
+    if (rv) return coinbase::error(rv, "invalid share point for " + name);
+  }
+
   return reconstruct_exponent_recursive(root, shares, P);
 }
 

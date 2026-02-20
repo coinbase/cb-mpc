@@ -1,7 +1,7 @@
 #include <openssl/core_names.h>
 #include <openssl/kdf.h>
 
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/crypto/base.h>
 
 // NOLINTBEGIN(*magic-number*)
 namespace coinbase::crypto {

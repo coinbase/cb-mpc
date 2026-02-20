@@ -1,5 +1,7 @@
-#include <cbmpc/core/log.h>
-#include <cbmpc/crypto/base.h>
+#include <algorithm>
+
+#include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/crypto/base.h>
 
 namespace coinbase::crypto {
 
@@ -60,6 +62,25 @@ void paillier_t::update_private() {
   phi_N = (p - 1) * (q - 1);
 
   inv_phi_N = N.inv(phi_N);
+
+  // Precompute N^{-1} mod 2^bit_size for constant-time L(u) extraction during decryption.
+  // (See `paillier_t::decrypt` for details.)
+  {
+    bn_t two_pow = bn_t(1) << bit_size;  // 2^2048
+    auto* inv = BN_mod_inverse(inv_N_mod_2k, N.value(), two_pow, bn_t::thread_local_storage_bn_ctx());
+    cb_assert(inv && "paillier_t::update_private: failed to invert N mod 2^bit_size");
+
+    constexpr int BN_ULONG_BITS = int(sizeof(BN_ULONG) * 8);
+    static_assert(bit_size % BN_ULONG_BITS == 0, "Paillier bit_size must be BN_ULONG-word aligned");
+    constexpr int k_words = bit_size / BN_ULONG_BITS;
+    BIGNUM& inv_bn = *(BIGNUM*)inv_N_mod_2k;
+    cb_assert(bn_wexpand(&inv_bn, k_words));
+    // Zero any unused high words and force a fixed-top representation so decrypt can read `d[0..k_words)`.
+    for (int i = inv_bn.top; i < k_words; i++) inv_bn.d[i] = 0;
+    inv_bn.top = k_words;
+    inv_bn.neg = 0;
+    inv_bn.flags |= BN_FLG_FIXED_TOP | BN_FLG_CONSTTIME;
+  }
 
   // p^2
   bn_t p_sqr = p * p;
@@ -211,12 +232,41 @@ bn_t paillier_t::decrypt(const bn_t& src) const {
   }
 
   // Side-channel note:
-  // This is the Paillier L(u) step: L(c1) = (c1 - 1) / N, with c1 ∈ Z_{N^2}. This division uses generic bignum
-  // arithmetic and is not designed to be strictly constant-time with respect to `c1`'s value.
-  // We acknowledge and accept the residual timing side-channel risk, but in our current threat model Paillier
-  // decryption is not exposed as a high-resolution timing oracle, so we consider this risk negligible in practice.
-  // If that assumption changes, replace this with a fixed-size, constant-time extraction of L(c1).
-  bn_t m1 = (c1 - 1) / N;
+  // This is the Paillier L(u) step: L(c1) = (c1 - 1) / N, with c1 ∈ Z_{N^2}.
+  // For odd N, division by N can be replaced by multiplication with N^{-1} modulo 2^k:
+  //   (c1 - 1) = N * L(c1)  ⇒  L(c1) ≡ (c1 - 1) * N^{-1} (mod 2^k)
+  // With k = 2048 and 0 ≤ L(c1) < N < 2^k, this recovers L(c1) exactly from the low k bits.
+  constexpr int BN_ULONG_BITS = int(sizeof(BN_ULONG) * 8);
+  static_assert(bit_size % BN_ULONG_BITS == 0, "Paillier bit_size must be BN_ULONG-word aligned");
+  constexpr int k_words = bit_size / BN_ULONG_BITS;
+
+  const BIGNUM& c1_bn = *(const BIGNUM*)c1;
+  cb_assert(c1_bn.top >= 0);
+
+  // tmp_low = (c1 - 1) mod 2^k (little-endian words)
+  BN_ULONG tmp_low[k_words];
+  BN_ULONG borrow = 1;
+  for (int i = 0; i < k_words; i++) {
+    BN_ULONG w = 0;
+    if (i < c1_bn.top) w = c1_bn.d[i];
+    tmp_low[i] = w - borrow;
+    borrow = (borrow && (w == 0)) ? 1 : 0;
+  }
+
+  // m1_words = tmp_low * inv_N_mod_2k mod 2^k
+  const BIGNUM& inv_bn = *(const BIGNUM*)inv_N_mod_2k;
+  cb_assert(inv_bn.top == k_words);
+  BN_ULONG prod[k_words * 2];
+  bn_mul_normal(prod, tmp_low, k_words, inv_bn.d, k_words);
+
+  bn_t m1;
+  BIGNUM& m1_bn = *(BIGNUM*)m1;
+  cb_assert(bn_wexpand(&m1_bn, k_words));
+  std::copy(prod, prod + k_words, m1_bn.d);
+  m1_bn.top = k_words;
+  m1_bn.neg = 0;
+  m1_bn.flags |= BN_FLG_FIXED_TOP | BN_FLG_CONSTTIME;
+
   MODULO(N) m1 *= inv_phi_N;
   return m1;
 }

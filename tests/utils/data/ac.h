@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/secret_sharing.h>
+#include <cbmpc/internal/crypto/secret_sharing.h>
 
 #include "test_node.h"
 

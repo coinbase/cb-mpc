@@ -1,7 +1,6 @@
-#include "extended_uint.h"
-
 #include <cbmpc/core/error.h>
-#include <cbmpc/core/utils.h>
+#include <cbmpc/internal/core/extended_uint.h>
+#include <cbmpc/internal/core/utils.h>
 
 namespace coinbase {
 

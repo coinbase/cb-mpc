@@ -1,4 +1,4 @@
-#include "base_ecc_secp256k1.h"
+#include <cbmpc/internal/crypto/base_ecc_secp256k1.h>
 
 // clang-format off
 #include "secp256k1/src/assumptions.h"
@@ -361,6 +361,8 @@ bn_t hash_message(const bn_t& rx, const ecc_point_t& pub_key, mem_t message) {
 error_t verify(const ecc_point_t& pub_key, mem_t m, mem_t sig) {
   error_t rv = UNINITIALIZED_ERROR;
   if (sig.size != 64) return coinbase::error(E_BADARG, "BIP340 verify: sig size != 64");
+  if (m.size != 32) return coinbase::error(E_BADARG, "BIP340 verify: msg size != 32");
+  if (!m.data) return coinbase::error(E_BADARG, "BIP340 verify: msg is null");
 
   ecurve_t curve = curve_secp256k1;
   const mod_t& q = curve.order();

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/crypto/base.h>
 
 #include "utils/test_macros.h"
 
@@ -57,6 +57,18 @@ TEST(BaseTest, TestGenRandomHelpers) {
   // Test gen_random_int<uint32_t>
   auto r_int = gen_random_int<uint32_t>();
   SUCCEED() << "Generated a random int: " << r_int;
+}
+
+TEST(BaseTest, BitsSelfAppendIsSafe) {
+  // Ensure `x += x` works correctly and does not rely on dangling views during resize().
+  // Use a byte-aligned bit count to exercise the fast-path in bits_t::operator+=.
+  bits_t x = gen_random_bits(128);
+  bits_t expected = x + x;
+
+  bits_t y = x;
+  y += y;
+  // `bits_t::equ` is intentionally not part of the API; compare the binary representation instead.
+  EXPECT_TRUE(mem_t(expected) == mem_t(y));
 }
 
 TEST(BaseTest, TestAES_CTR) {

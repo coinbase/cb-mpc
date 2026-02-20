@@ -5,18 +5,20 @@ Standard: c++17
 ColumnLimit: 120
 
 IncludeCategories:
-  - Regex: "<benchmark/benchmark.h>"
-    Priority: -2
-    SortPriority: -2
-  - Regex: "<cbmpc/core/precompiled.h>"
-    Priority: -1
-    SortPriority: -1
+  # Prefer a simple, stable include ordering:
+  # 1) System/third-party headers: <...>
+  # 2) Project headers: <cbmpc/...>
+  # 3) Local/relative headers: "..."
+  #
+  # Public headers are required to be self-contained and must not rely on
+  # include ordering (enforced by build/tests), so we avoid special-casing
+  # specific headers here.
   - Regex: "^<cbmpc/.*>$"
     Priority: 2
     SortPriority: 2
   - Regex: '^".*"$'
-    Priority: 6
-    SortPriority: 6
+    Priority: 3
+    SortPriority: 3
   - Regex: "^<.*>$"
     Priority: 1
     SortPriority: 1

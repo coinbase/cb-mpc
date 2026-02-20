@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/crypto/lagrange.h>
-#include <cbmpc/crypto/secret_sharing.h>
+#include <cbmpc/internal/crypto/lagrange.h>
+#include <cbmpc/internal/crypto/secret_sharing.h>
 
 #include "util.h"
 

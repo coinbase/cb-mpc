@@ -1,4 +1,4 @@
-#include "mpc_job.h"
+#include <cbmpc/internal/protocol/mpc_job.h>
 
 namespace coinbase::mpc {
 
@@ -14,8 +14,8 @@ error_t job_mp_t::send_to_parties(party_set_t set, const std::vector<buf_t>& in)
 
 // default implementation simply by receiving one by one
 error_t job_mp_t::receive_many_impl(std::vector<party_idx_t> from_set, std::vector<buf_t>& outs) {
-  if (!transport_ptr) return E_NET_GENERAL;
-  return transport_ptr->receive_all(from_set, outs);
+  if (!transport_raw) return E_NET_GENERAL;
+  return transport_raw->receive_all(from_set, outs);
 }
 
 error_t job_mp_t::receive_from_parties(party_set_t set, std::vector<buf_t>& v) {

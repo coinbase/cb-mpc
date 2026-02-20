@@ -1,8 +1,8 @@
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/crypto/base_pki.h>
-#include <cbmpc/crypto/commitment.h>
-#include <cbmpc/zk/zk_pedersen.h>
+#include <cbmpc/internal/crypto/base_pki.h>
+#include <cbmpc/internal/crypto/commitment.h>
+#include <cbmpc/internal/zk/zk_pedersen.h>
 
 #include "util.h"
 

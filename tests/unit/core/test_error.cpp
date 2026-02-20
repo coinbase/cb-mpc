@@ -7,6 +7,8 @@
 
 namespace {
 
+using coinbase::error_t;
+
 error_t inner_func() { return coinbase::error(E_BADARG, "inner error msg"); }
 
 error_t outer_func() {

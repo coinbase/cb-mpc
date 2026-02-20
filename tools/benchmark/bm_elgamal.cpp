@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/crypto/elgamal.h>
+#include <cbmpc/internal/crypto/elgamal.h>
 
 #include "util.h"
 

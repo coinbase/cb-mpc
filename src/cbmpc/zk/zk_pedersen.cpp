@@ -1,6 +1,5 @@
-#include "zk_pedersen.h"
-
-#include "small_primes.h"
+#include <cbmpc/internal/zk/small_primes.h>
+#include <cbmpc/internal/zk/zk_pedersen.h>
 
 namespace coinbase::zk {
 
@@ -26,9 +25,9 @@ pedersen_commitment_params_t::pedersen_commitment_params_t() {
   };
 
   p = mod_t(bn_t::from_bin(mem_t(PED_P_BIN, sizeof(PED_P_BIN))), /* multiplicative_dense */ true);
-  assert(bn_t(p).prime());
+  cb_assert(bn_t(p).prime());
   p_tag = mod_t((bn_t(p) - 1) / 2, /* multiplicative_dense */ true);
-  assert(bn_t(p_tag).prime());
+  cb_assert(bn_t(p_tag).prime());
   sqrt_g = 2;
   g = 4;
 
