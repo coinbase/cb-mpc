@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/ro.h>
 
 #include "utils/test_macros.h"
 
@@ -26,6 +26,38 @@ TEST(BigNumber, Subtraction) {
   EXPECT_EQ(bn_t(-123) - bn_t(-456), 333);
   EXPECT_EQ(bn_t(1) - bn_t(1000), -999);
   EXPECT_EQ(bn_t(999) - bn_t(0), 999);
+}
+
+TEST(BigNumber, IntOperatorsHandleIntMin) {
+  const int v = INT_MIN;
+
+  bn_t abs_v;
+  abs_v.set_int64(2147483648LL);
+
+  // Non-modular operators
+  EXPECT_EQ(bn_t(0) + v, bn_t(v));
+  EXPECT_EQ(bn_t(1) * v, bn_t(v));
+
+  EXPECT_EQ(bn_t(0) - v, abs_v);
+  EXPECT_EQ(bn_t(0) * v, 0);
+
+  bn_t x = 0;
+  EXPECT_NO_THROW(x += v);
+  EXPECT_EQ(x, bn_t(v));
+
+  bn_t y = 0;
+  EXPECT_NO_THROW(y -= v);
+  EXPECT_EQ(y, abs_v);
+
+  bn_t z = 1;
+  EXPECT_NO_THROW(z *= v);
+  EXPECT_EQ(z, bn_t(v));
+
+  // Modular path uses `mod_t::mod(int)` internally; ensure INT_MIN does not trigger UB.
+  const mod_t& q = crypto::curve_ed25519.order();
+  bn_t expected_mod;
+  MODULO(q) { expected_mod = -abs_v; }
+  MODULO(q) { EXPECT_EQ(bn_t(0) + v, expected_mod); }
 }
 
 TEST(BigNumber, Multiplication) {
@@ -89,6 +121,18 @@ TEST(BigNumber, ShiftOperators) {
 
   bn_t val3 = val2 >> 2;
   EXPECT_EQ(val3, 10);
+
+  // Negative shifts are treated as no-ops.
+  bn_t neg1(32);
+  neg1 <<= -5;
+  EXPECT_EQ(neg1, 32);
+
+  bn_t neg2(1);
+  neg2 >>= -10;
+  EXPECT_EQ(neg2, 1);
+
+  EXPECT_EQ(bn_t(5) << -3, 5);
+  EXPECT_EQ(bn_t(10) >> -2, 10);
 }
 
 TEST(BigNumber, BitwiseSetAndCheck) {
@@ -128,6 +172,46 @@ TEST(BigNumber, RangeCheck) {
   EXPECT_ER_MSG(check_open_range(bn_t(3), bn_t(3), bn_t(5)), "check_open_range failed");
   EXPECT_OK(check_open_range(bn_t(3), bn_t(4), bn_t(5)));
   EXPECT_ER_MSG(check_open_range(bn_t(3), bn_t(5), bn_t(5)), "check_open_range failed");
+}
+
+TEST(BigNumber, FromStringValidInput) {
+  bn_t result;
+  EXPECT_OK(bn_t::from_string("0", result));
+  EXPECT_EQ(result, 0);
+  EXPECT_OK(bn_t::from_string("12345", result));
+  EXPECT_EQ(result, 12345);
+  EXPECT_OK(bn_t::from_string("-42", result));
+  EXPECT_EQ(result, -42);
+}
+
+TEST(BigNumber, FromStringRejectsInvalidInput) {
+  bn_t result;
+  EXPECT_ER(bn_t::from_string("", result));
+  EXPECT_ER(bn_t::from_string("not_a_number", result));
+  EXPECT_ER(bn_t::from_string("1234ncc", result));
+  EXPECT_ER(bn_t::from_string("0xAB", result));
+  EXPECT_ER(bn_t::from_string(nullptr, result));
+}
+
+TEST(BigNumber, FromHexValidInput) {
+  bn_t result;
+  EXPECT_OK(bn_t::from_hex("0", result));
+  EXPECT_EQ(result, 0);
+  EXPECT_OK(bn_t::from_hex("FF", result));
+  EXPECT_EQ(result, 255);
+  EXPECT_OK(bn_t::from_hex("-1A", result));
+  EXPECT_EQ(result, -26);
+  EXPECT_OK(bn_t::from_hex("abc", result));
+  EXPECT_EQ(result, 0xabc);
+}
+
+TEST(BigNumber, FromHexRejectsInvalidInput) {
+  bn_t result;
+  EXPECT_ER(bn_t::from_hex("", result));
+  EXPECT_ER(bn_t::from_hex("0xAB", result));
+  EXPECT_ER(bn_t::from_hex("ZZZZ", result));
+  EXPECT_ER(bn_t::from_hex("1234ncc", result));
+  EXPECT_ER(bn_t::from_hex(nullptr, result));
 }
 
 TEST(BigNumber, CompareMatchesOpenSSL) {
@@ -193,5 +277,37 @@ TEST(BigNumber, GetBinSize) {
   MODULO(crypto::curve_ed25519.order()) { a += 0; };
   EXPECT_EQ(a, 1);
   EXPECT_EQ(a.get_bin_size(), 1);
+}
+
+TEST(BigNumber, ConvertDeserializeOversizedNoThrow) {
+  const uint32_t value_size = bn_t::MAX_SERIALIZED_BIGNUM_BYTES + 1;
+  const uint32_t header = value_size << 1;  // neg=0
+
+  int header_size = 0;
+  {
+    converter_t sizer(true);
+    uint32_t tmp = header;
+    sizer.convert_len(tmp);
+    header_size = sizer.get_offset();
+  }
+
+  ASSERT_GT(header_size, 0);
+  ASSERT_LE(value_size, static_cast<uint32_t>(INT_MAX - header_size));
+  const int value_size_int = static_cast<int>(value_size);
+
+  buf_t buffer(header_size + value_size_int);
+  {
+    converter_t writer(buffer.data());
+    uint32_t tmp = header;
+    writer.convert_len(tmp);
+    memset(writer.current(), 0x7F, static_cast<size_t>(value_size_int));
+    writer.forward(value_size_int);
+  }
+
+  bn_t result;
+  converter_t reader{mem_t(buffer)};
+  EXPECT_NO_THROW(result.convert(reader));
+  EXPECT_TRUE(reader.is_error());
+  EXPECT_EQ(reader.get_offset(), header_size);
 }
 }  // namespace

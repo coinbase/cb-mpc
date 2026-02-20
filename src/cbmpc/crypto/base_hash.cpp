@@ -1,7 +1,7 @@
 #include <openssl/core_names.h>
 #include <openssl/kdf.h>
 
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/crypto/base.h>
 
 // NOLINTBEGIN(*magic-number*)
 namespace coinbase::crypto {
@@ -49,15 +49,15 @@ static const uint8_t SHA3_384_oid[] = {0x30, 0x41, 0x30, 0x0d, 0x06, 0x09, 0x60,
 static const uint8_t SHA3_512_oid[] = {0x30, 0x51, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01,
                                        0x65, 0x03, 0x04, 0x02, 0x0a, 0x05, 0x00, 0x04, 0x40};
 
-static const EVP_MD *evp_sha256() noexcept(true) { return EVP_sha256(); }
-static const EVP_MD *evp_sha384() noexcept(true) { return EVP_sha384(); }
-static const EVP_MD *evp_sha512() noexcept(true) { return EVP_sha512(); }
-static const EVP_MD *evp_sha3_256() noexcept(true) { return EVP_sha3_256(); }
-static const EVP_MD *evp_sha3_384() noexcept(true) { return EVP_sha3_384(); }
-static const EVP_MD *evp_sha3_512() noexcept(true) { return EVP_sha3_512(); }
-static const EVP_MD *evp_blake2s256() noexcept(true) { return EVP_blake2s256(); }
-static const EVP_MD *evp_blake2b512() noexcept(true) { return EVP_blake2b512(); }
-static const EVP_MD *evp_ripemd160() noexcept(true) { return EVP_ripemd160(); }
+static const EVP_MD* evp_sha256() noexcept(true) { return EVP_sha256(); }
+static const EVP_MD* evp_sha384() noexcept(true) { return EVP_sha384(); }
+static const EVP_MD* evp_sha512() noexcept(true) { return EVP_sha512(); }
+static const EVP_MD* evp_sha3_256() noexcept(true) { return EVP_sha3_256(); }
+static const EVP_MD* evp_sha3_384() noexcept(true) { return EVP_sha3_384(); }
+static const EVP_MD* evp_sha3_512() noexcept(true) { return EVP_sha3_512(); }
+static const EVP_MD* evp_blake2s256() noexcept(true) { return EVP_blake2s256(); }
+static const EVP_MD* evp_blake2b512() noexcept(true) { return EVP_blake2b512(); }
+static const EVP_MD* evp_ripemd160() noexcept(true) { return EVP_ripemd160(); }
 
 static const hash_alg_t alg_nohash = {hash_e::none, 0, 0, 0, 0, mem_t(), mem_t(), nullptr};
 static const hash_alg_t alg_sha256 = {
@@ -81,7 +81,7 @@ static const hash_alg_t alg_blake2s = {hash_e::blake2s, 32, 64, 0, 0, mem_t(), m
 static const hash_alg_t alg_blake2b = {hash_e::blake2b, 64, 128, 0, 0, mem_t(), mem_t(), evp_blake2b512()};
 static const hash_alg_t alg_ripemd160 = {hash_e::ripemd160, 20, 64, 20, 8, mem_t(), mem_t(), evp_ripemd160()};
 
-const hash_alg_t &hash_alg_t::get(hash_e type)  // static
+const hash_alg_t& hash_alg_t::get(hash_e type)  // static
 {
   switch (type) {
     case hash_e::sha256:
@@ -121,20 +121,20 @@ void hash_t::free() {
   ctx_ptr = nullptr;
 }
 
-hash_t &hash_t::init() {
+hash_t& hash_t::init() {
   if (!ctx_ptr) ctx_ptr = ::EVP_MD_CTX_new();
   ::EVP_DigestInit(ctx_ptr, alg.md);
   return *this;
 }
 
-hash_t &hash_t::update(const_byte_ptr ptr, int size) {
+hash_t& hash_t::update(const_byte_ptr ptr, int size) {
   ::EVP_DigestUpdate(ctx_ptr, ptr, size);
   return *this;
 }
 
 void hash_t::final(byte_ptr out) { ::EVP_DigestFinal(ctx_ptr, out, NULL); }
 
-void hash_t::copy_state(hash_t &dst) { EVP_MD_CTX_copy(dst.ctx_ptr, ctx_ptr); }
+void hash_t::copy_state(hash_t& dst) { EVP_MD_CTX_copy(dst.ctx_ptr, ctx_ptr); }
 
 buf_t hash_t::final() {
   buf_t out(alg.size);
@@ -156,20 +156,20 @@ buf_t hmac_t::final() {
   return out;
 }
 
-hmac_t &hmac_t::init(mem_t key) {
+hmac_t& hmac_t::init(mem_t key) {
   if (!ctx_ptr) {
-    EVP_MAC *mac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+    EVP_MAC* mac = EVP_MAC_fetch(NULL, "HMAC", NULL);
     ctx_ptr = EVP_MAC_CTX_new(mac);
     EVP_MAC_free(mac);
   }
   OSSL_PARAM params[2];
-  params[0] = OSSL_PARAM_construct_utf8_string("digest", (char *)EVP_MD_name(alg.md), 0);
+  params[0] = OSSL_PARAM_construct_utf8_string("digest", (char*)EVP_MD_name(alg.md), 0);
   params[1] = OSSL_PARAM_construct_end();
   EVP_MAC_init(ctx_ptr, key.data, key.size, params);
   return *this;
 }
 
-hmac_t &hmac_t::update(const_byte_ptr ptr, int size) {
+hmac_t& hmac_t::update(const_byte_ptr ptr, int size) {
   EVP_MAC_update(ctx_ptr, ptr, size);
   return *this;
 }
@@ -181,7 +181,7 @@ void hmac_t::final(byte_ptr out) {
   ctx_ptr = nullptr;
 }
 
-void hmac_t::copy_state(hmac_t &dst) {
+void hmac_t::copy_state(hmac_t& dst) {
   if (dst.ctx_ptr) EVP_MAC_CTX_free(dst.ctx_ptr);
   dst.ctx_ptr = EVP_MAC_CTX_dup(ctx_ptr);
 }
@@ -224,28 +224,28 @@ const uint64_t sha512_k[80] = {  // ULL = uint64
 // -------------------------- RFC 5869 HKDF ----------------------------
 
 buf_t hkdf_extract(hash_e type, mem_t salt, mem_t ikm) {
-  const hash_alg_t &alg = hash_alg_t::get(type);
+  const hash_alg_t& alg = hash_alg_t::get(type);
   buf_t prk(alg.size);
 
-  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "HKDF", NULL);
+  EVP_KDF* kdf = EVP_KDF_fetch(NULL, "HKDF", NULL);
   cb_assert(kdf && "EVP_KDF_fetch(HKDF) failed");
-  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
+  EVP_KDF_CTX* kctx = EVP_KDF_CTX_new(kdf);
   EVP_KDF_free(kdf);
   cb_assert(kctx && "EVP_KDF_CTX_new failed");
 
   int mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
   OSSL_PARAM params[7];
   int pidx = 0;
-  params[pidx++] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, (char *)EVP_MD_name(alg.md), 0);
-  params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, (void *)ikm.data, (size_t)ikm.size);
+  params[pidx++] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, (char*)EVP_MD_name(alg.md), 0);
+  params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, (void*)ikm.data, (size_t)ikm.size);
   buf_t zero_salt;
   if (salt.size > 0) {
-    params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, (void *)salt.data, (size_t)salt.size);
+    params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, (void*)salt.data, (size_t)salt.size);
   } else {
     zero_salt.resize(alg.size);
     memset(zero_salt.data(), 0, zero_salt.size());
     params[pidx++] =
-        OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, (void *)zero_salt.data(), (size_t)zero_salt.size());
+        OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, (void*)zero_salt.data(), (size_t)zero_salt.size());
   }
   params[pidx++] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
   params[pidx] = OSSL_PARAM_construct_end();
@@ -257,7 +257,7 @@ buf_t hkdf_extract(hash_e type, mem_t salt, mem_t ikm) {
 }
 
 buf_t hkdf_expand(hash_e type, mem_t prk, mem_t info, int out_len) {
-  const hash_alg_t &alg = hash_alg_t::get(type);
+  const hash_alg_t& alg = hash_alg_t::get(type);
   const int hash_len = alg.size;
   cb_assert(out_len >= 0);
   const int n = (out_len + hash_len - 1) / hash_len;
@@ -265,19 +265,19 @@ buf_t hkdf_expand(hash_e type, mem_t prk, mem_t info, int out_len) {
 
   buf_t okm(out_len);
 
-  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "HKDF", NULL);
+  EVP_KDF* kdf = EVP_KDF_fetch(NULL, "HKDF", NULL);
   cb_assert(kdf && "EVP_KDF_fetch(HKDF) failed");
-  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
+  EVP_KDF_CTX* kctx = EVP_KDF_CTX_new(kdf);
   EVP_KDF_free(kdf);
   cb_assert(kctx && "EVP_KDF_CTX_new failed");
 
   int mode = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
   OSSL_PARAM params[6];
   int pidx = 0;
-  params[pidx++] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, (char *)EVP_MD_name(alg.md), 0);
-  params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, (void *)prk.data, (size_t)prk.size);
+  params[pidx++] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, (char*)EVP_MD_name(alg.md), 0);
+  params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, (void*)prk.data, (size_t)prk.size);
   if (info.size > 0) {
-    params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, (void *)info.data, (size_t)info.size);
+    params[pidx++] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, (void*)info.data, (size_t)info.size);
   }
   params[pidx++] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
   params[pidx] = OSSL_PARAM_construct_end();

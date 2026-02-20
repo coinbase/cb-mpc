@@ -1,5 +1,5 @@
-#include <cbmpc/core/utils.h>
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/core/utils.h>
+#include <cbmpc/internal/crypto/base.h>
 
 namespace coinbase::crypto {
 
@@ -179,7 +179,7 @@ buf_t ecurve_ed_t::prv_to_der(const ecc_prv_key_t& K) const {
   cb_assert(K.ed_bin.size() == ed25519::prv_bin_size());
   buf_t out(ed25519::pkcs8_prefix.size + ed25519::prv_bin_size());
   memmove(out.data(), ed25519::pkcs8_prefix.data, ed25519::pkcs8_prefix.size);
-  memmove(out.data() + ed25519::x509_prefix.size, K.ed_bin.data(), ed25519::prv_bin_size());
+  memmove(out.data() + ed25519::pkcs8_prefix.size, K.ed_bin.data(), ed25519::prv_bin_size());
   return out;
 }
 

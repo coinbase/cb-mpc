@@ -1,12 +1,11 @@
-#include <cbmpc/core/log.h>
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
-#include <cbmpc/crypto/scope.h>
-
-#include "base_ecc_secp256k1.h"
-#include "base_eddsa.h"
-#include "base_pki.h"
-#include "ec25519_core.h"
+#include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_ecc_secp256k1.h>
+#include <cbmpc/internal/crypto/base_eddsa.h>
+#include <cbmpc/internal/crypto/base_pki.h>
+#include <cbmpc/internal/crypto/ec25519_core.h>
+#include <cbmpc/internal/crypto/ro.h>
+#include <cbmpc/internal/crypto/scope.h>
 
 namespace coinbase::crypto {
 
@@ -892,7 +891,7 @@ ecc_point_t ecc_point_t::operator-() const {
 
 bool ecc_point_t::operator==(const ecc_point_t& val) const {
   if (!ptr) return val.ptr == nullptr;
-  if (!val.ptr) return ptr != nullptr;
+  if (!val.ptr) return false;
   if (!curve) return false;
   if (curve != val.curve) return false;
   return curve.ptr->equ_points(*this, val);

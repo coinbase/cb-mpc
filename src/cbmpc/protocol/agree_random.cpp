@@ -1,7 +1,6 @@
-#include "agree_random.h"
-
-#include <cbmpc/crypto/commitment.h>
-#include <cbmpc/protocol/committed_broadcast.h>
+#include <cbmpc/internal/crypto/commitment.h>
+#include <cbmpc/internal/protocol/agree_random.h>
+#include <cbmpc/internal/protocol/committed_broadcast.h>
 
 namespace coinbase::mpc {
 

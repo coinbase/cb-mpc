@@ -1,10 +1,8 @@
 
-#include "ec25519_core.h"
-
-#include <cbmpc/core/extended_uint.h>
-#include <cbmpc/core/utils.h>
-
-#include "base_ec_core.h"
+#include <cbmpc/internal/core/extended_uint.h>
+#include <cbmpc/internal/core/utils.h>
+#include <cbmpc/internal/crypto/base_ec_core.h>
+#include <cbmpc/internal/crypto/ec25519_core.h>
 
 #define EXTENDED_COORD
 
@@ -1005,6 +1003,7 @@ extern "C" int ED25519_sign_with_scalar(uint8_t* out_sig, const uint8_t* message
   for (int i = 0; i < 32; i++) az[i] = scalar_bin[31 - i];
 
   sign_with_nonce(out_sig, message, message_len, public_key, az, nonce);
+  OPENSSL_cleanse(nonce, sizeof(nonce));
   OPENSSL_cleanse(az, sizeof(az));
   return 1;
 }

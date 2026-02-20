@@ -1,13 +1,12 @@
-#include "secret_sharing.h"
-
-#include <cbmpc/core/log.h>
-#include <cbmpc/core/utils.h>
-#include <cbmpc/crypto/base_pki.h>
-#include <cbmpc/crypto/lagrange.h>
+#include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/core/utils.h>
+#include <cbmpc/internal/crypto/base_pki.h>
+#include <cbmpc/internal/crypto/lagrange.h>
+#include <cbmpc/internal/crypto/secret_sharing.h>
 
 namespace coinbase::crypto::ss {
 
-std::vector<bn_t> share_and(const mod_t &q, const bn_t &x, const int n, crypto::drbg_aes_ctr_t *drbg) {
+std::vector<bn_t> share_and(const mod_t& q, const bn_t& x, const int n, crypto::drbg_aes_ctr_t* drbg) {
   cb_assert(n > 0);
   std::vector<bn_t> shares(n);
   bn_t sum = 0;
@@ -22,9 +21,9 @@ std::vector<bn_t> share_and(const mod_t &q, const bn_t &x, const int n, crypto::
   return shares;
 }
 
-std::pair<std::vector<bn_t>, std::vector<bn_t>> share_threshold(const mod_t &q, const bn_t &a, const int threshold,
-                                                                const int n, const std::vector<bn_t> &pids,
-                                                                crypto::drbg_aes_ctr_t *drbg) {
+std::pair<std::vector<bn_t>, std::vector<bn_t>> share_threshold(const mod_t& q, const bn_t& a, const int threshold,
+                                                                const int n, const std::vector<bn_t>& pids,
+                                                                crypto::drbg_aes_ctr_t* drbg) {
   std::vector<bn_t> shares(n);
   std::vector<bn_t> b(threshold);
   cb_assert(threshold > 0);
@@ -48,12 +47,12 @@ node_t::~node_t() {
   for (auto node : children) delete node;
 }
 
-void node_t::add_child_node(node_t *node) {
+void node_t::add_child_node(node_t* node) {
   children.push_back(node);
   node->parent = this;
 }
 
-error_t node_t::validate_tree(std::set<pname_t> &names) const {
+error_t node_t::validate_tree(std::set<pname_t>& names) const {
   error_t rv = UNINITIALIZED_ERROR;
   if (name.empty() && parent) return coinbase::error(E_BADARG, "unnamed node");
   if (!parent && !name.empty()) return coinbase::error(E_BADARG, "named root node");
@@ -83,13 +82,13 @@ error_t node_t::validate_tree(std::set<pname_t> &names) const {
       return coinbase::error(E_BADARG, "invalid node type");
   }
 
-  for (const node_t *child : children)
+  for (const node_t* child : children)
     if (rv = child->validate_tree(names)) return rv;
 
   return SUCCESS;
 }
 
-void node_t::convert_node(coinbase::converter_t &c) {
+void node_t::convert_node(coinbase::converter_t& c) {
   int temp = int(type);
   c.convert(temp);
   type = node_e(temp);
@@ -99,7 +98,7 @@ void node_t::convert_node(coinbase::converter_t &c) {
   c.convert_len(n);
 
   for (int i = 0; i < n; i++) {
-    node_t *child = c.is_write() ? children[i] : new node_t();
+    node_t* child = c.is_write() ? children[i] : new node_t();
     child->convert_node(c);
 
     if (c.is_error()) {
@@ -112,25 +111,35 @@ void node_t::convert_node(coinbase::converter_t &c) {
 }
 
 // ac stands for access structure
-void ac_owned_t::convert(coinbase::converter_t &c)  // static
+void ac_owned_t::convert(coinbase::converter_t& c)  // static
 {
   bool exists = (root != nullptr);
   c.convert(exists);
   error_t rv = UNINITIALIZED_ERROR;
 
   if (exists) {
+    c.convert(curve);
+    if (!c.is_write() && !curve.valid()) {
+      rv = coinbase::error(E_FORMAT, "access structure: invalid curve");
+      c.set_error(rv);
+      delete root;
+      root = nullptr;
+      return;
+    }
     if (!c.is_write()) {
       delete root;
       root = new node_t();
     }
 
-    ((node_t *)root)->convert_node(c);
+    ((node_t*)root)->convert_node(c);
     if (c.is_write()) return;
 
     if (!c.is_error()) {
-      rv = root->validate_tree();
+      rv = validate_tree();
       if (rv == 0) return;
     }
+  } else if (!c.is_write()) {
+    curve = nullptr;
   }
 
   delete root;
@@ -138,13 +147,13 @@ void ac_owned_t::convert(coinbase::converter_t &c)  // static
   if (rv) c.set_error(rv);
 }
 
-std::vector<node_t *> node_t::get_sorted_children() const {
-  std::vector<node_t *> sorted = children;
-  std::sort(sorted.begin(), sorted.end(), [](node_t *n1, node_t *n2) -> auto { return n1->name < n2->name; });
+std::vector<node_t*> node_t::get_sorted_children() const {
+  std::vector<node_t*> sorted = children;
+  std::sort(sorted.begin(), sorted.end(), [](node_t* n1, node_t* n2) -> auto { return n1->name < n2->name; });
   return sorted;
 }
 
-static int find_child_index(const node_t *node, const std::string &name) {
+static int find_child_index(const node_t* node, const std::string& name) {
   int n = int(node->children.size());
   for (int i = 0; i < n; i++) {
     if (node->children[i]->name == name) return i;
@@ -152,9 +161,9 @@ static int find_child_index(const node_t *node, const std::string &name) {
   return -1;
 }
 
-node_t *node_t::clone() const {
-  node_t *node = new node_t(type, name, threshold);
-  for (const node_t *child : children) {
+node_t* node_t::clone() const {
+  node_t* node = new node_t(type, name, threshold);
+  for (const node_t* child : children) {
     node->add_child_node(child->clone());
   }
   return node;
@@ -162,7 +171,7 @@ node_t *node_t::clone() const {
 
 void node_t::remove_and_delete() {
   if (parent) {
-    auto &parent_list = parent->children;
+    auto& parent_list = parent->children;
     auto it = std::find(parent_list.begin(), parent_list.end(), this);
     if (it != parent_list.end()) parent_list.erase(it);
   }
@@ -171,7 +180,7 @@ void node_t::remove_and_delete() {
 
 std::string node_t::get_path() const {
   std::string path;
-  const node_t *node = this;
+  const node_t* node = this;
   while (node) {
     if (path.empty())
       path = node->name;
@@ -182,27 +191,27 @@ std::string node_t::get_path() const {
   return path;
 }
 
-bn_t node_t::pid_from_path(const std::string &path) { return pid_from_name(strext::tokenize(path, "/").back()); }
+bn_t node_t::pid_from_path(const std::string& path) { return pid_from_name(strext::tokenize(path, "/").back()); }
 
 bn_t node_t::get_pid() const { return pid_from_name(name); }
 
-const node_t *node_t::find(const pname_t &name) const {
+const node_t* node_t::find(const pname_t& name) const {
   if (this->name == name) return this;
   for (const auto child : children) {
-    const node_t *res = child->find(name);
+    const node_t* res = child->find(name);
     if (res) return res;
   }
   return nullptr;
 }
 
-static void list_leaf_paths_recursive(const node_t *node, const std::string &parent_path,
-                                      std::vector<std::string> &list) {
+static void list_leaf_paths_recursive(const node_t* node, const std::string& parent_path,
+                                      std::vector<std::string>& list) {
   std::string path = get_node_path(parent_path, node);
 
   if (node->type == node_e::LEAF) {
     list.push_back(path);
   } else {
-    for (const node_t *child : node->children) list_leaf_paths_recursive(child, path, list);
+    for (const node_t* child : node->children) list_leaf_paths_recursive(child, path, list);
   }
 }
 
@@ -212,11 +221,11 @@ std::vector<std::string> node_t::list_leaf_paths() const {
   return list;
 }
 
-static void list_leaf_names_recursive(const node_t *node, std::set<pname_t> &list) {
+static void list_leaf_names_recursive(const node_t* node, std::set<pname_t>& list) {
   if (node->type == node_e::LEAF) {
     list.insert(node->name);
   } else {
-    for (const node_t *child : node->children) list_leaf_names_recursive(child, list);
+    for (const node_t* child : node->children) list_leaf_names_recursive(child, list);
   }
 }
 
@@ -226,7 +235,7 @@ std::set<pname_t> node_t::list_leaf_names() const {
   return list;
 }
 
-bool node_t::enough_for_quorum(const std::set<pname_t> &names) const {
+bool node_t::enough_for_quorum(const std::set<pname_t>& names) const {
   int count = 0;
 
   switch (type) {
@@ -258,10 +267,10 @@ bool node_t::enough_for_quorum(const std::set<pname_t> &names) const {
   return false;
 }
 
-static void share_recursive(const mod_t &q, const ecc_point_t &G, const node_t *node, const bn_t &a,
-                            const bool output_additional_data, ac_shares_t &ac_shares,
-                            ac_internal_shares_t &ac_internal_shares, ac_internal_pub_shares_t &ac_internal_pub_shares,
-                            drbg_aes_ctr_t *drbg) {
+static void share_recursive(const mod_t& q, const ecc_point_t& G, const node_t* node, const bn_t& a,
+                            const bool output_additional_data, ac_shares_t& ac_shares,
+                            ac_internal_shares_t& ac_internal_shares, ac_internal_pub_shares_t& ac_internal_pub_shares,
+                            drbg_aes_ctr_t* drbg) {
   auto sorted_children = node->get_sorted_children();
   int n = int(sorted_children.size());
 
@@ -307,33 +316,40 @@ static void share_recursive(const mod_t &q, const ecc_point_t &G, const node_t *
   }
 }
 
-ac_shares_t ac_t::share(const mod_t &q, const bn_t &x, drbg_aes_ctr_t *drbg) const {
+ac_shares_t ac_t::share(const mod_t& q, const bn_t& x, drbg_aes_ctr_t* drbg) const {
   ac_shares_t shares;
   ac_internal_shares_t dummy;
   ac_internal_pub_shares_t dummy_pub;
 
   bool output_additional_data = false;
-  share_recursive(q, G, root, x, output_additional_data, shares, dummy, dummy_pub, drbg);
+  ecc_point_t dummy_G;
+  share_recursive(q, dummy_G, root, x, output_additional_data, shares, dummy, dummy_pub, drbg);
   return shares;
 }
 
-error_t ac_t::share_with_internals(const mod_t &q, const bn_t &x, ac_shares_t &shares,
-                                   ac_internal_shares_t &ac_internal_shares,
-                                   ac_internal_pub_shares_t &ac_internal_pub_shares, drbg_aes_ctr_t *drbg) const {
+error_t ac_t::share_with_internals(const mod_t& q, const bn_t& x, ac_shares_t& shares,
+                                   ac_internal_shares_t& ac_internal_shares,
+                                   ac_internal_pub_shares_t& ac_internal_pub_shares, drbg_aes_ctr_t* drbg) const {
+  if (!root) return coinbase::error(E_BADARG, "missing root");
+  if (!curve.valid()) return coinbase::error(E_BADARG, "missing curve");
+  if (q != curve.order()) return coinbase::error(E_BADARG, "invalid modulus");
   bool output_additional_data = true;
-  share_recursive(q, G, root, x, output_additional_data, shares, ac_internal_shares, ac_internal_pub_shares, drbg);
+  share_recursive(q, curve.generator(), root, x, output_additional_data, shares, ac_internal_shares,
+                  ac_internal_pub_shares, drbg);
   return SUCCESS;
 }
 
-error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t &Q, const bn_t &si,
-                                                      const ac_internal_pub_shares_t &pub_data,
-                                                      const pname_t &leaf) const {
-  vartime_scope_t vartime_scope;
+error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t& Q, const bn_t& si,
+                                                      const ac_internal_pub_shares_t& pub_data,
+                                                      const pname_t& leaf) const {
+  if (!curve.valid()) return coinbase::error(E_BADARG, "missing curve");
+  if (Q.get_curve() != curve) return coinbase::error(E_BADARG, "curve mismatch");
   auto node = find(leaf);
   if (node == nullptr || node->type != node_e::LEAF) return coinbase::error(E_NOT_FOUND);
 
-  ecc_point_t expected_pub_share = si * G;
-  const node_t *child = nullptr;
+  ecc_point_t expected_pub_share = si * curve.generator();
+  vartime_scope_t vartime_scope;
+  const node_t* child = nullptr;
 
   while (node != nullptr) {
     auto sorted_children = node->get_sorted_children();
@@ -346,7 +362,7 @@ error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t &Q, cons
         return coinbase::error(E_CRYPTO);
       }
     } else if (node->type == node_e::AND) {
-      ecc_point_t expected_sum = Q.get_curve().infinity();
+      ecc_point_t expected_sum = curve.infinity();
       for (size_t i = 0; i < sorted_children.size(); i++) {
         auto child_pub_shares = pub_data.at(sorted_children[i]->name);
         expected_sum += child_pub_shares;
@@ -384,17 +400,20 @@ error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t &Q, cons
   return SUCCESS;
 }
 
-static error_t reconstruct_recursive(const mod_t &q, const node_t *node, const ac_shares_t &shares, bn_t &x) {
+static error_t reconstruct_recursive(const mod_t& q, const node_t* node, const ac_shares_t& shares, bn_t& x) {
   error_t rv = UNINITIALIZED_ERROR;
   int n = node->get_n();
 
   switch (node->type) {
     case node_e::LEAF: {
-      const auto &[found, share] = lookup(shares, node->name);
+      const auto& [found, share] = lookup(shares, node->name);
       if (!found) {
+        // Missing leaf shares are expected in threshold/OR reconstructions.
+        // Do not emit stack traces / dylog output for this control-flow condition.
+        dylog_disable_scope_t dylog_disable_scope;
         return coinbase::error(E_INSUFFICIENT);
       }
-      x = share;
+      x = *share;
     } break;
     case node_e::OR:
       for (int i = 0; i < n; i++) {
@@ -449,23 +468,23 @@ static error_t reconstruct_recursive(const mod_t &q, const node_t *node, const a
   return SUCCESS;
 }
 
-error_t ac_t::reconstruct(const mod_t &q, const ac_shares_t &shares, bn_t &x) const {
+error_t ac_t::reconstruct(const mod_t& q, const ac_shares_t& shares, bn_t& x) const {
   return reconstruct_recursive(q, root, shares, x);
 }
 
-static error_t reconstruct_exponent_recursive(const node_t *node, const ac_pub_shares_t &shares, ecc_point_t &P) {
+static error_t reconstruct_exponent_recursive(const node_t* node, const ac_pub_shares_t& shares, ecc_point_t& P) {
   error_t rv = UNINITIALIZED_ERROR;
   int n = node->get_n();
-  const pname_t &name = node->name;
+  const pname_t& name = node->name;
 
   switch (node->type) {
     case node_e::LEAF: {
-      const auto &[found, share] = lookup(shares, name);
+      const auto& [found, share] = lookup(shares, name);
       if (!found) {
         dylog_disable_scope_t dylog_disable_scope;
         return coinbase::error(E_INSUFFICIENT, "missing share for leaf node " + name);
       }
-      P = share;
+      P = *share;
     } break;
 
     case node_e::OR:
@@ -525,15 +544,23 @@ static error_t reconstruct_exponent_recursive(const node_t *node, const ac_pub_s
   return SUCCESS;
 }
 
-error_t ac_t::reconstruct_exponent(const ac_pub_shares_t &shares, ecc_point_t &P) const {
+error_t ac_t::reconstruct_exponent(const ac_pub_shares_t& shares, ecc_point_t& P) const {
+  if (!root) return coinbase::error(E_BADARG, "missing root");
+  if (!curve.valid()) return coinbase::error(E_BADARG, "missing curve");
+  allow_ecc_infinity_t allow_ecc_infinity;
+  for (const auto& [name, share] : shares) {
+    error_t rv = curve.check(share);
+    if (rv) return coinbase::error(rv, "invalid share point for " + name);
+  }
+
   return reconstruct_exponent_recursive(root, shares, P);
 }
 
-static void list_pub_data_nodes_recursive(const node_t *node, std::set<const node_t *> &node_set) {
+static void list_pub_data_nodes_recursive(const node_t* node, std::set<const node_t*>& node_set) {
   if (node->type == node_e::LEAF) {
     return;
   }
-  for (const node_t *child : node->children) {
+  for (const node_t* child : node->children) {
     list_pub_data_nodes_recursive(child, node_set);
   }
   if (node->type == node_e::AND || node->type == node_e::THRESHOLD) {
@@ -541,8 +568,8 @@ static void list_pub_data_nodes_recursive(const node_t *node, std::set<const nod
   }
 }
 
-std::set<const node_t *> ac_t::list_pub_data_nodes() const {
-  std::set<const node_t *> nodes;
+std::set<const node_t*> ac_t::list_pub_data_nodes() const {
+  std::set<const node_t*> nodes;
   list_pub_data_nodes_recursive(root, nodes);
   return nodes;
 }

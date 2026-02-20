@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cbmpc/crypto/secret_sharing.h>
+#include <cbmpc/internal/crypto/secret_sharing.h>
 
 namespace coinbase::testutils {
 

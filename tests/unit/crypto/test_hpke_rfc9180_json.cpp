@@ -2,8 +2,8 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/base_pki.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_pki.h>
 
 #include "utils/test_macros.h"
 

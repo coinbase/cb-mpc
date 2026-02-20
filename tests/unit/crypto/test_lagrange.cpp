@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/lagrange.h>
+#include <cbmpc/internal/crypto/lagrange.h>
 
 #include "utils/test_macros.h"
 

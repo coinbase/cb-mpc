@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/crypto/base.h>
 
 namespace {
 
 using namespace coinbase;
 using namespace coinbase::crypto;
 
-TEST(BaseHash, MemTVectorEncodesBoundariesAndLength) {
+TEST(BaseHash, MemVecEncodesBoundsAndLen) {
   const std::vector<mem_t> msgs_a = {mem_t("a"), mem_t("bc")};  // concat: "abc"
   const std::vector<mem_t> msgs_b = {mem_t("ab"), mem_t("c")};  // concat: "abc"
   const std::vector<mem_t> msgs_c = {mem_t("abc")};             // concat: "abc"

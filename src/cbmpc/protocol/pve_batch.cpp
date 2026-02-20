@@ -1,13 +1,10 @@
-#include "pve_batch.h"
+#include <cbmpc/internal/protocol/pve_batch.h>
 
 namespace coinbase::mpc {
 
-ec_pve_batch_t::ec_pve_batch_t(int batch_count) : base_pke(pve_base_pke_unified()), n(batch_count), rows(kappa) {
-  cb_assert(batch_count > 0 && batch_count <= MAX_BATCH_COUNT);
-  Q.resize(n);
-}
-
-void ec_pve_batch_t::encrypt(const void* ek, mem_t label, ecurve_t curve, const std::vector<bn_t>& _x) {
+error_t ec_pve_batch_t::encrypt(const pve_base_pke_i& base_pke, pve_keyref_t ek, mem_t label, ecurve_t curve,
+                                const std::vector<bn_t>& _x) {
+  error_t rv = UNINITIALIZED_ERROR;
   cb_assert(n > 0 && n <= MAX_BATCH_COUNT);
   cb_assert(int(_x.size()) == n);
 
@@ -45,7 +42,9 @@ void ec_pve_batch_t::encrypt(const void* ek, mem_t label, ecurve_t curve, const 
     buf_t rho0 = drbg02.gen(rho_size);
     buf_t rho1 = drbg1.gen(rho_size);
 
-    std::vector<bn_t> x0 = bn_t::vector_from_bin(x0_source_bin, n, curve_size + coinbase::bits_to_bytes(SEC_P_STAT), q);
+    std::vector<bn_t> x0;
+    if (rv = bn_t::vector_from_bin(x0_source_bin, n, curve_size + coinbase::bits_to_bytes(SEC_P_STAT), q, x0))
+      return rv;
     std::vector<bn_t> x1(n);
     for (int j = 0; j < n; j++) {
       MODULO(q) x1[j] = x[j] - x0[j];
@@ -56,8 +55,8 @@ void ec_pve_batch_t::encrypt(const void* ek, mem_t label, ecurve_t curve, const 
 
     buf_t x1_bin = bn_t::vector_to_bin(x1, curve_size);
 
-    base_pke.encrypt(ek, inner_label, r01[i], rho0, c0[i]);
-    base_pke.encrypt(ek, inner_label, x1_bin, rho1, c1[i]);
+    if (rv = base_pke.encrypt(ek, inner_label, r01[i], rho0, c0[i])) return rv;
+    if (rv = base_pke.encrypt(ek, inner_label, x1_bin, rho1, c1[i])) return rv;
     rows[i].x_bin = x1_bin;  // some of these will be reset to zero later based on `bi`
   }
 
@@ -69,9 +68,11 @@ void ec_pve_batch_t::encrypt(const void* ek, mem_t label, ecurve_t curve, const 
     rows[i].c = bi ? c0[i] : c1[i];
     if (!bi) rows[i].x_bin.free();
   }
+  return SUCCESS;
 }
 
-error_t ec_pve_batch_t::verify(const void* ek, const std::vector<ecc_point_t>& Q, mem_t label) const {
+error_t ec_pve_batch_t::verify(const pve_base_pke_i& base_pke, pve_keyref_t ek, const std::vector<ecc_point_t>& Q,
+                               mem_t label) const {
   error_t rv = UNINITIALIZED_ERROR;
   if (n <= 0 || n > MAX_BATCH_COUNT) return coinbase::error(E_BADARG);
   if (int(Q.size()) != n) return coinbase::error(E_BADARG);
@@ -103,25 +104,26 @@ error_t ec_pve_batch_t::verify(const void* ek, const std::vector<ecc_point_t>& Q
     if (bi) {
       c0[i] = rows[i].c;
 
-      xi = bn_t::vector_from_bin(rows[i].x_bin, n, curve_size, q);
-
       if (rows[i].r.size() != 16) return coinbase::error(E_CRYPTO);
+      if (rows[i].x_bin.size() != n * curve_size) return coinbase::error(E_CRYPTO);
+      if (rv = bn_t::vector_from_bin(rows[i].x_bin, n, curve_size, q, xi)) return rv;
       crypto::drbg_aes_ctr_t drbg1(rows[i].r);
       buf_t rho1 = drbg1.gen(rho_size);
 
-      base_pke.encrypt(ek, inner_label, bn_t::vector_to_bin(xi, curve_size), rho1, c1[i]);
+      if (rv = base_pke.encrypt(ek, inner_label, bn_t::vector_to_bin(xi, curve_size), rho1, c1[i])) return rv;
     } else {
       c1[i] = rows[i].c;
 
       if (rows[i].r.size() != 32) return coinbase::error(E_CRYPTO);
       crypto::drbg_aes_ctr_t drbg01(rows[i].r.take(16));
       buf_t x0_source_bin = drbg01.gen(n * (curve_size + coinbase::bits_to_bytes(SEC_P_STAT)));
-      xi = bn_t::vector_from_bin(x0_source_bin, n, curve_size + coinbase::bits_to_bytes(SEC_P_STAT), q);
+      if (rv = bn_t::vector_from_bin(x0_source_bin, n, curve_size + coinbase::bits_to_bytes(SEC_P_STAT), q, xi))
+        return rv;
 
       crypto::drbg_aes_ctr_t drbg02(rows[i].r.skip(16));
       buf_t rho0 = drbg02.gen(rho_size);
 
-      base_pke.encrypt(ek, inner_label, rows[i].r.take(16), rho0, c0[i]);
+      if (rv = base_pke.encrypt(ek, inner_label, rows[i].r.take(16), rho0, c0[i])) return rv;
     }
 
     X0[i].resize(n);
@@ -141,28 +143,40 @@ error_t ec_pve_batch_t::verify(const void* ek, const std::vector<ecc_point_t>& Q
 
 error_t ec_pve_batch_t::restore_from_decrypted(int row_index, mem_t decrypted_x_buf, ecurve_t curve,
                                                std::vector<bn_t>& x) const {
-  if (row_index > kappa) return coinbase::error(E_BADARG);
+  if (row_index < 0 || row_index >= kappa) return coinbase::error(E_BADARG);
 
   const mod_t& q = curve.order();
   const auto& G = curve.generator();
   int curve_size = curve.size();
 
-  buf_t r01, x1_bin;
-  bool bi = b.get_bit(row_index);
+  const row_t& row = rows[row_index];
+  const bool bi = b.get_bit(row_index);
+
+  mem_t r01;
+  mem_t x1_bin;
   if (bi) {
-    x1_bin = rows[row_index].x_bin;
+    // When bi=1, the opened value is x1_bin (stored), and the unopened value is r01 (decrypted).
+    if (row.x_bin.size() != n * curve_size) return coinbase::error(E_CRYPTO);
+    x1_bin = row.x_bin;
     r01 = decrypted_x_buf;
+    if (r01.size != 16) return coinbase::error(E_CRYPTO);
   } else {
+    // When bi=0, the opened value is r01||r02 (stored in row.r), and the unopened value is x1_bin (decrypted).
+    if (row.r.size() != 32) return coinbase::error(E_CRYPTO);
+    r01 = row.r.take(16);
     x1_bin = decrypted_x_buf;
-    if (rows[row_index].r.size() != 32) return coinbase::error(E_CRYPTO);
-    r01 = rows[row_index].r.take(16);
+    if (x1_bin.size != n * curve_size) return coinbase::error(E_CRYPTO);
   }
 
-  crypto::drbg_aes_ctr_t drbg01(r01);  // decrypted_x_buf = r01
+  crypto::drbg_aes_ctr_t drbg01(r01);
   buf_t x0_source_bin = drbg01.gen(n * (curve_size + coinbase::bits_to_bytes(SEC_P_STAT)));
-  std::vector<bn_t> x0 = bn_t::vector_from_bin(x0_source_bin, n, curve_size + coinbase::bits_to_bytes(SEC_P_STAT), q);
+  std::vector<bn_t> x0;
+  error_t rv = bn_t::vector_from_bin(x0_source_bin, n, curve_size + coinbase::bits_to_bytes(SEC_P_STAT), q, x0);
+  if (rv) return rv;
 
-  std::vector<bn_t> x1 = bn_t::vector_from_bin(x1_bin, n, curve_size, q);
+  std::vector<bn_t> x1;
+  rv = bn_t::vector_from_bin(x1_bin, n, curve_size, q, x1);
+  if (rv) return rv;
 
   for (int i = 0; i < n; i++) {
     MODULO(q) x[i] = x0[i] + x1[i];
@@ -172,11 +186,11 @@ error_t ec_pve_batch_t::restore_from_decrypted(int row_index, mem_t decrypted_x_
   return SUCCESS;
 }
 
-error_t ec_pve_batch_t::decrypt(const void* dk, const void* ek, mem_t label, ecurve_t curve, std::vector<bn_t>& xs,
-                                bool skip_verify) const {
+error_t ec_pve_batch_t::decrypt(const pve_base_pke_i& base_pke, pve_keyref_t dk, pve_keyref_t ek, mem_t label,
+                                ecurve_t curve, std::vector<bn_t>& xs, bool skip_verify) const {
   error_t rv = UNINITIALIZED_ERROR;
   xs.resize(n);
-  if (!skip_verify && (rv = verify(ek, Q, label))) return rv;
+  if (!skip_verify && (rv = verify(base_pke, ek, Q, label))) return rv;
 
   if (label != this->L) return coinbase::error(E_CRYPTO);
   buf_t inner_label = genPVELabelWithPoint(label, Q);

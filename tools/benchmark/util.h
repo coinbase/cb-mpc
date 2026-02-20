@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/crypto/base.h>
 
 inline coinbase::crypto::ecurve_t get_curve(int index) {
   switch (index) {

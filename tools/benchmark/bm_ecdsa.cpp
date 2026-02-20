@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/protocol/ecdsa_2p.h>
-#include <cbmpc/protocol/ecdsa_mp.h>
+#include <cbmpc/internal/protocol/ecdsa_2p.h>
+#include <cbmpc/internal/protocol/ecdsa_mp.h>
 
 #include "local_network/mpc_runner.h"
 #include "mpc_util.h"

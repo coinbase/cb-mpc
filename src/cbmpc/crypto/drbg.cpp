@@ -1,4 +1,4 @@
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/crypto/base.h>
 
 namespace coinbase::crypto {
 
@@ -33,7 +33,7 @@ void drbg_aes_ctr_t::seed(mem_t in) {
 
 void drbg_aes_ctr_t::gen(mem_t out) {
   out.bzero();
-  ctr.update(out, out.data);
+  ctr.update(out, const_cast<byte_ptr>(out.data));
 }
 
 bn_t drbg_aes_ctr_t::gen_bn(const mod_t& mod) { return gen_bn(mod.get_bits_count() + SEC_P_STAT) % mod; }

@@ -17,7 +17,6 @@ target_sources(cbmpc_crypto  PRIVATE
   base_rsa.cpp
   base_paillier.cpp
   base_rsa_oaep.cpp
-  base_pki.cpp
 
   drbg.cpp
   ro.cpp

@@ -1,4 +1,4 @@
-#include "hd_tree_bip32.h"
+#include <cbmpc/internal/protocol/hd_tree_bip32.h>
 
 namespace coinbase::mpc {
 

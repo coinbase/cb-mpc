@@ -21,7 +21,23 @@ set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "Disable benchmark tests" FORCE)
 add_subdirectory(${REPO_ROOT}/vendors/google-benchmark
                  ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/.benchmark)
 
-set(CBMPC_SOURCE_DIR /usr/local/opt/cbmpc/)
+if(NOT DEFINED CBMPC_SOURCE_DIR)
+  if(DEFINED ENV{CBMPC_PREFIX})
+    set(CBMPC_SOURCE_DIR "$ENV{CBMPC_PREFIX}")
+  elseif(DEFINED ENV{CBMPC_PREFIX_FULL})
+    set(CBMPC_SOURCE_DIR "$ENV{CBMPC_PREFIX_FULL}")
+  else()
+    # Default to the repo-local full install prefix (no sudo).
+    set(CBMPC_SOURCE_DIR "${REPO_ROOT}/build/install/full")
+  endif()
+endif()
+
+set(CBMPC_LIB_DIR "${CBMPC_SOURCE_DIR}/lib")
+if(EXISTS "${CBMPC_SOURCE_DIR}/lib/Release/libcbmpc.a")
+  set(CBMPC_LIB_DIR "${CBMPC_SOURCE_DIR}/lib/Release")
+elseif(EXISTS "${CBMPC_SOURCE_DIR}/lib/Debug/libcbmpc.a")
+  set(CBMPC_LIB_DIR "${CBMPC_SOURCE_DIR}/lib/Debug")
+endif()
 
 add_executable(
   cbmpc_benchmark
@@ -45,14 +61,26 @@ add_executable(
   # bm_test.cpp
   )
 
-target_include_directories(cbmpc_benchmark PRIVATE ${REPO_ROOT}/tests/utils)
-target_include_directories(cbmpc_benchmark PRIVATE ${CBMPC_SOURCE_DIR}/include)
+add_subdirectory(${REPO_ROOT}/tests/utils ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/.cbmpc_test_util)
+target_include_directories(cbmpc_test_util PRIVATE ${CBMPC_SOURCE_DIR}/include)
+if(EXISTS "${CBMPC_SOURCE_DIR}/include-internal")
+  target_include_directories(cbmpc_test_util PRIVATE ${CBMPC_SOURCE_DIR}/include-internal)
+endif()
+# `cbmpc_test_util` (local_network runner) historically used the parallel transport
+# demo helpers. Keep the implementation linked here so clean Linux builds don't
+# depend on core library internals.
+target_sources(cbmpc_test_util PRIVATE ${REPO_ROOT}/demo-cpp/common/mpc_job_session.cpp)
 
-target_link_directories(cbmpc_benchmark PUBLIC ${CBMPC_SOURCE_DIR}/lib)
+target_include_directories(cbmpc_benchmark PRIVATE ${CBMPC_SOURCE_DIR}/include)
+if(EXISTS "${CBMPC_SOURCE_DIR}/include-internal")
+  target_include_directories(cbmpc_benchmark PRIVATE ${CBMPC_SOURCE_DIR}/include-internal)
+endif()
+target_include_directories(cbmpc_benchmark PRIVATE ${REPO_ROOT}/demo-cpp/common)
+
+target_link_directories(cbmpc_benchmark PUBLIC ${CBMPC_LIB_DIR})
 link_openssl(cbmpc_benchmark)
 target_link_libraries(cbmpc_benchmark PUBLIC benchmark::benchmark PRIVATE cbmpc)
-target_link_libraries(cbmpc_benchmark
-                      PRIVATE ${REPO_ROOT}/lib/Release/libcbmpc_test_util.a)
+target_link_libraries(cbmpc_benchmark PRIVATE cbmpc_test_util)
 
 if(IS_LINUX)
   link_openssl(cbmpc_benchmark)

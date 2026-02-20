@@ -1,8 +1,9 @@
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/ro.h>
 
+using namespace coinbase;
 using namespace coinbase::crypto;
 
 static void BM_SHA256(benchmark::State& state) {

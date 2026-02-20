@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/tdh2.h>
+#include <cbmpc/internal/crypto/tdh2.h>
 
 #include "utils/data/ac.h"
 #include "utils/data/tdh2.h"
@@ -45,6 +45,7 @@ TEST_F(TDH2, AddCompleteness) {
 }
 
 TEST_F(TDH2, ACCompleteness) {
+  test_ac.curve = curve_p256;
   public_key_t enc_key;
   ss::ac_pub_shares_t pub_shares;
   ss::party_map_t<private_share_t> dec_shares;
@@ -72,6 +73,28 @@ TEST_F(TDH2, ACCompleteness) {
   buf_t decrypted;
   EXPECT_OK(combine(test_ac, enc_key, pub_shares, label, partial_decryptions, ciphertext, decrypted));
   EXPECT_EQ(plain, decrypted);
+}
+
+TEST_F(TDH2, CiphertextRoundTripKeepsLabel) {
+  int n = 3;
+  std::vector<private_share_t> dec_shares;
+
+  public_key_t enc_key;
+  crypto::tdh2::pub_shares_t pub_shares;
+  testutils::generate_additive_shares(n, enc_key, pub_shares, dec_shares, curve_p256);
+
+  const buf_t label = crypto::gen_random(10);
+  const buf_t wrong_label = buf_t("wrong-label");
+  const buf_t plain = crypto::gen_random(32);
+
+  const ciphertext_t ciphertext = enc_key.encrypt(plain, label);
+  const buf_t serialized = coinbase::convert(ciphertext);
+
+  ciphertext_t roundtrip;
+  ASSERT_EQ(coinbase::convert(roundtrip, serialized), SUCCESS);
+  EXPECT_EQ(roundtrip.L, label);
+  EXPECT_OK(roundtrip.verify(enc_key, label));
+  EXPECT_ER(roundtrip.verify(enc_key, wrong_label));
 }
 
 }  // namespace

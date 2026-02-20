@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/core/log.h>
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
+#include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/ro.h>
 
 using namespace coinbase;
 using namespace coinbase::crypto;
 
 namespace {
 
-TEST(CryptoEdDSA, RejectTorsionPointsAndFixInfinityEquality) {
+TEST(CryptoEdDSA, RejectTorsionAndFixInfinityEq) {
   crypto::vartime_scope_t vartime_scope;
   ecurve_t curve = crypto::curve_ed25519;
 
@@ -103,7 +103,7 @@ TEST(CryptoEdDSA, hash_to_point) {
   EXPECT_EQ(in_group_counter, point_counter);
 }
 
-TEST(CryptoEdDSA, mul_by_order_is_infinity_for_subgroup_points) {
+TEST(CryptoEdDSA, MulByOrderIsInfinityForSubgroup) {
   crypto::vartime_scope_t vartime_scope;
   ecurve_t curve = crypto::curve_ed25519;
   const bn_t q = curve.order().value();

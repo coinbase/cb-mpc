@@ -1,4 +1,4 @@
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/crypto/base.h>
 
 extern "C" void bn_correct_top(BIGNUM* a);
 
@@ -10,10 +10,13 @@ static thread_local const mod_t* g_thread_local_storage_modo = nullptr;
 static const mod_t* thread_local_storage_mod() { return g_thread_local_storage_modo; }
 /**
  * @notes:
- * - Although static code analysis marks this is dangerous, it is safe the way we use it:
- *   - We use it in the MODULE macros such that in `MODULE(q) { operation }`, all operations
- *     are done modulo q. In this case, the mod is set once and the pointer is valid until
- *     we exit the scope of the MODULE.
+ * - Static analysis flags this as dangerous because it is a single thread-local pointer that affects all `bn_t`
+ *   arithmetic on the current thread.
+ * - It is intended to be used via the `MODULO(q) { ... }` macro so operations inside the block are performed
+ *   modulo `q`.
+ * - The macro resets the modulus in the `for` loop update clause; if the block exits early (e.g., `return`,
+ *   `break`, `throw`, `goto`), the modulus may remain set and affect subsequent operations on the same thread.
+ * - The modulus is not stacked, so `MODULO(...)` must not be nested.
  */
 static void thread_local_storage_set_mod(const mod_t* ptr) { g_thread_local_storage_modo = ptr; }
 
@@ -121,20 +124,33 @@ bn_t::operator BIGNUM*() { return &val; }
 void bn_t::correct_top() const { bn_correct_top((BIGNUM*)&val); }
 
 int64_t bn_t::get_int64() const {
-  int64_t result = (int64_t)BN_get_word(*this);
-  if (BN_is_negative(*this)) result = -result;
-  return result;
+  const bool neg = BN_is_negative(*this);
+  cb_assert(BN_num_bits(*this) <= 64);
+
+  const uint64_t abs_val = static_cast<uint64_t>(BN_get_word(*this));
+  if (!neg) {
+    cb_assert(abs_val <= static_cast<uint64_t>(INT64_MAX));
+    return static_cast<int64_t>(abs_val);
+  }
+
+  cb_assert(abs_val <= static_cast<uint64_t>(INT64_MAX) + 1);
+  if (abs_val == static_cast<uint64_t>(INT64_MAX) + 1) return INT64_MIN;
+  return -static_cast<int64_t>(abs_val);
 }
 
 void bn_t::set_int64(int64_t src) {
   bool neg = src < 0;
-  if (neg) src = -src;
-  int res = BN_set_word(*this, (BN_ULONG)src);
+  uint64_t abs_val = neg ? -static_cast<uint64_t>(src) : static_cast<uint64_t>(src);
+  int res = BN_set_word(*this, static_cast<BN_ULONG>(abs_val));
   cb_assert(res);
   if (neg) BN_set_negative(*this, 1);
 }
 
-bn_t::operator int() const { return (int)get_int64(); }
+bn_t::operator int() const {
+  int64_t val = get_int64();
+  cb_assert(val >= INT_MIN && val <= INT_MAX);
+  return static_cast<int>(val);
+}
 
 bn_t& bn_t::operator=(int src) {
   set_int64(src);
@@ -214,9 +230,9 @@ bn_t& bn_t::operator+=(int src2) {
 
   int res;
   if (src2 >= 0)
-    res = BN_add_word(*this, src2);
+    res = BN_add_word(*this, static_cast<BN_ULONG>(src2));
   else
-    res = BN_sub_word(*this, -src2);
+    res = BN_sub_word(*this, static_cast<BN_ULONG>(-static_cast<unsigned int>(src2)));
   cb_assert(res);
   return *this;
 }
@@ -227,9 +243,9 @@ bn_t& bn_t::operator-=(int src2) {
 
   int res;
   if (src2 >= 0)
-    res = BN_sub_word(*this, src2);
+    res = BN_sub_word(*this, static_cast<BN_ULONG>(src2));
   else
-    res = BN_add_word(*this, -src2);
+    res = BN_add_word(*this, static_cast<BN_ULONG>(-static_cast<unsigned int>(src2)));
   cb_assert(res);
   return *this;
 }
@@ -239,8 +255,8 @@ bn_t& bn_t::operator*=(int src2) {
   if (mod) return *this = mod->mul(*this, mod->mod(src2));
 
   bool neg = src2 < 0;
-  if (neg) src2 = -src2;
-  int res = BN_mul_word(*this, src2);
+  const BN_ULONG abs_src2 = neg ? static_cast<BN_ULONG>(-static_cast<unsigned int>(src2)) : static_cast<BN_ULONG>(src2);
+  int res = BN_mul_word(*this, abs_src2);
   cb_assert(res);
   if (neg) BN_set_negative(*this, !BN_is_negative(*this));
   cb_assert(res);
@@ -270,9 +286,9 @@ bn_t operator+(const bn_t& src1, int src2) {
   int res;
   bn_t result = src1;
   if (src2 >= 0)
-    res = BN_add_word(result, src2);
+    res = BN_add_word(result, static_cast<BN_ULONG>(src2));
   else
-    res = BN_sub_word(result, -src2);
+    res = BN_sub_word(result, static_cast<BN_ULONG>(-static_cast<unsigned int>(src2)));
   cb_assert(res);
   return result;
 }
@@ -294,9 +310,9 @@ bn_t operator-(const bn_t& src1, int src2) {
   bn_t result = src1;
   int res;
   if (src2 >= 0)
-    res = BN_sub_word(result, src2);
+    res = BN_sub_word(result, static_cast<BN_ULONG>(src2));
   else
-    res = BN_add_word(result, -src2);
+    res = BN_add_word(result, static_cast<BN_ULONG>(-static_cast<unsigned int>(src2)));
   cb_assert(res);
   return result;
 }
@@ -317,8 +333,8 @@ bn_t operator*(const bn_t& src1, int src2) {
 
   bn_t result = src1;
   bool neg = src2 < 0;
-  if (neg) src2 = -src2;
-  int res = BN_mul_word(result, src2);
+  const BN_ULONG abs_src2 = neg ? static_cast<BN_ULONG>(-static_cast<unsigned int>(src2)) : static_cast<BN_ULONG>(src2);
+  int res = BN_mul_word(result, abs_src2);
   cb_assert(res);
   if (neg) BN_set_negative(result, !BN_is_negative(result));
   return result;
@@ -365,27 +381,35 @@ bn_t bn_t::div(const bn_t& src1, const bn_t& src2, bn_t* rem) {  // static
 }
 
 bn_t& bn_t::operator<<=(int value) {
-  int res = BN_lshift(*this, *this, value);
+  if (value <= 0) return *this;
+
+  const int res = BN_lshift(*this, *this, value);
   cb_assert(res);
   return *this;
 }
 
 bn_t& bn_t::operator>>=(int value) {
-  int res = BN_rshift(*this, *this, value);
+  if (value <= 0) return *this;
+
+  const int res = BN_rshift(*this, *this, value);
   cb_assert(res);
   return *this;
 }
 
 bn_t bn_t::lshift(int n) const {
+  if (n <= 0) return *this;
+
   bn_t result;
-  int res = BN_lshift(result, *this, n);
+  const int res = BN_lshift(result, *this, n);
   cb_assert(res);
   return result;
 }
 
 bn_t bn_t::rshift(int n) const {
+  if (n <= 0) return *this;
+
   bn_t result;
-  int res = BN_rshift(result, *this, n);
+  const int res = BN_rshift(result, *this, n);
   cb_assert(res);
   return result;
 }
@@ -495,10 +519,26 @@ bn_t bn_t::from_bin(mem_t mem) {  // static
 }
 
 std::vector<bn_t> bn_t::vector_from_bin(mem_t mem, int n, int size, const mod_t& q) {  // static
-  std::vector<bn_t> result(n);
-  cb_assert(mem.size == n * size);
-  for (int i = 0; i < n; i++, mem = mem.skip(size)) result[i] = bn_t::from_bin(mem.take(size)) % q;
+  std::vector<bn_t> result;
+  const error_t rv = vector_from_bin(mem, n, size, q, result);
+  if (rv) return {};
   return result;
+}
+
+error_t bn_t::vector_from_bin(mem_t mem, int n, int size, const mod_t& q, std::vector<bn_t>& out) {  // static
+  if (n < 0) return coinbase::error(E_BADARG, "vector_from_bin: negative n", /*to_print_stack_trace=*/false);
+  if (size < 0)
+    return coinbase::error(E_BADARG, "vector_from_bin: negative element size", /*to_print_stack_trace=*/false);
+  if (mem.size < 0)
+    return coinbase::error(E_BADARG, "vector_from_bin: negative input size", /*to_print_stack_trace=*/false);
+
+  const int64_t expected_size = static_cast<int64_t>(n) * static_cast<int64_t>(size);
+  if (expected_size != static_cast<int64_t>(mem.size))
+    return coinbase::error(E_BADARG, "vector_from_bin: input size mismatch", /*to_print_stack_trace=*/false);
+
+  out.resize(n);
+  for (int i = 0; i < n; i++, mem = mem.skip(size)) out[i] = bn_t::from_bin(mem.take(size)) % q;
+  return SUCCESS;
 }
 
 bn_t bn_t::from_bin_bitlen(mem_t mem, int bits) {  // static
@@ -530,17 +570,39 @@ std::string bn_t::to_hex() const {
   return result;
 }
 
+error_t bn_t::from_string(const_char_ptr str, bn_t& result) {
+  if (!str || *str == '\0') return coinbase::error(E_BADARG, "from_string: empty or null input");
+  bn_t tmp;
+  BIGNUM* ptr = tmp;
+  int n = BN_dec2bn(&ptr, str);
+  if (n <= 0 || static_cast<size_t>(n) != strlen(str))
+    return coinbase::error(E_BADARG, "from_string: invalid decimal string");
+  result = std::move(tmp);
+  return SUCCESS;
+}
+
 bn_t bn_t::from_string(const_char_ptr str) {
   bn_t result;
-  BIGNUM* ptr = result;
-  cb_assert(0 != BN_dec2bn(&ptr, str));
+  error_t rv = from_string(str, result);
+  cb_assert(rv == 0);
   return result;
+}
+
+error_t bn_t::from_hex(const_char_ptr str, bn_t& result) {
+  if (!str || *str == '\0') return coinbase::error(E_BADARG, "from_hex: empty or null input");
+  bn_t tmp;
+  BIGNUM* ptr = tmp;
+  int n = BN_hex2bn(&ptr, str);
+  if (n <= 0 || static_cast<size_t>(n) != strlen(str))
+    return coinbase::error(E_BADARG, "from_hex: invalid hexadecimal string");
+  result = std::move(tmp);
+  return SUCCESS;
 }
 
 bn_t bn_t::from_hex(const_char_ptr str) {
   bn_t result;
-  BIGNUM* ptr = result;
-  cb_assert(0 != BN_hex2bn(&ptr, str));
+  error_t rv = from_hex(str, result);
+  cb_assert(rv == 0);
   return result;
 }
 
@@ -550,43 +612,53 @@ int bn_t::sign() const {
   return +1;
 }
 
-bn_t operator<<(const bn_t& src1, int src2) {
-  bn_t result;
-  int res = BN_lshift(result, src1, src2);
-  cb_assert(res);
-  return result;
-}
+bn_t operator<<(const bn_t& src1, int src2) { return src1.lshift(src2); }
 
-bn_t operator>>(const bn_t& src1, int src2) {
-  bn_t result;
-  int res = BN_rshift(result, src1, src2);
-  cb_assert(res);
-  return result;
-}
+bn_t operator>>(const bn_t& src1, int src2) { return src1.rshift(src2); }
 
 void bn_t::convert(coinbase::converter_t& converter) {
-  uint32_t neg = sign() < 0;
-  uint32_t value_size = get_bin_size();
-  uint32_t header = (value_size << 1) | neg;
-  converter.convert_len(header);
+  static_assert(MAX_SERIALIZED_BIGNUM_BYTES <= (coinbase::converter_t::MAX_CONVERT_LEN >> 1),
+                "CBMPC_MAX_SERIALIZED_BIGNUM_BYTES must be <= converter_t::MAX_CONVERT_LEN / 2");
 
   if (converter.is_write()) {
+    const uint32_t neg = sign() < 0 ? 1u : 0u;
+    const int value_size = get_bin_size();
+    cb_assert(value_size >= 0);
+    cb_assert(static_cast<uint32_t>(value_size) <= MAX_SERIALIZED_BIGNUM_BYTES);
+
+    uint32_t header = (static_cast<uint32_t>(value_size) << 1) | neg;
+    converter.convert_len(header);
     if (!converter.is_calc_size()) to_bin(converter.current());
-  } else {
-    neg = header & 1;
-    value_size = header >> 1;
-    if (converter.is_error() || !converter.at_least(value_size)) {
-      converter.set_error();
-      return;
-    }
-    if (value_size == 0 && neg) {
-      converter.set_error();
-      return;
-    }
-    auto res = BN_bin2bn(converter.current(), value_size, *this);
-    if (!res) throw std::bad_alloc();
-    if (neg) BN_set_negative(*this, 1);
+    converter.forward(value_size);
+    return;
   }
+
+  uint32_t header = 0;
+  converter.convert_len(header);
+
+  const uint32_t neg = header & 1;
+  const uint32_t value_size_u32 = header >> 1;
+  if (value_size_u32 > MAX_SERIALIZED_BIGNUM_BYTES || value_size_u32 > static_cast<uint32_t>(INT_MAX)) {
+    converter.set_error();
+    return;
+  }
+  const int value_size = static_cast<int>(value_size_u32);
+
+  if (converter.is_error() || !converter.at_least(value_size)) {
+    converter.set_error();
+    return;
+  }
+  if (value_size == 0 && neg) {
+    converter.set_error();
+    return;
+  }
+  auto res = BN_bin2bn(converter.current(), value_size, *this);
+  if (!res) {
+    // Do not throw here: a malicious peer can trigger BN_bin2bn() failures by sending oversized bignums.
+    converter.set_error();
+    return;
+  }
+  if (neg) BN_set_negative(*this, 1);
   converter.forward(value_size);
 }
 

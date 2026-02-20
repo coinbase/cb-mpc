@@ -1,5 +1,5 @@
 #pragma once
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/crypto/base.h>
 
 struct test_nizk_t {
   uint64_t aux = 0;

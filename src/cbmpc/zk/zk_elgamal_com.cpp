@@ -1,7 +1,6 @@
-#include "zk_elgamal_com.h"
-
-#include <cbmpc/crypto/ro.h>
-#include <cbmpc/zk/zk_pedersen.h>
+#include <cbmpc/internal/crypto/ro.h>
+#include <cbmpc/internal/zk/zk_elgamal_com.h>
+#include <cbmpc/internal/zk/zk_pedersen.h>
 
 namespace coinbase::zk {
 
@@ -91,6 +90,9 @@ error_t uc_elgamal_com_t::verify(const ecc_point_t& Q, const elg_com_t& UV, mem_
   ecc_point_t B_sum = curve.infinity();
 
   for (int i = 0; i < rho; i++) {
+    if (rv = crypto::check_right_open_range(0, z1[i], q)) return rv;
+    if (rv = crypto::check_right_open_range(0, z2[i], q)) return rv;
+
     bn_t sigma = bn_t::rand_bitlen(SEC_P_STAT);
     MODULO(q) {
       z1_sum += sigma * z1[i];
