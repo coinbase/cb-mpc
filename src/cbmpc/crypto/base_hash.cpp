@@ -128,6 +128,7 @@ hash_t& hash_t::init() {
 }
 
 hash_t& hash_t::update(const_byte_ptr ptr, int size) {
+  cb_assert(size >= 0);
   ::EVP_DigestUpdate(ctx_ptr, ptr, size);
   return *this;
 }
@@ -170,6 +171,7 @@ hmac_t& hmac_t::init(mem_t key) {
 }
 
 hmac_t& hmac_t::update(const_byte_ptr ptr, int size) {
+  cb_assert(size >= 0);
   EVP_MAC_update(ctx_ptr, ptr, size);
   return *this;
 }

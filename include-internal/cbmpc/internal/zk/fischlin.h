@@ -48,17 +48,17 @@ struct fischlin_params_t {
   int rho, b, t;
 
   int e_max() const {
-    cb_assert(t < 32);
-    return 1 << t;
+    cb_assert(t < 31);
+    return 1U << t;
   }
   uint32_t b_mask() const {
-    cb_assert(b < 32);
-    return (1 << b) - 1;
+    cb_assert(b < 31);
+    return (1U << b) - 1;
   }
   error_t check() const {
     if (rho <= 0) return coinbase::error(E_CRYPTO, "rho <= 0");
     if (b <= 0) return coinbase::error(E_CRYPTO, "b <= 0");
-    if (b >= 32) return coinbase::error(E_CRYPTO, "b >= 32");
+    if (b >= 31) return coinbase::error(E_CRYPTO, "b >= 31");
     if (int64_t(b) * int64_t(rho) < SEC_P_COM) return coinbase::error(E_CRYPTO, "b * rho < SEC_P_COM");
     return SUCCESS;
   }
@@ -66,7 +66,7 @@ struct fischlin_params_t {
   error_t check_with_effective_b(int effective_b) const {
     if (rho <= 0) return coinbase::error(E_CRYPTO, "rho <= 0");
     if (b <= 0) return coinbase::error(E_CRYPTO, "b <= 0");
-    if (b >= 32) return coinbase::error(E_CRYPTO, "b >= 32");
+    if (b >= 31) return coinbase::error(E_CRYPTO, "b >= 31");
 
     if (effective_b <= 0) return coinbase::error(E_CRYPTO, "effective_b <= 0");
     if (int64_t(rho) * int64_t(effective_b) < SEC_P_COM)

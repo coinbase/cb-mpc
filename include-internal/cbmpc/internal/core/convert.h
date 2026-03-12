@@ -254,7 +254,15 @@ template <typename... ARGS>
 error_t deser(mem_t bin, ARGS&... args) {
   converter_t converter(bin);
   converter.convert(args...);
-  return converter.get_rv();
+  error_t rv = converter.get_rv();
+  if (rv != SUCCESS) return rv;
+
+  // Strict deserialization: reject trailing bytes
+  if (converter.get_offset() != converter.get_size()) {
+    return coinbase::error(E_BADARG);
+  }
+
+  return SUCCESS;
 }
 
 template <typename T>

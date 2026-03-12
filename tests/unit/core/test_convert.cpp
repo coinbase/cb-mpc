@@ -155,4 +155,23 @@ TEST(CoreConvert, ConvertLastRejectsNegRemainingSize) {
   EXPECT_EQ(out.size(), 0);
 }
 
+TEST(CoreConvert, RejectsTrailingBytes) {
+  // Strict deserialization should fail when there are unconsumed trailing bytes.
+  // This prevents message malleability where two different byte sequences
+  // could deserialize to the same value.
+  int original_value = 42;
+  buf_t serialized = coinbase::ser(original_value);
+
+  byte_t garbage[4] = {0xDE, 0xAD, 0xBE, 0xEF};
+  buf_t with_trailing = serialized + mem_t(garbage, 4);
+
+  int result = 0;
+  error_t rv = deser(with_trailing, result);
+
+  EXPECT_NE(rv, SUCCESS);
+
+  EXPECT_OK(deser(serialized, result));
+  EXPECT_EQ(result, original_value);
+}
+
 }  // namespace

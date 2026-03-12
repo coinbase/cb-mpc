@@ -313,4 +313,45 @@ TEST_F(SecretSharing, ReconstructExpRejectsNonSubgroup) {
   EXPECT_ER(ac.reconstruct_exponent(pub_shares, P));
 }
 
+TEST_F(SecretSharing, VerifyShareMissingPubDataKeyCrashes) {
+  ecurve_t curve = curve_secp256k1;
+  ac_t ac(simple_and_node, curve);
+
+  ac_shares_t shares;
+  ac_internal_shares_t internal_shares;
+  ac_internal_pub_shares_t pub_data;
+  ASSERT_OK(ac.share_with_internals(q, x, shares, internal_shares, pub_data));
+
+  pub_data.erase("leaf2");
+
+  vartime_scope_t vartime_scope;
+  ecc_point_t Q = x * curve.generator();
+
+  EXPECT_NO_THROW({
+    auto rv = ac.verify_share_against_ancestors_pub_data(Q, shares.at("leaf1"), pub_data, "leaf1");
+    EXPECT_ER(rv);
+  });
+}
+
+TEST_F(SecretSharing, ShareThresholdRejectsNegativeN) {
+  // share_threshold() should validate that n > 0
+  // Negative n values would convert to SIZE_MAX when constructing std::vector<bn_t>(n)
+  // causing std::bad_alloc or std::length_error
+
+  int threshold = 3;
+  std::vector<bn_t> pids = {1, 3, 8};  // Dummy PIDs
+
+  // Should throw assertion_failed_t for negative n
+  EXPECT_THROW({ share_threshold(q, x, threshold, -1, pids, nullptr); }, coinbase::assertion_failed_t);
+
+  EXPECT_THROW({ share_threshold(q, x, threshold, -100, pids, nullptr); }, coinbase::assertion_failed_t);
+
+  // Valid n should work
+  {
+    auto result = share_threshold(q, x, threshold, 3, pids, nullptr);
+    EXPECT_EQ(result.first.size(), 3);
+    EXPECT_EQ(result.second.size(), threshold);
+  }
+}
+
 }  // namespace

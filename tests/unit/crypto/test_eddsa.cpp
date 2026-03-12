@@ -230,4 +230,42 @@ TEST(CryptoEdDSA, subgroup_check) {
   EXPECT_EQ(got, want);
 }
 
+TEST(CryptoEdDSA, SetEdBinValidatesKeyLength) {
+  // Ed25519 private keys must be exactly 32 bytes
+  // set_ed_bin() should validate this to prevent out-of-bounds reads in sign()
+
+  // Test with too short key (16 bytes)
+  {
+    buf_t short_key(16);
+    short_key.bzero();
+
+    ecc_prv_key_t key;
+    // Should throw assertion_failed_t for wrong-length key
+    EXPECT_THROW({ key.set_ed_bin(short_key); }, coinbase::assertion_failed_t);
+  }
+
+  // Test with too long key (48 bytes)
+  {
+    buf_t long_key(48);
+    long_key.bzero();
+
+    ecc_prv_key_t key;
+    // Should throw assertion_failed_t for wrong-length key
+    EXPECT_THROW({ key.set_ed_bin(long_key); }, coinbase::assertion_failed_t);
+  }
+
+  // Test with valid 32-byte key - should succeed
+  {
+    buf_t valid_key(32);
+    valid_key.bzero();
+
+    ecc_prv_key_t key;
+    EXPECT_NO_THROW({ key.set_ed_bin(valid_key); });
+
+    // Verify the key was set correctly
+    ecc_point_t pub = key.pub();
+    EXPECT_TRUE(pub.is_on_curve());
+  }
+}
+
 }  // namespace

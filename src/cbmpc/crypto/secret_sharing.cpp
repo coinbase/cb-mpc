@@ -24,9 +24,10 @@ std::vector<bn_t> share_and(const mod_t& q, const bn_t& x, const int n, crypto::
 std::pair<std::vector<bn_t>, std::vector<bn_t>> share_threshold(const mod_t& q, const bn_t& a, const int threshold,
                                                                 const int n, const std::vector<bn_t>& pids,
                                                                 crypto::drbg_aes_ctr_t* drbg) {
+  cb_assert(threshold > 0);
+  cb_assert(n > 0);
   std::vector<bn_t> shares(n);
   std::vector<bn_t> b(threshold);
-  cb_assert(threshold > 0);
   shares.resize(n);
   b.resize(threshold);
   b[0] = a;
@@ -354,8 +355,9 @@ error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t& Q, cons
   while (node != nullptr) {
     auto sorted_children = node->get_sorted_children();
 
-    auto pub_shares = pub_data.at(node->name);
-    ecc_point_t my_pub_share = pub_shares;
+    auto it = pub_data.find(node->name);
+    if (it == pub_data.end()) return coinbase::error(E_BADARG, "missing pub_data key");
+    ecc_point_t my_pub_share = it->second;
 
     if (node->type == node_e::LEAF || node->type == node_e::OR) {
       if (my_pub_share != expected_pub_share) {
@@ -364,15 +366,18 @@ error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t& Q, cons
     } else if (node->type == node_e::AND) {
       ecc_point_t expected_sum = curve.infinity();
       for (size_t i = 0; i < sorted_children.size(); i++) {
-        auto child_pub_shares = pub_data.at(sorted_children[i]->name);
-        expected_sum += child_pub_shares;
+        auto child_it = pub_data.find(sorted_children[i]->name);
+        if (child_it == pub_data.end()) return coinbase::error(E_BADARG, "missing pub_data key");
+        expected_sum += child_it->second;
       }
       if (expected_sum != my_pub_share) return coinbase::error(E_CRYPTO);
     } else if (node->type == node_e::THRESHOLD) {
       std::vector<ecc_point_t> quorum(node->threshold);
       std::vector<bn_t> quorum_pids(node->threshold);
       for (int i = 0; i < node->threshold; i++) {
-        quorum[i] = pub_data.at(sorted_children[i]->name);
+        auto child_it = pub_data.find(sorted_children[i]->name);
+        if (child_it == pub_data.end()) return coinbase::error(E_BADARG, "missing pub_data key");
+        quorum[i] = child_it->second;
         quorum_pids[i] = sorted_children[i]->get_pid();
       }
 
@@ -382,8 +387,9 @@ error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t& Q, cons
       if (my_pub_share != lagrange_interpolate_exponent(0, quorum, quorum_pids)) return coinbase::error(E_CRYPTO);
 
       for (size_t i = node->threshold; i < sorted_children.size(); i++) {
-        if (pub_data.at(sorted_children[i]->name) !=
-            lagrange_interpolate_exponent(sorted_children[i]->get_pid(), quorum, quorum_pids))
+        auto child_it = pub_data.find(sorted_children[i]->name);
+        if (child_it == pub_data.end()) return coinbase::error(E_BADARG, "missing pub_data key");
+        if (child_it->second != lagrange_interpolate_exponent(sorted_children[i]->get_pid(), quorum, quorum_pids))
           return coinbase::error(E_CRYPTO);
       }
     } else {

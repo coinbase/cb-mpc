@@ -119,7 +119,10 @@ buf_t gen_random(int size) {
   return output;
 }
 
-buf_t gen_random_bitlen(int bitlen) { return gen_random(coinbase::bits_to_bytes(bitlen)); }
+buf_t gen_random_bitlen(int bitlen) {
+  cb_assert(bitlen >= 0);
+  return gen_random(coinbase::bits_to_bytes(bitlen));
+}
 
 coinbase::bits_t gen_random_bits(int count) {
   coinbase::bits_t out(count);

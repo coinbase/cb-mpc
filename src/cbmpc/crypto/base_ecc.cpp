@@ -410,6 +410,7 @@ void ecc_prv_key_t::set(ecurve_t curve, const bn_t& val) {
 }
 
 void ecc_prv_key_t::set_ed_bin(mem_t ed_bin) {
+  cb_assert(ed_bin.size == ed25519::prv_bin_size());
   this->curve = curve_ed25519;
   this->ed_bin = ed_bin;
 }
@@ -446,7 +447,10 @@ error_t sig_with_pub_key_t::verify_all(const ecc_point_t& Q, mem_t hash,
                                        const std::vector<sig_with_pub_key_t>& sigs)  // static
 {
   error_t rv = UNINITIALIZED_ERROR;
-  ecc_point_t QSum = crypto::curve_p256.infinity();
+  if (sigs.empty()) return coinbase::error(E_BADARG, "sig_with_pub_key_t::verify_all: no signatures provided");
+
+  ecc_point_t QSum = sigs[0].Q.get_curve().infinity();
+
   for (const auto& s : sigs) {
     if (rv = s.verify(hash)) return rv;
     QSum += s.Q;

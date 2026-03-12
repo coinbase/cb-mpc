@@ -157,22 +157,6 @@ struct edwards_projective_t {
     affine_y = y * zi;
   }
 
-  static bool is_on_curve(const fe_t& x, const fe_t& y) {
-    fe_t xx = x * x;
-    fe_t yy = y * y;
-
-    fe_t t = yy;
-    if constexpr (a_coeff == -1)
-      t -= yy;
-    else if constexpr (a_coeff == 1)
-      t += yy;
-    else
-      return false;
-
-    fe_t d = get_d();
-    return t == fe_t::one() + d * xx * yy;
-  }
-
   static bool is_on_curve(const fe_t& x, const fe_t& y, const fe_t& z) {
     fe_t xx = x * x;
     fe_t yy = y * y;

@@ -11,6 +11,7 @@ buf_t::buf_t() noexcept(true) : s(0) { static_assert(sizeof(buf_t) == 40, "Inval
 buf_t::buf_t(int new_size) : s(new_size) {  // NOLINT(*init*)
   // NOTE: `buf_t(int)` intentionally leaves the buffer contents uninitialized.
   // Callers must fully overwrite `size()` bytes before reading from `data()`.
+  cb_assert(new_size >= 0);
   if (new_size > short_size) set_long_ptr(new byte_t[new_size]);
 }
 

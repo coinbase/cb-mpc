@@ -196,4 +196,12 @@ TEST(Buf, BzeroAndSecureBzero) {
   }
 }
 
+TEST(Buf, ConstructorRejectsNegativeSize) {
+  // buf_t constructor should validate that size >= 0
+  // Negative sizes would bypass guards like `if (buf.size() > 0)`
+  // and could cause downstream memory corruption
+  EXPECT_THROW({ coinbase::buf_t buf(-1); }, coinbase::assertion_failed_t);
+  EXPECT_THROW({ coinbase::buf_t buf(-100); }, coinbase::assertion_failed_t);
+}
+
 }  // namespace

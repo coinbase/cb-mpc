@@ -1,6 +1,7 @@
 #include <array>
 #include <gtest/gtest.h>
 
+#include <cbmpc/api/access_structure_util.h>
 #include <cbmpc/api/pve_base_pke.h>
 #include <cbmpc/api/pve_batch_ac.h>
 #include <cbmpc/core/access_structure.h>
@@ -894,4 +895,12 @@ TEST(ApiPveAcNeg, GetPublicKeysCompressedAc_GarbageCiphertext) {
   const std::array<uint8_t, 4> garbage = {0xDE, 0xAD, 0xBE, 0xEF};
   std::vector<buf_t> Qs;
   EXPECT_NE(coinbase::api::pve::get_public_keys_compressed_ac(mem_t(garbage.data(), 4), Qs), SUCCESS);
+}
+
+TEST(ApiPveAcNeg, ValidateAccessStructureNodeAcceptsInvalidNodeType) {
+  coinbase::api::access_structure_t invalid_node;
+  // Cast an out-of-range value to the enum type.
+  invalid_node.type = static_cast<coinbase::api::access_structure_t::node_type>(99);
+  error_t rv = coinbase::api::detail::validate_access_structure_node(invalid_node);
+  EXPECT_NE(rv, SUCCESS);
 }

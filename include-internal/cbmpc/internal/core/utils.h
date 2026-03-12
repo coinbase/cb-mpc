@@ -20,7 +20,10 @@ static std::mutex coutMutex;
 namespace coinbase {
 
 inline int bits_to_bytes_floor(int bits) { return bits >> 3; }
-inline int bits_to_bytes(int bits) { return (bits + 7) >> 3; }
+inline int bits_to_bytes(int bits) {
+  cb_assert(bits >= 0);
+  return (bits + 7) >> 3;
+}
 inline int bytes_to_bits(int bytes) { return bytes << 3; }
 
 namespace detail {

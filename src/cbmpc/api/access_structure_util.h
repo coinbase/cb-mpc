@@ -47,6 +47,8 @@ inline error_t validate_access_structure_node_impl(const access_structure_t& n, 
       if (static_cast<size_t>(n.threshold_k) > n.children.size())
         return coinbase::error(E_BADARG, "access_structure: threshold_k > children.size()");
       break;
+    default:
+      return coinbase::error(E_BADARG, "invalid node type");
   }
 
   for (const auto& ch : n.children) {

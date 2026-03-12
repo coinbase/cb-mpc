@@ -19,10 +19,6 @@
 #define DLLEXPORT __attribute__((visibility("default")))
 #define DLLEXPORT_DEF DLLEXPORT
 
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-
 #define FOR_EACH(i, c) for (auto i = (c).begin(); i != (c).end(); ++i)
 
 typedef void* void_ptr;

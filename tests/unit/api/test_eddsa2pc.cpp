@@ -12,6 +12,7 @@ namespace {
 
 using coinbase::buf_t;
 using coinbase::error_t;
+using coinbase::mem_t;
 
 using coinbase::api::curve_id;
 using coinbase::api::eddsa_2p::party_t;
@@ -204,4 +205,69 @@ TEST(ApiEdDSA2pc, KeyBlobPrivScalar_NoPubSign) {
   bad_x[0] ^= 0x01;
   buf_t bad_merged;
   EXPECT_NE(coinbase::api::eddsa_2p::attach_private_scalar(public_1, bad_x, Qi_full_1, bad_merged), SUCCESS);
+}
+
+TEST(ApiEdDSA2pc, NegSignNullMessage) {
+  auto c1 = std::make_shared<mpc_net_context_t>(0);
+  auto c2 = std::make_shared<mpc_net_context_t>(1);
+  std::vector<std::shared_ptr<mpc_net_context_t>> peers = {c1, c2};
+  c1->init_with_peers(peers);
+  c2->init_with_peers(peers);
+
+  local_api_transport_t t1(c1);
+  local_api_transport_t t2(c2);
+
+  buf_t key_blob_1;
+  buf_t key_blob_2;
+  error_t rv1 = UNINITIALIZED_ERROR;
+  error_t rv2 = UNINITIALIZED_ERROR;
+
+  const coinbase::api::job_2p_t job1{party_t::p1, "p1", "p2", t1};
+  const coinbase::api::job_2p_t job2{party_t::p2, "p1", "p2", t2};
+
+  run_2pc(
+      c1, c2, [&] { return coinbase::api::eddsa_2p::dkg(job1, curve_id::ed25519, key_blob_1); },
+      [&] { return coinbase::api::eddsa_2p::dkg(job2, curve_id::ed25519, key_blob_2); }, rv1, rv2);
+  ASSERT_EQ(rv1, SUCCESS);
+  ASSERT_EQ(rv2, SUCCESS);
+
+  buf_t sig1;
+  buf_t sig2;
+  run_2pc(
+      c1, c2, [&] { return coinbase::api::eddsa_2p::sign(job1, key_blob_1, mem_t(nullptr, 0), sig1); },
+      [&] { return coinbase::api::eddsa_2p::sign(job2, key_blob_2, mem_t(nullptr, 0), sig2); }, rv1, rv2);
+  EXPECT_NE(rv1, SUCCESS);
+}
+
+TEST(ApiEdDSA2pc, NegSignZeroLengthMessage) {
+  auto c1 = std::make_shared<mpc_net_context_t>(0);
+  auto c2 = std::make_shared<mpc_net_context_t>(1);
+  std::vector<std::shared_ptr<mpc_net_context_t>> peers = {c1, c2};
+  c1->init_with_peers(peers);
+  c2->init_with_peers(peers);
+
+  local_api_transport_t t1(c1);
+  local_api_transport_t t2(c2);
+
+  buf_t key_blob_1;
+  buf_t key_blob_2;
+  error_t rv1 = UNINITIALIZED_ERROR;
+  error_t rv2 = UNINITIALIZED_ERROR;
+
+  const coinbase::api::job_2p_t job1{party_t::p1, "p1", "p2", t1};
+  const coinbase::api::job_2p_t job2{party_t::p2, "p1", "p2", t2};
+
+  run_2pc(
+      c1, c2, [&] { return coinbase::api::eddsa_2p::dkg(job1, curve_id::ed25519, key_blob_1); },
+      [&] { return coinbase::api::eddsa_2p::dkg(job2, curve_id::ed25519, key_blob_2); }, rv1, rv2);
+  ASSERT_EQ(rv1, SUCCESS);
+  ASSERT_EQ(rv2, SUCCESS);
+
+  buf_t empty_msg;
+  buf_t sig1;
+  buf_t sig2;
+  run_2pc(
+      c1, c2, [&] { return coinbase::api::eddsa_2p::sign(job1, key_blob_1, empty_msg, sig1); },
+      [&] { return coinbase::api::eddsa_2p::sign(job2, key_blob_2, empty_msg, sig2); }, rv1, rv2);
+  EXPECT_NE(rv1, SUCCESS);
 }

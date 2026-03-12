@@ -18,6 +18,7 @@ static T SUM(int n, LAMBDA lambda) {
 
 template <typename T>
 static T SUM(const std::vector<T>& v) {
+  if (v.empty()) return T{};
   T s = v[0];
   for (int i = 1; i < int(v.size()); i++) s += v[i];
   return s;
@@ -25,6 +26,7 @@ static T SUM(const std::vector<T>& v) {
 
 template <typename T>
 static T SUM(const std::vector<std::reference_wrapper<T>>& v) {
+  if (v.empty()) return T{};
   T s = v[0].get();
   for (int i = 1; i < int(v.size()); i++) s += v[i].get();
   return s;
@@ -32,6 +34,7 @@ static T SUM(const std::vector<std::reference_wrapper<T>>& v) {
 
 template <typename T>
 static T SUM(const std::map<coinbase::crypto::pname_t, T>& m) {
+  if (m.empty()) return T{};
   T s = m.begin()->second;
   for (auto it = std::next(m.begin()); it != m.end(); ++it) s += it->second;
   return s;

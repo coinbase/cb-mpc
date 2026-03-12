@@ -59,7 +59,11 @@ struct public_key_t {
    */
   ciphertext_t encrypt(mem_t plain, mem_t label, const bn_t& r, const bn_t& s, mem_t iv) const;
 
-  bool valid() const { return Q.valid(); }
+  bool valid() const {
+    if (!Q.valid()) return false;
+    ecc_point_t expected_Gamma = ro::hash_curve(mem_t("TDH2-Gamma"), Q, sid).curve(Q.get_curve());
+    return Gamma == expected_Gamma;
+  }
   void convert(coinbase::converter_t& converter) { converter.convert(Q, Gamma, sid); }
   buf_t to_bin() const { return coinbase::convert(*this); }
   error_t from_bin(mem_t bin) { return coinbase::convert(*this, bin); }

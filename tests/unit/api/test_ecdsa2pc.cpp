@@ -825,3 +825,22 @@ TEST_F(ApiEcdsa2pcNegWithBlobs, NegRefreshRoleMismatch) {
   buf_t new_blob;
   EXPECT_NE(coinbase::api::ecdsa_2p::refresh(job, blob1_, new_blob), SUCCESS);
 }
+
+// ==========================================================================
+// Negative: sign with null or zero-length message
+// ==========================================================================
+
+TEST_F(ApiEcdsa2pcNegWithBlobs, NegSignNullMessage) {
+  noop_transport_t t;
+  auto job = make_noop_job(t);
+  buf_t sid, sig;
+  EXPECT_NE(coinbase::api::ecdsa_2p::sign(job, blob1_, mem_t(nullptr, 0), sid, sig), SUCCESS);
+}
+
+TEST_F(ApiEcdsa2pcNegWithBlobs, NegSignZeroLengthMessage) {
+  noop_transport_t t;
+  auto job = make_noop_job(t);
+  buf_t empty_msg;
+  buf_t sid, sig;
+  EXPECT_NE(coinbase::api::ecdsa_2p::sign(job, blob1_, empty_msg, sid, sig), SUCCESS);
+}
