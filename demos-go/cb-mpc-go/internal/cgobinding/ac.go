@@ -33,6 +33,12 @@ func AddChild(parent, child C_NodePtr) {
 	C.add_child((*C.crypto_ss_node_ref)(&parent), (*C.crypto_ss_node_ref)(&child))
 }
 
+// SetNodeExplicitPID sets an explicit PID on a node, overriding the default
+// hash-based derivation.
+func SetNodeExplicitPID(node C_NodePtr, pid int) {
+	C.set_node_explicit_pid((*C.crypto_ss_node_ref)(&node), C.int(pid))
+}
+
 // NewAccessStructure constructs a new native access-structure object and
 // returns an opaque handle managed by the caller. The returned handle must be
 // released exactly once via FreeAccessStructure.

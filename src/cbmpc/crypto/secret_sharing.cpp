@@ -154,6 +154,7 @@ static int find_child_index(const node_t *node, const std::string &name) {
 
 node_t *node_t::clone() const {
   node_t *node = new node_t(type, name, threshold);
+  node->explicit_pid = explicit_pid;
   for (const node_t *child : children) {
     node->add_child_node(child->clone());
   }
@@ -184,7 +185,10 @@ std::string node_t::get_path() const {
 
 bn_t node_t::pid_from_path(const std::string &path) { return pid_from_name(strext::tokenize(path, "/").back()); }
 
-bn_t node_t::get_pid() const { return pid_from_name(name); }
+bn_t node_t::get_pid() const {
+  if (explicit_pid.has_value()) return explicit_pid.value();
+  return pid_from_name(name);
+}
 
 const node_t *node_t::find(const pname_t &name) const {
   if (this->name == name) return this;

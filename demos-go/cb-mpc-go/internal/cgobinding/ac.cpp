@@ -26,6 +26,12 @@ void add_child(crypto_ss_node_ref* parent, crypto_ss_node_ref* child) {
   p->add_child_node(c);
 }
 
+void set_node_explicit_pid(crypto_ss_node_ref* node, int pid) {
+  if (node == nullptr || node->opaque == nullptr) return;
+  node_t* n = static_cast<node_t*>(node->opaque);
+  n->set_explicit_pid(pid);
+}
+
 crypto_ss_ac_ref new_access_structure(crypto_ss_node_ref* root, ecurve_ref* curve_ref) {
   crypto::ss::node_t* root_node = static_cast<crypto::ss::node_t*>(root->opaque);
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <cbmpc/crypto/base.h>
 #include <cbmpc/zk/zk_ec.h>
 
@@ -40,6 +42,7 @@ struct node_t {
   int threshold;
   std::vector<node_t *> children;
   node_t *parent = nullptr;
+  std::optional<bn_t> explicit_pid;  // if set, overrides pid_from_name(name)
 
   node_t(node_e _type, pname_t _name, int _threshold = 0) : type(_type), name(_name), threshold(_threshold) {}
 
@@ -49,6 +52,9 @@ struct node_t {
       child->parent = this;
     }
   }
+
+  void set_explicit_pid(const bn_t &pid) { explicit_pid = pid; }
+  void set_explicit_pid(int pid) { explicit_pid = bn_t(pid); }
 
   ~node_t();
   node_t *clone() const;

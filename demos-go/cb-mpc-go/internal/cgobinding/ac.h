@@ -24,6 +24,8 @@ typedef struct crypto_ss_node_ref {
 crypto_ss_node_ref new_node(int node_type, cmem_t node_name, int threshold);
 // Adds |child| as a child of |parent|. Both pointers must reference valid nodes.
 void add_child(crypto_ss_node_ref* parent, crypto_ss_node_ref* child);
+// Sets an explicit PID on a node, overriding the default hash-based derivation.
+void set_node_explicit_pid(crypto_ss_node_ref* node, int pid);
 // Constructs and returns a new access-structure given a root node and the
 // curve reference. The caller owns the returned pointer and must release it
 // via free_crypto_ss_ac.
