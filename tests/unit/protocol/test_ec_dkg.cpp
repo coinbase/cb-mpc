@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/core/strext.h>
-#include <cbmpc/crypto/secret_sharing.h>
-#include <cbmpc/protocol/ec_dkg.h>
+#include <cbmpc/internal/core/strext.h>
+#include <cbmpc/internal/crypto/secret_sharing.h>
+#include <cbmpc/internal/protocol/ec_dkg.h>
 
 #include "utils/local_network/mpc_tester.h"
 #include "utils/test_macros.h"
@@ -26,7 +26,7 @@ static void RunDkgAndAdditiveShareTest(crypto::ss::node_t* root_node, const std:
   ecurve_t curve = crypto::curve_secp256k1;
   const auto& G = curve.generator();
   ss::ac_t ac;
-  ac.G = G;
+  ac.curve = curve;
   ac.root = root_node;
 
   mpc::party_set_t quorum_party_set;
@@ -36,8 +36,8 @@ static void RunDkgAndAdditiveShareTest(crypto::ss::node_t* root_node, const std:
   buf_t sid_dkg = crypto::gen_random(16);
   mpc_runner_t all_parties_runner(pnames);
   all_parties_runner.run_mpc([&](mpc::job_mp_t& job) {
-    ASSERT_OK(coinbase::mpc::eckey::key_share_mp_t::threshold_dkg(job, curve, sid_dkg, ac, quorum_party_set,
-                                                                  keyshares[job.get_party_idx()]));
+    ASSERT_OK(coinbase::mpc::eckey::key_share_mp_t::dkg_ac(job, curve, sid_dkg, ac, quorum_party_set,
+                                                           keyshares[job.get_party_idx()]));
   });
 
   // Basic key consistency
@@ -76,7 +76,7 @@ TEST(ECDKG, ReconstructPubAdditiveShares) {
   ecurve_t curve = crypto::curve_secp256k1;
   const auto& G = curve.generator();
   ss::ac_t ac;
-  ac.G = G;
+  ac.curve = curve;
   ac.root = root_node;
 
   std::set<crypto::pname_t> quorum = {"p0", "p1", "p2"};
@@ -129,7 +129,7 @@ TEST(ECDKG, ReconstructPubAdditiveShares) {
   EXPECT_EQ(additive_share.Qis["p2"], expected_p2);
 }
 
-TEST(ECDKG, ReconstructPubAdditiveShares_ORNode) {
+TEST(ECDKG, ReconstructPubShares_OR) {
   // OR(p0, AND(p1, THRESHOLD[1](p2, p3))) with additive quorum {p1, p2}
   ss::node_t* root_node = new ss::node_t(
       ss::node_e::OR, "", 0,
@@ -146,7 +146,7 @@ TEST(ECDKG, ReconstructPubAdditiveShares_ORNode) {
   RunDkgAndAdditiveShareTest(root_node, pnames, dkg_quorum_indices, additive_quorum);
 }
 
-TEST(ECDKG, ReconstructPubAdditiveShares_Threshold2of3) {
+TEST(ECDKG, ReconstructPubShares_Thres2of3) {
   // THRESHOLD[2](p0, p1, p2) with additive quorum {p0, p2}
   ss::node_t* root_node =
       new ss::node_t(ss::node_e::THRESHOLD, "", 2,
@@ -159,7 +159,33 @@ TEST(ECDKG, ReconstructPubAdditiveShares_Threshold2of3) {
   RunDkgAndAdditiveShareTest(root_node, pnames, dkg_quorum_indices, additive_quorum);
 }
 
-TEST(ECDKG, ReconstructPubAdditiveShares_ThresholdNofN_ANDEquivalent) {
+TEST(ECDKG, ReconstructPub_2of3_AllQuorum) {
+  // THRESHOLD[2](p0, p1, p2) with all leaves in additive quorum (|quorum| > threshold).
+  ss::node_t* root_node =
+      new ss::node_t(ss::node_e::THRESHOLD, "", 2,
+                     {new ss::node_t(ss::node_e::LEAF, "p0"), new ss::node_t(ss::node_e::LEAF, "p1"),
+                      new ss::node_t(ss::node_e::LEAF, "p2")});
+
+  std::vector<crypto::pname_t> pnames = {"p0", "p1", "p2"};
+  std::set<int> dkg_quorum_indices = {0, 1, 2};
+  std::set<crypto::pname_t> additive_quorum = {"p0", "p1", "p2"};
+  RunDkgAndAdditiveShareTest(root_node, pnames, dkg_quorum_indices, additive_quorum);
+}
+
+TEST(ECDKG, ReconstructPub_1of3_AllQuorum) {
+  // THRESHOLD[1](p0, p1, p2) with all leaves in additive quorum.
+  ss::node_t* root_node =
+      new ss::node_t(ss::node_e::THRESHOLD, "", 1,
+                     {new ss::node_t(ss::node_e::LEAF, "p0"), new ss::node_t(ss::node_e::LEAF, "p1"),
+                      new ss::node_t(ss::node_e::LEAF, "p2")});
+
+  std::vector<crypto::pname_t> pnames = {"p0", "p1", "p2"};
+  std::set<int> dkg_quorum_indices = {0, 1, 2};
+  std::set<crypto::pname_t> additive_quorum = {"p0", "p1", "p2"};
+  RunDkgAndAdditiveShareTest(root_node, pnames, dkg_quorum_indices, additive_quorum);
+}
+
+TEST(ECDKG, ReconstructPub_NofN_AndEq) {
   // THRESHOLD[3](p0, p1, p2) with additive quorum {p0, p1, p2} (equivalent to AND)
   ss::node_t* root_node =
       new ss::node_t(ss::node_e::THRESHOLD, "", 3,
@@ -172,7 +198,7 @@ TEST(ECDKG, ReconstructPubAdditiveShares_ThresholdNofN_ANDEquivalent) {
   RunDkgAndAdditiveShareTest(root_node, pnames, dkg_quorum_indices, additive_quorum);
 }
 
-TEST(ECDKG, ReconstructPubAdditiveShares_Threshold3of4_LargerLeaves) {
+TEST(ECDKG, ReconstructPub_3of4_LargeLeaves) {
   // THRESHOLD[3](p0, p1, p2, p3) with additive quorum {p0, p1, p2}
   ss::node_t* root_node =
       new ss::node_t(ss::node_e::THRESHOLD, "", 3,
@@ -185,7 +211,7 @@ TEST(ECDKG, ReconstructPubAdditiveShares_Threshold3of4_LargerLeaves) {
   RunDkgAndAdditiveShareTest(root_node, pnames, dkg_quorum_indices, additive_quorum);
 }
 
-TEST(ECDKG, ThresholdDkgRejectsInvalidAccessStructureDuplicateLeaves) {
+TEST(ECDKG, ThresholdDkgRejectsDupLeaves) {
   dylog_disable_scope_t dylog_disable_scope;
 
   ecurve_t curve = crypto::curve_secp256k1;
@@ -197,7 +223,7 @@ TEST(ECDKG, ThresholdDkgRejectsInvalidAccessStructureDuplicateLeaves) {
               {new node_t(node_e::LEAF, "p1"), new node_t(node_e::LEAF, "p1"), new node_t(node_e::LEAF, "p2")});
 
   ss::ac_t ac;
-  ac.G = G;
+  ac.curve = curve;
   ac.root = &root;
 
   std::vector<crypto::pname_t> pnames = {"p0", "p1", "p2"};
@@ -208,7 +234,7 @@ TEST(ECDKG, ThresholdDkgRejectsInvalidAccessStructureDuplicateLeaves) {
 
   buf_t sid = crypto::gen_random(16);
   key_share_mp_t key;
-  error_t rv = key_share_mp_t::threshold_dkg(job, curve, sid, ac, quorum_party_set, key);
+  error_t rv = key_share_mp_t::dkg_ac(job, curve, sid, ac, quorum_party_set, key);
   EXPECT_EQ(uint32_t(rv), uint32_t(E_BADARG));
 }
 

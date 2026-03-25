@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/zk/zk_ec.h>
+#include <cbmpc/internal/zk/fischlin.h>
+#include <cbmpc/internal/zk/zk_ec.h>
 
 #include "utils/data/zk_completeness.h"
 #include "utils/test_macros.h"
@@ -95,5 +96,40 @@ TEST_3RZK_COMPLETENESS(ZK_PaillierPedersenEqualInteractive, new test_i3rzk_paill
 TEST_NIZK_COMPLETENESS(ZK_PaillierRangeExpSlack, new test_nizk_paillier_range_exp_slack());
 TEST_NIZK_COMPLETENESS_CURVES(ZK_PDL, test_nizk_pdl);
 TEST_NIZK_COMPLETENESS(ZK_UnknownOrderDL, new test_unknown_order_dl());
+
+TEST(FischlinParams, RejectsB31ToPreventUB) {
+  coinbase::zk::fischlin_params_t p{128, 31, 4};
+  EXPECT_NE(p.check(), SUCCESS);
+}
+
+TEST(FischlinParams, RejectsB32) {
+  coinbase::zk::fischlin_params_t p{128, 32, 4};
+  EXPECT_NE(p.check(), SUCCESS);
+}
+
+TEST(FischlinParams, AcceptsValidParams) {
+  coinbase::zk::fischlin_params_t p{128, 16, 4};
+  EXPECT_EQ(p.check(), SUCCESS);
+}
+
+TEST(FischlinParams, AcceptsB30) {
+  coinbase::zk::fischlin_params_t p{128, 30, 4};
+  EXPECT_EQ(p.check(), SUCCESS);
+}
+
+TEST(FischlinParams, AcceptsT30) {
+  coinbase::zk::fischlin_params_t p{128, 16, 30};
+  EXPECT_EQ(p.check(), SUCCESS);
+}
+
+TEST(FischlinParams, BMaskWorksCorrectly) {
+  coinbase::zk::fischlin_params_t p{128, 8, 4};
+  EXPECT_EQ(p.b_mask(), 0xFFu);
+}
+
+TEST(FischlinParams, EMaxWorksCorrectly) {
+  coinbase::zk::fischlin_params_t p{128, 16, 4};
+  EXPECT_EQ(p.e_max(), 16);
+}
 
 }  // namespace

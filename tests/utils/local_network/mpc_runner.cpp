@@ -1,6 +1,6 @@
 #include "mpc_runner.h"
 
-#include <cbmpc/crypto/base_pki.h>
+#include <cbmpc/internal/crypto/base_pki.h>
 
 using namespace coinbase::mpc;
 
@@ -125,47 +125,6 @@ void mpc_runner_t::run_2pc(lambda_2p_t f) {
 void mpc_runner_t::run_mpc(lambda_mp_t f) {
   set_new_network_mp();
   run_mpc_role([&](party_idx_t party_index) { f(*job_mps[party_index]); });
-}
-
-void mpc_runner_t::run_2pc_parallel_helper(std::shared_ptr<parallel_data_transport_t> network, party_t role, int th_i,
-                                           lambda_2p_parallel_t f) {
-  parallel_id_t parallel_id = th_i;
-  job_parallel_2p_t job(role, test_pnames[0], test_pnames[1], network, parallel_id);
-  f(job, th_i);
-}
-
-void mpc_runner_t::run_2pc_parallel(int n_threads, lambda_2p_parallel_t f) {
-  run_mpc_role([&](party_idx_t party_index) {
-    std::shared_ptr<parallel_data_transport_t> network =
-        std::make_shared<parallel_data_transport_t>(get_data_transport_ptr(party_index), n_threads);
-
-    std::vector<std::thread> threads;
-    for (int th_i = 0; th_i < n_threads; th_i++) {
-      threads.emplace_back(run_2pc_parallel_helper, network, party_t(party_index), th_i, f);
-    }
-    for (auto& th : threads) th.join();
-  });
-}
-
-void mpc_runner_t::run_mpc_parallel_helper(int n, std::shared_ptr<parallel_data_transport_t> network,
-                                           party_idx_t party_index, int th_i, lambda_mp_parallel_t f) {
-  parallel_id_t parallel_id = th_i;
-  std::vector<crypto::pname_t> pnames(test_pnames.begin(), test_pnames.begin() + n);
-  job_parallel_mp_t job(party_index, pnames, network, parallel_id);
-  f(job, th_i);
-}
-
-void mpc_runner_t::run_mpc_parallel(int n_threads, lambda_mp_parallel_t f) {
-  run_mpc_role([&](party_idx_t party_index) {
-    std::shared_ptr<parallel_data_transport_t> network =
-        std::make_shared<parallel_data_transport_t>(get_data_transport_ptr(party_index), n_threads);
-
-    std::vector<std::thread> threads;
-    for (int th_i = 0; th_i < n_threads; th_i++) {
-      threads.emplace_back(run_mpc_parallel_helper, n, network, party_index, th_i, f);
-    }
-    for (auto& th : threads) th.join();
-  });
 }
 
 std::shared_ptr<local_data_transport_t> mpc_runner_t::get_data_transport_ptr(party_idx_t role) {

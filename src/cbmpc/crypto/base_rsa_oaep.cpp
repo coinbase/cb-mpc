@@ -1,4 +1,4 @@
-#include "base.h"
+#include <cbmpc/internal/crypto/base.h>
 
 /*
  * Written by Ulf Moeller. This software is distributed on an "AS IS" basis,
@@ -20,13 +20,13 @@
 
 namespace coinbase::crypto {
 
-static int mgf1_xor(unsigned char *out, size_t outlen, const unsigned char *seed, size_t seedlen, const EVP_MD *md,
-                    OSSL_LIB_CTX *libctx, const char *propq) {
+static int mgf1_xor(unsigned char* out, size_t outlen, const unsigned char* seed, size_t seedlen, const EVP_MD* md,
+                    OSSL_LIB_CTX* libctx, const char* propq) {
   unsigned char dig[EVP_MAX_MD_SIZE];
   unsigned int counter = 0;
   size_t done = 0;
   unsigned int mdsize = 0;
-  EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+  EVP_MD_CTX* ctx = EVP_MD_CTX_new();
   if (ctx == NULL) return -1;
 
   mdsize = EVP_MD_get_size(md);
@@ -72,10 +72,10 @@ err:
  * to avoid complicating an already difficult enough function.
  */
 // NOLINTBEGIN
-static int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx, unsigned char *to, int tlen,
-                                                   const unsigned char *from, int flen, const unsigned char *param,
-                                                   int plen, const EVP_MD *md, const EVP_MD *mgf1md,
-                                                   const unsigned char *seed_data, int seedlen) {
+static int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX* libctx, unsigned char* to, int tlen,
+                                                   const unsigned char* from, int flen, const unsigned char* param,
+                                                   int plen, const EVP_MD* md, const EVP_MD* mgf1md,
+                                                   const unsigned char* seed_data, int seedlen) {
   int rv = 0;
   int emlen = tlen - 1;
   unsigned char *db, *seed;
@@ -115,7 +115,7 @@ static int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx, unsigne
   db = to + mdlen + 1;
 
   /* step 3a: hash the additional input */
-  if (!EVP_Digest((void *)param, plen, db, NULL, md, NULL)) goto err;
+  if (!EVP_Digest((void*)param, plen, db, NULL, md, NULL)) goto err;
   /* step 3b: zero bytes array of length nLen - KLen - 2 HLen -2 */
   memset(db + mdlen, 0, emlen - flen - 2 * mdlen - 1);
   /* step 3c: DB = HA || PS || 00000001 || K */
@@ -138,7 +138,7 @@ err:
 // NOLINTEND
 
 error_t rsa_pub_key_t::pad_oaep_with_seed(int bits, mem_t in, hash_e hash_alg, hash_e mgf_alg, mem_t label, mem_t seed,
-                                          buf_t &out)  // static
+                                          buf_t& out)  // static
 {
   int key_size = coinbase::bits_to_bytes(bits);
   if (0 >= ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(NULL, out.alloc(key_size), key_size, in.data, in.size, label.data,
@@ -148,13 +148,13 @@ error_t rsa_pub_key_t::pad_oaep_with_seed(int bits, mem_t in, hash_e hash_alg, h
   return SUCCESS;
 }
 
-error_t rsa_pub_key_t::pad_oaep(int bits, mem_t in, hash_e hash_alg, hash_e mgf_alg, mem_t label, buf_t &out)  // static
+error_t rsa_pub_key_t::pad_oaep(int bits, mem_t in, hash_e hash_alg, hash_e mgf_alg, mem_t label, buf_t& out)  // static
 {
   int seed_size = hash_alg_t::get(hash_alg).size;
   return pad_oaep_with_seed(bits, in, hash_alg, mgf_alg, label, gen_random(seed_size), out);
 }
 
-error_t rsa_prv_key_t::decrypt_oaep(mem_t in, hash_e hash_alg, hash_e mgf_alg, mem_t label, buf_t &out) const {
+error_t rsa_prv_key_t::decrypt_oaep(mem_t in, hash_e hash_alg, hash_e mgf_alg, mem_t label, buf_t& out) const {
   int n_size = size();
   if (in.size != n_size) return coinbase::error(E_CRYPTO);
 
@@ -169,9 +169,9 @@ error_t rsa_prv_key_t::decrypt_oaep(mem_t in, hash_e hash_alg, hash_e mgf_alg, m
   // using OPENSSL_free. Only pass memory allocated by OPENSSL_malloc, otherwise
   // we risk invalid-free crashes.
   if (label.size > 0) {
-    auto openssl_deleter = [](uint8_t *p) { OPENSSL_free(p); };
+    auto openssl_deleter = [](uint8_t* p) { OPENSSL_free(p); };
     std::unique_ptr<uint8_t, decltype(openssl_deleter)> label_ptr(
-        static_cast<uint8_t *>(OPENSSL_memdup(label.data, static_cast<size_t>(label.size))), openssl_deleter);
+        static_cast<uint8_t*>(OPENSSL_memdup(label.data, static_cast<size_t>(label.size))), openssl_deleter);
     if (!label_ptr) return openssl_error("RSA decrypt OAEP error");
     if (EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, label_ptr.get(), label.size) <= 0) {
       return openssl_error("RSA decrypt OAEP error");
@@ -189,14 +189,14 @@ error_t rsa_prv_key_t::decrypt_oaep(mem_t in, hash_e hash_alg, hash_e mgf_alg, m
 }
 
 error_t rsa_pub_key_t::encrypt_oaep_with_seed(mem_t in, hash_e hash_alg, hash_e mgf_alg, mem_t label, mem_t seed,
-                                              buf_t &out) const {
+                                              buf_t& out) const {
   error_t rv = UNINITIALIZED_ERROR;
   buf_t padded;
   if (rv = pad_oaep_with_seed(size() * 8, in, hash_alg, mgf_alg, label, seed, padded)) return rv;
   return rv = encrypt_raw(padded, out);
 }
 
-error_t rsa_pub_key_t::encrypt_oaep(mem_t in, hash_e hash_alg, hash_e mgf_alg, mem_t label, buf_t &out) const {
+error_t rsa_pub_key_t::encrypt_oaep(mem_t in, hash_e hash_alg, hash_e mgf_alg, mem_t label, buf_t& out) const {
   error_t rv = UNINITIALIZED_ERROR;
   buf_t padded;
   if (rv = pad_oaep(size() * 8, in, hash_alg, mgf_alg, label, padded)) return rv;

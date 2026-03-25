@@ -1,12 +1,10 @@
-#include "ecdsa_2p.h"
-
-#include <cbmpc/protocol/agree_random.h>
-#include <cbmpc/protocol/ec_dkg.h>
-#include <cbmpc/protocol/int_commitment.h>
-#include <cbmpc/protocol/sid.h>
-#include <cbmpc/zk/zk_pedersen.h>
-
-#include "util.h"
+#include <cbmpc/internal/protocol/agree_random.h>
+#include <cbmpc/internal/protocol/ec_dkg.h>
+#include <cbmpc/internal/protocol/ecdsa_2p.h>
+#include <cbmpc/internal/protocol/int_commitment.h>
+#include <cbmpc/internal/protocol/sid.h>
+#include <cbmpc/internal/protocol/util.h>
+#include <cbmpc/internal/zk/zk_pedersen.h>
 
 namespace coinbase::mpc::ecdsa2pc {
 
@@ -368,6 +366,12 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
         Q_minus_xG = key.Q - Q_pub_share;
         if (rv = zk_ecdsa[i].verify(curve, key.paillier, c_key_tag, pai_c, Q_minus_xG, R2[i], m[i], r[i], sid, i))
           return coinbase::error(rv, "zk_ecdsa_sign_2pc_integer_commit_t::verify failed");
+      }
+
+      {
+        crypto::vartime_scope_t vartime_scope;
+        if (rv = key.paillier.verify_cipher(c[i]))
+          return coinbase::error(rv, "ecdsa_2p: invalid Paillier ciphertext from counterparty");
       }
 
       bn_t s = key.paillier.decrypt(c[i]);

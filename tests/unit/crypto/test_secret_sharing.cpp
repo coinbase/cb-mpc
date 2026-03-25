@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/lagrange.h>
-#include <cbmpc/crypto/secret_sharing.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/lagrange.h>
+#include <cbmpc/internal/crypto/secret_sharing.h>
 
 #include "utils/data/ac.h"
 #include "utils/test_macros.h"
@@ -34,8 +34,8 @@ TEST_F(SSNode, ValidateTestNodes) {
 
 TEST_F(SSNode, InvalidNode) {
   node_t root(node_e::AND, "root", 0);
-  node_t *child1 = new node_t(node_e::LEAF, "child1", 0);
-  node_t *child2 = new node_t(node_e::LEAF, "child2", 0);
+  node_t* child1 = new node_t(node_e::LEAF, "child1", 0);
+  node_t* child2 = new node_t(node_e::LEAF, "child2", 0);
 
   root.add_child_node(child1);
   root.add_child_node(child2);
@@ -44,13 +44,13 @@ TEST_F(SSNode, InvalidNode) {
   root.name = "";
   EXPECT_OK(root.validate_tree());
 
-  node_t *child3 = new node_t(node_e::THRESHOLD, "child3", 2);
+  node_t* child3 = new node_t(node_e::THRESHOLD, "child3", 2);
   root.add_child_node(child3);
   EXPECT_ER(root.validate_tree());  // threshold node with no child
-  node_t *child31 = new node_t(node_e::LEAF, "child31", 0);
+  node_t* child31 = new node_t(node_e::LEAF, "child31", 0);
   child3->add_child_node(child31);
   EXPECT_ER(root.validate_tree());  // threshold node with not enough child
-  node_t *child32 = new node_t(node_e::LEAF, "child32", 0);
+  node_t* child32 = new node_t(node_e::LEAF, "child32", 0);
   child3->add_child_node(child32);
   EXPECT_OK(root.validate_tree());  // threshold node with not enough child
 
@@ -58,8 +58,8 @@ TEST_F(SSNode, InvalidNode) {
 }
 
 TEST_F(SSNode, NodeClone) {
-  for (const auto &root : all_roots) {
-    node_t *clone = root->clone();
+  for (const auto& root : all_roots) {
+    node_t* clone = root->clone();
     EXPECT_EQ(clone->children.size(), root->children.size());
     delete clone;
   }
@@ -79,7 +79,7 @@ class SecretSharing : public coinbase::testutils::TestAC {
     n = 5;
   }
 
-  bool correctly_reconstructable(const ac_t &ac_ref, const ac_shares_t &shares, const ss::node_t *root) {
+  bool correctly_reconstructable(const ac_t& ac_ref, const ac_shares_t& shares, const ss::node_t* root) {
     bn_t reconstructed_x;
 
     if (ac_ref.enough_for_quorum(shares)) {
@@ -96,7 +96,7 @@ TEST_F(SecretSharing, ListLeaves) {
   ac_t ac(test_root);
   auto leaves = ac.list_leaf_names();
   EXPECT_EQ(leaves.size(), 24);
-  for (const auto &leaf : leaves) {
+  for (const auto& leaf : leaves) {
     EXPECT_TRUE(test_root->find(leaf));
   }
   std::set<std::string> leaves_set(leaves.begin(), leaves.end());
@@ -147,7 +147,7 @@ TEST_F(SecretSharing, ShareAnd) {
   EXPECT_EQ(shares.size(), n);
 
   bn_t sum = 0;
-  for (const auto &share : shares) {
+  for (const auto& share : shares) {
     MODULO(q) sum += share;
   }
   EXPECT_EQ(sum, x);
@@ -246,18 +246,112 @@ TEST_F(SecretSharing, ACEnoughQuorumAndReconstruct) {
   shares = ac.share(q, x, nullptr);
 
   ac_shares_t minimal_shares;
-  for (const auto &name : valid_quorum) {
+  for (const auto& name : valid_quorum) {
     minimal_shares[name] = shares[name];
   }
   EXPECT_TRUE(ac.enough_for_quorum(minimal_shares));
   EXPECT_TRUE(correctly_reconstructable(ac, minimal_shares, test_root));
 
   ac_shares_t malicious_shares;
-  for (const auto &name : valid_quorum) {
+  for (const auto& name : valid_quorum) {
     malicious_shares[name] = bn_t::rand(q);
   }
   EXPECT_TRUE(ac.enough_for_quorum(malicious_shares));
   EXPECT_FALSE(correctly_reconstructable(ac, malicious_shares, test_root));
+}
+
+TEST_F(SecretSharing, ACReconstructExponentEd25519) {
+  vartime_scope_t vartime_scope;
+  ecurve_t curve = curve_ed25519;
+  const mod_t q = curve.order();
+  const bn_t x = bn_t::rand(q);
+
+  ac_t ac(test_root);
+  ac.curve = curve;
+
+  const ac_shares_t shares = ac.share(q, x, nullptr);
+  ac_pub_shares_t pub_shares;
+  for (const auto& [name, si] : shares) {
+    pub_shares[name] = si * curve.generator();
+  }
+
+  ecc_point_t P;
+  EXPECT_OK(ac.reconstruct_exponent(pub_shares, P));
+  EXPECT_EQ(P, x * curve.generator());
+}
+
+TEST_F(SecretSharing, ReconstructExpRejectsNonSubgroup) {
+  vartime_scope_t vartime_scope;
+  ecurve_t curve = curve_ed25519;
+  const mod_t q = curve.order();
+  const bn_t x = bn_t::rand(q);
+
+  ac_t ac(test_root);
+  ac.curve = curve;
+
+  const ac_shares_t shares = ac.share(q, x, nullptr);
+  ac_pub_shares_t pub_shares;
+  for (const auto& [name, si] : shares) {
+    pub_shares[name] = si * curve.generator();
+  }
+
+  // Ed25519 order-2 torsion point (x=0, y=-1): on-curve but not in the prime-order subgroup.
+  uint8_t order2[32];
+  order2[0] = 0xec;
+  for (int i = 1; i < 31; i++) order2[i] = 0xff;
+  order2[31] = 0x7f;
+
+  ecc_point_t T(curve);
+  ASSERT_EQ(T.from_bin(curve, coinbase::mem_t(order2, 32)), SUCCESS);
+  ASSERT_TRUE(T.is_on_curve());
+  ASSERT_FALSE(T.is_infinity());
+  ASSERT_FALSE(T.is_in_subgroup());
+
+  pub_shares["leaf1"] = T;
+
+  ecc_point_t P;
+  EXPECT_ER(ac.reconstruct_exponent(pub_shares, P));
+}
+
+TEST_F(SecretSharing, VerifyShareMissingPubDataKeyCrashes) {
+  ecurve_t curve = curve_secp256k1;
+  ac_t ac(simple_and_node, curve);
+
+  ac_shares_t shares;
+  ac_internal_shares_t internal_shares;
+  ac_internal_pub_shares_t pub_data;
+  ASSERT_OK(ac.share_with_internals(q, x, shares, internal_shares, pub_data));
+
+  pub_data.erase("leaf2");
+
+  vartime_scope_t vartime_scope;
+  ecc_point_t Q = x * curve.generator();
+
+  EXPECT_NO_THROW({
+    auto rv = ac.verify_share_against_ancestors_pub_data(Q, shares.at("leaf1"), pub_data, "leaf1");
+    EXPECT_ER(rv);
+  });
+}
+
+TEST_F(SecretSharing, ShareThresholdRejectsNegativeN) {
+  // share_threshold() should validate that n > 0
+  // Negative n values would convert to SIZE_MAX when constructing std::vector<bn_t>(n)
+  // causing std::bad_alloc or std::length_error
+
+  int threshold = 3;
+  std::vector<bn_t> pids = {1, 3, 8};  // Dummy PIDs
+
+  // Should throw assertion_failed_t for negative n
+  EXPECT_THROW({ share_threshold(q, x, threshold, -1, pids, nullptr); }, coinbase::assertion_failed_t);
+
+  EXPECT_THROW({ share_threshold(q, x, threshold, -100, pids, nullptr); }, coinbase::assertion_failed_t);
+
+  // Valid n should work
+  {
+    auto result = share_threshold(q, x, threshold, 3, pids, nullptr);
+    EXPECT_EQ(result.first.size(), 3);
+    EXPECT_EQ(result.second.size(), threshold);
+  }
 }
 
 }  // namespace

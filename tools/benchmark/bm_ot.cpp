@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/protocol/ot.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/protocol/ot.h>
 
 #define base_ot_m_lb 1 << 6
 #define base_ot_m_ub 1 << 11

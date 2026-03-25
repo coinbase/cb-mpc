@@ -1,12 +1,12 @@
 home:=$(shell pwd)
 
-exe:="build/cbmpc_benchmark"
+exe:=build/$(BUILD_TYPE)/cbmpc_benchmark
 
 .PHONY: benchmark-build
 benchmark-build:
 	${RUN_CMD} 'cd $(home)/tools/benchmark && \
-	cmake -Bbuild -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DCMAKE_BUILD_TYPE=Release && \
-	cmake --build build/ -- -j$(NCORES)'
+	cmake -Bbuild/$(BUILD_TYPE) -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DCBMPC_SOURCE_DIR="$(CBMPC_PREFIX_FULL)" && \
+	cmake --build build/$(BUILD_TYPE)/ -- -j$(CMAKE_NCORES)'
 
 .PHONY: benchmark-run # e.g. make benchmark-run unit=us filter=ZK
 benchmark-run:

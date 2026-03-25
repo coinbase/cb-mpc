@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/crypto/base.h>
 
 static void BM_Paillier_Gen(benchmark::State& state)
 {

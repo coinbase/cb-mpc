@@ -1,14 +1,10 @@
-#include <cbmpc/core/extended_uint.h>
-#include <cbmpc/core/utils.h>
-#include <cbmpc/crypto/base.h>
+#include <cbmpc/internal/core/extended_uint.h>
+#include <cbmpc/internal/core/utils.h>
+#include <cbmpc/internal/crypto/base.h>
 
 namespace coinbase::crypto {
 
-#if defined(TARGET_IPHONE_SIMULATOR) && TARGET_IPHONE_SIMULATOR
-static thread_local int vartime_scope = 1;
-#else
 static thread_local int vartime_scope = 0;
-#endif
 
 vartime_scope_t::vartime_scope_t() { vartime_scope++; }
 vartime_scope_t::~vartime_scope_t() { vartime_scope--; }
@@ -86,7 +82,7 @@ mod_t& mod_t::operator=(mod_t&& src) {
   return *this;
 }
 
-void mod_t::check(const bn_t& a) const { assert(is_in_range(a) && "out of range for constant-time operations"); }
+void mod_t::check(const bn_t& a) const { cb_assert(is_in_range(a) && "out of range for constant-time operations"); }
 
 bool mod_t::is_in_range(const bn_t& a) const { return a.sign() >= 0 && a < m; }
 
@@ -293,12 +289,27 @@ void mod_t::scr_inv(bn_t& res, const bn_t& in) const {
 void mod_t::random_masking_inv(bn_t& r, const bn_t& a) const {
   // Eventhough, this function is not truely constant-time, the running time is not dependent on the input (bn_t a).
   // Therefore, it doesn't leak any information of the input.
-  bn_t mask = rand();
-  bn_t masked_a = mul(a, mask);
-  masked_a.correct_top();
-  auto res = BN_mod_inverse(r, masked_a, m, bn_t::thread_local_storage_bn_ctx());
-  cb_assert(res && "mod_t::random_masking_inv failed");
-  r = mul(r, mask);
+  // `BN_mod_inverse` fails when the operand is not invertible modulo `m`.
+  // Even when `a` is invertible, a random mask might not be (e.g. if `m` is composite),
+  // which would make `a*mask` non-invertible. Retry with a fresh mask.
+  //
+  // Bound retries to avoid hanging forever when `a` itself isn't invertible.
+  constexpr int max_attempts = 128;
+  bn_t mask;
+  bn_t masked_a;
+  for (int attempt = 0; attempt < max_attempts; attempt++) {
+    mask = rand();
+    if (mask == 0) continue;
+
+    masked_a = mul(a, mask);
+    masked_a.correct_top();
+    if (BN_mod_inverse(r, masked_a, m, bn_t::thread_local_storage_bn_ctx())) {
+      r = mul(r, mask);
+      return;
+    }
+  }
+
+  cb_assert(false && "mod_t::random_masking_inv failed");
 }
 
 void mod_t::_inv(bn_t& r, const bn_t& a, inv_algo_e alg) const {
@@ -451,13 +462,13 @@ void mod_t::_mod(BIGNUM& r, const BIGNUM& x) const {
   borrow &= (r1.d[k] == 0);
   uint64_t mask = constant_time_mask_64(borrow);
   for (int i = 0; i < k; i++) {
-    r1.d[i] = MASKED_SELECT(mask, r1.d[i], r2.d[i]);
+    r1.d[i] = masked_select(mask, r1.d[i], r2.d[i]);
   }
 
   borrow = ct_bn_sub_words(r2.d, r1.d, mm.d, k);
   mask = (uint64_t)0 - borrow;
   for (int i = 0; i < k; i++) {
-    r1.d[i] = MASKED_SELECT(mask, r1.d[i], r2.d[i]);
+    r1.d[i] = masked_select(mask, r1.d[i], r2.d[i]);
   }
 
   auto exp_res = bn_wexpand(&r, k);
@@ -503,8 +514,8 @@ bn_t mod_t::N_inv_mod_phiN_2048(const bn_t& N, const bn_t& phiN) {
     cb_assert(res);
     return result;
   }
-  assert(!phiN.is_odd());
-  assert(N.is_odd());
+  cb_assert(!phiN.is_odd());
+  cb_assert(N.is_odd());
   bn_t N_minus_phiN = LARGEST_PRIME_MOD_2048.sub(N, phiN);
   N_minus_phiN.correct_top();
   mod_t mod_N_minus_phiN(N_minus_phiN, false);

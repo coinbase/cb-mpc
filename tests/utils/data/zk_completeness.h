@@ -1,11 +1,11 @@
 #pragma once
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/base_pki.h>
-#include <cbmpc/zk/zk_ec.h>
-#include <cbmpc/zk/zk_elgamal_com.h>
-#include <cbmpc/zk/zk_paillier.h>
-#include <cbmpc/zk/zk_unknown_order.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_pki.h>
+#include <cbmpc/internal/zk/zk_ec.h>
+#include <cbmpc/internal/zk/zk_elgamal_com.h>
+#include <cbmpc/internal/zk/zk_paillier.h>
+#include <cbmpc/internal/zk/zk_unknown_order.h>
 
 namespace coinbase::test::data {
 

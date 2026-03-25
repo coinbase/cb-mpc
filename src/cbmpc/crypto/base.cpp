@@ -1,8 +1,6 @@
-#include "base.h"
-
-#include <cbmpc/core/log.h>
-
-#include "scope.h"
+#include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/scope.h>
 
 namespace coinbase::crypto {
 // clang-format off
@@ -107,7 +105,7 @@ void gen_random(byte_ptr output, int size) {
   cb_assert(res > 0);
 }
 
-void gen_random(mem_t out) { gen_random(out.data, out.size); }
+void gen_random(mem_t out) { gen_random(const_cast<byte_ptr>(out.data), out.size); }
 
 bool gen_random_bool() {
   uint8_t temp = 0;
@@ -121,11 +119,14 @@ buf_t gen_random(int size) {
   return output;
 }
 
-buf_t gen_random_bitlen(int bitlen) { return gen_random(coinbase::bits_to_bytes(bitlen)); }
+buf_t gen_random_bitlen(int bitlen) {
+  cb_assert(bitlen >= 0);
+  return gen_random(coinbase::bits_to_bytes(bitlen));
+}
 
 coinbase::bits_t gen_random_bits(int count) {
   coinbase::bits_t out(count);
-  gen_random(mem_t(out).data, coinbase::bits_to_bytes(count));
+  gen_random(const_cast<byte_ptr>(mem_t(out).data), coinbase::bits_to_bytes(count));
   return out;
 }
 
@@ -233,7 +234,7 @@ void aes_gcm_t::encrypt_final(mem_t tag)  // tag.data is output
   int out_size = 0;
   cb_assert(0 < EVP_EncryptFinal_ex(cipher.ctx, NULL, &out_size));
   cb_assert(out_size == 0);
-  cb_assert(0 < EVP_CIPHER_CTX_ctrl(cipher.ctx, EVP_CTRL_GCM_GET_TAG, tag.size, tag.data));
+  cb_assert(0 < EVP_CIPHER_CTX_ctrl(cipher.ctx, EVP_CTRL_GCM_GET_TAG, tag.size, const_cast<byte_ptr>(tag.data)));
 }
 
 void aes_gcm_t::decrypt_init(mem_t key, mem_t iv, mem_t auth) {
@@ -248,7 +249,7 @@ void aes_gcm_t::decrypt_init(mem_t key, mem_t iv, mem_t auth) {
 }
 
 error_t aes_gcm_t::decrypt_final(mem_t tag) {
-  cb_assert(0 < EVP_CIPHER_CTX_ctrl(cipher.ctx, EVP_CTRL_GCM_SET_TAG, tag.size, tag.data));
+  cb_assert(0 < EVP_CIPHER_CTX_ctrl(cipher.ctx, EVP_CTRL_GCM_SET_TAG, tag.size, const_cast<byte_ptr>(tag.data)));
   int dummy = 0;
   if (0 >= EVP_DecryptFinal_ex(cipher.ctx, NULL, &dummy)) return coinbase::error(E_CRYPTO);
   return SUCCESS;
@@ -280,7 +281,7 @@ void aes_gmac_t::final(mem_t out) {
   cb_assert(0 < EVP_EncryptUpdate(ctx, &dummy, &out_size, &dummy, 0));
   cb_assert(0 < EVP_EncryptFinal_ex(ctx, NULL, &out_size));
   cb_assert(out_size == 0);
-  cb_assert(0 < EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, out.size, out.data));
+  cb_assert(0 < EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, out.size, const_cast<byte_ptr>(out.data)));
 }
 
 buf_t aes_gmac_t::final(int size) {

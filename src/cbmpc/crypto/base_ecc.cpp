@@ -1,12 +1,11 @@
-#include <cbmpc/core/log.h>
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
-#include <cbmpc/crypto/scope.h>
-
-#include "base_ecc_secp256k1.h"
-#include "base_eddsa.h"
-#include "base_pki.h"
-#include "ec25519_core.h"
+#include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_ecc_secp256k1.h>
+#include <cbmpc/internal/crypto/base_eddsa.h>
+#include <cbmpc/internal/crypto/base_pki.h>
+#include <cbmpc/internal/crypto/ec25519_core.h>
+#include <cbmpc/internal/crypto/ro.h>
+#include <cbmpc/internal/crypto/scope.h>
 
 namespace coinbase::crypto {
 
@@ -411,6 +410,7 @@ void ecc_prv_key_t::set(ecurve_t curve, const bn_t& val) {
 }
 
 void ecc_prv_key_t::set_ed_bin(mem_t ed_bin) {
+  cb_assert(ed_bin.size == ed25519::prv_bin_size());
   this->curve = curve_ed25519;
   this->ed_bin = ed_bin;
 }
@@ -447,8 +447,16 @@ error_t sig_with_pub_key_t::verify_all(const ecc_point_t& Q, mem_t hash,
                                        const std::vector<sig_with_pub_key_t>& sigs)  // static
 {
   error_t rv = UNINITIALIZED_ERROR;
-  ecc_point_t QSum = crypto::curve_p256.infinity();
+  if (sigs.empty()) return coinbase::error(E_BADARG, "sig_with_pub_key_t::verify_all: no signatures provided");
+
+  const auto curve = sigs[0].Q.get_curve();
+  if (!curve || Q.get_curve() != curve)
+    return coinbase::error(E_BADARG, "sig_with_pub_key_t::verify_all: mixed curves");
+
+  ecc_point_t QSum = curve.infinity();
+
   for (const auto& s : sigs) {
+    if (s.Q.get_curve() != curve) return coinbase::error(E_BADARG, "sig_with_pub_key_t::verify_all: mixed curves");
     if (rv = s.verify(hash)) return rv;
     QSum += s.Q;
   }
@@ -487,7 +495,7 @@ buf_t ecc_prv_key_t::sign_schnorr(mem_t message) const {
 ecurve_t ecurve_t::find(int openssl_id) {
   if (openssl_id == 0) return nullptr;
 
-  for (int i = 0; i < _countof(g_curves); i++) {
+  for (int i = 0; i < sizeof(g_curves) / sizeof(g_curves[0]); i++) {
     ecurve_t curve = ecurve_t(g_curves[i]);
     if (curve.type() == ecurve_type_e::ossl && !curve.get_group()) continue;
     if (openssl_id == curve.get_openssl_code()) return curve;
@@ -500,7 +508,7 @@ ecurve_t ecurve_t::find(const EC_GROUP* group) {
   int name_id = EC_GROUP_get_curve_name(group);
   if (name_id) return find(name_id);
 
-  for (int i = 0; i < _countof(g_curves); i++) {
+  for (int i = 0; i < sizeof(g_curves) / sizeof(g_curves[0]); i++) {
     ecurve_t curve = ecurve_t(g_curves[i]);
     const EC_GROUP* curve_group = curve.get_group();
     if (!curve_group) continue;
@@ -892,7 +900,7 @@ ecc_point_t ecc_point_t::operator-() const {
 
 bool ecc_point_t::operator==(const ecc_point_t& val) const {
   if (!ptr) return val.ptr == nullptr;
-  if (!val.ptr) return ptr != nullptr;
+  if (!val.ptr) return false;
   if (!curve) return false;
   if (curve != val.curve) return false;
   return curve.ptr->equ_points(*this, val);

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/base_hash.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_hash.h>
 
 #include "utils/test_macros.h"
 

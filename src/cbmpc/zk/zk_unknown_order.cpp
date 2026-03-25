@@ -1,7 +1,6 @@
-#include "zk_unknown_order.h"
-
-#include <cbmpc/crypto/ro.h>
-#include <cbmpc/zk/zk_paillier.h>
+#include <cbmpc/internal/crypto/ro.h>
+#include <cbmpc/internal/zk/zk_paillier.h>
+#include <cbmpc/internal/zk/zk_unknown_order.h>
 namespace coinbase::zk {
 
 void unknown_order_dl_t::prove(const bn_t& a, const bn_t& b, const mod_t& N, const int l, const bn_t& w, mem_t sid,

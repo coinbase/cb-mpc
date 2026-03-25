@@ -116,23 +116,23 @@ typedef struct {
 } ttest_ctx_t;
 
 typedef struct {
-  int64_t *ticks;
-  int64_t *exec_times;
-  uint8_t *input_data;
-  uint8_t *classes;
-  dudect_config_t *config;
-  ttest_ctx_t *ttest_ctxs[DUDECT_TESTS];
-  int64_t *percentiles;
+  int64_t* ticks;
+  int64_t* exec_times;
+  uint8_t* input_data;
+  uint8_t* classes;
+  dudect_config_t* config;
+  ttest_ctx_t* ttest_ctxs[DUDECT_TESTS];
+  int64_t* percentiles;
 } dudect_ctx_t;
 
 typedef enum { DUDECT_LEAKAGE_FOUND = 0, DUDECT_NO_LEAKAGE_EVIDENCE_YET } dudect_state_t;
 
 /* Public API */
 
-DUDECT_VISIBILITY inline int dudect_init(dudect_ctx_t *ctx, dudect_config_t *conf);
-DUDECT_VISIBILITY inline dudect_state_t dudect_main(dudect_ctx_t *c);
-DUDECT_VISIBILITY inline int dudect_free(dudect_ctx_t *ctx);
-DUDECT_VISIBILITY inline void randombytes(uint8_t *x, size_t how_much);
+DUDECT_VISIBILITY inline int dudect_init(dudect_ctx_t* ctx, dudect_config_t* conf);
+DUDECT_VISIBILITY inline dudect_state_t dudect_main(dudect_ctx_t* c);
+DUDECT_VISIBILITY inline int dudect_free(dudect_ctx_t* ctx);
+DUDECT_VISIBILITY inline void randombytes(uint8_t* x, size_t how_much);
 DUDECT_VISIBILITY inline uint8_t randombit(void);
 
 /* Public configuration */
@@ -143,8 +143,8 @@ DUDECT_VISIBILITY inline uint8_t randombit(void);
 #include <stdint.h>
 
 // kill this
-extern void prepare_inputs(dudect_config_t *c, uint8_t *input_data, uint8_t *classes);
-extern uint8_t do_one_computation(uint8_t *data);
+extern void prepare_inputs(dudect_config_t* c, uint8_t* input_data, uint8_t* classes);
+extern uint8_t do_one_computation(uint8_t* data);
 
 #endif /* DUDECT_H_INCLUDED */
 
@@ -176,7 +176,7 @@ extern uint8_t do_one_computation(uint8_t *data);
 
   see https://en.wikipedia.org/wiki/Welch%27s_t-test
  */
-static void t_push(ttest_ctx_t *ctx, double x, uint8_t clazz) {
+static void t_push(ttest_ctx_t* ctx, double x, uint8_t clazz) {
   assert(clazz == 0 || clazz == 1);
   ctx->n[clazz]++;
   /*
@@ -188,7 +188,7 @@ static void t_push(ttest_ctx_t *ctx, double x, uint8_t clazz) {
   ctx->m2[clazz] = ctx->m2[clazz] + delta * (x - ctx->mean[clazz]);
 }
 
-static double t_compute(ttest_ctx_t *ctx) {
+static double t_compute(ttest_ctx_t* ctx) {
   double var[2] = {0.0, 0.0};
   var[0] = ctx->m2[0] / (ctx->n[0] - 1);
   var[1] = ctx->m2[1] / (ctx->n[1] - 1);
@@ -198,7 +198,7 @@ static double t_compute(ttest_ctx_t *ctx) {
   return t_value;
 }
 
-static void t_init(ttest_ctx_t *ctx) {
+static void t_init(ttest_ctx_t* ctx) {
   for (int clazz = 0; clazz < 2; clazz++) {
     ctx->mean[clazz] = 0.0;
     ctx->m2[clazz] = 0.0;
@@ -206,9 +206,9 @@ static void t_init(ttest_ctx_t *ctx) {
   }
 }
 
-static int cmp(const int64_t *a, const int64_t *b) { return (int)(*a - *b); }
+static int cmp(const int64_t* a, const int64_t* b) { return (int)(*a - *b); }
 
-static int64_t percentile(int64_t *a_sorted, double which, size_t size) {
+static int64_t percentile(int64_t* a_sorted, double which, size_t size) {
   size_t array_position = (size_t)((double)size * (double)which);
   assert(array_position < size);
   return a_sorted[array_position];
@@ -220,8 +220,8 @@ static int64_t percentile(int64_t *a_sorted, double which, size_t size) {
  the measurements distribution, but there's not more science
  than that.
 */
-static void prepare_percentiles(dudect_ctx_t *ctx) {
-  qsort(ctx->exec_times, ctx->config->number_measurements, sizeof(int64_t), (int (*)(const void *, const void *))cmp);
+static void prepare_percentiles(dudect_ctx_t* ctx) {
+  qsort(ctx->exec_times, ctx->config->number_measurements, sizeof(int64_t), (int (*)(const void*, const void*))cmp);
   for (size_t i = 0; i < DUDECT_NUMBER_PERCENTILES; i++) {
     ctx->percentiles[i] = percentile(ctx->exec_times, 1 - (pow(0.5, 10 * (double)(i + 1) / DUDECT_NUMBER_PERCENTILES)),
                                      ctx->config->number_measurements);
@@ -229,7 +229,7 @@ static void prepare_percentiles(dudect_ctx_t *ctx) {
 }
 
 /* this comes from ebacs */
-void randombytes(uint8_t *x, size_t how_much) {
+void randombytes(uint8_t* x, size_t how_much) {
   ssize_t i;
   static int fd = -1;
 
@@ -334,7 +334,7 @@ static inline int64_t cpucycles(void) {
 #define t_threshold_bananas 500  // test failed, with overwhelming probability
 #define t_threshold_moderate 10  // test failed. Pankaj likes 4.5 but let's be more lenient
 
-static void measure(dudect_ctx_t *ctx) {
+static void measure(dudect_ctx_t* ctx) {
   for (size_t i = 0; i < ctx->config->number_measurements; i++) {
     ctx->ticks[i] = cpucycles();
     do_one_computation(ctx->input_data + i * ctx->config->chunk_size);
@@ -345,7 +345,7 @@ static void measure(dudect_ctx_t *ctx) {
   }
 }
 
-static void update_statistics(dudect_ctx_t *ctx) {
+static void update_statistics(dudect_ctx_t* ctx) {
   for (size_t i = 10 /* discard the first few measurements */; i < (ctx->config->number_measurements - 1); i++) {
     int64_t difference = ctx->exec_times[i];
 
@@ -373,7 +373,7 @@ static void update_statistics(dudect_ctx_t *ctx) {
 }
 
 #if DUDECT_TRACE
-static void report_test(ttest_ctx_t *x) {
+static void report_test(ttest_ctx_t* x) {
   if (x->n[0] > DUDECT_ENOUGH_MEASUREMENTS) {
     double tval = t_compute(x);
     printf(" abs(t): %4.2f, number measurements: %f\n", tval, x->n[0] + x->n[1]);
@@ -383,7 +383,7 @@ static void report_test(ttest_ctx_t *x) {
 }
 #endif /* DUDECT_TRACE */
 
-static ttest_ctx_t *max_test(dudect_ctx_t *ctx) {
+static ttest_ctx_t* max_test(dudect_ctx_t* ctx) {
   size_t ret = 0;
   double max = 0;
   for (size_t i = 0; i < DUDECT_TESTS; i++) {
@@ -398,7 +398,7 @@ static ttest_ctx_t *max_test(dudect_ctx_t *ctx) {
   return ctx->ttest_ctxs[ret];
 }
 
-static dudect_state_t report(dudect_ctx_t *ctx) {
+static dudect_state_t report(dudect_ctx_t* ctx) {
 
 #if DUDECT_TRACE
   for (size_t i = 0; i < DUDECT_TESTS; i++) {
@@ -417,7 +417,7 @@ static dudect_state_t report(dudect_ctx_t *ctx) {
   report_test(ctx->ttest_ctxs[1 + DUDECT_NUMBER_PERCENTILES]);
 #endif /* DUDECT_TRACE */
 
-  ttest_ctx_t *t = max_test(ctx);
+  ttest_ctx_t* t = max_test(ctx);
   double max_t = fabs(t_compute(t));
   double number_traces_max_t = t->n[0] + t->n[1];
   double max_tau = max_t / sqrt(number_traces_max_t);
@@ -464,7 +464,7 @@ static dudect_state_t report(dudect_ctx_t *ctx) {
   return DUDECT_NO_LEAKAGE_EVIDENCE_YET;
 }
 
-dudect_state_t dudect_main(dudect_ctx_t *ctx) {
+dudect_state_t dudect_main(dudect_ctx_t* ctx) {
   prepare_inputs(ctx->config, ctx->input_data, ctx->classes);
   measure(ctx);
 
@@ -483,22 +483,22 @@ dudect_state_t dudect_main(dudect_ctx_t *ctx) {
   return ret;
 }
 
-int dudect_init(dudect_ctx_t *ctx, dudect_config_t *conf) {
-  ctx->config = (dudect_config_t *)calloc(1, sizeof(*conf));
+int dudect_init(dudect_ctx_t* ctx, dudect_config_t* conf) {
+  ctx->config = (dudect_config_t*)calloc(1, sizeof(*conf));
   ctx->config->number_measurements = conf->number_measurements;
   ctx->config->chunk_size = conf->chunk_size;
-  ctx->ticks = (int64_t *)calloc(ctx->config->number_measurements, sizeof(int64_t));
-  ctx->exec_times = (int64_t *)calloc(ctx->config->number_measurements, sizeof(int64_t));
-  ctx->classes = (uint8_t *)calloc(ctx->config->number_measurements, sizeof(uint8_t));
-  ctx->input_data = (uint8_t *)calloc(ctx->config->number_measurements * ctx->config->chunk_size, sizeof(uint8_t));
+  ctx->ticks = (int64_t*)calloc(ctx->config->number_measurements, sizeof(int64_t));
+  ctx->exec_times = (int64_t*)calloc(ctx->config->number_measurements, sizeof(int64_t));
+  ctx->classes = (uint8_t*)calloc(ctx->config->number_measurements, sizeof(uint8_t));
+  ctx->input_data = (uint8_t*)calloc(ctx->config->number_measurements * ctx->config->chunk_size, sizeof(uint8_t));
 
   for (int i = 0; i < DUDECT_TESTS; i++) {
-    ctx->ttest_ctxs[i] = (ttest_ctx_t *)calloc(1, sizeof(ttest_ctx_t));
+    ctx->ttest_ctxs[i] = (ttest_ctx_t*)calloc(1, sizeof(ttest_ctx_t));
     assert(ctx->ttest_ctxs[i]);
     t_init(ctx->ttest_ctxs[i]);
   }
 
-  ctx->percentiles = (int64_t *)calloc(DUDECT_NUMBER_PERCENTILES, sizeof(int64_t));
+  ctx->percentiles = (int64_t*)calloc(DUDECT_NUMBER_PERCENTILES, sizeof(int64_t));
 
   assert(ctx->ticks);
   assert(ctx->exec_times);
@@ -509,7 +509,7 @@ int dudect_init(dudect_ctx_t *ctx, dudect_config_t *conf) {
   return 0;
 }
 
-int dudect_free(dudect_ctx_t *ctx) {
+int dudect_free(dudect_ctx_t* ctx) {
   for (int i = 0; i < DUDECT_TESTS; i++) {
     free(ctx->ttest_ctxs[i]);
   }

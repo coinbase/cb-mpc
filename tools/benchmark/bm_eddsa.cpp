@@ -3,7 +3,7 @@
 #include <local_network/mpc_runner.h>
 
 #include <cbmpc/core/buf.h>
-#include <cbmpc/protocol/eddsa.h>
+#include <cbmpc/internal/protocol/eddsa.h>
 
 #include "mpc_util.h"
 

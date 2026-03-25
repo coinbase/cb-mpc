@@ -1,12 +1,11 @@
 add_library(cbmpc_protocol OBJECT "")
 
-target_precompile_headers(cbmpc_protocol PUBLIC "mpc_job.h")
+target_precompile_headers(cbmpc_protocol PUBLIC "${ROOT_DIR}/include-internal/cbmpc/internal/protocol/mpc_job.h")
 
 target_sources(cbmpc_protocol  PRIVATE
   int_commitment.cpp
 
   mpc_job.cpp
-  mpc_job_session.cpp
 
   agree_random.cpp
   ot.cpp

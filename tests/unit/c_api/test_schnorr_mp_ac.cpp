@@ -1,0 +1,493 @@
+#include <cstring>
+#include <gtest/gtest.h>
+#include <memory>
+#include <vector>
+
+#include <cbmpc/c_api/access_structure.h>
+#include <cbmpc/c_api/job.h>
+#include <cbmpc/c_api/schnorr_mp.h>
+#include <cbmpc/core/error.h>
+#include <cbmpc/internal/crypto/base_ecc_secp256k1.h>
+
+#include "test_transport_harness.h"
+
+namespace {
+
+using coinbase::buf_t;
+using coinbase::error_t;
+using coinbase::mem_t;
+
+using coinbase::testutils::mpc_net_context_t;
+using coinbase::testutils::capi_harness::make_transport;
+using coinbase::testutils::capi_harness::run_mp;
+using coinbase::testutils::capi_harness::transport_ctx_t;
+
+static void expect_eq(cmem_t a, cmem_t b) {
+  ASSERT_EQ(a.size, b.size);
+  if (a.size > 0) {
+    ASSERT_NE(a.data, nullptr);
+    ASSERT_NE(b.data, nullptr);
+    ASSERT_EQ(std::memcmp(a.data, b.data, static_cast<size_t>(a.size)), 0);
+  }
+}
+
+static void make_peers(int n, std::vector<std::shared_ptr<mpc_net_context_t>>& peers) {
+  peers.clear();
+  peers.reserve(n);
+  for (int i = 0; i < n; i++) peers.push_back(std::make_shared<mpc_net_context_t>(i));
+  for (const auto& p : peers) p->init_with_peers(peers);
+}
+
+static void make_transports(const std::vector<std::shared_ptr<mpc_net_context_t>>& peers,
+                            std::vector<transport_ctx_t>& ctxs, std::vector<cbmpc_transport_t>& transports) {
+  ctxs.resize(peers.size());
+  transports.resize(peers.size());
+  for (size_t i = 0; i < peers.size(); i++) {
+    ctxs[i] = transport_ctx_t{peers[i], /*free_calls=*/nullptr};
+    transports[i] = make_transport(&ctxs[i]);
+  }
+}
+
+}  // namespace
+
+TEST(CApiSchnorrMpAc, DkgRefreshSign2of3) {
+  constexpr int n = 3;
+
+  // Full 3-party network for threshold DKG/refresh.
+  std::vector<std::shared_ptr<mpc_net_context_t>> peers;
+  make_peers(n, peers);
+
+  std::vector<transport_ctx_t> ctxs;
+  std::vector<cbmpc_transport_t> transports;
+  make_transports(peers, ctxs, transports);
+
+  const char* party_names[n] = {"p0", "p1", "p2"};
+
+  // Access structure: THRESHOLD[2](p0, p1, p2)
+  const int32_t child_indices[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, /*leaf_name=*/nullptr, /*k=*/2, /*off=*/0, /*cnt=*/3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, /*leaf_name=*/"p0", /*k=*/0, /*off=*/0, /*cnt=*/0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, /*leaf_name=*/"p1", /*k=*/0, /*off=*/0, /*cnt=*/0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, /*leaf_name=*/"p2", /*k=*/0, /*off=*/0, /*cnt=*/0},
+  };
+  const cbmpc_access_structure_t ac = {
+      /*nodes=*/nodes,
+      /*nodes_count=*/static_cast<int32_t>(sizeof(nodes) / sizeof(nodes[0])),
+      /*child_indices=*/child_indices,
+      /*child_indices_count=*/static_cast<int32_t>(sizeof(child_indices) / sizeof(child_indices[0])),
+      /*root_index=*/0,
+  };
+
+  // Only p0 and p1 actively contribute to DKG/refresh.
+  const char* quorum[] = {"p0", "p1"};
+
+  std::vector<cmem_t> key_blobs(n, cmem_t{nullptr, 0});
+  std::vector<cmem_t> sids(n, cmem_t{nullptr, 0});
+  std::vector<cbmpc_error_t> rvs;
+
+  run_mp(
+      peers,
+      [&](int i) {
+        const cbmpc_mp_job_t job = {
+            /*self=*/i,
+            /*party_names=*/party_names,
+            /*party_names_count=*/n,
+            /*transport=*/&transports[static_cast<size_t>(i)],
+        };
+        return cbmpc_schnorr_mp_dkg_ac(&job, CBMPC_CURVE_SECP256K1, /*sid_in=*/cmem_t{nullptr, 0}, &ac, quorum,
+                                       /*quorum_party_names_count=*/2, &key_blobs[static_cast<size_t>(i)],
+                                       &sids[static_cast<size_t>(i)]);
+      },
+      rvs);
+
+  for (auto rv : rvs) ASSERT_EQ(rv, CBMPC_SUCCESS);
+  for (int i = 0; i < n; i++) {
+    ASSERT_GT(key_blobs[static_cast<size_t>(i)].size, 0);
+    ASSERT_GT(sids[static_cast<size_t>(i)].size, 0);
+  }
+  for (int i = 1; i < n; i++) expect_eq(sids[0], sids[static_cast<size_t>(i)]);
+
+  cmem_t pub0{nullptr, 0};
+  ASSERT_EQ(cbmpc_schnorr_mp_get_public_key_compressed(key_blobs[0], &pub0), CBMPC_SUCCESS);
+  ASSERT_EQ(pub0.size, 33);
+  for (int i = 1; i < n; i++) {
+    cmem_t pub_i{nullptr, 0};
+    ASSERT_EQ(cbmpc_schnorr_mp_get_public_key_compressed(key_blobs[static_cast<size_t>(i)], &pub_i), CBMPC_SUCCESS);
+    expect_eq(pub_i, pub0);
+    cbmpc_cmem_free(pub_i);
+  }
+
+  const buf_t pub_buf(pub0.data, pub0.size);
+  coinbase::crypto::ecc_point_t Q;
+  ASSERT_EQ(Q.from_bin(coinbase::crypto::curve_secp256k1, pub_buf), SUCCESS);
+
+  uint8_t msg_bytes[32];
+  for (int i = 0; i < 32; i++) msg_bytes[i] = static_cast<uint8_t>(0x22 + i);
+  const cmem_t msg = {msg_bytes, 32};
+
+  // Signing quorum: {p0, p1}
+  const char* sign_party_names[2] = {"p0", "p1"};
+  const cmem_t sign_key_blobs[2] = {key_blobs[0], key_blobs[1]};
+
+  {
+    std::vector<std::shared_ptr<mpc_net_context_t>> sign_peers;
+    make_peers(2, sign_peers);
+
+    std::vector<transport_ctx_t> sign_ctxs;
+    std::vector<cbmpc_transport_t> sign_transports;
+    make_transports(sign_peers, sign_ctxs, sign_transports);
+
+    std::vector<cmem_t> sigs(2, cmem_t{nullptr, 0});
+    run_mp(
+        sign_peers,
+        [&](int i) {
+          const cbmpc_mp_job_t job = {
+              /*self=*/i,
+              /*party_names=*/sign_party_names,
+              /*party_names_count=*/2,
+              /*transport=*/&sign_transports[static_cast<size_t>(i)],
+          };
+          return cbmpc_schnorr_mp_sign_ac(&job, sign_key_blobs[static_cast<size_t>(i)], &ac, msg, /*sig_receiver=*/0,
+                                          &sigs[static_cast<size_t>(i)]);
+        },
+        rvs);
+
+    for (auto rv : rvs) ASSERT_EQ(rv, CBMPC_SUCCESS);
+    ASSERT_EQ(sigs[0].size, 64);
+    EXPECT_EQ(sigs[1].size, 0);
+    ASSERT_EQ(coinbase::crypto::bip340::verify(Q, mem_t(msg_bytes, 32), mem_t(sigs[0].data, sigs[0].size)), SUCCESS);
+
+    for (auto m : sigs) cbmpc_cmem_free(m);
+  }
+
+  // Threshold refresh.
+  std::vector<cmem_t> new_key_blobs(n, cmem_t{nullptr, 0});
+  std::vector<cmem_t> refresh_sids(n, cmem_t{nullptr, 0});
+  run_mp(
+      peers,
+      [&](int i) {
+        const cbmpc_mp_job_t job = {
+            /*self=*/i,
+            /*party_names=*/party_names,
+            /*party_names_count=*/n,
+            /*transport=*/&transports[static_cast<size_t>(i)],
+        };
+        return cbmpc_schnorr_mp_refresh_ac(&job, /*sid_in=*/cmem_t{nullptr, 0}, key_blobs[static_cast<size_t>(i)], &ac,
+                                           quorum, /*quorum_party_names_count=*/2,
+                                           &refresh_sids[static_cast<size_t>(i)],
+                                           &new_key_blobs[static_cast<size_t>(i)]);
+      },
+      rvs);
+  for (auto rv : rvs) ASSERT_EQ(rv, CBMPC_SUCCESS);
+  for (int i = 0; i < n; i++) ASSERT_GT(new_key_blobs[static_cast<size_t>(i)].size, 0);
+  for (int i = 1; i < n; i++) expect_eq(refresh_sids[0], refresh_sids[static_cast<size_t>(i)]);
+
+  for (int i = 0; i < n; i++) {
+    cmem_t pub_i{nullptr, 0};
+    ASSERT_EQ(cbmpc_schnorr_mp_get_public_key_compressed(new_key_blobs[static_cast<size_t>(i)], &pub_i), CBMPC_SUCCESS);
+    expect_eq(pub_i, pub0);
+    cbmpc_cmem_free(pub_i);
+  }
+
+  const cmem_t sign_new_key_blobs[2] = {new_key_blobs[0], new_key_blobs[1]};
+
+  {
+    std::vector<std::shared_ptr<mpc_net_context_t>> sign_peers;
+    make_peers(2, sign_peers);
+
+    std::vector<transport_ctx_t> sign_ctxs;
+    std::vector<cbmpc_transport_t> sign_transports;
+    make_transports(sign_peers, sign_ctxs, sign_transports);
+
+    std::vector<cmem_t> sigs(2, cmem_t{nullptr, 0});
+    run_mp(
+        sign_peers,
+        [&](int i) {
+          const cbmpc_mp_job_t job = {
+              /*self=*/i,
+              /*party_names=*/sign_party_names,
+              /*party_names_count=*/2,
+              /*transport=*/&sign_transports[static_cast<size_t>(i)],
+          };
+          return cbmpc_schnorr_mp_sign_ac(&job, sign_new_key_blobs[static_cast<size_t>(i)], &ac, msg,
+                                          /*sig_receiver=*/0, &sigs[static_cast<size_t>(i)]);
+        },
+        rvs);
+
+    for (auto rv : rvs) ASSERT_EQ(rv, CBMPC_SUCCESS);
+    ASSERT_EQ(sigs[0].size, 64);
+    EXPECT_EQ(sigs[1].size, 0);
+    ASSERT_EQ(coinbase::crypto::bip340::verify(Q, mem_t(msg_bytes, 32), mem_t(sigs[0].data, sigs[0].size)), SUCCESS);
+
+    for (auto m : sigs) cbmpc_cmem_free(m);
+  }
+
+  cbmpc_cmem_free(pub0);
+  for (auto m : refresh_sids) cbmpc_cmem_free(m);
+  for (auto m : new_key_blobs) cbmpc_cmem_free(m);
+  for (auto m : sids) cbmpc_cmem_free(m);
+  for (auto m : key_blobs) cbmpc_cmem_free(m);
+}
+
+// ------------ Disclaimer: All the following tests have been generated by AI ------------
+
+#include <cbmpc/internal/core/log.h>
+
+TEST(CApiSchnorrMpAcNeg, DkgAcNullOutAcKeyBlob) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  const char* quorum[] = {"p0", "p1"};
+  cmem_t sid{nullptr, 0};
+  EXPECT_EQ(cbmpc_schnorr_mp_dkg_ac(&bad_job, CBMPC_CURVE_SECP256K1, cmem_t{nullptr, 0}, &ac, quorum, 2, nullptr, &sid),
+            E_BADARG);
+}
+
+TEST(CApiSchnorrMpAcNeg, DkgAcNullOutSid) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  const char* quorum[] = {"p0", "p1"};
+  cmem_t key{nullptr, 0};
+  EXPECT_EQ(cbmpc_schnorr_mp_dkg_ac(&bad_job, CBMPC_CURVE_SECP256K1, cmem_t{nullptr, 0}, &ac, quorum, 2, &key, nullptr),
+            E_BADARG);
+}
+
+TEST(CApiSchnorrMpAcNeg, DkgAcNullJob) {
+  dylog_disable_scope_t no_log;
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  const char* quorum[] = {"p0", "p1"};
+  cmem_t key{nullptr, 0};
+  cmem_t sid{nullptr, 0};
+  EXPECT_EQ(cbmpc_schnorr_mp_dkg_ac(nullptr, CBMPC_CURVE_SECP256K1, cmem_t{nullptr, 0}, &ac, quorum, 2, &key, &sid),
+            E_BADARG);
+}
+
+TEST(CApiSchnorrMpAcNeg, DkgAcInvalidCurve) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  const char* quorum[] = {"p0", "p1"};
+  cmem_t key{nullptr, 0};
+  cmem_t sid{nullptr, 0};
+  EXPECT_NE(cbmpc_schnorr_mp_dkg_ac(&bad_job, static_cast<cbmpc_curve_id_t>(0), cmem_t{nullptr, 0}, &ac, quorum, 2,
+                                    &key, &sid),
+            CBMPC_SUCCESS);
+}
+
+TEST(CApiSchnorrMpAcNeg, DkgAcNullAc) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const char* quorum[] = {"p0", "p1"};
+  cmem_t key{nullptr, 0};
+  cmem_t sid{nullptr, 0};
+  EXPECT_EQ(
+      cbmpc_schnorr_mp_dkg_ac(&bad_job, CBMPC_CURVE_SECP256K1, cmem_t{nullptr, 0}, nullptr, quorum, 2, &key, &sid),
+      E_BADARG);
+}
+
+TEST(CApiSchnorrMpAcNeg, RefreshAcNullOutNewAcKeyBlob) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  const char* quorum[] = {"p0", "p1"};
+  cmem_t sid_out{nullptr, 0};
+  EXPECT_EQ(
+      cbmpc_schnorr_mp_refresh_ac(&bad_job, cmem_t{nullptr, 0}, cmem_t{nullptr, 0}, &ac, quorum, 2, &sid_out, nullptr),
+      E_BADARG);
+}
+
+TEST(CApiSchnorrMpAcNeg, RefreshAcNullJob) {
+  dylog_disable_scope_t no_log;
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  const char* quorum[] = {"p0", "p1"};
+  cmem_t sid_out{nullptr, 0};
+  cmem_t new_key{nullptr, 0};
+  EXPECT_EQ(
+      cbmpc_schnorr_mp_refresh_ac(nullptr, cmem_t{nullptr, 0}, cmem_t{nullptr, 0}, &ac, quorum, 2, &sid_out, &new_key),
+      E_BADARG);
+}
+
+TEST(CApiSchnorrMpAcNeg, RefreshAcEmptyKeyBlob) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  const char* quorum[] = {"p0", "p1"};
+  cmem_t sid_out{nullptr, 0};
+  cmem_t new_key{nullptr, 0};
+  EXPECT_NE(
+      cbmpc_schnorr_mp_refresh_ac(&bad_job, cmem_t{nullptr, 0}, cmem_t{nullptr, 0}, &ac, quorum, 2, &sid_out, &new_key),
+      CBMPC_SUCCESS);
+}
+
+TEST(CApiSchnorrMpAcNeg, RefreshAcNullAc) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const char* quorum[] = {"p0", "p1"};
+  cmem_t sid_out{nullptr, 0};
+  cmem_t new_key{nullptr, 0};
+  EXPECT_EQ(cbmpc_schnorr_mp_refresh_ac(&bad_job, cmem_t{nullptr, 0}, cmem_t{nullptr, 0}, nullptr, quorum, 2, &sid_out,
+                                        &new_key),
+            E_BADARG);
+}
+
+TEST(CApiSchnorrMpAcNeg, SignAcNullSigOut) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  EXPECT_EQ(cbmpc_schnorr_mp_sign_ac(&bad_job, cmem_t{nullptr, 0}, &ac, cmem_t{nullptr, 0}, 0, nullptr), E_BADARG);
+}
+
+TEST(CApiSchnorrMpAcNeg, SignAcNullJob) {
+  dylog_disable_scope_t no_log;
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  cmem_t sig{nullptr, 0};
+  EXPECT_EQ(cbmpc_schnorr_mp_sign_ac(nullptr, cmem_t{nullptr, 0}, &ac, cmem_t{nullptr, 0}, 0, &sig), E_BADARG);
+}
+
+TEST(CApiSchnorrMpAcNeg, SignAcNullAc) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  cmem_t sig{nullptr, 0};
+  EXPECT_EQ(cbmpc_schnorr_mp_sign_ac(&bad_job, cmem_t{nullptr, 0}, nullptr, cmem_t{nullptr, 0}, 0, &sig), E_BADARG);
+}
+
+TEST(CApiSchnorrMpAcNeg, SignAcEmptyKeyBlob) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  cmem_t sig{nullptr, 0};
+  EXPECT_NE(cbmpc_schnorr_mp_sign_ac(&bad_job, cmem_t{nullptr, 0}, &ac, cmem_t{nullptr, 0}, 0, &sig), CBMPC_SUCCESS);
+}
+
+TEST(CApiSchnorrMpAcNeg, SignAcEmptyMsg) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  uint8_t key_bytes[] = {0x01};
+  cmem_t sig{nullptr, 0};
+  EXPECT_NE(cbmpc_schnorr_mp_sign_ac(&bad_job, cmem_t{key_bytes, 1}, &ac, cmem_t{nullptr, 0}, 0, &sig), CBMPC_SUCCESS);
+}
+
+TEST(CApiSchnorrMpAcNeg, SignAcMsgWrongSize) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  uint8_t short_msg[31] = {};
+  cmem_t sig{nullptr, 0};
+  EXPECT_NE(cbmpc_schnorr_mp_sign_ac(&bad_job, cmem_t{nullptr, 0}, &ac, cmem_t{short_msg, 31}, 0, &sig), CBMPC_SUCCESS);
+}
+
+TEST(CApiSchnorrMpAcNeg, SignAcInvalidSigReceiver) {
+  dylog_disable_scope_t no_log;
+  const char* names[] = {"p0", "p1", "p2"};
+  const cbmpc_mp_job_t bad_job = {0, names, 3, nullptr};
+  const int32_t ci[] = {1, 2, 3};
+  const cbmpc_access_structure_node_t nodes[] = {
+      {CBMPC_ACCESS_STRUCTURE_NODE_THRESHOLD, nullptr, 2, 0, 3},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p0", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p1", 0, 0, 0},
+      {CBMPC_ACCESS_STRUCTURE_NODE_LEAF, "p2", 0, 0, 0},
+  };
+  const cbmpc_access_structure_t ac = {nodes, 4, ci, 3, 0};
+  uint8_t msg[32] = {};
+  cmem_t sig{nullptr, 0};
+  EXPECT_NE(cbmpc_schnorr_mp_sign_ac(&bad_job, cmem_t{nullptr, 0}, &ac, cmem_t{msg, 32}, -1, &sig), CBMPC_SUCCESS);
+}

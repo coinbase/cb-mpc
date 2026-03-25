@@ -1,14 +1,15 @@
 #include <gtest/gtest.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/base_pki.h>
-#include <cbmpc/crypto/commitment.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_pki.h>
+#include <cbmpc/internal/crypto/commitment.h>
 
 #include "utils/test_macros.h"
 
 namespace {
 
 using namespace coinbase::crypto;
+using coinbase::buf_t;
 
 TEST(CryptoCommitment, AdditionalInputSid) {
   buf_t sid = gen_random_bitlen(SEC_P_COM);
@@ -61,7 +62,7 @@ TEST(CryptoCommitment, LocalSidAndReceiverPid) {
   EXPECT_ER(com3.open(a));  // incorrect receiver pid
 }
 
-TEST(CryptoCommitment, AdditionalInputSid_AlternativeFormat) {
+TEST(CryptoCommitment, AdditionalSid_AltFormat) {
   buf_t sid = gen_random_bitlen(SEC_P_COM);
   mpc_pid_t pid = pid_from_name("test");
   commitment_t com1;

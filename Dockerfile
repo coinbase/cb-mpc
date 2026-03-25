@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     clang-20 \
     clang-format-20 \
     lld-20 \
+    llvm-20 \
     libfuzzer-20-dev \
     libclang-rt-20-dev \
     && rm -rf /var/lib/apt/lists/* \
@@ -36,9 +37,9 @@ WORKDIR /build
 COPY scripts/openssl/build-static-openssl-linux.sh .
 RUN sh build-static-openssl-linux.sh \
     && mkdir -p /usr/local/lib64 /usr/local/lib /usr/local/include \
-    && ln -sf /usr/local/opt/openssl@3.2.0/lib64/libcrypto.a /usr/local/lib64/libcrypto.a \
-    && ln -sf /usr/local/opt/openssl@3.2.0/lib64/libcrypto.a /usr/local/lib/libcrypto.a \
-    && ln -sf /usr/local/opt/openssl@3.2.0/include/openssl /usr/local/include/openssl \
+    && ln -sf /usr/local/opt/openssl@3.6.1/lib64/libcrypto.a /usr/local/lib64/libcrypto.a \
+    && ln -sf /usr/local/opt/openssl@3.6.1/lib64/libcrypto.a /usr/local/lib/libcrypto.a \
+    && ln -sf /usr/local/opt/openssl@3.6.1/include/openssl /usr/local/include/openssl \
     && rm -rf /build
 
 WORKDIR /code

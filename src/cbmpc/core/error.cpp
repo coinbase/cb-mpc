@@ -1,8 +1,7 @@
-#include "error.h"
-
-#include <cbmpc/core/log.h>
+#include <cbmpc/core/error.h>
 #include <cbmpc/core/macros.h>
-#include <cbmpc/core/strext.h>
+#include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/core/strext.h>
 
 #if !defined(_DEBUG)
 // #define JSON_ERR

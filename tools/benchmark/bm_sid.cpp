@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/protocol/sid.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/protocol/sid.h>
 
 #include "mpc_util.h"
 

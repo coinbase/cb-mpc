@@ -1,6 +1,5 @@
-#include "fischlin.h"
-
-#include <cbmpc/crypto/lagrange.h>
+#include <cbmpc/internal/crypto/lagrange.h>
+#include <cbmpc/internal/zk/fischlin.h>
 
 namespace coinbase::zk {
 

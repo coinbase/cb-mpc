@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 
-#include <cbmpc/crypto/base.h>
-#include <cbmpc/crypto/ro.h>
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/ro.h>
 
 using namespace coinbase::crypto;
 
