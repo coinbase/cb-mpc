@@ -57,7 +57,7 @@ struct commitment_t {
 
   /**
    * @specs:
-   * - basic-primitives-spec | Comp-1P
+   * - basic-primitives-spec | Com-1P
    */
   template <typename... ARGS>
   void gen(const ARGS&... args) {

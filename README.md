@@ -4,8 +4,14 @@
 
 - [Introduction](#introduction)
   - [Overview](#overview)
+  - [What cb-mpc Does and Does Not Do](#what-cb-mpc-does-and-does-not-do)
   - [Key Features](#key-features)
+- [High-level Public API vs the Full API](#high-level-public-api-vs-the-full-api)
 - [Directory Structure](#directory-structure)
+- [Supported Runtime and Deployment Environments](#supported-runtime-and-deployment-environments)
+  - [Key Management Responsibilities](#key-management-responsibilities)
+- [Initial Clone and Setup](#initial-clone-and-setup)
+- [Building the Code](#building-the-code)
 - [Supported Protocols](#supported-protocols)
 - [Design Principles and Secure Usage](#design-principles-and-secure-usage)
 - [External Dependencies](#external-dependencies)
@@ -23,6 +29,23 @@ Welcome to the Coinbase Open Source MPC Library. This repository provides the es
 ## Overview
 
 This cryptographic library is based on the MPC library used at Coinbase to protect cryptoassets, with modifications to make it suitable for public use. The library is designed as a general-purpose cryptographic library for securing cryptoasset keys, allowing developers to build their own applications. Coinbase has invested significantly in building a secure MPC library, and it is our hope that this library will help those interested in deploying MPC to do so easily and securely.
+
+## What cb-mpc Does and Does Not Do
+
+`cb-mpc` is a native cryptographic library for MPC protocols. It gives application developers the building blocks needed to generate and refresh keyshares, derive supported keys, produce MPC signatures, and support key-backup workflows via publicly verifiable encryption (PVE).
+
+`cb-mpc` does:
+
+- Implement MPC cryptographic protocols and expose them through public APIs.
+- Execute those protocols with input validation and safer defaults in the high-level public API.
+
+`cb-mpc` does not:
+
+- Provide a hosted signing service, wallet backend, or deployment platform.
+- Manage peer authentication, transport security, storage, backups, or access-control policy for you.
+- Decide when a signature should be allowed, what transaction should be signed, or how operational recovery and incident handling should work in your environment.
+
+If you build on the lower-level full API (including internal and low-level functionality), more validation and protocol-composition responsibility shifts to the integrating application. See [High-level Public API vs the Full API](#high-level-public-api-vs-the-full-api) and [Supported Runtime and Deployment Environments](#supported-runtime-and-deployment-environments) for more detail.
 
 ## Key Features
 
@@ -70,6 +93,56 @@ The cb-mpc library contains two levels of APIs, a public one that contains the A
 - `scripts`: a collection of scripts used by the Makefile
 - `tools/benchmark`: a collection of benchmarks for the library
 - `tests/{dudect,integration,unit}`: a collection of tests for the library
+
+# Supported Runtime and Deployment Environments
+
+This repository provides a native C++ cryptographic library. It is intended to be embedded into backend services, native applications, and other environments where the calling application can control process isolation, network transport, and secret storage.
+
+The environments that we support are:
+
+- **Native development:** macOS (`x86_64` and Apple Silicon) and Linux
+- **Containerized / CI environment:** Linux in the provided Docker image
+- **Compiler/toolchain guidance:** C++17 with Clang 20 or newer is recommended for the closest match to our testing environment
+
+Both native macOS development and the provided Linux Docker environment are intended to be ways to build and test the library. GitHub workflows currently run on Linux using the Docker image.
+
+This library is **not** a hosted service and does **not** provide a production networking stack, deployment framework, key-management system, or transport security layer. In production deployments, the integrating application is responsible for:
+
+- Authenticating peers and protecting transport channels (for example, via mutually authenticated TLS).
+- Protecting secret material at rest and in memory.
+- Managing process/container isolation, rollout, monitoring, and incident response.
+
+The library is intended for native environments where the integrating application can enforce those controls. In an MPC deployment, that may mean all parties run in backend services or that some parties run in native client applications on supported platforms. Other targets, such as browsers, WebAssembly, Windows, or mobile platforms, are not currently documented in this repository as supported deployment environments.
+
+## Key Management Responsibilities
+
+`cb-mpc` implements MPC key-generation (dkg and local generation), refresh, derivation, and signing protocols. It does not provide a custody service, policy engine, or application workflow around those protocols.
+
+In the public API, calls like `dkg*` and `refresh*` return opaque `key_blob` / `keyset_blob` values with each party's share to each party. Those blobs are later passed back into `sign*`, `refresh*`, `derive*`, and related APIs. This means the integrating application owns the lifecycle of those blobs and must treat them as secret key material.
+
+The integrating application is responsible for:
+
+- Keeping each party's blob separate and treating it like a private keyshare; do not log it or send one party's stored blob to another party.
+- Encrypting stored blobs and backups with application-managed protection, ideally using envelope encryption backed by an HSM, KMS, or secure enclave.
+- Authenticating and authorizing signing requests before invoking the library.
+- Passing the original message to EdDSA APIs, and for ECDSA or BIP340 Schnorr signing APIs, constructing the correct transaction or message preimage and applying the right hashing/domain-separation rules.
+- Coordinating backup, restore, refresh/rotation, and revocation/deletion of shares in the application's own storage and workflow layer.
+- Enforcing audit, approval, replay-protection, and incident-response controls appropriate for the deployment.
+
+A few practical tips:
+
+- If a party loses its only local `key_blob` / `keyset_blob` and no protected backup exists, recovery may depend on the protocol and access structure; do not assume `cb-mpc` can recreate that party-local secret material for you.
+- If recovery is a requirement, the application should maintain encrypted backups of each party's local secret material. For supported signing key types, the relevant public API exposes `detach_private_scalar`, `get_public_share_compressed`, and `attach_private_scalar` helpers for application-managed backup and restore flows, including verifiable backup schemes such as publicly verifiable encryption (PVE).
+- Use the corresponding `refresh*` APIs when you want fresh shares for the same (combined) key; if your operational policy requires replacing the key entirely, run a new `dkg*` flow and migrate in the application layer.
+- If compromise is suspected, stop signing with the affected material until the application's incident process decides whether to refresh the shares under controlled conditions or retire the key entirely.
+
+The library is responsible for:
+
+- Executing the cryptographic protocol once the caller provides the correct participants, transport, and local key blob.
+- Returning outputs such as signatures, refreshed shares, and derived key material.
+- Providing helper APIs for tasks like public-key extraction and backup/restore-related key-blob manipulation.
+
+For transport, opaque blob handling, session identifiers, and other operational security requirements, see [SECURE_USAGE.md](SECURE_USAGE.md).
 
 # Initial Clone and Setup
 
@@ -220,7 +293,7 @@ For example, for a one-off testing, you can run
 `docker run -it --rm -v $(pwd):/code -t cb-mpc bash -c 'make test'`
 
 
-## Supported Protocols
+# Supported Protocols
 
 Please note that all cryptographic code has a specification (except for code like wrappers around OpenSSL and the like), but there are some protocol specifications that are not implemented but still appear in the specifications since they may be useful for some application developers.
 
