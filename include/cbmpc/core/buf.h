@@ -266,6 +266,10 @@ class bits_t {
       set(value);
       return *this;
     }
+    ref_t& operator=(const ref_t& src) noexcept {
+      set(src.get());
+      return *this;
+    }
     operator bool() const { return get(); }
 
    private:

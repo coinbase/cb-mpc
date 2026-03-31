@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/protocol/ecdsa_2p.h>
 
 #include "utils/local_network/mpc_tester.h"
@@ -61,6 +62,28 @@ TEST_F(ECDSA2PC, PaillierKeygenInteractive) {
   dkg.step3_p1_to_p2(p, x1, Q1, prover_pid, sid);
   error_t rv = dkg.step4_p2_output(p, Q1, c_key, prover_pid, sid);
   ASSERT_EQ(rv, 0);
+}
+
+TEST_F(ECDSA2PC, PaillierKeygenInteractiveRejectsInvalidModulus) {
+  dylog_disable_scope_t no_log_err;
+  paillier_gen_interactive_t dkg(coinbase::crypto::pid_from_name("test"));
+  dkg.N = 2;
+
+  coinbase::crypto::paillier_t paillier;
+  const error_t rv = dkg.step4_p2_output(paillier, coinbase::crypto::curve_secp256k1.generator(), bn_t(0),
+                                         coinbase::crypto::pid_from_name("test"), coinbase::mem_t());
+  EXPECT_EQ(rv, E_CRYPTO);
+}
+
+TEST_F(ECDSA2PC, PaillierKeygenInteractiveRejectsOversizedModulus) {
+  dylog_disable_scope_t no_log_err;
+  paillier_gen_interactive_t dkg(coinbase::crypto::pid_from_name("test"));
+  dkg.N = (bn_t(1) << crypto::paillier_t::bit_size) + 1;
+
+  coinbase::crypto::paillier_t paillier;
+  const error_t rv = dkg.step4_p2_output(paillier, coinbase::crypto::curve_secp256k1.generator(), bn_t(0),
+                                         coinbase::crypto::pid_from_name("test"), coinbase::mem_t());
+  EXPECT_EQ(rv, E_CRYPTO);
 }
 
 TEST_F(ECDSA2PC, OptimizedKeygen) {

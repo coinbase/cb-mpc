@@ -12,5 +12,4 @@ target_sources(cbmpc_core PRIVATE
   convert.cpp
   error.cpp
   strext.cpp
-  extended_uint.cpp
 )

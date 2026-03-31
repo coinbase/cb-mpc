@@ -35,7 +35,8 @@ class paillier_t {
    */
   void generate();
   void create_prv(const bn_t& N, const bn_t& p, const bn_t& q);
-  void create_pub(const bn_t& N);
+  // Returns an error instead of asserting when rebuilding a public key from externally supplied material.
+  error_t create_pub(const bn_t& N);
 
   /**
    * @specs:
@@ -64,6 +65,8 @@ class paillier_t {
 
   bn_t get_cipher_randomness(const bn_t& plain, const bn_t& cipher) const;
 
+  // Private-key deserialization is intended for trusted local state only; callers must not feed it untrusted
+  // private-key material unless they validate it before use.
   void convert(coinbase::converter_t& converter);
 
   bool has_private_key() const { return has_private; }

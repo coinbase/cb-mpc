@@ -56,11 +56,13 @@ error_t paillier_gen_interactive_t::step4_p2_output(crypto::paillier_t& paillier
   error_t rv = UNINITIALIZED_ERROR;
   ecurve_t curve = Q1.get_curve();
   const mod_t& q = curve.order();
-  paillier.create_pub(N);
-
-  if (N.get_bits_count() < crypto::paillier_t::bit_size) return coinbase::error(E_CRYPTO);
-  if (N.get_bits_count() < 3 * q.get_bits_count() + 3 * SEC_P_STAT + SEC_P_COM + 1)
+  const int N_bits = N.get_bits_count();
+  if (N_bits < crypto::paillier_t::bit_size) return coinbase::error(E_CRYPTO);
+  if (N_bits > crypto::paillier_t::bit_size)
+    return coinbase::error(E_CRYPTO, "unsupported Paillier modulus size from counterparty");
+  if (N_bits < 3 * q.get_bits_count() + 3 * SEC_P_STAT + SEC_P_COM + 1)
     return coinbase::error(E_CRYPTO, "length of N < 3lg q+ 3 stat-sec-param + com-sec-param + 1");
+  if (rv = paillier.create_pub(N)) return coinbase::error(E_CRYPTO, "invalid Paillier modulus from counterparty");
 
   // Potential optimization: both `verify_cipher` and pdl.verify perform GCDs. These can be merged into a single GCD by
   // multiplying them together. See the notes in the spec.
@@ -158,11 +160,14 @@ error_t refresh(job_2p_t& job, const key_t& key, key_t& new_key) {
   zk::valid_paillier_interactive_t::challenge_msg_t pi1_V_tag;
   if (job.is_p2()) {
     if (N_tag <= 0) return rv = job.mpc_abort(E_CRYPTO, "N' < 0");
-    if (N_tag.get_bits_count() < 3 * q.get_bits_count() + 3 * SEC_P_STAT + SEC_P_COM + 1)
+    const int N_tag_bits = N_tag.get_bits_count();
+    if (N_tag_bits < 3 * q.get_bits_count() + 3 * SEC_P_STAT + SEC_P_COM + 1)
       return coinbase::error(E_CRYPTO, "length of N < 3lg q+ 3 stat-sec-param + com-sec-param + 1");
-    if (N_tag.get_bits_count() < crypto::paillier_t::bit_size) return rv = job.mpc_abort(E_CRYPTO, "N' < 2048");
+    if (N_tag_bits < crypto::paillier_t::bit_size) return rv = job.mpc_abort(E_CRYPTO, "N' < 2048");
+    if (N_tag_bits > crypto::paillier_t::bit_size)
+      return rv = job.mpc_abort(E_CRYPTO, "unsupported Paillier modulus size");
 
-    new_key.paillier.create_pub(N_tag);
+    if (rv = new_key.paillier.create_pub(N_tag)) return rv = job.mpc_abort(E_CRYPTO, "invalid Paillier modulus");
     // This includes the GCD check.
     if (rv = new_key.paillier.verify_cipher(c_key_tag)) return rv;
     rho2 = bn_t::rand(q);

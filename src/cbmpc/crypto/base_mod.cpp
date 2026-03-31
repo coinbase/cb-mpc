@@ -1,6 +1,6 @@
-#include <cbmpc/internal/core/extended_uint.h>
 #include <cbmpc/internal/core/utils.h>
 #include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_bn256.h>
 
 namespace coinbase::crypto {
 
@@ -16,15 +16,13 @@ mod_t::~mod_t() {
   if (mont) BN_MONT_CTX_free(mont);
 }
 
+bool mod_t::is_valid_modulus(const bn_t& m) { return m > 1 && m.is_odd(); }
+
 void mod_t::convert(coinbase::converter_t& converter) {
   converter.convert(m);
   if (!converter.is_write()) {
     if (converter.is_error()) return;
-    if (m <= 1) {
-      converter.set_error();
-      return;
-    }
-    if (!m.is_odd()) {
+    if (!is_valid_modulus(m)) {
       converter.set_error();
       return;
     }

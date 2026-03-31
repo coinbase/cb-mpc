@@ -7,7 +7,7 @@ namespace coinbase::crypto {
 static thread_local scoped_ptr_t<BN_CTX> g_tls_bn_ctx = nullptr;
 
 static thread_local const mod_t* g_thread_local_storage_modo = nullptr;
-static const mod_t* thread_local_storage_mod() { return g_thread_local_storage_modo; }
+const mod_t* thread_local_storage_mod() { return g_thread_local_storage_modo; }
 /**
  * @notes:
  * - Static analysis flags this as dangerous because it is a single thread-local pointer that affects all `bn_t`

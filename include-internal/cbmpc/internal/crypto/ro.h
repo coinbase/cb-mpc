@@ -2,6 +2,10 @@
 
 #include <cbmpc/internal/crypto/base.h>
 
+namespace coinbase::crypto {
+class bn256_t;
+}
+
 namespace coinbase::crypto::ro {  // random oracle
 struct hmac_state_t {
   crypto::hmac_sha256_t hmac;
@@ -114,6 +118,7 @@ class hash_numbers_t : public hmac_state_t {
     return *this;
   }
   std::vector<bn_t> mod(const mod_t& q);
+  std::vector<bn256_t> mod256(const mod_t& p);
 
  private:
   int l;
