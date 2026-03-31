@@ -17,6 +17,21 @@ struct bignum_st {
   int flags;
 };
 
+struct bn_mont_ctx_st {
+#if OPENSSL_VERSION_NUMBER < 0x30600000L
+  int ri; /* number of bits in R */
+#endif
+  BIGNUM RR;      /* used to convert to montgomery form,
+                     possibly zero-padded */
+  BIGNUM N;       /* The modulus */
+  BIGNUM Ni;      /* R*(1/R mod N) - N*Ni = 1 (Ni is only
+                   * stored for bignum algorithm) */
+  BN_ULONG n0[2]; /* least significant word(s) of Ni; (type
+                   * changed with 0.9.9, was "BN_ULONG n0;"
+                   * before) */
+  int flags;
+};
+
 namespace coinbase::crypto {
 
 constexpr int div_ceil(int a, int b) { return (a + b - 1) / b; }
@@ -40,6 +55,7 @@ class bn_t {
   friend class crypto::paillier_t;
   friend class crypto::ecdsa_signature_t;
   friend class montgomery_t;
+  friend class bn256_t;
   friend std::ostream& operator<<(std::ostream& os, const bn_t& obj);
 
  public:
@@ -214,6 +230,8 @@ class bn_t {
 #define MODULO(n)                                                                      \
   for (coinbase::crypto::bn_t::set_modulo(n); coinbase::crypto::bn_t::check_modulo(n); \
        coinbase::crypto::bn_t::reset_modulo(n))
+
+const mod_t* thread_local_storage_mod();
 
 bn_t operator+(const bn_t& b1, const bn_t& b2);
 bn_t operator-(const bn_t& b1, const bn_t& b2);

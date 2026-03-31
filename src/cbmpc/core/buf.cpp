@@ -90,14 +90,12 @@ int buf_t::size() const { return s; }
 bool buf_t::empty() const { return s == 0; }
 
 buf_t& buf_t::operator=(mem_t src) {
-  if (s != src.size || data() != src.data) {
-    free();
+  if (s == src.size && data() == src.data) return *this;
 
-    if (src.size <= short_size)
-      assign_short(src.data, src.size);
-    else
-      assign_long(src.data, src.size);
-  }
+  // `mem_t` is a view and may alias this buffer (for example `buf = buf.take(n)`),
+  // so copy it before zeroizing or reallocating the current storage.
+  buf_t tmp(src);
+  *this = std::move(tmp);
   return *this;
 }
 
@@ -261,9 +259,11 @@ buf_t operator+(mem_t src1, mem_t src2) {
 buf_t& buf_t::operator+=(mem_t src) {
   cb_assert(src.size >= 0);
   cb_assert(s <= INT_MAX - src.size);  // overflow check
+  // `mem_t` may point into this buffer, and resize() can zeroize/reallocate it.
+  buf_t tmp(src);
   int old_size = s;
-  byte_ptr new_ptr = resize(old_size + src.size);
-  memmove(new_ptr + old_size, src.data, src.size);
+  byte_ptr new_ptr = resize(old_size + tmp.size());
+  memmove(new_ptr + old_size, tmp.data(), tmp.size());
   return *this;
 }
 

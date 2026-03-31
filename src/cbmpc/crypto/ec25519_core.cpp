@@ -1,6 +1,6 @@
 
-#include <cbmpc/internal/core/extended_uint.h>
 #include <cbmpc/internal/core/utils.h>
+#include <cbmpc/internal/crypto/base_bn256.h>
 #include <cbmpc/internal/crypto/base_ec_core.h>
 #include <cbmpc/internal/crypto/ec25519_core.h>
 

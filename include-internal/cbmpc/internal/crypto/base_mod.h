@@ -32,6 +32,7 @@ class mod_t {
   mod_t(const bn_t& m, bool multiplicative_dense = true) : multiplicative_dense(multiplicative_dense) { init(m); }
 
   void convert(coinbase::converter_t&);
+  static bool is_valid_modulus(const bn_t& m);
 
   // clang-format off
   bn_t add(const bn_t& a, const bn_t& b) const { bn_t r; _add(r, a, b); return r; }
@@ -94,6 +95,7 @@ class mod_t {
 
   BN_MONT_CTX* get_mont_ctx() const { return mont; }
   const bn_t& value() const { return m; }
+  const bn_t& get_barrett_mu() const { return mu; }
 
  private:
   bn_t m;

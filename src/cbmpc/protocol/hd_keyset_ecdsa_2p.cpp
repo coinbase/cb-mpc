@@ -148,6 +148,7 @@ error_t key_share_ecdsa_hdmpc_2p_t::derive_keys(job_2p_t& job, const key_share_e
   buf_t chain_code = y.skip(delta_size);
 
   int n_hd_paths = (int)non_hardened_paths.size();
+  derived_keys.resize(n_hd_paths);
 
   ecc_point_t delta_G = delta * G;
   ecc_point_t Q_derived = Q + delta_G;

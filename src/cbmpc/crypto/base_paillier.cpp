@@ -22,10 +22,20 @@ void paillier_t::convert(coinbase::converter_t& converter) {
 
   if (!converter.is_write()) {
     if (converter.is_error()) return;
-    if (has_private)
+    if (N.get_bits_count() > bit_size) {
+      converter.set_error();
+      return;
+    }
+    if (has_private) {
+      // This path rebuilds a private key from serialized state without semantically validating `p`/`q`.
+      // It is intended for trusted local blobs.
       update_private();
-    else
+    } else {
+      // This path only rebuilds cached public state from the deserialized modulus.
+      // `mod_t::convert()` already enforces the basic modulus representation, but callers are still responsible
+      // for any higher-level/context-specific validation at the boundary after deserialization.
       update_public();
+    }
   }
 }
 
@@ -43,6 +53,8 @@ void paillier_t::generate() {
 }
 
 void paillier_t::update_public() {
+  // Internal helper: callers must ensure `N` has already been validated / constructed as a valid `mod_t`.
+  // The untrusted-input boundary is handled by `create_pub()` or by `mod_t::convert()` during deserialization.
   // calculate N^2
   NN = mod_t(N * N, /* multiplicative_dense */ true);
 }
@@ -133,10 +145,13 @@ void paillier_t::create_prv(const bn_t& theN, const bn_t& theP, const bn_t& theQ
   update_private();
 }
 
-void paillier_t::create_pub(const bn_t& theN) {
+error_t paillier_t::create_pub(const bn_t& theN) {
+  if (!mod_t::is_valid_modulus(theN)) return E_BADARG;
+  if (theN.get_bits_count() > bit_size) return E_BADARG;
   N = mod_t(theN, /* multiplicative_dense */ true);
   has_private = false;
   update_public();
+  return SUCCESS;
 }
 
 bn_t paillier_t::add_ciphers(const bn_t& src1, const bn_t& src2, crypto::paillier_t::rerand_e rerand_mode) const {
@@ -299,6 +314,7 @@ bn_t paillier_t::get_cipher_randomness(const bn_t& plain, const bn_t& cipher) co
 }
 
 error_t paillier_t::verify_cipher(const mod_t& N, const mod_t& NN, const bn_t& cipher) {
+  vartime_scope_t vartime_scope;
   error_t rv = UNINITIALIZED_ERROR;
   if (rv = coinbase::crypto::check_open_range(0, cipher, NN)) return rv;
   if (!mod_t::coprime(cipher, N)) return coinbase::error(E_CRYPTO);

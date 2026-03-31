@@ -1,4 +1,5 @@
 #include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/crypto/base_bn256.h>
 #include <cbmpc/internal/crypto/ro.h>
 
 namespace coinbase::crypto::ro {  // random oracle
@@ -88,6 +89,27 @@ std::vector<bn_t> hash_numbers_t::mod(const mod_t& p) {
     mem_t bin = t.range(i * bytes_per_value, bytes_per_value);
     r[i] = bn_t::from_bin(bin) % p;
   }
+
+  return r;
+}
+
+std::vector<bn256_t> hash_numbers_t::mod256(const mod_t& p) {
+  cb_assert(l > 0 && "hash_numbers_t::mod(): call count(l) with l > 0 before mod()");
+  buf_t h = final();
+
+  int bits_per_value = p.get_bits_count() + SEC_P_COM;
+  int bytes_per_value = bits_to_bytes(bits_per_value);
+  buf_t t = drbg_sample_string(h, bytes_per_value * 8 * l);
+
+  std::vector<bn256_t> r(l);
+  uint64_t temp[8] = {0};
+  for (int i = 0; i < l; i++) {
+    mem_t bin = t.range(i * bytes_per_value, bytes_per_value);
+    bin.reverse();
+    memmove(temp, bin.data, bytes_per_value);
+    MODULO(p) r[i] = bn256_t::reduce(temp);
+  }
+  coinbase::secure_bzero(byte_ptr(temp), sizeof(temp));
 
   return r;
 }

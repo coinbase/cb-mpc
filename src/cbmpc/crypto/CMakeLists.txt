@@ -8,6 +8,7 @@ target_sources(cbmpc_crypto  PRIVATE
 
   base.cpp
   base_bn.cpp
+  base_bn256.cpp
   base_mod.cpp
   base_ec_core.cpp
   base_ecc.cpp

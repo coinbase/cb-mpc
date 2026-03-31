@@ -56,8 +56,8 @@ TEST_F(HDMPC_EdDSA_2P, Keygen) {
 TEST_F(HDMPC_EdDSA_2P, KeygenDerive) {
   int DATA_COUNT = 2;
   key_share_eddsa_hdmpc_2p_t p1_key, p2_key;
-  std::vector<coinbase::mpc::eddsa2pc::key_t> p1_derived_keys(DATA_COUNT);
-  std::vector<coinbase::mpc::eddsa2pc::key_t> p2_derived_keys(DATA_COUNT);
+  std::vector<coinbase::mpc::eddsa2pc::key_t> p1_derived_keys;
+  std::vector<coinbase::mpc::eddsa2pc::key_t> p2_derived_keys;
 
   buf_t session_id = coinbase::crypto::gen_random(32);
   bip32_path_t hardened_path;
@@ -90,8 +90,6 @@ TEST_F(HDMPC_EdDSA_2P, KeygenDerive) {
 
     rv = key_share_eddsa_hdmpc_2p_t::dkg(job, curve, *key);
     ASSERT_EQ(rv, 0);
-
-    int n_sigs = (int)non_hardened_paths.size();
 
     rv = key_share_eddsa_hdmpc_2p_t::derive_keys(job, *key, hardened_path, non_hardened_paths, session_id,
                                                  *derived_keys);
