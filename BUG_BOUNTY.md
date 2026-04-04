@@ -15,7 +15,14 @@ Through community collaboration and vigilant security reviews, we aspire to prov
 
 To keep this bounty focused on issues that affect real integrations, eligible reports should target vulnerabilities reachable through the library's supported public APIs. High-level protocol entry points are exposed via the public C++ headers under `include/cbmpc/api/` (e.g., signing, DKG, TDH2).
 
-For **Medium** and above, submissions must include a proof-of-concept that triggers the issue through those public APIs. Reports may reference or require fixes in `include-internal/` for root cause and impact analysis, but the PoC must not use `include-internal/` as the entry point. For MPC protocol-break PoCs, we expect the participating parties to run independently, ideally on separate machines. At least one honest party should use unmodified library code, and the malicious party should interact only through the protocol boundary exposed by the supported public APIs. Demo applications and sample code under `demo-*`, and the C API headers under `include/cbmpc/c_api/*`, are not in scope for this bug bounty program.
+The in-tree Go wrapper under `cb-mpc-go/` is beta integration code built on top
+of that public API. Reports limited to the Go wrapper, its examples/demos, or
+its build/test tooling are welcome through the normal private disclosure path,
+but they are not bounty-eligible on their own. If a report demonstrates a
+vulnerability in the underlying `cb-mpc` implementation through the supported
+public APIs, bounty eligibility is evaluated against the scope described here.
+
+For **Medium** and above, submissions must include a proof-of-concept that triggers the issue through those public APIs. Reports may reference or require fixes in `include-internal/` for root cause and impact analysis, but the PoC must not use `include-internal/` as the entry point. For MPC protocol-break PoCs, we expect the participating parties to run independently, ideally on separate machines. At least one honest party should use unmodified library code, and the malicious party should interact only through the protocol boundary exposed by the supported public APIs. Demo applications and sample code under `demo-*`, the Go wrapper demos and examples under `cb-mpc-go/`, and the C API headers under `include/cbmpc/c_api/*`, are not in scope for this bug bounty program.
 
 | Vulnerability Tier          | Description                           | Reward                                             |
 |:-------------------|:--------------------------------|:------------------------------------------|

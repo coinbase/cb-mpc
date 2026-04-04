@@ -90,6 +90,7 @@ The cb-mpc library contains two levels of APIs, a public one that contains the A
 - `include-internal`: internal headers (installed only in `full` mode), included as `<cbmpc/internal/...>`
 - `src`: C++ implementation sources
 - `demo-cpp`: a collection of examples of common use cases in c++
+- `cb-mpc-go`: Go bindings, tests, examples, demos, and helper scripts built on the public C API
 - `scripts`: a collection of scripts used by the Makefile
 - `tools/benchmark`: a collection of benchmarks for the library
 - `tests/{dudect,integration,unit}`: a collection of tests for the library
@@ -405,4 +406,15 @@ Note that as indicated in their repository, the curve addition operations of `se
 
 # Go Wrappers
 
-There are extensive Go wrappers for this C++ library that enable the use of library natively from Go. You can find them in [coinbase/cb-mpc-go](https://github.com/coinbase/cb-mpc-go/). The repository also includes demos on how to use the library in Go. 
+The Go bindings for this library now live in [cb-mpc-go](cb-mpc-go) within this
+repository. That directory keeps its own Go module, Makefile, examples, and
+demos, while building against the parent `cb-mpc` checkout instead of vendoring
+`cb-mpc` as a nested submodule.
+
+From the repository root, the usual entry points are:
+
+```bash
+cd cb-mpc-go
+make build
+make test
+```

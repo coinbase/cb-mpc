@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ECDSA MP AC Web Demo</title>
+  <script>
+    async function copyField(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(el.value);
+        return;
+      }
+      el.focus();
+      el.select();
+      document.execCommand('copy');
+    }
+  </script>
+  {{ if .AutoRefresh }}
+  <meta http-equiv="refresh" content="3">
+  {{ end }}
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #f5f7fb; color: #17202a; }
+    header, main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    header h1 { margin: 0 0 8px; }
+    .card { background: #fff; border: 1px solid #d8dee9; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 999px; background: #eef3ff; color: #174ea6; font-size: 12px; font-weight: 600; }
+    .flash-error { background: #fdecea; color: #b3261e; }
+    .flash-info { background: #e8f5e9; color: #1b5e20; }
+    form { margin: 0; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; }
+    input, textarea, select, button { font: inherit; }
+    input, textarea, select { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #c9d3e0; border-radius: 8px; margin-bottom: 12px; background: #fff; }
+    textarea { min-height: 84px; resize: vertical; }
+    button { padding: 10px 14px; border: 0; border-radius: 8px; background: #0b57d0; color: #fff; cursor: pointer; }
+    button[disabled] { background: #98a6b7; cursor: not-allowed; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .action-form { min-width: 220px; flex: 1 1 220px; }
+    .stack { display: grid; gap: 12px; }
+    .copy-block { display: grid; gap: 6px; margin-top: 12px; }
+    .copy-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .copy-actions button { padding: 8px 12px; }
+    .mono-box { min-height: 72px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .sensitive { color: #8a1c1c; font-weight: 600; }
+    .change-note { color: #1b5e20; font-weight: 600; }
+    dl { margin: 0; }
+    dt { font-size: 12px; color: #4a5568; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 12px; }
+    dd { margin: 4px 0 0; word-break: break-word; }
+    ul { margin: 10px 0 0; padding-left: 18px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .muted { color: #5f6b7a; }
+    .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ECDSA MP AC Web Demo</h1>
+    <p class="muted">Run one server per party, open one browser page per server, create the same workflow ID on every page, then trigger DKG, signing, refresh, and re-sign to demonstrate a real MPC-backed application flow.</p>
+  </header>
+
+  <main>
+    {{ if .FlashError }}
+    <div class="card flash-error">{{ .FlashError }}</div>
+    {{ end }}
+    {{ if .FlashInfo }}
+    <div class="card flash-info">{{ .FlashInfo }}</div>
+    {{ end }}
+
+    <section class="card">
+      <h2>Local Party</h2>
+      <div class="grid">
+        <div>
+          <dl>
+            <dt>Self Index</dt>
+            <dd>{{ .Self }}</dd>
+            <dt>HTTP Listen</dt>
+            <dd><code>{{ .HTTPListen }}</code></dd>
+            <dt>Threshold</dt>
+            <dd>{{ .Threshold }} of {{ len .PartyNames }}</dd>
+            <dt>Selected Sign Receiver</dt>
+            <dd>Quorum slot {{ .SignReceiver }}</dd>
+          </dl>
+        </div>
+        <div>
+          <dt>Party Names</dt>
+          <div class="pill-row">
+            {{ range .PartyNames }}<span class="badge"><code>{{ . }}</code></span>{{ end }}
+          </div>
+          <dt>DKG / Refresh Quorum</dt>
+          <div class="pill-row">
+            {{ range .QuorumNames }}<span class="badge"><code>{{ . }}</code></span>{{ end }}
+          </div>
+        </div>
+        <div>
+          <dt>Transport Base Addresses</dt>
+          <ul>
+            {{ range .TransportAddrs }}<li><code>{{ . }}</code></li>{{ end }}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Create Workflow</h2>
+      <p class="muted">Use the same workflow ID and message on every party page. Party names are fixed server config and already globally unique. This demo persists sensitive MPC blobs under the configured party data directory, so treat the local storage as demo-only.</p>
+      <form method="post" action="/workflows">
+        <label for="id">Workflow ID</label>
+        <input id="id" name="id" maxlength="64" placeholder="wallet-demo-001" required>
+        <label for="message">Message To Sign</label>
+        <textarea id="message" name="message" placeholder="Pay 5 BTC to demo merchant #42" required></textarea>
+        <button type="submit">Create Workflow</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Workflows</h2>
+      {{ if .Workflows }}
+        {{ range .Workflows }}
+        <article class="card">
+          <div class="grid">
+            <div>
+              <h3>{{ .ID }}</h3>
+              <div class="pill-row">
+                <span class="badge">{{ .Status }}</span>
+                {{ if .ActiveOperation }}<span class="badge">running {{ .ActiveOperation }}</span>{{ end }}
+                {{ if .SignCount }}<span class="badge">{{ .SignCount }} signatures completed</span>{{ end }}
+              </div>
+              <dl>
+                <dt>Message</dt>
+                <dd>{{ .Message }}</dd>
+                <dt>Message Hash</dt>
+                <dd>{{ if .MessageHashHex }}<code>{{ .MessageHashHex }}</code>{{ else }}<span class="muted">Not available yet</span>{{ end }}</dd>
+                <dt>Current SID</dt>
+                <dd>{{ if .CurrentSIDHex }}<code>{{ .CurrentSIDHex }}</code>{{ else }}<span class="muted">Not available yet</span>{{ end }}</dd>
+                <dt>Current Key Blob</dt>
+                <dd>{{ if .CurrentKeyBlobBytes }}{{ .CurrentKeyBlobBytes }} bytes{{ else }}<span class="muted">Not available yet</span>{{ end }}</dd>
+                <dt>Refresh Count</dt>
+                <dd>{{ .RefreshCount }}</dd>
+                <dt>Sign Count</dt>
+                <dd>{{ .SignCount }}</dd>
+                <dt>Last Signature Stage</dt>
+                <dd>{{ if .LastSignatureStage }}{{ .LastSignatureStage }}{{ if .LastSignatureVerified }} (verified){{ end }}{{ else }}<span class="muted">None yet</span>{{ end }}</dd>
+                <dt>Last Signature Quorum</dt>
+                <dd>{{ if .LastSignatureQuorum }}{{ .LastSignatureQuorum }}{{ else }}<span class="muted">None yet</span>{{ end }}</dd>
+                <dt>Last Signature Receiver</dt>
+                <dd>{{ if .LastSignatureReceiver }}{{ .LastSignatureReceiver }}{{ else }}<span class="muted">None yet</span>{{ end }}</dd>
+                <dt>Last Error</dt>
+                <dd>{{ if .LastError }}{{ .LastError }}{{ else }}<span class="muted">None</span>{{ end }}</dd>
+              </dl>
+              {{ if .KeyMaterialError }}
+              <p class="sensitive">Unable to decode key material for display: {{ .KeyMaterialError }}</p>
+              {{ end }}
+              <div class="copy-block">
+                <label for="pubkey-{{ .ID }}">Joint Public Key (compressed hex, should match on every party page)</label>
+                <textarea id="pubkey-{{ .ID }}" class="mono-box" readonly>{{ if .PublicKeyHex }}{{ .PublicKeyHex }}{{ else }}Not generated yet{{ end }}</textarea>
+                {{ if .PublicKeyHex }}
+                <div class="copy-actions">
+                  <button type="button" onclick="copyField('pubkey-{{ .ID }}')">Copy Public Key</button>
+                </div>
+                {{ end }}
+              </div>
+              <div class="copy-block">
+                <label for="pubkey-uncompressed-{{ .ID }}">Joint Public Key (uncompressed hex, use this if an external verifier rejects the compressed key)</label>
+                <textarea id="pubkey-uncompressed-{{ .ID }}" class="mono-box" readonly>{{ if .PublicKeyUncompressedHex }}{{ .PublicKeyUncompressedHex }}{{ else }}Not generated yet{{ end }}</textarea>
+                {{ if .PublicKeyUncompressedHex }}
+                <div class="copy-actions">
+                  <button type="button" onclick="copyField('pubkey-uncompressed-{{ .ID }}')">Copy Uncompressed Public Key</button>
+                </div>
+                {{ end }}
+              </div>
+              <div class="copy-block">
+                <label for="pubshare-{{ .ID }}">Local Public Share (compressed hex)</label>
+                <textarea id="pubshare-{{ .ID }}" class="mono-box" readonly>{{ if .LocalPublicShareHex }}{{ .LocalPublicShareHex }}{{ else }}Not available yet{{ end }}</textarea>
+                {{ if .LocalPublicShareHex }}
+                <div class="copy-actions">
+                  <button type="button" onclick="copyField('pubshare-{{ .ID }}')">Copy Public Share</button>
+                  {{ if .PreviousPublicShareHex }}
+                    {{ if .PublicShareChanged }}<span class="change-note">Changed on last refresh</span>{{ else }}<span class="muted">Did not change on last refresh</span>{{ end }}
+                  {{ end }}
+                </div>
+                {{ end }}
+              </div>
+              <div class="copy-block">
+                <label for="privshare-{{ .ID }}">Local Private Scalar Share (hex, demo-only, sensitive)</label>
+                <textarea id="privshare-{{ .ID }}" class="mono-box" readonly>{{ if .LocalPrivateScalarHex }}{{ .LocalPrivateScalarHex }}{{ else }}Not available yet{{ end }}</textarea>
+                {{ if .LocalPrivateScalarHex }}
+                <div class="copy-actions">
+                  <button type="button" onclick="copyField('privshare-{{ .ID }}')">Copy Private Share</button>
+                  <span class="sensitive">Sensitive demo output</span>
+                  {{ if .PreviousPrivateScalarHex }}
+                    {{ if .PrivateScalarChanged }}<span class="change-note">Changed on last refresh</span>{{ else }}<span class="muted">Did not change on last refresh</span>{{ end }}
+                  {{ end }}
+                </div>
+                {{ end }}
+              </div>
+              {{ if .PreviousPublicShareHex }}
+              <div class="stack">
+                <div class="copy-block">
+                  <label for="prev-pubshare-{{ .ID }}">Previous Public Share Before Last Refresh</label>
+                  <textarea id="prev-pubshare-{{ .ID }}" class="mono-box" readonly>{{ .PreviousPublicShareHex }}</textarea>
+                </div>
+                <div class="copy-block">
+                  <label for="prev-privshare-{{ .ID }}">Previous Private Scalar Share Before Last Refresh</label>
+                  <textarea id="prev-privshare-{{ .ID }}" class="mono-box" readonly>{{ .PreviousPrivateScalarHex }}</textarea>
+                </div>
+              </div>
+              {{ end }}
+            </div>
+            <div>
+              <h4>Actions</h4>
+              <p class="muted">Click the matching action on the other party pages too. For signing, pick the same quorum on the participating pages only. Receiver slot {{ $.SignReceiver }} within the selected quorum receives and verifies the DER signature.</p>
+              <div class="actions">
+                <form class="action-form" method="post" action="/workflows/{{ .ID }}/actions/dkg">
+                  <button type="submit" {{ if not .CanRunDKG }}disabled{{ end }}>Run DKG</button>
+                </form>
+                <form class="action-form" method="post" action="/workflows/{{ .ID }}/actions/sign">
+                  <label for="sign-quorum-{{ .ID }}">Sign Quorum</label>
+                  <select id="sign-quorum-{{ .ID }}" name="quorum-indices" {{ if not .CanRunSign }}disabled{{ end }}>
+                    {{ range .SignQuorumOptions }}
+                    <option value="{{ .Value }}">{{ .Label }}</option>
+                    {{ end }}
+                  </select>
+                  <button type="submit" {{ if not .CanRunSign }}disabled{{ end }}>{{ .SignButtonLabel }}</button>
+                </form>
+                <form class="action-form" method="post" action="/workflows/{{ .ID }}/actions/refresh">
+                  <button type="submit" {{ if not .CanRunRefresh }}disabled{{ end }}>Refresh</button>
+                </form>
+              </div>
+              <h4>Verification Bundle</h4>
+              <p class="muted">The receiver page gets the DER signature. Copy the original message, public key, and DER signature below into a third-party secp256k1 ECDSA verifier. If the site rejects the compressed public key, try the uncompressed key instead.</p>
+              <div class="copy-block">
+                <label for="hash-{{ .ID }}">SHA-256 Message Hash (hex)</label>
+                <textarea id="hash-{{ .ID }}" class="mono-box" readonly>{{ .MessageHashHex }}</textarea>
+                <div class="copy-actions">
+                  <button type="button" onclick="copyField('hash-{{ .ID }}')">Copy Message Hash</button>
+                </div>
+              </div>
+              <div class="copy-block">
+                <label for="message-{{ .ID }}">Original Message (use this with SHA-256 selected in most web verifiers)</label>
+                <textarea id="message-{{ .ID }}" class="mono-box" readonly>{{ .Message }}</textarea>
+                <div class="copy-actions">
+                  <button type="button" onclick="copyField('message-{{ .ID }}')">Copy Original Message</button>
+                </div>
+              </div>
+              <div class="copy-block">
+                <label for="sig-{{ .ID }}">Last DER Signature (hex, receiver page only)</label>
+                <textarea id="sig-{{ .ID }}" class="mono-box" readonly>{{ if .LastSignatureHex }}{{ .LastSignatureHex }}{{ else }}No local DER signature on this page yet{{ end }}</textarea>
+                {{ if .LastSignatureHex }}
+                <div class="copy-actions">
+                  <button type="button" onclick="copyField('sig-{{ .ID }}')">Copy Signature</button>
+                  {{ if .LastSignatureVerified }}<span class="change-note">Verified on this page</span>{{ end }}
+                </div>
+                {{ end }}
+              </div>
+              <h4>Event Log</h4>
+              <ul>
+                {{ range .Events }}
+                <li><strong>{{ .Time.Format "15:04:05" }}</strong> [{{ .Level }}] {{ .Message }}</li>
+                {{ else }}
+                <li class="muted">No events yet.</li>
+                {{ end }}
+              </ul>
+            </div>
+          </div>
+        </article>
+        {{ end }}
+      {{ else }}
+        <div class="card muted">No workflows yet. Create one above on each party page using the same workflow ID and message.</div>
+      {{ end }}
+    </section>
+  </main>
+</body>
+</html>

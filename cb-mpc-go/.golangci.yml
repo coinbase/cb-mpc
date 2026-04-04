@@ -1,0 +1,72 @@
+version: "2"
+# Local/static-analysis configuration. CI enforces tests, `go vet`, and
+# `golangci-lint`; keep this file aligned with the repository workflows and
+# actual package paths.
+run:
+  timeout: 10m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    - gocritic
+    - revive
+    - govet
+    - staticcheck
+    - errcheck
+    - ineffassign
+    - misspell
+    - gosec
+
+  settings:
+    revive:
+      severity: warning
+    misspell:
+      locale: US
+  exclusions:
+    warn-unused: true
+    presets:
+      - comments
+      - std-error-handling
+      - common-false-positives
+      - legacy
+    rules:
+      # Exclude the noisy gocritic dupSubExpr in the CGO binding package only.
+      - linters:
+          - gocritic
+        text: "suspicious identical LHS and RHS"
+        path: "internal/cgo/.*"
+      # Demo/example code intentionally accepts file paths and other user input
+      # directly; keep gosec focused on the shipped library packages.
+      - linters:
+          - gosec
+        path: "^(examples|demos)/.*"
+      # Demo/example binaries intentionally use log.Fatal in main-style flows;
+      # avoid noisy exitAfterDefer findings there.
+      - linters:
+          - gocritic
+        text: "exitAfterDefer"
+        path: "^(examples|demos)/.*"
+      # Test files intentionally exercise insecure/failure cases.
+      - linters:
+          - gosec
+        path: "_test\\.go$"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+# v2: configure formatters separately
+formatters:
+  enable:
+    - gofumpt
+    - gci
+  settings:
+    gofumpt:
+      module-path: github.com/coinbase/cb-mpc-go
+    gci:
+      sections:
+        - Standard
+        - Default
+        - Prefix(github.com/coinbase/cb-mpc-go)
