@@ -40,6 +40,27 @@ struct key_blob_v1_t {
   }
 };
 
+static error_t validate_aggregate_public_key(
+    const coinbase::crypto::ecurve_t& curve, const coinbase::crypto::ecc_point_t& Q,
+    const coinbase::crypto::ss::party_map_t<coinbase::crypto::ecc_point_t>& Qis) {
+  coinbase::crypto::ecc_point_t Q_sum = curve.infinity();
+  for (const auto& kv : Qis) Q_sum += kv.second;
+  if (Q != Q_sum) return coinbase::error(E_FORMAT, "invalid key blob");
+  return SUCCESS;
+}
+
+static error_t parse_Qis(const std::map<std::string, buf_t>& Qis_compressed, const coinbase::crypto::ecurve_t& curve,
+                         coinbase::crypto::ss::party_map_t<coinbase::crypto::ecc_point_t>& Qis) {
+  error_t rv = UNINITIALIZED_ERROR;
+  Qis.clear();
+  for (const auto& kv : Qis_compressed) {
+    coinbase::crypto::ecc_point_t Qi;
+    if (rv = Qi.from_bin(curve, kv.second)) return coinbase::error(rv, "invalid key blob");
+    Qis[kv.first] = std::move(Qi);
+  }
+  return SUCCESS;
+}
+
 static error_t parse_key_blob_any_version(mem_t in, key_blob_v1_t& out_blob, coinbase::api::curve_id& out_curve_id,
                                           coinbase::crypto::ecurve_t& out_curve) {
   if (const error_t rv =
@@ -163,15 +184,9 @@ static error_t deserialize_key_blob(const coinbase::api::job_mp_t& job, mem_t in
     const std::string name(name_view);
     const auto it = blob.Qis_compressed.find(name);
     if (it == blob.Qis_compressed.end()) return coinbase::error(E_BADARG, "job.party_names mismatch key blob");
-
-    coinbase::crypto::ecc_point_t Qi;
-    if (rv = Qi.from_bin(curve, it->second)) return coinbase::error(rv, "invalid key blob");
-    Qis[name] = std::move(Qi);
   }
-
-  coinbase::crypto::ecc_point_t Q_sum = curve.infinity();
-  for (const auto& kv : Qis) Q_sum += kv.second;
-  if (Q != Q_sum) return coinbase::error(E_FORMAT, "invalid key blob");
+  if (rv = parse_Qis(blob.Qis_compressed, curve, Qis)) return rv;
+  if (rv = validate_aggregate_public_key(curve, Q, Qis)) return rv;
 
   const auto& G = curve.generator();
   const auto it_self = Qis.find(blob.party_name);
@@ -224,14 +239,10 @@ static error_t deserialize_ac_key_blob(const coinbase::api::job_mp_t& job, mem_t
     const std::string name(name_view);
     const auto it = blob.Qis_compressed.find(name);
     if (it == blob.Qis_compressed.end()) return coinbase::error(E_BADARG, "job.party_names mismatch key blob");
-
-    coinbase::crypto::ecc_point_t Qi;
-    if (rv = Qi.from_bin(curve, it->second)) return coinbase::error(rv, "invalid key blob");
-    Qis[name] = std::move(Qi);
   }
+  if (rv = parse_Qis(blob.Qis_compressed, curve, Qis)) return rv;
+  if (rv = validate_aggregate_public_key(curve, Q, Qis)) return rv;
 
-  // Access-structure key blobs are validated using the access structure at use sites.
-  // Here we only enforce the self-share binding.
   const auto& G = curve.generator();
   const auto it_self = Qis.find(blob.party_name);
   if (it_self == Qis.end()) return coinbase::error(E_FORMAT, "invalid key blob");
@@ -266,11 +277,8 @@ static error_t deserialize_ac_key_blob(mem_t in, coinbase::mpc::ecdsampc::key_t&
   if (rv = Q.from_bin(curve, blob.Q_compressed)) return coinbase::error(rv, "invalid key blob");
 
   coinbase::crypto::ss::party_map_t<coinbase::crypto::ecc_point_t> Qis;
-  for (const auto& kv : blob.Qis_compressed) {
-    coinbase::crypto::ecc_point_t Qi;
-    if (rv = Qi.from_bin(curve, kv.second)) return coinbase::error(rv, "invalid key blob");
-    Qis[kv.first] = std::move(Qi);
-  }
+  if (rv = parse_Qis(blob.Qis_compressed, curve, Qis)) return rv;
+  if (rv = validate_aggregate_public_key(curve, Q, Qis)) return rv;
 
   const auto& G = curve.generator();
   const auto it_self = Qis.find(blob.party_name);
@@ -473,6 +481,9 @@ error_t get_public_key_compressed(mem_t key_blob, buf_t& pub_key) {
 
   coinbase::crypto::ecc_point_t Q(curve);
   if (rv = Q.from_bin(curve, blob.Q_compressed)) return coinbase::error(rv, "invalid key blob");
+  coinbase::crypto::ss::party_map_t<coinbase::crypto::ecc_point_t> Qis;
+  if (rv = parse_Qis(blob.Qis_compressed, curve, Qis)) return rv;
+  if (rv = validate_aggregate_public_key(curve, Q, Qis)) return rv;
 
   pub_key = Q.to_compressed_bin();
   return SUCCESS;
@@ -499,6 +510,12 @@ error_t detach_private_scalar(mem_t key_blob, buf_t& out_public_key_blob, buf_t&
   const int order_size = q.get_bin_size();
   if (order_size <= 0) return coinbase::error(E_GENERAL, "invalid curve order size");
 
+  coinbase::crypto::ecc_point_t Q(curve);
+  if (rv = Q.from_bin(curve, blob.Q_compressed)) return coinbase::error(rv, "invalid key blob");
+  coinbase::crypto::ss::party_map_t<coinbase::crypto::ecc_point_t> Qis;
+  if (rv = parse_Qis(blob.Qis_compressed, curve, Qis)) return rv;
+  if (rv = validate_aggregate_public_key(curve, Q, Qis)) return rv;
+
   out_private_scalar_fixed = blob.x_share.to_bin(order_size);
 
   // Redact private scalar share.
@@ -518,6 +535,12 @@ error_t attach_private_scalar(mem_t public_key_blob, mem_t private_scalar_fixed,
   const coinbase::crypto::mod_t& q = curve.order();
   const int order_size = q.get_bin_size();
   if (order_size <= 0) return coinbase::error(E_GENERAL, "invalid curve order size");
+
+  coinbase::crypto::ecc_point_t Q(curve);
+  if (rv = Q.from_bin(curve, blob.Q_compressed)) return coinbase::error(rv, "invalid key blob");
+  coinbase::crypto::ss::party_map_t<coinbase::crypto::ecc_point_t> Qis;
+  if (rv = parse_Qis(blob.Qis_compressed, curve, Qis)) return rv;
+  if (rv = validate_aggregate_public_key(curve, Q, Qis)) return rv;
 
   if (const error_t rvm = coinbase::api::detail::validate_mem_arg(private_scalar_fixed, "private_scalar_fixed"))
     return rvm;
