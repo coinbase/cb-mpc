@@ -9,6 +9,8 @@
 #include <cbmpc/core/access_structure.h>
 #include <cbmpc/core/error.h>
 
+#include "../api/access_structure_util.h"
+
 namespace coinbase::capi::detail {
 
 inline cbmpc_error_t to_cpp_quorum_party_names(const char* const* names, int names_count,
@@ -33,6 +35,7 @@ inline cbmpc_error_t to_cpp_access_structure(const cbmpc_access_structure_t* in,
   if (!in) return E_BADARG;
   if (in->nodes_count < 0 || in->child_indices_count < 0) return E_BADARG;
   if (in->nodes_count == 0) return E_BADARG;
+  if (static_cast<size_t>(in->nodes_count) > coinbase::api::detail::MAX_ACCESS_STRUCTURE_NODES) return E_RANGE;
   if (!in->nodes) return E_BADARG;
   if (in->child_indices_count > 0 && !in->child_indices) return E_BADARG;
   if (in->root_index < 0 || in->root_index >= in->nodes_count) return E_BADARG;
@@ -42,12 +45,15 @@ inline cbmpc_error_t to_cpp_access_structure(const cbmpc_access_structure_t* in,
 
   struct builder_t {
     static cbmpc_error_t build(const cbmpc_access_structure_t* in, int32_t idx, bool is_root,
-                               std::vector<uint8_t>& state, coinbase::api::access_structure_t& out) {
+                               size_t depth, size_t& nodes_seen, std::vector<uint8_t>& state,
+                               coinbase::api::access_structure_t& out) {
       if (idx < 0 || idx >= in->nodes_count) return E_BADARG;
+      if (depth > coinbase::api::detail::MAX_ACCESS_STRUCTURE_DEPTH) return E_RANGE;
 
       const auto uidx = static_cast<size_t>(idx);
       if (state[uidx] == 1) return E_BADARG;  // cycle
       if (state[uidx] == 2) return E_BADARG;  // node reuse (DAG)
+      if (++nodes_seen > coinbase::api::detail::MAX_ACCESS_STRUCTURE_NODES) return E_RANGE;
       state[uidx] = 1;
 
       const cbmpc_access_structure_node_t& n = in->nodes[uidx];
@@ -93,7 +99,7 @@ inline cbmpc_error_t to_cpp_access_structure(const cbmpc_access_structure_t* in,
           for (int32_t i = 0; i < n.child_indices_count; i++) {
             const int32_t child_idx = in->child_indices[static_cast<size_t>(off + i)];
             coinbase::api::access_structure_t child;
-            const cbmpc_error_t rv = build(in, child_idx, /*is_root=*/false, state, child);
+            const cbmpc_error_t rv = build(in, child_idx, /*is_root=*/false, depth + 1, nodes_seen, state, child);
             if (rv) return rv;
             node.children.emplace_back(std::move(child));
           }
@@ -109,7 +115,8 @@ inline cbmpc_error_t to_cpp_access_structure(const cbmpc_access_structure_t* in,
     }
   };
 
-  const cbmpc_error_t rv = builder_t::build(in, in->root_index, /*is_root=*/true, state, out);
+  size_t nodes_seen = 0;
+  const cbmpc_error_t rv = builder_t::build(in, in->root_index, /*is_root=*/true, /*depth=*/0, nodes_seen, state, out);
   if (rv) return rv;
 
   // Reject unreachable nodes (must be a single rooted tree).
