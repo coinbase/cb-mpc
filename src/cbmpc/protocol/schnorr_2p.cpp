@@ -108,6 +108,7 @@ error_t sign_batch(job_2p_t& job, key_t& key, const std::vector<mem_t>& msgs, st
   if (job.is_p1()) {
     if (s2.size() != size_t(n_sigs)) return coinbase::error(E_CRYPTO, "schnorr_2p: inconsistent batch size (s2)");
     for (int i = 0; i < n_sigs; i++) {
+      if (!q.is_in_range(s2[i])) return coinbase::error(E_CRYPTO, "schnorr_2p: invalid s2");
       bn_t s, s1;
       MODULO(q) {
         s1 = e[i] * key.x_share + k1[i];

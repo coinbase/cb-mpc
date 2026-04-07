@@ -60,6 +60,24 @@ TEST(BigNumber, IntOperatorsHandleIntMin) {
   MODULO(q) { EXPECT_EQ(bn_t(0) + v, expected_mod); }
 }
 
+TEST(BigNumber, ModuloScopeRestoresOnThrow) {
+  const mod_t& q = crypto::curve_ed25519.order();
+  EXPECT_EQ(thread_local_storage_mod(), nullptr);
+
+  struct sentinel_t {};
+
+  try {
+    MODULO(q) {
+      EXPECT_EQ(thread_local_storage_mod(), &q);
+      throw sentinel_t();
+    }
+    FAIL() << "expected throw";
+  } catch (const sentinel_t&) {
+  }
+
+  EXPECT_EQ(thread_local_storage_mod(), nullptr);
+}
+
 TEST(BigNumber, Multiplication) {
   EXPECT_EQ(bn_t(123) * bn_t(456), 56088);
   EXPECT_EQ(bn_t(-123) * bn_t(456), -56088);

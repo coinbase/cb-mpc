@@ -8,17 +8,13 @@ static thread_local scoped_ptr_t<BN_CTX> g_tls_bn_ctx = nullptr;
 
 static thread_local const mod_t* g_thread_local_storage_modo = nullptr;
 const mod_t* thread_local_storage_mod() { return g_thread_local_storage_modo; }
-/**
- * @notes:
- * - Static analysis flags this as dangerous because it is a single thread-local pointer that affects all `bn_t`
- *   arithmetic on the current thread.
- * - It is intended to be used via the `MODULO(q) { ... }` macro so operations inside the block are performed
- *   modulo `q`.
- * - The macro resets the modulus in the `for` loop update clause; if the block exits early (e.g., `return`,
- *   `break`, `throw`, `goto`), the modulus may remain set and affect subsequent operations on the same thread.
- * - The modulus is not stacked, so `MODULO(...)` must not be nested.
- */
 static void thread_local_storage_set_mod(const mod_t* ptr) { g_thread_local_storage_modo = ptr; }
+
+scoped_modulo_t::scoped_modulo_t(const mod_t& mod) : previous_(thread_local_storage_mod()) {
+  thread_local_storage_set_mod(&mod);
+}
+
+scoped_modulo_t::~scoped_modulo_t() { thread_local_storage_set_mod(previous_); }
 
 BN_CTX* bn_t::thread_local_storage_bn_ctx() {  // static
   BN_CTX* ctx = g_tls_bn_ctx;

@@ -45,6 +45,7 @@ class paillier_t;
 class ecdsa_signature_t;
 class ecurve_t;
 class ecc_point_t;
+class scoped_modulo_t;
 
 typedef void (*gen_prime_callback)(int a, int b, void* ctx);
 
@@ -211,25 +212,21 @@ class bn_t {
   void init();
 };
 
-/**
- * WARNING: `MODULO(n)` sets a thread-local modulus for all `bn_t` arithmetic in the current thread.
- *
- * The modulus is reset in the `for` loop update clause, so it is NOT reset if the body exits early
- * via `return`, `break`, `throw`, `goto`, etc. If that happens, subsequent cryptographic operations
- * on the same thread may run under an unexpected modulus (or under a modulus when they should not),
- * potentially producing incorrect results or corrupted state.
- *
- * Additional caveats:
- * - The modulus is stored as a single thread-local pointer (it is not stacked), so `MODULO(...)`
- *   must not be nested.
- * - Avoid mixing arithmetic that assumes "no modulus" with code that can leave a previous modulus set.
- *
- * If early-exit behavior is required, ensure the modulus is reset before leaving the scope, or refactor
- * to propagate errors without exiting the `MODULO(...) { ... }` block.
- */
-#define MODULO(n)                                                                      \
-  for (coinbase::crypto::bn_t::set_modulo(n); coinbase::crypto::bn_t::check_modulo(n); \
-       coinbase::crypto::bn_t::reset_modulo(n))
+class scoped_modulo_t {
+ public:
+  explicit scoped_modulo_t(const mod_t& mod);
+  ~scoped_modulo_t();
+
+  explicit operator bool() const { return active_; }
+
+ private:
+  const mod_t* previous_ = nullptr;
+  bool active_ = true;
+};
+
+// `MODULO(n)` installs a thread-local modulus for the current scope and restores the previous modulus on every exit
+// path, including exceptions.
+#define MODULO(n) if (coinbase::crypto::scoped_modulo_t _cb_scoped_modulo(n); _cb_scoped_modulo)
 
 const mod_t* thread_local_storage_mod();
 
