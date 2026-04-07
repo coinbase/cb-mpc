@@ -46,12 +46,17 @@ class ec_pve_batch_t {
   const buf_t& get_Label() const { return L; }
 
   void convert(coinbase::converter_t& converter) {
-    if (int(Q.size()) != n) {
+    if (converter.is_write() && int(Q.size()) != n) {
       converter.set_error();
       return;
     }
 
     converter.convert(Q, L, b);
+
+    if (!converter.is_write() && int(Q.size()) != n) {
+      converter.set_error();
+      return;
+    }
 
     for (int i = 0; i < kappa; i++) {
       converter.convert(rows[i].x_bin);

@@ -32,7 +32,7 @@ using detail::parse_ek_blob;
 using detail::rsa_oaep_hsm_base_pke_t;
 
 static error_t parse_batch_ciphertext(mem_t ciphertext, pve_batch_ciphertext_blob_v1_t& out_blob) {
-  error_t rv = coinbase::convert(out_blob, ciphertext);
+  error_t rv = coinbase::deser(ciphertext, out_blob);
   if (rv) return rv;
   if (out_blob.version != pve_batch_ciphertext_version_v1)
     return coinbase::error(E_FORMAT, "unsupported ciphertext version");
@@ -40,6 +40,12 @@ static error_t parse_batch_ciphertext(mem_t ciphertext, pve_batch_ciphertext_blo
   if (out_blob.batch_count > static_cast<uint32_t>(coinbase::mpc::ec_pve_batch_t::MAX_BATCH_COUNT))
     return coinbase::error(E_RANGE, "batch too large");
   return SUCCESS;
+}
+
+static error_t deserialize_batch_ciphertext(mem_t ciphertext, int n, coinbase::mpc::ec_pve_batch_t& out_ct) {
+  if (n <= 0 || n > coinbase::mpc::ec_pve_batch_t::MAX_BATCH_COUNT)
+    return coinbase::error(E_BADARG, "invalid batch count");
+  return coinbase::deser(ciphertext, out_ct);
 }
 
 }  // namespace
@@ -114,7 +120,7 @@ error_t verify_batch(const base_pke_i& base_pke, curve_id curve, mem_t ek, mem_t
 
   base_pke_bridge_t bridge(base_pke);
   coinbase::mpc::ec_pve_batch_t pve_ct(n);
-  if (rv = coinbase::convert(pve_ct, blob.ct)) return rv;
+  if (rv = deserialize_batch_ciphertext(blob.ct, n, pve_ct)) return rv;
 
   for (const auto& q : pve_ct.get_Qs()) {
     if (q.get_curve() != icurve) return coinbase::error(E_BADARG, "ciphertext curve mismatch");
@@ -160,7 +166,7 @@ error_t decrypt_batch(const base_pke_i& base_pke, curve_id curve, mem_t dk, mem_
 
   base_pke_bridge_t bridge(base_pke);
   coinbase::mpc::ec_pve_batch_t pve_ct(n);
-  if (rv = coinbase::convert(pve_ct, blob.ct)) return rv;
+  if (rv = deserialize_batch_ciphertext(blob.ct, n, pve_ct)) return rv;
 
   for (const auto& q : pve_ct.get_Qs()) {
     if (q.get_curve() != icurve) return coinbase::error(E_BADARG, "ciphertext curve mismatch");
@@ -171,7 +177,7 @@ error_t decrypt_batch(const base_pke_i& base_pke, curve_id curve, mem_t dk, mem_
 
   std::vector<coinbase::crypto::bn_t> xs_bn;
   rv = pve_ct.decrypt(bridge, coinbase::mpc::pve_keyref(dk_mem), coinbase::mpc::pve_keyref(ek_mem), label, icurve,
-                      xs_bn, /*skip_verify=*/true);
+                      xs_bn, /*skip_verify=*/false);
   if (rv) {
     out_xs.clear();
     return rv;
@@ -258,7 +264,7 @@ error_t get_public_keys_compressed_batch(mem_t ciphertext, std::vector<buf_t>& o
 
   const int n = static_cast<int>(blob.batch_count);
   coinbase::mpc::ec_pve_batch_t pve_ct(n);  // base PKE not used for extraction
-  if (rv = coinbase::convert(pve_ct, blob.ct)) return rv;
+  if (rv = deserialize_batch_ciphertext(blob.ct, n, pve_ct)) return rv;
 
   std::vector<buf_t> out_local;
   out_local.reserve(static_cast<size_t>(n));
@@ -279,7 +285,7 @@ error_t get_Label_batch(mem_t ciphertext, buf_t& out_label) {
 
   const int n = static_cast<int>(blob.batch_count);
   coinbase::mpc::ec_pve_batch_t pve_ct(n);  // base PKE not used for extraction
-  if (rv = coinbase::convert(pve_ct, blob.ct)) return rv;
+  if (rv = deserialize_batch_ciphertext(blob.ct, n, pve_ct)) return rv;
 
   out_label = pve_ct.get_Label();
   return SUCCESS;

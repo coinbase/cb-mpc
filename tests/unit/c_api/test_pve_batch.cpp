@@ -6,6 +6,7 @@
 #include <cbmpc/c_api/pve_batch_single_recipient.h>
 #include <cbmpc/core/error.h>
 #include <cbmpc/core/macros.h>
+#include <cbmpc/internal/core/convert.h>
 #include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/crypto/base_ecc.h>
 
@@ -13,6 +14,14 @@ namespace {
 
 using coinbase::buf_t;
 using coinbase::mem_t;
+
+struct pve_batch_ciphertext_blob_v1_t {
+  uint32_t version = 1;
+  uint32_t batch_count = 0;
+  buf_t ct;
+
+  void convert(coinbase::converter_t& c) { c.convert(version, batch_count, ct); }
+};
 
 static buf_t expected_Q(cbmpc_curve_id_t curve_id, mem_t x) {
   const coinbase::crypto::ecurve_t curve = (curve_id == CBMPC_CURVE_P256)        ? coinbase::crypto::curve_p256
@@ -259,6 +268,41 @@ TEST(CApiPveBatchNeg, Decrypt) {
             CBMPC_SUCCESS);
   EXPECT_NE(cbmpc_pve_batch_decrypt(nullptr, CBMPC_CURVE_SECP256K1, dk, ek, ct, cmem_t{nullptr, 0}, &xs_out),
             CBMPC_SUCCESS);
+
+  cbmpc_cmem_free(ct);
+  cbmpc_cmem_free(dk);
+  cbmpc_cmem_free(ek);
+}
+
+TEST(CApiPveBatchNeg, DecryptRejectsTamperedOuterBatchCount) {
+  dylog_disable_scope_t no_log;
+
+  cmem_t ek{nullptr, 0};
+  cmem_t dk{nullptr, 0};
+  ASSERT_EQ(cbmpc_pve_generate_base_pke_ecies_p256_keypair(&ek, &dk), CBMPC_SUCCESS);
+
+  const cmem_t label = {reinterpret_cast<uint8_t*>(const_cast<char*>("label")), 5};
+  std::array<uint8_t, 32> x_bytes{};
+  x_bytes[0] = 1;
+  int x_size = 32;
+  const cmems_t xs = {1, x_bytes.data(), &x_size};
+
+  cmem_t ct{nullptr, 0};
+  ASSERT_EQ(cbmpc_pve_batch_encrypt(nullptr, CBMPC_CURVE_SECP256K1, ek, label, xs, &ct), CBMPC_SUCCESS);
+
+  pve_batch_ciphertext_blob_v1_t blob;
+  ASSERT_EQ(coinbase::deser(mem_t(ct.data, ct.size), blob), SUCCESS);
+  blob.batch_count = 2;
+  const buf_t tampered = coinbase::convert(blob);
+
+  cmems_t xs_out{0, nullptr, nullptr};
+  EXPECT_NE(cbmpc_pve_batch_decrypt(nullptr, CBMPC_CURVE_SECP256K1, dk, ek,
+                                    cmem_t{const_cast<uint8_t*>(tampered.data()), tampered.size()},
+                                    label, &xs_out),
+            CBMPC_SUCCESS);
+  EXPECT_EQ(xs_out.count, 0);
+  EXPECT_EQ(xs_out.data, nullptr);
+  EXPECT_EQ(xs_out.sizes, nullptr);
 
   cbmpc_cmem_free(ct);
   cbmpc_cmem_free(dk);
