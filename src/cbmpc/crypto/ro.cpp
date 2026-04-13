@@ -95,18 +95,32 @@ std::vector<bn_t> hash_numbers_t::mod(const mod_t& p) {
 
 std::vector<bn256_t> hash_numbers_t::mod256(const mod_t& p) {
   cb_assert(l > 0 && "hash_numbers_t::mod(): call count(l) with l > 0 before mod()");
+  const int mod_bits = p.get_bits_count();
+  cb_assert(mod_bits <= 256 && "hash_numbers_t::mod256(): only supports moduli up to 256 bits");
   buf_t h = final();
 
-  int bits_per_value = p.get_bits_count() + SEC_P_COM;
+  int bits_per_value = mod_bits + SEC_P_COM;
   int bytes_per_value = bits_to_bytes(bits_per_value);
   buf_t t = drbg_sample_string(h, bytes_per_value * 8 * l);
 
   std::vector<bn256_t> r(l);
   uint64_t temp[8] = {0};
+  size_t copy_size = 0;
+  if (bytes_per_value < 0) {
+    cb_assert(false && "hash_numbers_t::mod256(): negative sample size");
+  } else {
+    copy_size = static_cast<size_t>(bytes_per_value);
+  }
+  if (copy_size > sizeof(temp)) {
+    cb_assert(false && "hash_numbers_t::mod256(): sampled value exceeds reducer input size");
+    copy_size = sizeof(temp);
+  }
+
   for (int i = 0; i < l; i++) {
     mem_t bin = t.range(i * bytes_per_value, bytes_per_value);
     bin.reverse();
-    memmove(temp, bin.data, bytes_per_value);
+    memcpy(temp, bin.data, copy_size);
+
     MODULO(p) r[i] = bn256_t::reduce(temp);
   }
   coinbase::secure_bzero(byte_ptr(temp), sizeof(temp));
