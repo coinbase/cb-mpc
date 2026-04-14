@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_bn256.h>
 #include <cbmpc/internal/crypto/ro.h>
 
 using namespace coinbase::crypto;
@@ -63,6 +65,24 @@ TEST(RandomOracle, EncodeAndUpdateConcatenation) {
   buf_t h2 = s2.final();
 
   cb_assert(h1 == h2);
+}
+
+TEST(RandomOracle, HashNumbersMod256StaysWithinCurveOrder) {
+  const mod_t& q = curve_secp256k1.order();
+
+  auto values = ro::hash_numbers(mem_t("mod256"), 7).count(8).mod256(q);
+  auto repeat = ro::hash_numbers(mem_t("mod256"), 7).count(8).mod256(q);
+
+  ASSERT_EQ(values.size(), 8u);
+  ASSERT_EQ(repeat.size(), values.size());
+  for (std::size_t i = 0; i < values.size(); ++i) EXPECT_TRUE(values[i] == repeat[i]);
+  for (const auto& value : values) EXPECT_TRUE((bn_t(value) < q.value()));
+}
+
+TEST(RandomOracle, HashNumbersMod256RejectsModuliWiderThan256Bits) {
+  EXPECT_THROW(
+      { ro::hash_numbers(mem_t("mod256-wide")).count(1).mod256(LARGEST_PRIME_MOD_2048); },
+      coinbase::assertion_failed_t);
 }
 
 }  // namespace

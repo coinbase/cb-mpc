@@ -211,25 +211,37 @@ class bn_t {
   void init();
 };
 
+namespace detail {
+
+class modulo_scope_t {
+ public:
+  explicit modulo_scope_t(const mod_t& mod);
+  ~modulo_scope_t();
+  explicit operator bool() const { return active_; }
+  void done() { active_ = false; }
+
+  modulo_scope_t(const modulo_scope_t&) = delete;
+  modulo_scope_t& operator=(const modulo_scope_t&) = delete;
+  modulo_scope_t(modulo_scope_t&&) = delete;
+  modulo_scope_t& operator=(modulo_scope_t&&) = delete;
+
+ private:
+  bool active_ = true;
+  const mod_t* previous_mod_ = nullptr;
+};
+
+}  // namespace detail
+
 /**
- * WARNING: `MODULO(n)` sets a thread-local modulus for all `bn_t` arithmetic in the current thread.
+ * `MODULO(n)` temporarily sets a thread-local modulus for all `bn_t` arithmetic in the current thread.
  *
- * The modulus is reset in the `for` loop update clause, so it is NOT reset if the body exits early
- * via `return`, `break`, `throw`, `goto`, etc. If that happens, subsequent cryptographic operations
- * on the same thread may run under an unexpected modulus (or under a modulus when they should not),
- * potentially producing incorrect results or corrupted state.
+ * The previous modulus is restored whenever the statement scope exits, including early `return`, `break`,
+ * `continue`, `throw`, and nested `MODULO(...)` scopes.
  *
- * Additional caveats:
- * - The modulus is stored as a single thread-local pointer (it is not stacked), so `MODULO(...)`
- *   must not be nested.
- * - Avoid mixing arithmetic that assumes "no modulus" with code that can leave a previous modulus set.
- *
- * If early-exit behavior is required, ensure the modulus is reset before leaving the scope, or refactor
- * to propagate errors without exiting the `MODULO(...) { ... }` block.
+ * Prefer this macro over manually calling `bn_t::set_modulo()` / `reset_modulo()`.
  */
-#define MODULO(n)                                                                      \
-  for (coinbase::crypto::bn_t::set_modulo(n); coinbase::crypto::bn_t::check_modulo(n); \
-       coinbase::crypto::bn_t::reset_modulo(n))
+#define MODULO(n) \
+  for (coinbase::crypto::detail::modulo_scope_t cbmpc_modulo_scope(n); cbmpc_modulo_scope; cbmpc_modulo_scope.done())
 
 const mod_t* thread_local_storage_mod();
 
