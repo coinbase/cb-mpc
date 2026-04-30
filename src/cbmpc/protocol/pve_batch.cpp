@@ -197,7 +197,7 @@ error_t ec_pve_batch_t::decrypt(const pve_base_pke_i& base_pke, pve_keyref_t dk,
 
   for (int i = 0; i < kappa; i++) {
     buf_t x_buf;
-    if (rv = base_pke.decrypt(dk, inner_label, rows[i].c, x_buf)) return rv;
+    if (rv = base_pke.decrypt(dk, inner_label, rows[i].c, x_buf)) continue;
     if (restore_from_decrypted(i, x_buf, curve, xs) == SUCCESS) return SUCCESS;
   }
 
