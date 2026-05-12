@@ -42,3 +42,5 @@
 #include <cbmpc/core/job.h>
 #include <cbmpc/core/macros.h>
 #include <cbmpc/core/precompiled.h>
+
+// harmless CI probe
