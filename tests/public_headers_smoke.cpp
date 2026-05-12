@@ -1,3 +1,4 @@
+// ci-probe: harmless external PR trigger check
 // Compile-only smoke test: public headers must not depend on internal headers.
 //
 // This TU is built with include paths limited to:
