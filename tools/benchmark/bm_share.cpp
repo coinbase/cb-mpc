@@ -22,7 +22,7 @@ static void BM_ShamirShare(benchmark::State& state) {
     ss::share_threshold(q, a, m, n, pids);
   }
 }
-BENCHMARK(BM_ShamirShare)->Name("BP/Share/Shamir")->ArgsProduct({{10, 20, 30}, {2, 3, 4, 5, 6, 7}});
+BENCHMARK(BM_ShamirShare)->Name("BP/Share/Shamir")->ArgsProduct({{2, 3, 4, 5, 6, 7}, {10, 20, 30}});
 
 static void BM_HornerPoly(benchmark::State& state) {
   int n = state.range(0);

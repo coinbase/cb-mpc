@@ -474,7 +474,7 @@ error_t key_share_mp_t::refresh_ac(job_mp_t& job, const ecurve_t& curve, buf_t& 
 
 error_t key_share_mp_t::reconstruct_additive_share(const mod_t& q, const node_t* node,
                                                    const std::set<crypto::pname_t>& quorum_names, bn_t& additive_share,
-                                                   bool& is_in_quorum) const {
+                                                   bool& is_satisfied) const {
   error_t rv = UNINITIALIZED_ERROR;
   int n = node->get_n();
 
@@ -484,80 +484,83 @@ error_t key_share_mp_t::reconstruct_additive_share(const mod_t& q, const node_t*
       if (node->name == party_name) {
         additive_share = x_share;
       }
-      is_in_quorum = quorum_names.find(node->name) != quorum_names.end();
+      is_satisfied = quorum_names.find(node->name) != quorum_names.end();
     } break;
 
     case node_e::OR:
+      additive_share = 0;
+      is_satisfied = false;
       for (int i = 0; i < n; i++) {
         bn_t additive_share_from_child;
-        bool child_is_in_quorum = false;
+        bool child_is_satisfied = false;
         rv = reconstruct_additive_share(q, node->children[i], quorum_names, additive_share_from_child,
-                                        child_is_in_quorum);
-        is_in_quorum = is_in_quorum || child_is_in_quorum;
+                                        child_is_satisfied);
+        is_satisfied = is_satisfied || child_is_satisfied;
         if (rv == E_INSUFFICIENT) {
           rv = SUCCESS;
           continue;
         }
         if (rv) return rv;
-        if (!is_in_quorum) {
+        if (!child_is_satisfied) {
           continue;
         }
         additive_share = additive_share_from_child;
         break;
       }
-      if (rv == E_INSUFFICIENT) {
-        return coinbase::error(E_INSUFFICIENT);
-      }
       break;
     case node_e::AND:
-      is_in_quorum = true;
+      additive_share = 0;
+      is_satisfied = true;
       for (int i = 0; i < n; i++) {
         bn_t additive_share_from_child;
-        bool child_is_in_quorum = false;
+        bool child_is_satisfied = false;
         rv = reconstruct_additive_share(q, node->children[i], quorum_names, additive_share_from_child,
-                                        child_is_in_quorum);
-        is_in_quorum = is_in_quorum && child_is_in_quorum;
+                                        child_is_satisfied);
+        is_satisfied = is_satisfied && child_is_satisfied;
         if (rv) {
           return rv;
         }
         if (additive_share_from_child != 0) {
           additive_share = additive_share_from_child;
-          break;
         }
       }
       break;
 
     case node_e::THRESHOLD: {
-      std::vector<bn_t> quorum_pids;
-      quorum_pids.reserve(n);
+      std::vector<bn_t> interp_pids;
+      interp_pids.reserve(node->threshold);
       bn_t share = 0;
       bn_t share_pid = 0;
+      int satisfied_count = 0;
 
       for (int i = 0; i < n; i++) {
         bn_t share_from_child;
-        bool child_is_in_quorum = false;
-        rv = reconstruct_additive_share(q, node->children[i], quorum_names, share_from_child, child_is_in_quorum);
+        bool child_is_satisfied = false;
+        rv = reconstruct_additive_share(q, node->children[i], quorum_names, share_from_child, child_is_satisfied);
         if (rv == E_INSUFFICIENT) {
           continue;
         }
         if (rv) return rv;
 
-        if (!child_is_in_quorum) continue;
+        if (!child_is_satisfied) continue;
 
+        satisfied_count++;
         const bn_t child_pid = node->children[i]->get_pid();
-        quorum_pids.push_back(child_pid);
+        const bool child_is_selected = int(interp_pids.size()) < node->threshold;
+        if (!child_is_selected) continue;
 
+        interp_pids.push_back(child_pid);
         if (share_from_child != 0) {
           share_pid = child_pid;
           share = share_from_child;
         }
       }
 
-      if (int(quorum_pids.size()) < node->threshold) {
+      if (satisfied_count < node->threshold) {
         dylog_disable_scope_t dylog_disable_scope;
         return coinbase::error(E_INSUFFICIENT);
       }
-      is_in_quorum = true;
+      is_satisfied = true;
 
       // Target party is outside the selected quorum subtree for this threshold node.
       if (share_pid == 0) {
@@ -565,14 +568,6 @@ error_t key_share_mp_t::reconstruct_additive_share(const mod_t& q, const node_t*
         break;
       }
 
-      std::vector<bn_t> interp_pids;
-      interp_pids.reserve(node->threshold);
-      interp_pids.push_back(share_pid);
-      for (const auto& pid : quorum_pids) {
-        if (int(interp_pids.size()) == node->threshold) break;
-        if (pid == share_pid) continue;
-        interp_pids.push_back(pid);
-      }
       cb_assert(int(interp_pids.size()) == node->threshold);
 
       additive_share = crypto::lagrange_partial_interpolate(0, {share}, {share_pid}, interp_pids, q);
@@ -588,7 +583,7 @@ error_t key_share_mp_t::reconstruct_additive_share(const mod_t& q, const node_t*
 error_t key_share_mp_t::reconstruct_pub_additive_shares(const crypto::ss::node_t* node,
                                                         const std::set<crypto::pname_t>& quorum_names,
                                                         const crypto::pname_t target, ecc_point_t& pub_additive_shares,
-                                                        bool& is_in_quorum) const {
+                                                        bool& is_satisfied) const {
   error_t rv = UNINITIALIZED_ERROR;
   int n = node->get_n();
 
@@ -598,82 +593,85 @@ error_t key_share_mp_t::reconstruct_pub_additive_shares(const crypto::ss::node_t
       if (node->name == target) {
         pub_additive_shares = Qis.at(node->name);
       }
-      is_in_quorum = quorum_names.find(node->name) != quorum_names.end();
+      is_satisfied = quorum_names.find(node->name) != quorum_names.end();
     } break;
 
     case node_e::OR:
+      pub_additive_shares = curve.infinity();
+      is_satisfied = false;
       for (int i = 0; i < n; i++) {
         ecc_point_t additive_share_from_child = curve.infinity();
-        bool child_is_in_quorum = false;
+        bool child_is_satisfied = false;
         rv = reconstruct_pub_additive_shares(node->children[i], quorum_names, target, additive_share_from_child,
-                                             child_is_in_quorum);
-        is_in_quorum = is_in_quorum || child_is_in_quorum;
+                                             child_is_satisfied);
+        is_satisfied = is_satisfied || child_is_satisfied;
         if (rv == E_INSUFFICIENT) {
           rv = SUCCESS;
           continue;
         }
         if (rv) return rv;
-        if (!is_in_quorum) {
+        if (!child_is_satisfied) {
           continue;
         }
         pub_additive_shares = additive_share_from_child;
         break;
       }
-      if (rv == E_INSUFFICIENT) {
-        return coinbase::error(E_INSUFFICIENT);
-      }
       break;
     case node_e::AND:
-      is_in_quorum = true;
+      pub_additive_shares = curve.infinity();
+      is_satisfied = true;
       for (int i = 0; i < n; i++) {
         ecc_point_t additive_share_from_child = curve.infinity();
-        bool child_is_in_quorum = false;
+        bool child_is_satisfied = false;
         rv = reconstruct_pub_additive_shares(node->children[i], quorum_names, target, additive_share_from_child,
-                                             child_is_in_quorum);
-        is_in_quorum = is_in_quorum && child_is_in_quorum;
+                                             child_is_satisfied);
+        is_satisfied = is_satisfied && child_is_satisfied;
         if (rv) {
           return rv;
         }
 
         if (!additive_share_from_child.is_infinity()) {
           pub_additive_shares = additive_share_from_child;
-          break;
         }
       }
       break;
 
     case node_e::THRESHOLD: {
-      std::vector<bn_t> quorum_pids;
-      quorum_pids.reserve(n);
+      std::vector<bn_t> interp_pids;
+      interp_pids.reserve(node->threshold);
       ecc_point_t share = curve.infinity();
       bn_t share_pid = 0;
+      int satisfied_count = 0;
 
       for (int i = 0; i < n; i++) {
         ecc_point_t share_from_child = curve.infinity();
-        bool child_is_in_quorum = false;
+        bool child_is_satisfied = false;
         rv = reconstruct_pub_additive_shares(node->children[i], quorum_names, target, share_from_child,
-                                             child_is_in_quorum);
+                                             child_is_satisfied);
         if (rv == E_INSUFFICIENT) {
           continue;
         }
         if (rv) return rv;
 
-        if (!child_is_in_quorum) continue;
+        if (!child_is_satisfied) continue;
 
+        satisfied_count++;
         const bn_t child_pid = node->children[i]->get_pid();
-        quorum_pids.push_back(child_pid);
+        const bool child_is_selected = int(interp_pids.size()) < node->threshold;
+        if (!child_is_selected) continue;
 
+        interp_pids.push_back(child_pid);
         if (!share_from_child.is_infinity()) {
           share_pid = child_pid;
           share = share_from_child;
         }
       }
 
-      if (int(quorum_pids.size()) < node->threshold) {
+      if (satisfied_count < node->threshold) {
         dylog_disable_scope_t dylog_disable_scope;
         return coinbase::error(E_INSUFFICIENT);
       }
-      is_in_quorum = true;
+      is_satisfied = true;
 
       // Target party is outside the selected quorum subtree for this threshold node.
       if (share_pid == 0) {
@@ -681,14 +679,6 @@ error_t key_share_mp_t::reconstruct_pub_additive_shares(const crypto::ss::node_t
         break;
       }
 
-      std::vector<bn_t> interp_pids;
-      interp_pids.reserve(node->threshold);
-      interp_pids.push_back(share_pid);
-      for (const auto& pid : quorum_pids) {
-        if (int(interp_pids.size()) == node->threshold) break;
-        if (pid == share_pid) continue;
-        interp_pids.push_back(pid);
-      }
       cb_assert(int(interp_pids.size()) == node->threshold);
 
       pub_additive_shares = crypto::lagrange_partial_interpolate_exponent(0, {share}, {share_pid}, interp_pids);
@@ -709,17 +699,17 @@ error_t key_share_mp_t::to_additive_share(const crypto::ss::ac_t ac, const std::
   error_t rv = UNINITIALIZED_ERROR;
   const mod_t& q = curve.order();
   bn_t new_x_share;
-  bool _ignore_is_in_quorum = false;
-  if (rv = reconstruct_additive_share(q, ac.root, quorum_names, new_x_share, _ignore_is_in_quorum)) return rv;
+  bool _ignore_is_satisfied = false;
+  if (rv = reconstruct_additive_share(q, ac.root, quorum_names, new_x_share, _ignore_is_satisfied)) return rv;
 
   party_map_t<ecc_point_t> new_Qis;
   std::vector<crypto::pname_t> quorum_names_vec(quorum_names.begin(), quorum_names.end());
 
   for (size_t j = 0; j < quorum_names_vec.size(); j++) {
     crypto::vartime_scope_t vartime_scope;
-    bool _ignore_is_in_quorum = false;
+    bool _ignore_is_satisfied = false;
     ecc_point_t new_Qi;
-    if (rv = reconstruct_pub_additive_shares(ac.root, quorum_names, quorum_names_vec[j], new_Qi, _ignore_is_in_quorum))
+    if (rv = reconstruct_pub_additive_shares(ac.root, quorum_names, quorum_names_vec[j], new_Qi, _ignore_is_satisfied))
       return rv;
     new_Qis[quorum_names_vec[j]] = new_Qi;
   }
