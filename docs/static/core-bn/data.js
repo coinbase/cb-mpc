@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1768925439798,
+  "lastUpdate": 1778856937315,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -3480,6 +3480,126 @@ window.BENCHMARK_DATA = {
             "value": 1280.184455373408,
             "unit": "us/iter",
             "extra": "iterations: 549\ncpu: 1280.126551912587 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0460152b452fd76fab506c945674cff07ea7b162",
+          "message": "fix: harden additive share reconstruction (#114)\n\nTrack access-structure satisfaction separately for child nodes so OR and threshold reconstruction select only satisfied subtrees when producing additive private and public shares.\n\nAdd ECDKG coverage for redundant and partially unsatisfied composite children.\n\nUse full-width Fischlin hash values to avoid truncating accepted parameter ranges, and correct the Shamir benchmark argument ordering.",
+          "timestamp": "2026-05-15T07:16:43-07:00",
+          "tree_id": "2423fde4db9e98caffc745a5016877cf2e3163fb",
+          "url": "https://github.com/coinbase/cb-mpc/commit/0460152b452fd76fab506c945674cff07ea7b162"
+        },
+        "date": 1778856936202,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.0980715167494172,
+            "unit": "us/iter",
+            "extra": "iterations: 6456907\ncpu: 0.09805303297693463 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.5316963081091417,
+            "unit": "us/iter",
+            "extra": "iterations: 1318728\ncpu: 0.5316343893509535 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.0803752420554881,
+            "unit": "us/iter",
+            "extra": "iterations: 8739732\ncpu: 0.08036926795924665 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.6109831076599339,
+            "unit": "us/iter",
+            "extra": "iterations: 1108017\ncpu: 0.6109502471532491 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.17648623266133645,
+            "unit": "us/iter",
+            "extra": "iterations: 3978692\ncpu: 0.17647215667862604 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 12.314681883724521,
+            "unit": "us/iter",
+            "extra": "iterations: 56866\ncpu: 12.312880561319483 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 17.706848026935194,
+            "unit": "us/iter",
+            "extra": "iterations: 39507\ncpu: 17.70586344192171 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 18741.552027031994,
+            "unit": "us/iter",
+            "extra": "iterations: 37\ncpu: 18739.753378378362 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 17.553797445257015,
+            "unit": "us/iter",
+            "extra": "iterations: 40004\ncpu: 17.552706629337074 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 700.0310009969331,
+            "unit": "us/iter",
+            "extra": "iterations: 1003\ncpu: 699.9830937188452 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 23.549631465226355,
+            "unit": "us/iter",
+            "extra": "iterations: 30084\ncpu: 23.54855105704021 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1193.8795349234902,
+            "unit": "us/iter",
+            "extra": "iterations: 587\ncpu: 1193.7764906303073 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 23.46345530735782,
+            "unit": "us/iter",
+            "extra": "iterations: 28875\ncpu: 23.461841939393565 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1202.008068143112,
+            "unit": "us/iter",
+            "extra": "iterations: 587\ncpu: 1201.8931345826034 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 26.086881495636007,
+            "unit": "us/iter",
+            "extra": "iterations: 26691\ncpu: 26.083532089467397 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1410.0405434780653,
+            "unit": "us/iter",
+            "extra": "iterations: 506\ncpu: 1409.872241106718 us\nthreads: 1"
           }
         ]
       }
