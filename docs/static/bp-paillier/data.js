@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1768925446604,
+  "lastUpdate": 1778856944297,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1914,6 +1914,72 @@ window.BENCHMARK_DATA = {
             "value": 8340.068190475016,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8339.955511904764 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0460152b452fd76fab506c945674cff07ea7b162",
+          "message": "fix: harden additive share reconstruction (#114)\n\nTrack access-structure satisfaction separately for child nodes so OR and threshold reconstruction select only satisfied subtrees when producing additive private and public shares.\n\nAdd ECDKG coverage for redundant and partially unsatisfied composite children.\n\nUse full-width Fischlin hash values to avoid truncating accepted parameter ranges, and correct the Shamir benchmark argument ordering.",
+          "timestamp": "2026-05-15T07:16:43-07:00",
+          "tree_id": "2423fde4db9e98caffc745a5016877cf2e3163fb",
+          "url": "https://github.com/coinbase/cb-mpc/commit/0460152b452fd76fab506c945674cff07ea7b162"
+        },
+        "date": 1778856943832,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 62099.36699997343,
+            "unit": "us/iter",
+            "extra": "iterations: 10\ncpu: 62090.04890000001 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 5103.995525547547,
+            "unit": "us/iter",
+            "extra": "iterations: 137\ncpu: 5103.50097810219 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 9956.232785712667,
+            "unit": "us/iter",
+            "extra": "iterations: 70\ncpu: 9954.294685714287 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 5334.223740455924,
+            "unit": "us/iter",
+            "extra": "iterations: 131\ncpu: 5333.609969465651 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 12.383485352461072,
+            "unit": "us/iter",
+            "extra": "iterations: 56460\ncpu: 12.381355915692525 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 14.812302162832765,
+            "unit": "us/iter",
+            "extra": "iterations: 47299\ncpu: 14.810441489249255 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 9425.820310808203,
+            "unit": "us/iter",
+            "extra": "iterations: 74\ncpu: 9424.554027027021 us\nthreads: 1"
           }
         ]
       }
