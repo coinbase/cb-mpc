@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1768925450438,
+  "lastUpdate": 1778856948529,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1218,6 +1218,48 @@ window.BENCHMARK_DATA = {
             "value": 13862.9125490208,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13860.809411764703 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0460152b452fd76fab506c945674cff07ea7b162",
+          "message": "fix: harden additive share reconstruction (#114)\n\nTrack access-structure satisfaction separately for child nodes so OR and threshold reconstruction select only satisfied subtrees when producing additive private and public shares.\n\nAdd ECDKG coverage for redundant and partially unsatisfied composite children.\n\nUse full-width Fischlin hash values to avoid truncating accepted parameter ranges, and correct the Shamir benchmark argument ordering.",
+          "timestamp": "2026-05-15T07:16:43-07:00",
+          "tree_id": "2423fde4db9e98caffc745a5016877cf2e3163fb",
+          "url": "https://github.com/coinbase/cb-mpc/commit/0460152b452fd76fab506c945674cff07ea7b162"
+        },
+        "date": 1778856948039,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 27653.728679997585,
+            "unit": "us/iter",
+            "extra": "iterations: 25\ncpu: 27650.12636 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 118414.91733328742,
+            "unit": "us/iter",
+            "extra": "iterations: 6\ncpu: 118396.56433333334 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 15568.201444441203,
+            "unit": "us/iter",
+            "extra": "iterations: 45\ncpu: 15566.458866666671 us\nthreads: 1"
           }
         ]
       }
