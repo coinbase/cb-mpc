@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_bn256.h>
+#include <cbmpc/internal/crypto/base_ecc_secp256k1.h>
 #include <cbmpc/internal/crypto/base_pki.h>
 
 #include "utils/test_macros.h"
@@ -70,6 +72,29 @@ TEST_F(ECC, secp256k1) {
       EXPECT_TRUE(((q - 1) * C + C).is_infinity());
     }
   }
+}
+
+TEST_F(ECC, secp256k1_batch_get_coordinates) {
+  std::vector<ecc_point_t> points;
+  for (int i = 1; i <= 8; ++i) points.push_back(bn_t(i) * curve_secp256k1.generator());
+
+  std::vector<bn256_t> xs, ys;
+  ecurve_secp256k1_t::get_coordinates(points, xs, ys);
+
+  ASSERT_EQ(xs.size(), points.size());
+  ASSERT_EQ(ys.size(), points.size());
+  for (size_t i = 0; i < points.size(); ++i) {
+    bn_t x, y;
+    points[i].get_coordinates(x, y);
+    EXPECT_EQ(xs[i], bn256_t(x));
+    EXPECT_EQ(ys[i], bn256_t(y));
+  }
+}
+
+TEST_F(ECC, secp256k1_batch_get_coordinates_rejects_wrong_curve) {
+  std::vector<ecc_point_t> points = {ecc_point_t(curve_p256.generator())};
+  std::vector<bn256_t> xs, ys;
+  EXPECT_CB_ASSERT(ecurve_secp256k1_t::get_coordinates(points, xs, ys), "curve_secp256k1");
 }
 
 TEST_F(ECC, SigningScheme2) {

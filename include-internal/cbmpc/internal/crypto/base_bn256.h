@@ -105,6 +105,10 @@ class alignas(32) bn256_t {
 
   bool operator==(const bn256_t& b) const;
   bool operator!=(const bn256_t& b) const;
+  bool operator>(const bn256_t& b) const;
+  bool operator<(const bn256_t& b) const;
+  bool operator>=(const bn256_t& b) const;
+  bool operator<=(const bn256_t& b) const;
 
   bn256_t operator+(const bn256_t& b) const;
   bn256_t operator-(const bn256_t& b) const;
@@ -118,6 +122,10 @@ class alignas(32) bn256_t {
 
   bn256_t operator-() const;
   bn256_t inv_mod(const mod_t& q) const;
+
+  static void add_mod(bn256_t& r, const bn256_t& a, const bn256_t& b, const mod_t& mod);
+  static void sub_mod(bn256_t& r, const bn256_t& a, const bn256_t& b, const mod_t& mod);
+  static void neg_mod(bn256_t& r, const bn256_t& a, const mod_t& mod);
 
   void to_bin(byte_ptr m) const;
   buf_t to_bin() const;
@@ -133,6 +141,7 @@ class alignas(32) bn256_t {
   static void mul_add_no_reduce(uint64_t r[8], const bn256_t& a, const bn256_t& b);
   static void add_no_reduce(uint64_t r[8], const bn256_t& a);
   static bn256_t reduce(uint64_t r[8]);
+  static bn256_t reduce(uint64_t r[8], const mod_t& mod);
   static bn256_t two_to_pow(int n);
 
  private:
@@ -141,6 +150,9 @@ class alignas(32) bn256_t {
   void mont_mul(const bn256_t& a, const bn256_t& b, const uint64_t* m, uint64_t mont_prime);
   void mont_reduce(uint64_t u[8], const uint64_t* m, uint64_t mont_prime);
 };
+
+bn256_t SUM_MOD(const std::vector<bn256_t>& v, const mod_t& q);
+bn256_t SUM(const std::vector<bn256_t>& v);
 
 }  // namespace coinbase::crypto
 

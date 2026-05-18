@@ -12,6 +12,7 @@ class ecc_generator_point_t;
 class ecc_pub_key_t;
 class ecc_prv_key_t;
 class ecc_point_t;
+class bn256_t;
 
 namespace secp256k1 {
 typedef struct point_t* point_ptr_t;
@@ -199,6 +200,7 @@ class ecc_point_t {
   error_t from_oct(ecurve_t curve, mem_t in) { return from_bin(curve, in); }
 
   void get_coordinates(bn_t& x, bn_t& y) const;
+  void get_coordinates(bn256_t& x, bn256_t& y) const;
   void get_x(bn_t& x) const;
   void get_y(bn_t& y) const;
 

@@ -24,6 +24,15 @@ bn_t drbg_sample_number(mem_t seed, const mod_t& p)  // modulo p
   return bn_t::from_bin(r) % p;
 }
 
+int drbg_sample_number(mem_t seed, int m)  // modulo m
+{
+  cb_assert(m > 0);
+  // Used only for deterministic non-cryptographic choices. The `% m` mapping
+  // is biased, so cryptographic challenge/scalar sampling should use mod_t.
+  buf_t r = drbg_sample_string(seed, 64);
+  return coinbase::be_get_8(r.data()) % m;
+}
+
 /**
  * @specs:
  * - basic-primitives-spec | drbg-sample-curve-point-1P
@@ -74,6 +83,11 @@ buf_t hash_string_t::bitlen(int bits) {
 bn_t hash_number_t::mod(const mod_t& p) {
   buf_t h = final();
   return drbg_sample_number(h, p);
+}
+
+int hash_number_t::mod(int m) {
+  buf_t h = final();
+  return drbg_sample_number(h, m);
 }
 
 std::vector<bn_t> hash_numbers_t::mod(const mod_t& p) {

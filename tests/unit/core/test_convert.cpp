@@ -122,6 +122,16 @@ TEST(CoreConvert, CustomStruct) {
   EXPECT_EQ(out.s, "");
 }
 
+TEST(CoreConvert, EmptyBitsRoundTrip) {
+  bits_t in;
+  buf_t buf = coinbase::ser(in);
+
+  bits_t out;
+  EXPECT_OK(deser(buf, out));
+  EXPECT_TRUE(out.empty());
+  EXPECT_EQ(out.count(), 0);
+}
+
 TEST(CoreConvert, ConvertLenRejectsOversizedLengths) {
   // Encode a 4-byte length prefix > converter_t::MAX_CONVERT_LEN (64 MiB).
   // len = 0x04000001 -> bytes: 0xE4 0x00 0x00 0x01

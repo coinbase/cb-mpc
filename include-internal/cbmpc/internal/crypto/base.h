@@ -30,6 +30,7 @@ constexpr int SEC_P_STAT_SHORT = 50;
 
 namespace coinbase::crypto {
 class bn_t;
+class bn256_t;
 class mod_t;
 class ecc_point_t;
 
@@ -125,6 +126,11 @@ class drbg_aes_ctr_t {
   bn_t gen_bn(int bits);
   bn_t gen_bn(const mod_t& mod);
   bn_t gen_bn(const bn_t& mod);
+  bits_t gen_bits(int bitlen);
+  // Optimized 256-bit sampler for four-limb moduli. For moduli very close to
+  // 2^256 it may return a raw 256-bit draw for speed, so callers must tolerate
+  // the negligible probability of a value outside the modulus.
+  bn256_t gen_bn256(const mod_t& mod);
 
   bool gen_bool() { return (gen_byte() & 1) != 0; }
   uint32_t gen_int() {
