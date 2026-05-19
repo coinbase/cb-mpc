@@ -36,6 +36,7 @@ class ecurve_secp256k1_t final : public ecurve_interface_t {
   int to_bin(const ecc_point_t& P, byte_ptr out) const override;
   error_t from_bin(ecc_point_t& P, mem_t bin) const override;
   void get_coordinates(const ecc_point_t& P, bn_t& x, bn_t& y) const override;
+  static void get_coordinates(const std::vector<ecc_point_t>& P, std::vector<bn256_t>& x, std::vector<bn256_t>& y);
   bool hash_to_point(mem_t bin, ecc_point_t& Q) const override;
 
   buf_t pub_to_der(const ecc_pub_key_t& P) const override;

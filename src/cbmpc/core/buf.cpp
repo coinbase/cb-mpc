@@ -531,7 +531,7 @@ void bits_t::convert(converter_t& converter) {
   int size = coinbase::bits_to_bytes(count);
 
   if (converter.is_write()) {
-    if (!converter.is_calc_size()) {
+    if (size && !converter.is_calc_size()) {
       bzero_unused();
       memmove(converter.current(), data, size);
     }
@@ -541,7 +541,7 @@ void bits_t::convert(converter_t& converter) {
       return;
     }
     alloc(count);
-    memmove(data, converter.current(), size);
+    if (size) memmove(data, converter.current(), size);
   }
   converter.forward(size);
 }

@@ -1,3 +1,4 @@
+#include <cbmpc/internal/crypto/base_bn256.h>
 #include <cbmpc/internal/crypto/base_ecc_secp256k1.h>
 
 // clang-format off
@@ -285,6 +286,36 @@ void ecurve_secp256k1_t::get_coordinates(const ecc_point_t& P, bn_t& x, bn_t& y)
   to_bin(P, buf.data());
   x = bn_t::from_bin(buf.range(1, 32));
   y = bn_t::from_bin(buf.range(33, 32));
+}
+
+void ecurve_secp256k1_t::get_coordinates(const std::vector<ecc_point_t>& P, std::vector<bn256_t>& x,
+                                         std::vector<bn256_t>& y) {
+  int n = int(P.size());
+  if (n == 0) {
+    x.clear();
+    y.clear();
+    return;
+  }
+
+  std::vector<secp256k1_gej> gej(n);
+  std::vector<secp256k1_ge> ge(n);
+  for (int i = 0; i < n; i++) {
+    cb_assert(P[i].valid());
+    cb_assert(P[i].get_curve() == curve_secp256k1);
+    gej[i] = *(const secp256k1_gej*)P[i].secp256k1;
+  }
+  secp256k1_ge_set_all_gej_var(ge.data(), gej.data(), n);
+  x.resize(n);
+  y.resize(n);
+  for (int i = 0; i < n; i++) {
+    uint8_t bin[32];
+    secp256k1_fe_normalize_var(&ge[i].x);
+    secp256k1_fe_get_b32(bin, &ge[i].x);
+    x[i] = bn256_t::from_bin(mem_t(bin, 32));
+    secp256k1_fe_normalize_var(&ge[i].y);
+    secp256k1_fe_get_b32(bin, &ge[i].y);
+    y[i] = bn256_t::from_bin(mem_t(bin, 32));
+  }
 }
 
 bool ecurve_secp256k1_t::hash_to_point(mem_t bin, ecc_point_t& Q) const {

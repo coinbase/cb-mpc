@@ -1,5 +1,6 @@
 #include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_bn256.h>
 #include <cbmpc/internal/crypto/base_ecc_secp256k1.h>
 #include <cbmpc/internal/crypto/base_eddsa.h>
 #include <cbmpc/internal/crypto/base_pki.h>
@@ -761,6 +762,13 @@ void ecc_point_t::convert_fixed_curve(coinbase::converter_t& converter, ecurve_t
 }
 
 void ecc_point_t::get_coordinates(bn_t& x, bn_t& y) const { curve.ptr->get_coordinates(*this, x, y); }
+
+void ecc_point_t::get_coordinates(bn256_t& x, bn256_t& y) const {
+  bn_t _x, _y;
+  get_coordinates(_x, _y);
+  x = _x;
+  y = _y;
+}
 
 bn_t ecc_point_t::get_x() const {
   bn_t x;

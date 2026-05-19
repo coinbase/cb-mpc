@@ -825,6 +825,19 @@ bool bn256_t::operator!=(uint64_t b) const {
   return x != 0;
 }
 
+bool bn256_t::operator<(const bn256_t& b) const {
+  uint64_t borrow = 0;
+  subx(w0, b.w0, borrow);
+  subx(w1, b.w1, borrow);
+  subx(w2, b.w2, borrow);
+  subx(w3, b.w3, borrow);
+  return borrow;
+}
+
+bool bn256_t::operator>=(const bn256_t& b) const { return !(*this < b); }
+bool bn256_t::operator>(const bn256_t& b) const { return b < *this; }
+bool bn256_t::operator<=(const bn256_t& b) const { return !(b < *this); }
+
 bn256_t bn256_t::two_to_pow(int n) {
   cb_assert(n >= 0 && n < 256);
   bn256_t r;
@@ -842,9 +855,29 @@ bn256_t bn256_t::two_to_pow(int n) {
 bn256_t bn256_t::operator+(const bn256_t& b) const {
   const mod_t* mod = thread_local_storage_mod();
   cb_assert(mod);
-  const auto m = mod->value().val.d;
   bn256_t r;
-  const bn256_t& a = *this;
+  add_mod(r, *this, b, *mod);
+  return r;
+}
+
+bn256_t bn256_t::operator-(const bn256_t& b) const {
+  const mod_t* mod = thread_local_storage_mod();
+  cb_assert(mod);
+  bn256_t r;
+  sub_mod(r, *this, b, *mod);
+  return r;
+}
+
+bn256_t bn256_t::operator-() const {
+  const mod_t* mod = thread_local_storage_mod();
+  cb_assert(mod);
+  bn256_t r;
+  neg_mod(r, *this, *mod);
+  return r;
+}
+
+void bn256_t::add_mod(bn256_t& r, const bn256_t& a, const bn256_t& b, const mod_t& mod) {
+  const auto m = mod.value().val.d;
 
   uint64_t carry = 0;
   uint64_t a0 = addx(a.w0, b.w0, carry);
@@ -859,20 +892,15 @@ bn256_t bn256_t::operator+(const bn256_t& b) const {
   uint64_t s3 = subx(a3, m[3], borrow);
 
   subx(carry, 0, borrow);
-  uint64_t mask = -uint64_t(bool(borrow));
+  uint64_t mask = -borrow;
   r.w0 = s0 ^ ((a0 ^ s0) & mask);
   r.w1 = s1 ^ ((a1 ^ s1) & mask);
   r.w2 = s2 ^ ((a2 ^ s2) & mask);
   r.w3 = s3 ^ ((a3 ^ s3) & mask);
-  return r;
 }
 
-bn256_t bn256_t::operator-(const bn256_t& b) const {
-  const mod_t* mod = thread_local_storage_mod();
-  cb_assert(mod);
-  const auto m = mod->value().val.d;
-  bn256_t r;
-  const bn256_t& a = *this;
+void bn256_t::sub_mod(bn256_t& r, const bn256_t& a, const bn256_t& b, const mod_t& mod) {
+  const auto m = mod.value().val.d;
 
   uint64_t borrow = 0;
   uint64_t s0 = subx(a.w0, b.w0, borrow);
@@ -880,7 +908,7 @@ bn256_t bn256_t::operator-(const bn256_t& b) const {
   uint64_t s2 = subx(a.w2, b.w2, borrow);
   uint64_t s3 = subx(a.w3, b.w3, borrow);
 
-  uint64_t mask = -uint64_t(bool(borrow));
+  uint64_t mask = -borrow;
   uint64_t t0 = m[0] & mask;
   uint64_t t1 = m[1] & mask;
   uint64_t t2 = m[2] & mask;
@@ -891,23 +919,18 @@ bn256_t bn256_t::operator-(const bn256_t& b) const {
   r.w1 = addx(s1, t1, carry);
   r.w2 = addx(s2, t2, carry);
   r.w3 = addx(s3, t3, carry);
-  return r;
 }
 
-bn256_t bn256_t::operator-() const {
-  const mod_t* mod = thread_local_storage_mod();
-  cb_assert(mod);
-  const auto m = mod->value().val.d;
-  bn256_t r;
-  const bn256_t& b = *this;
+void bn256_t::neg_mod(bn256_t& r, const bn256_t& a, const mod_t& mod) {
+  const auto m = mod.value().val.d;
 
   uint64_t borrow = 0;
-  uint64_t s0 = subx(0, b.w0, borrow);
-  uint64_t s1 = subx(0, b.w1, borrow);
-  uint64_t s2 = subx(0, b.w2, borrow);
-  uint64_t s3 = subx(0, b.w3, borrow);
+  uint64_t s0 = subx(0, a.w0, borrow);
+  uint64_t s1 = subx(0, a.w1, borrow);
+  uint64_t s2 = subx(0, a.w2, borrow);
+  uint64_t s3 = subx(0, a.w3, borrow);
 
-  uint64_t mask = -uint64_t(borrow);
+  uint64_t mask = -borrow;
   uint64_t t0 = m[0] & mask;
   uint64_t t1 = m[1] & mask;
   uint64_t t2 = m[2] & mask;
@@ -918,7 +941,6 @@ bn256_t bn256_t::operator-() const {
   r.w1 = addx(s1, t1, carry);
   r.w2 = addx(s2, t2, carry);
   r.w3 = addx(s3, t3, carry);
-  return r;
 }
 
 bn256_t& bn256_t::operator+=(const bn256_t& b) { return *this = *this + b; }
@@ -1096,8 +1118,17 @@ void bn256_t::mul_add_no_reduce(uint64_t r[8], const bn256_t& a, const bn256_t& 
 bn256_t bn256_t::reduce(uint64_t x[8]) {
   const mod_t* mod = thread_local_storage_mod();
   cb_assert(mod);
-  const auto m = mod->value().val.d;
-  const auto mu = mod->get_barrett_mu().val.d;
+  return reduce(x, *mod);
+}
+
+bn256_t bn256_t::reduce(uint64_t x[8], const mod_t& mod) {
+  const auto& m_val = mod.value().val;
+  const auto& mu_val = mod.get_barrett_mu().val;
+  cb_assert(m_val.top == 4);
+  cb_assert(mu_val.top == 5);
+
+  const auto m = m_val.d;
+  const auto mu = mu_val.d;
 
   bn256_t r;
   r.barrett_reduce(x, (const uint64_t*)m, (const uint64_t*)mu);
@@ -1369,6 +1400,21 @@ bn256_t bn256_t::mont_mul(const bn256_t& a, const bn256_t& b) {
   bn256_t r;
   r.mont_mul(a, b, (const uint64_t*)m, prime);
   return r;
+}
+
+bn256_t SUM_MOD(const std::vector<bn256_t>& v, const mod_t& q) {
+  bn256_t s;
+  if (!v.empty()) {
+    s = v[0];
+    for (int i = 1; i < int(v.size()); i++) bn256_t::add_mod(s, s, v[i], q);
+  }
+  return s;
+}
+
+bn256_t SUM(const std::vector<bn256_t>& v) {
+  const mod_t* mod = thread_local_storage_mod();
+  cb_assert(mod);
+  return SUM_MOD(v, *mod);
 }
 
 }  // namespace coinbase::crypto

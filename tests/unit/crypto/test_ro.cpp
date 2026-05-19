@@ -4,6 +4,8 @@
 #include <cbmpc/internal/crypto/base_bn256.h>
 #include <cbmpc/internal/crypto/ro.h>
 
+#include "utils/test_macros.h"
+
 using namespace coinbase::crypto;
 
 namespace {
@@ -86,3 +88,8 @@ TEST(RandomOracle, HashNumbersMod256RejectsModuliWiderThan256Bits) {
 }
 
 }  // namespace
+TEST(RandomOracle, DrbgSampleNumberRejectsNonPositiveModulus) {
+  buf_t seed = buf_t("0123456789abcdef");
+  EXPECT_CB_ASSERT(ro::drbg_sample_number(seed, 0), "m > 0");
+  EXPECT_CB_ASSERT(ro::drbg_sample_number(seed, -7), "m > 0");
+}
