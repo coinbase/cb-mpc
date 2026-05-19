@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1778856948529,
+  "lastUpdate": 1779203694508,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1260,6 +1260,48 @@ window.BENCHMARK_DATA = {
             "value": 15568.201444441203,
             "unit": "us/iter",
             "extra": "iterations: 45\ncpu: 15566.458866666671 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a8ee24c6d48f11d2f61e005e3ed0c5056d42bedc",
+          "message": "feat: add ML-KEM-768 and extend bn256_t/DRBG/RO primitives (#115)\n\n- Add mlkem768_pub_key_t and mlkem768_prv_key_t backed by OpenSSL ML-KEM-768 for post-quantum key encapsulation, with unit tests\n- Extend bn256_t with comparison operators (<, >, <=, >=), static modular helpers (add_mod, sub_mod, neg_mod), a generic reduce(mod) overload, and SUM / SUM_MOD free functions; refactor operator+/- to delegate to statics\n- Add drbg_aes_ctr_t::gen_bits and gen_bn256 with a fast path for near-2^256 moduli; add ecc_point_t::get_coordinates(bn256_t&, bn256_t&) overload\n- Add hash_number_t::mod(int) and drbg_sample_number(seed, int) for deterministic non-cryptographic integer sampling (documented as biased)",
+          "timestamp": "2026-05-19T07:36:20-07:00",
+          "tree_id": "70d8c822edb8b06bfa2d4a242b348d256cb6fe44",
+          "url": "https://github.com/coinbase/cb-mpc/commit/a8ee24c6d48f11d2f61e005e3ed0c5056d42bedc"
+        },
+        "date": 1779203693911,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24580.619571435946,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24578.28810714286 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 106102.87299998943,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 106092.59614285715 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13857.74505882307,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13856.302745098032 us\nthreads: 1"
           }
         ]
       }
