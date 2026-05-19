@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1778856944297,
+  "lastUpdate": 1779203689495,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1980,6 +1980,72 @@ window.BENCHMARK_DATA = {
             "value": 9425.820310808203,
             "unit": "us/iter",
             "extra": "iterations: 74\ncpu: 9424.554027027021 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a8ee24c6d48f11d2f61e005e3ed0c5056d42bedc",
+          "message": "feat: add ML-KEM-768 and extend bn256_t/DRBG/RO primitives (#115)\n\n- Add mlkem768_pub_key_t and mlkem768_prv_key_t backed by OpenSSL ML-KEM-768 for post-quantum key encapsulation, with unit tests\n- Extend bn256_t with comparison operators (<, >, <=, >=), static modular helpers (add_mod, sub_mod, neg_mod), a generic reduce(mod) overload, and SUM / SUM_MOD free functions; refactor operator+/- to delegate to statics\n- Add drbg_aes_ctr_t::gen_bits and gen_bn256 with a fast path for near-2^256 moduli; add ecc_point_t::get_coordinates(bn256_t&, bn256_t&) overload\n- Add hash_number_t::mod(int) and drbg_sample_number(seed, int) for deterministic non-cryptographic integer sampling (documented as biased)",
+          "timestamp": "2026-05-19T07:36:20-07:00",
+          "tree_id": "70d8c822edb8b06bfa2d4a242b348d256cb6fe44",
+          "url": "https://github.com/coinbase/cb-mpc/commit/a8ee24c6d48f11d2f61e005e3ed0c5056d42bedc"
+        },
+        "date": 1779203688780,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 62249.243299993395,
+            "unit": "us/iter",
+            "extra": "iterations: 10\ncpu: 62245.31710000001 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4590.213722581065,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4590.0196645161295 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8588.697950618092,
+            "unit": "us/iter",
+            "extra": "iterations: 81\ncpu: 8587.561975308641 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4745.71754421668,
+            "unit": "us/iter",
+            "extra": "iterations: 147\ncpu: 4745.451823129251 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.835085185123654,
+            "unit": "us/iter",
+            "extra": "iterations: 59177\ncpu: 11.833854926745191 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 14.056178731801353,
+            "unit": "us/iter",
+            "extra": "iterations: 49661\ncpu: 14.055313445158177 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8338.214428568963,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8337.54032142857 us\nthreads: 1"
           }
         ]
       }
