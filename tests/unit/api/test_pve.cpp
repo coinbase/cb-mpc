@@ -41,6 +41,26 @@ class toy_base_pke_t final : public coinbase::api::pve::base_pke_i {
   bool mutate_ = false;
 };
 
+class first_decrypt_fails_base_pke_t final : public coinbase::api::pve::base_pke_i {
+ public:
+  error_t encrypt(mem_t /*ek*/, mem_t /*label*/, mem_t plain, mem_t /*rho*/, buf_t& out_ct) const override {
+    out_ct = buf_t(plain);
+    return SUCCESS;
+  }
+
+  error_t decrypt(mem_t /*dk*/, mem_t /*label*/, mem_t ct, buf_t& out_plain) const override {
+    decrypt_calls_++;
+    if (decrypt_calls_ == 1) return E_FORMAT;
+    out_plain = buf_t(ct);
+    return SUCCESS;
+  }
+
+  int decrypt_calls() const { return decrypt_calls_; }
+
+ private:
+  mutable int decrypt_calls_ = 0;
+};
+
 static buf_t expected_Q(curve_id cid, mem_t x) {
   const coinbase::crypto::ecurve_t curve = (cid == curve_id::p256)        ? coinbase::crypto::curve_p256
                                            : (cid == curve_id::secp256k1) ? coinbase::crypto::curve_secp256k1
@@ -137,6 +157,30 @@ TEST(ApiPve, EncryptVerifyDecrypt_CustomBasePke) {
   buf_t x_out;
   ASSERT_EQ(coinbase::api::pve::decrypt(base_pke, curve, dk, ek, ct, label, x_out), SUCCESS);
   EXPECT_EQ(x_out.size(), 32);
+  EXPECT_EQ(x_out, buf_t(x_mem));
+}
+
+TEST(ApiPve, DecryptContinuesAfterRowDecryptFailure) {
+  const first_decrypt_fails_base_pke_t base_pke;
+
+  const curve_id curve = curve_id::secp256k1;
+  const buf_t ek = buf_t("ek");
+  const buf_t dk = buf_t("dk");
+  const buf_t label = buf_t("label");
+
+  std::array<uint8_t, 32> x_bytes{};
+  for (int i = 0; i < 32; i++) x_bytes[static_cast<size_t>(i)] = static_cast<uint8_t>(0x20 + i);
+  const mem_t x_mem(x_bytes.data(), static_cast<int>(x_bytes.size()));
+
+  buf_t ct;
+  ASSERT_EQ(coinbase::api::pve::encrypt(base_pke, curve, ek, label, x_mem, ct), SUCCESS);
+
+  const buf_t Q_expected = expected_Q(curve, x_mem);
+  ASSERT_EQ(coinbase::api::pve::verify(base_pke, curve, ek, ct, Q_expected, label), SUCCESS);
+
+  buf_t x_out;
+  ASSERT_EQ(coinbase::api::pve::decrypt(base_pke, curve, dk, ek, ct, label, x_out), SUCCESS);
+  EXPECT_GE(base_pke.decrypt_calls(), 2);
   EXPECT_EQ(x_out, buf_t(x_mem));
 }
 

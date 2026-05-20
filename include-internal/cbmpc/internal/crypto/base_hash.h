@@ -13,9 +13,6 @@
 namespace coinbase::crypto {
 class bn_t;
 
-extern const uint32_t sha256_k[64];
-extern const uint64_t sha512_k[80];
-
 enum { max_hash_size = EVP_MAX_MD_SIZE };
 
 enum class hash_e {

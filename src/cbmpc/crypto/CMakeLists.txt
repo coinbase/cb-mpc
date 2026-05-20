@@ -27,6 +27,7 @@ target_sources(cbmpc_crypto  PRIVATE
   secret_sharing.cpp
 
   tdh2.cpp
+  mlkem768.cpp
 )
 
 target_link_libraries(cbmpc_crypto cbmpc_core)

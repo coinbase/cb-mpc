@@ -91,6 +91,10 @@ class hash_number_t : public hmac_state_t {
   }
 
   bn_t mod(const mod_t& q);
+  // Convenience helper for deterministic non-cryptographic choices. This uses
+  // a 64-bit draw followed by `% m`, so it has modulo bias and must not be used
+  // for cryptographic challenge or scalar sampling.
+  int mod(int m);
 };
 
 /**
@@ -157,6 +161,8 @@ hash_curve_t hash_curve(const ARGS&... args) {
 
 buf_t drbg_sample_string(mem_t seed, int bits);
 bn_t drbg_sample_number(mem_t seed, const mod_t& p);  // modulo p
+// Deterministic non-cryptographic sampler; biased by `% m`.
+int drbg_sample_number(mem_t seed, int m);  // modulo m
 ecc_point_t drbg_sample_curve(mem_t seed, const crypto::ecurve_t& curve);
 
 }  // namespace coinbase::crypto::ro

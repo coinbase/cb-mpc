@@ -218,19 +218,17 @@ void uc_elgamal_com_mult_private_scalar_t::prove(const ecc_point_t& Q, const elg
       },
 
       // hash
-      [&](uint16_t i, uint16_t e_tag) -> uint16_t {
-        return hash32bit_for_zk_fischlin(common_hash, i, e_tag, z1_tag, z2_tag);
-      },
+      [&](int i, int e_tag) -> uint32_t { return hash32bit_for_zk_fischlin(common_hash, i, e_tag, z1_tag, z2_tag); },
 
       // save
-      [&](int i, uint16_t e_tag) {
+      [&](int i, int e_tag) {
         e[i] = e_tag;
         z1[i] = z1_tag;
         z2[i] = z2_tag;
       },
 
       // response_next
-      [&](uint16_t e_tag) {
+      [&](int e_tag) {
         int res = bn_mod_add_fixed_top(z1_tag, z1_tag, c, q_value);
         cb_assert(res);
         res = bn_mod_add_fixed_top(z2_tag, z2_tag, r, q_value);
@@ -259,7 +257,7 @@ error_t uc_elgamal_com_mult_private_scalar_t::verify(const ecc_point_t& Q, const
 
   const mod_t& q = curve.order();
   const auto& G = curve.generator();
-  uint16_t b_mask = params.b_mask();
+  uint32_t b_mask = params.b_mask();
 
   for (int i = 0; i < rho; i++) {
     if (rv = curve.check(A1_tag[i]))
@@ -288,7 +286,7 @@ error_t uc_elgamal_com_mult_private_scalar_t::verify(const ecc_point_t& Q, const
     A1_sum += sigma * A1_tag[i];
     A2_sum += sigma * A2_tag[i];
 
-    uint16_t h = hash32bit_for_zk_fischlin(common_hash, uint16_t(i), e[i], z1[i], z2[i]) & b_mask;
+    uint32_t h = hash32bit_for_zk_fischlin(common_hash, i, e[i], z1[i], z2[i]) & b_mask;
     if (h != 0) return coinbase::error(E_CRYPTO);
   }
 

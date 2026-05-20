@@ -10,6 +10,11 @@ using namespace coinbase::crypto;
 
 namespace {
 
+error_t return_inside_modulo_scope(const mod_t& q) {
+  MODULO(q) { return E_CRYPTO; }
+  return SUCCESS;
+}
+
 TEST(BigNumber, Addition) {
   EXPECT_EQ(bn_t(123) + bn_t(456), 579);
   EXPECT_EQ(bn_t(-123) + bn_t(456), 333);
@@ -58,6 +63,28 @@ TEST(BigNumber, IntOperatorsHandleIntMin) {
   bn_t expected_mod;
   MODULO(q) { expected_mod = -abs_v; }
   MODULO(q) { EXPECT_EQ(bn_t(0) + v, expected_mod); }
+}
+
+TEST(BigNumber, ModuloScopeRestoresThreadLocalStateAfterEarlyReturn) {
+  const mod_t& q = crypto::curve_ed25519.order();
+
+  ASSERT_EQ(thread_local_storage_mod(), nullptr);
+  EXPECT_EQ(return_inside_modulo_scope(q), E_CRYPTO);
+  EXPECT_EQ(thread_local_storage_mod(), nullptr);
+  EXPECT_EQ(bn_t(10) + bn_t(3), 13);
+}
+
+TEST(BigNumber, ModuloScopeRestoresPreviousNestedModulus) {
+  const mod_t& outer = crypto::curve_ed25519.order();
+  const mod_t& inner = crypto::curve_secp256k1.order();
+
+  ASSERT_EQ(thread_local_storage_mod(), nullptr);
+  MODULO(outer) {
+    ASSERT_EQ(thread_local_storage_mod(), &outer);
+    MODULO(inner) { EXPECT_EQ(thread_local_storage_mod(), &inner); }
+    EXPECT_EQ(thread_local_storage_mod(), &outer);
+  }
+  EXPECT_EQ(thread_local_storage_mod(), nullptr);
 }
 
 TEST(BigNumber, Multiplication) {
