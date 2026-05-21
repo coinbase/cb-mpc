@@ -35,6 +35,10 @@ TEST(Mod, Initialization) {
   // Paillier/RSA Modulo
   EXPECT_NO_FATAL_FAILURE(mod_t(bn_t::generate_prime(2048, false) * bn_t::generate_prime(2048, false)));
 
+  bn_t oversized_modulus = (bn_t(1) << mod_t::MAX_MODULUS_BITS) + 1;
+  EXPECT_FALSE(mod_t::is_valid_modulus(oversized_modulus));
+  EXPECT_CB_ASSERT((mod_t(oversized_modulus)), "modulus too large");
+
   dylog_disable_scope_t no_log_err;
   EXPECT_CB_ASSERT(mod_t(100), "BN_MONT_CTX_set failed");
   EXPECT_CB_ASSERT(mod_t(bn_t::rand_bitlen(256) * 2), "BN_MONT_CTX_set failed");

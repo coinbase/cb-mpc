@@ -164,7 +164,7 @@ There are three build modes available:
 - **Test**: This mode enables security checks and validations to ensure the code is robust and secure.
 - **Release**: This mode applies the highest level of optimization for maximum performance and disables checks to improve runtime efficiency.
 
-## On macOS
+## Native Builds
 
 ### OpenSSL
 
@@ -176,12 +176,15 @@ The library depends on a **custom build of OpenSSL 3.6.1** with specific modific
 make openssl
 
 # Or use platform-specific targets:
+make openssl-linux      # for Linux
 make openssl-macos      # for x86_64
 make openssl-macos-m1   # for ARM64 (Apple Silicon)
 ```
 
 **Manual Build:**
 ```bash
+scripts/openssl/build-static-openssl-linux.sh      # for Linux
+# or
 scripts/openssl/build-static-openssl-macos.sh      # for x86_64
 # or
 scripts/openssl/build-static-openssl-macos-m1.sh   # for ARM64
@@ -193,10 +196,13 @@ scripts/openssl/build-static-openssl-macos-m1.sh   # for ARM64
 If you prefer a different installation path, you can set the `CBMPC_OPENSSL_ROOT` variable:
 
 ```bash
-# Option 1: Environment variable (before running cmake)
+# Option 1: Environment variable (before building OpenSSL)
+CBMPC_OPENSSL_ROOT=/your/custom/path make openssl
+
+# Option 2: Environment variable (before running cmake)
 export CBMPC_OPENSSL_ROOT=/your/custom/path
 
-# Option 2: CMake variable
+# Option 3: CMake variable
 cmake -DCBMPC_OPENSSL_ROOT=/your/custom/path ...
 ```
 

@@ -20,6 +20,8 @@ bool is_vartime_scope();
 
 class mod_t {
  public:
+  inline static constexpr int MAX_MODULUS_BITS = 8192;
+
   mod_t();
   ~mod_t();
 
