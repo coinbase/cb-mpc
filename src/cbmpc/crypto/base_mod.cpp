@@ -16,7 +16,7 @@ mod_t::~mod_t() {
   if (mont) BN_MONT_CTX_free(mont);
 }
 
-bool mod_t::is_valid_modulus(const bn_t& m) { return m > 1 && m.is_odd(); }
+bool mod_t::is_valid_modulus(const bn_t& m) { return m > 1 && m.get_bits_count() <= MAX_MODULUS_BITS && m.is_odd(); }
 
 void mod_t::convert(coinbase::converter_t& converter) {
   converter.convert(m);
@@ -147,6 +147,9 @@ static void bn_copy(BIGNUM r, BIGNUM a) {
   if (r.top > len) std::fill(r.d + len, r.d + r.top, 0);
 }
 
+enum { BN_ULONG_BITS = sizeof(BN_ULONG) * 8 };
+static constexpr int MAX_MODULUS_WORDS = (mod_t::MAX_MODULUS_BITS + BN_ULONG_BITS - 1) / BN_ULONG_BITS;
+
 void mod_t::_mul(bn_t& r, const bn_t& a, const bn_t& b) const {
   if (vartime_scope) {
     int res = BN_mod_mul(r, a, b, m, bn_t::thread_local_storage_bn_ctx());
@@ -159,6 +162,14 @@ void mod_t::_mul(bn_t& r, const bn_t& a, const bn_t& b) const {
 
   const BIGNUM& aa = *(const BIGNUM*)a;
   const BIGNUM& bb = *(const BIGNUM*)b;
+  if (aa.top == 0 || bb.top == 0) {
+    r = 0;
+    return;
+  }
+
+  cb_assert(aa.top >= 0 && bb.top >= 0 && aa.top + bb.top <= 2 * MAX_MODULUS_WORDS);
+  // Intentional bounded VLA: modulus size is capped by MAX_MODULUS_BITS.
+  // Keep this on the stack to avoid heap allocation in the modular multiplication hot path.
   BN_ULONG buf[aa.top + bb.top];
   bn_mul_normal(buf, aa.d, aa.top, bb.d, bb.top);
 
@@ -167,8 +178,6 @@ void mod_t::_mul(bn_t& r, const bn_t& a, const bn_t& b) const {
 }
 
 bn_t mod_t::div(const bn_t& a, const bn_t& b) const { return mul(a, inv(b)); }
-
-enum { BN_ULONG_BITS = sizeof(BN_ULONG) * 8 };
 
 static BN_ULONG div_words_by_two(int n, BN_ULONG* r) {
   uint64_t carry = 0;
@@ -215,22 +224,28 @@ static BN_ULONG ct_bn_sub_words(BN_ULONG* r, const BN_ULONG* a, const BN_ULONG* 
 }
 
 static BN_ULONG cnd_add_words(int n, BN_ULONG r[], bool flag, const BN_ULONG a[]) {
+  cb_assert(n > 0 && n <= MAX_MODULUS_WORDS);
   BN_ULONG mask = constant_time_mask_ulong(flag);
+  // Intentional bounded VLA: preserving the temp array keeps ct_bn_add_words()'s carry chain optimizable.
   BN_ULONG temp[n];
   for (int i = 0; i < n; i++) temp[i] = a[i] & mask;
   return ct_bn_add_words(r, r, temp, n);
 }
 
 static BN_ULONG cnd_sub_words(int n, BN_ULONG r[], bool flag, const BN_ULONG a[]) {
+  cb_assert(n > 0 && n <= MAX_MODULUS_WORDS);
   BN_ULONG mask = constant_time_mask_ulong(flag);
+  // Intentional bounded VLA: preserving the temp array keeps ct_bn_sub_words()'s borrow chain optimizable.
   BN_ULONG temp[n];
   for (int i = 0; i < n; i++) temp[i] = a[i] & mask;
   return ct_bn_sub_words(r, r, temp, n);
 }
 
 static BN_ULONG cnd_neg_words(int n, BN_ULONG r[], bool flag) {
+  cb_assert(n > 0 && n <= MAX_MODULUS_WORDS);
   BN_ULONG mask = constant_time_mask_ulong(flag);
   for (int i = 0; i < n; i++) r[i] ^= mask;
+  // Intentional bounded VLA: see cnd_add_words().
   BN_ULONG temp[n];
   std::fill(temp, temp + n, 0);
   temp[0] = (BN_ULONG)flag;
@@ -252,6 +267,8 @@ void mod_t::scr_inv(bn_t& res, const bn_t& in) const {
   r->top = n;
 
   const BN_ULONG* m = q->d;
+  cb_assert(n > 0 && n <= MAX_MODULUS_WORDS);
+  // Intentional bounded VLAs: n is capped by MAX_MODULUS_BITS. These buffers are hot scratch state for SCR inversion.
   BN_ULONG a[n];
   auto top = std::min(x->top, n);
   std::copy(x->d, x->d + top, a);
@@ -369,6 +386,8 @@ bn_t mod_t::mul_mont(const bn_t& x, const bn_t& y) const {
 }
 
 void mod_t::init(const bn_t& m) {
+  cb_assert(m.get_bits_count() <= MAX_MODULUS_BITS && "modulus too large");
+
   if (!mont) mont = BN_MONT_CTX_new();
   if (!mont) throw std::bad_alloc();
 
@@ -440,12 +459,16 @@ void mod_t::_mod(BIGNUM& r, const BIGNUM& x) const {
   BIGNUM q1 = bn_skip(x, k - 1);  // q1 = x / b^(k-1)
 
   int q2_len = q1.top + mu.top;
+  cb_assert(k <= MAX_MODULUS_WORDS);
+  cb_assert(q2_len <= 2 * MAX_MODULUS_WORDS + 2);
+  // Intentional bounded VLA: q2_len is derived from operands capped by MAX_MODULUS_BITS.
   BN_ULONG q2_buf[q2_len];
   BIGNUM q2 = bn_buf(q2_buf, q2_len);
   bn_mul_normal(q2.d, q1.d, q1.top, mu.d, mu.top);  // q2 = q1 * mu;
 
   BIGNUM q3 = bn_skip(q2, k + 1);  // q3 = q2 / b^(k+1)
 
+  // Intentional bounded VLA: k <= MAX_MODULUS_WORDS.
   BN_ULONG r2_buf[k + 1];
   BIGNUM r2 = bn_buf(r2_buf, k + 1);
   barrett_partial_mul(r2.top, r2.d, q3.top, q3.d, mm.top, mm.d);  // r2 = partial_mul<k + 1>(q3, modulus);

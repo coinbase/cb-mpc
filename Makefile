@@ -73,9 +73,6 @@ submodules:
 openssl-linux:
 	@echo "Building custom OpenSSL for Linux..."
 	${RUN_CMD} 'bash ./scripts/openssl/build-static-openssl-linux.sh'
-	${RUN_CMD} 'mkdir -p /usr/local/lib64'
-	${RUN_CMD} 'mkdir -p /usr/local/lib'
-	${RUN_CMD} 'mkdir -p /usr/local/include'
 
 .PHONY: openssl-macos
 openssl-macos:

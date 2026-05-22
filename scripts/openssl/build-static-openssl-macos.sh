@@ -44,7 +44,7 @@ sed -i -e 's/^static//' crypto/ec/curve25519.c
   no-gost no-http no-idea no-mdc2 no-md2 no-md4 no-module no-nextprotoneg no-ocb no-ocsp no-psk no-padlockeng no-poly1305 \
   no-quic no-rc2 no-rc4 no-rc5 no-rfc3779 no-scrypt no-sctp no-seed no-siphash no-sm2 no-sm3 no-sm4 no-sock no-srtp no-srp \
   no-ssl-trace no-ssl3 no-stdio no-tests no-tls no-ts no-unit-test no-uplink no-whirlpool no-zlib \
-  --prefix=/usr/local/opt/openssl@3.6.1 darwin64-x86_64-cc
+  --prefix="${CBMPC_OPENSSL_ROOT:-/usr/local/opt/openssl@3.6.1}" darwin64-x86_64-cc
 
 make -j
 make install_sw
