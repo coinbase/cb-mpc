@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779203684270,
+  "lastUpdate": 1779463091373,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -3168,6 +3168,126 @@ window.BENCHMARK_DATA = {
             "value": 66.37512463330324,
             "unit": "us/iter",
             "extra": "iterations: 10567\ncpu: 66.36991482918515 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e97eec7b766cf548794656b079e6d3ca52f87a01",
+          "message": "fix: bound modulus buffers and OpenSSL install paths (#117)\n\nCap mod_t moduli at 8192 bits before using stack scratch buffers, and add assertions around bounded VLA allocations in modular arithmetic.\n\nHonor CBMPC_OPENSSL_ROOT in the platform OpenSSL build scripts and document native Linux/macOS build targets.\n\nResolves #108",
+          "timestamp": "2026-05-22T07:40:14-07:00",
+          "tree_id": "bd6376308d9c4237f429c1e6d342bf0b14a6afad",
+          "url": "https://github.com/coinbase/cb-mpc/commit/e97eec7b766cf548794656b079e6d3ca52f87a01"
+        },
+        "date": 1779463090703,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.33070987252000733,
+            "unit": "us/iter",
+            "extra": "iterations: 2123470\ncpu: 0.33067738607091224 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.34618294116336157,
+            "unit": "us/iter",
+            "extra": "iterations: 2022295\ncpu: 0.34616707799801716 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 3.153620527069506,
+            "unit": "us/iter",
+            "extra": "iterations: 222058\ncpu: 3.153359779877329 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.34982086013217534,
+            "unit": "us/iter",
+            "extra": "iterations: 2002413\ncpu: 0.3498018176070568 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 40.33537590861889,
+            "unit": "us/iter",
+            "extra": "iterations: 17334\ncpu: 40.33228320064612 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 62.944807778874356,
+            "unit": "us/iter",
+            "extra": "iterations: 11107\ncpu: 62.941981093004436 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 28.659937443966182,
+            "unit": "us/iter",
+            "extra": "iterations: 24538\ncpu: 28.657940907979448 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 62.83218559383124,
+            "unit": "us/iter",
+            "extra": "iterations: 11148\ncpu: 62.831661194833075 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 17.147499852919633,
+            "unit": "us/iter",
+            "extra": "iterations: 40794\ncpu: 17.146061847330472 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.508959678421817,
+            "unit": "us/iter",
+            "extra": "iterations: 48262\ncpu: 14.508308317102454 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 17.180447613677742,
+            "unit": "us/iter",
+            "extra": "iterations: 40774\ncpu: 17.179983935841452 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.037384495652317,
+            "unit": "us/iter",
+            "extra": "iterations: 98940\ncpu: 7.036830836870839 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 60.71786056644885,
+            "unit": "us/iter",
+            "extra": "iterations: 11475\ncpu: 60.714351982570804 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 77.88666551723499,
+            "unit": "us/iter",
+            "extra": "iterations: 8990\ncpu: 77.87827797552825 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/secp256k1",
+            "value": 2.922538475671637,
+            "unit": "us/iter",
+            "extra": "iterations: 239476\ncpu: 2.922346594230733 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/Ed25519",
+            "value": 64.29592328163174,
+            "unit": "us/iter",
+            "extra": "iterations: 10897\ncpu: 64.29181444434253 us\nthreads: 1"
           }
         ]
       }
