@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779203694508,
+  "lastUpdate": 1779463100936,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1302,6 +1302,48 @@ window.BENCHMARK_DATA = {
             "value": 13857.74505882307,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13856.302745098032 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e97eec7b766cf548794656b079e6d3ca52f87a01",
+          "message": "fix: bound modulus buffers and OpenSSL install paths (#117)\n\nCap mod_t moduli at 8192 bits before using stack scratch buffers, and add assertions around bounded VLA allocations in modular arithmetic.\n\nHonor CBMPC_OPENSSL_ROOT in the platform OpenSSL build scripts and document native Linux/macOS build targets.\n\nResolves #108",
+          "timestamp": "2026-05-22T07:40:14-07:00",
+          "tree_id": "bd6376308d9c4237f429c1e6d342bf0b14a6afad",
+          "url": "https://github.com/coinbase/cb-mpc/commit/e97eec7b766cf548794656b079e6d3ca52f87a01"
+        },
+        "date": 1779463100274,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24143.74872413928,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24141.782413793102 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 103734.07471427396,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 103717.988 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13778.288647057812,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13777.282803921564 us\nthreads: 1"
           }
         ]
       }
