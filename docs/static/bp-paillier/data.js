@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779203689495,
+  "lastUpdate": 1779463096018,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2046,6 +2046,72 @@ window.BENCHMARK_DATA = {
             "value": 8338.214428568963,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8337.54032142857 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e97eec7b766cf548794656b079e6d3ca52f87a01",
+          "message": "fix: bound modulus buffers and OpenSSL install paths (#117)\n\nCap mod_t moduli at 8192 bits before using stack scratch buffers, and add assertions around bounded VLA allocations in modular arithmetic.\n\nHonor CBMPC_OPENSSL_ROOT in the platform OpenSSL build scripts and document native Linux/macOS build targets.\n\nResolves #108",
+          "timestamp": "2026-05-22T07:40:14-07:00",
+          "tree_id": "bd6376308d9c4237f429c1e6d342bf0b14a6afad",
+          "url": "https://github.com/coinbase/cb-mpc/commit/e97eec7b766cf548794656b079e6d3ca52f87a01"
+        },
+        "date": 1779463095315,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 57009.70170000801,
+            "unit": "us/iter",
+            "extra": "iterations: 10\ncpu: 57002.448300000004 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4182.928742515189,
+            "unit": "us/iter",
+            "extra": "iterations: 167\ncpu: 4182.688802395211 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 7960.926670454621,
+            "unit": "us/iter",
+            "extra": "iterations: 88\ncpu: 7960.4617272727255 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4304.669546013568,
+            "unit": "us/iter",
+            "extra": "iterations: 163\ncpu: 4304.362429447854 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 12.035492923393434,
+            "unit": "us/iter",
+            "extra": "iterations: 58220\ncpu: 12.035255719683954 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 14.30240395897365,
+            "unit": "us/iter",
+            "extra": "iterations: 48750\ncpu: 14.300525538461546 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 7707.878604393484,
+            "unit": "us/iter",
+            "extra": "iterations: 91\ncpu: 7707.580175824176 us\nthreads: 1"
           }
         ]
       }
