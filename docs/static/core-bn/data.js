@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779463087609,
+  "lastUpdate": 1783521309011,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -3840,6 +3840,126 @@ window.BENCHMARK_DATA = {
             "value": 1414.2611224897848,
             "unit": "us/iter",
             "extra": "iterations: 498\ncpu: 1414.1780722891654 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ba33d3dcbc35f24a65048977c907e9b311428680",
+          "message": "fix: harden crypto helpers and add coverage tooling (#121)\n\nSimplify error reporting by removing stack trace emission from ordinary error paths and trimming unused string/error helpers, while keeping API argument validation on structured error returns.\n\nFix several crypto helper edge cases: mod_t assignment now drops stale Montgomery contexts, mod_t::mod(int) handles negative values and INT_MIN without signed overflow, ElGamal /= performs division, and Paillier batch cipher validation runs in an explicit variable-time scope.\n\nTighten ECC behavior by validating curves and signature scalars during ECDSA verification, asserting same-curve point operations, preserving variable-time scalar multiplication when requested, and enforcing Ed25519 point storage alignment.\n\nHarden protocol paths by checking Schnorr nonce points before proof verification, using explicit variable-time evaluation in HD EdDSA derivation, simplifying HD root K-share helpers, and preserving empty access structures during deserialization.\n\nAdd Clang/LLVM coverage configuration and Make targets for text and HTML coverage reports, and ignore generated PDF diff artifacts from internal tooling.",
+          "timestamp": "2026-07-08T06:57:56-07:00",
+          "tree_id": "cdb97949eff97ff7fcd7e8f501dc48686f17193b",
+          "url": "https://github.com/coinbase/cb-mpc/commit/ba33d3dcbc35f24a65048977c907e9b311428680"
+        },
+        "date": 1783521307779,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.08698808359948541,
+            "unit": "us/iter",
+            "extra": "iterations: 7694018\ncpu: 0.08698346767579697 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.507480615711806,
+            "unit": "us/iter",
+            "extra": "iterations: 1376553\ncpu: 0.5074476943495817 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.08213324565066454,
+            "unit": "us/iter",
+            "extra": "iterations: 8558133\ncpu: 0.08212815038046223 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.5685359278248403,
+            "unit": "us/iter",
+            "extra": "iterations: 1230119\ncpu: 0.5685130771900885 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.172001681488439,
+            "unit": "us/iter",
+            "extra": "iterations: 4085666\ncpu: 0.17198546773035112 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 11.244945670874511,
+            "unit": "us/iter",
+            "extra": "iterations: 62195\ncpu: 11.244057255406469 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 16.694926630756573,
+            "unit": "us/iter",
+            "extra": "iterations: 42143\ncpu: 16.69476126521651 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16543.505119048383,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16542.856023809534 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 17.224414156331743,
+            "unit": "us/iter",
+            "extra": "iterations: 40632\ncpu: 17.223479892694975 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 688.9157004925571,
+            "unit": "us/iter",
+            "extra": "iterations: 1015\ncpu: 688.8901201970443 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 24.243522701697614,
+            "unit": "us/iter",
+            "extra": "iterations: 30218\ncpu: 24.242492620292953 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1154.2975499999861,
+            "unit": "us/iter",
+            "extra": "iterations: 600\ncpu: 1154.2350266666783 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 23.247980098138783,
+            "unit": "us/iter",
+            "extra": "iterations: 29143\ncpu: 23.246811344061822 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1167.8681914189997,
+            "unit": "us/iter",
+            "extra": "iterations: 606\ncpu: 1167.8521369636974 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 26.69629161088018,
+            "unit": "us/iter",
+            "extra": "iterations: 26141\ncpu: 26.6945007842094 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1334.7131455940594,
+            "unit": "us/iter",
+            "extra": "iterations: 522\ncpu: 1334.6708371647544 us\nthreads: 1"
           }
         ]
       }
