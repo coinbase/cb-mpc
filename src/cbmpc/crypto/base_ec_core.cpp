@@ -5,8 +5,14 @@ namespace coinbase::crypto {
 
 booth_wnaf_t::booth_wnaf_t(int _win, const bn_t& x, int _bits, bool _back)
     : win(_win), bits(_bits), back(_back), index(0) {
-  x.to_bin(data, 33);
-  mem_t(data, 33).reverse();
+  cb_assert(sizeof(BN_ULONG) * 8 == 64);
+
+  bzero(data, 33);
+  const BIGNUM& bn = *(const BIGNUM*)x;
+  cb_assert(bn.neg == 0);
+  cb_assert(bn.top <= 4);
+
+  if (bn.top > 0) memmove(data, bn.d, bn.top * sizeof(BN_ULONG));
 
   if (back) index = (((bits - 1) + (win - 1)) / win) * win;
 }

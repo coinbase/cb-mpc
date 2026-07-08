@@ -53,8 +53,10 @@ error_t sign_batch(job_2p_t& job, key_t& key, const std::vector<mem_t>& msgs, st
     return coinbase::error(E_CRYPTO, "schnorr_2p: inconsistent batch size (R2)");
 
   if (job.is_p1()) {
-    // point checks are covered by the zk proof
     sid = crypto::sha256_t::hash(sid1, sid2);
+    for (const auto& point : R2) {
+      if (rv = curve.check(point)) return coinbase::error(rv, "schnorr_2p: R2 check failed");
+    }
     if (rv = zk_dl2.verify(R2, sid, 2)) return rv;
     zk_dl1.prove(R1, k1, sid, 1);
   }
@@ -62,8 +64,10 @@ error_t sign_batch(job_2p_t& job, key_t& key, const std::vector<mem_t>& msgs, st
 
   if (job.is_p2()) {
     if (R1.size() != size_t(n_sigs)) return coinbase::error(E_CRYPTO, "schnorr_2p: inconsistent batch size (R1)");
-    // point checks are covered by the zk proof
     if (rv = com.id(sid1, job.get_pid(party_t::p1)).open(R1)) return rv;
+    for (const auto& point : R1) {
+      if (rv = curve.check(point)) return coinbase::error(rv, "schnorr_2p: R1 check failed");
+    }
     if (rv = zk_dl1.verify(R1, sid, 1)) return rv;
   }
 

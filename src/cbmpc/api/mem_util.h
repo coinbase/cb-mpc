@@ -23,8 +23,8 @@ inline constexpr int MAX_MESSAGE_DIGEST_SIZE = 64;                 // 64 bytes (
 // inputs (including data that may be adversary-controlled) and must fail
 // gracefully with an error code.
 inline error_t validate_mem_arg(mem_t m, const char* name) {
-  if (m.size <= 0) return coinbase::error(E_BADARG, std::string("invalid ") + name, /*to_print_stack_trace=*/false);
-  if (!m.data) return coinbase::error(E_BADARG, std::string("invalid ") + name, /*to_print_stack_trace=*/false);
+  if (m.size <= 0) return coinbase::error(E_BADARG, std::string("invalid ") + name);
+  if (!m.data) return coinbase::error(E_BADARG, std::string("invalid ") + name);
   return SUCCESS;
 }
 
@@ -38,9 +38,8 @@ inline error_t validate_mem_vec_arg(const std::vector<mem_t>& ms, const char* na
 
 inline error_t validate_mem_arg_max_size(mem_t m, const char* name, int max_size) {
   if (const error_t rv = validate_mem_arg(m, name)) return rv;
-  if (max_size < 0) return coinbase::error(E_BADARG, "invalid max_size", /*to_print_stack_trace=*/false);
-  if (m.size > max_size)
-    return coinbase::error(E_RANGE, std::string(name) + " too large", /*to_print_stack_trace=*/false);
+  if (max_size < 0) return coinbase::error(E_BADARG, "invalid max_size");
+  if (m.size > max_size) return coinbase::error(E_RANGE, std::string(name) + " too large");
   return SUCCESS;
 }
 

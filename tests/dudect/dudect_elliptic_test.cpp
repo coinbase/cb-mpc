@@ -9,6 +9,9 @@ namespace coinbase::dudect {
 #define NUMBER_MEASUREMENTS (250)
 #define NUMBER_OPERANDS (2)
 
+constexpr double kMaxNoLeakageMeasurements = 100000;
+constexpr double kMaxEstimatedMeasurements = 1000000;
+
 static ecurve_t curve;
 
 static ecc_point_t G;
@@ -18,18 +21,26 @@ static ecc_point_t ecc_pt_base_b;
 static mod_t q;
 static mod_t small_q;
 static bn_t base_bn;
+static int secret_scalar_bitlen;
 
 static ecc_point_t ecc_pt_arr[NUMBER_MEASUREMENTS * NUMBER_OPERANDS];
 static bn_t bn_arr[NUMBER_MEASUREMENTS * NUMBER_OPERANDS];
 
+static bn_t rand_min_bitlen(const mod_t& q, int bits) {
+  cb_assert(bits > 192);
+  cb_assert(bits <= q.get_bits_count());
+  const bn_t min_value = bn_t(1).lshift(bits - 1);
+  return min_value + bn_t::rand(q.value() - min_value);
+}
+
 void generate_ecc_array(uint8_t c, uint16_t idx) {
   uint16_t start_idx = NUMBER_OPERANDS * idx;
   if (c == 1) {
-    ecc_pt_arr[start_idx] = curve.mul_to_generator(curve.get_random_value());
-    ecc_pt_arr[start_idx + 1] = curve.mul_to_generator(curve.get_random_value());
+    ecc_pt_arr[start_idx] = curve.mul_to_generator(rand_min_bitlen(q, secret_scalar_bitlen));
+    ecc_pt_arr[start_idx + 1] = curve.mul_to_generator(rand_min_bitlen(q, secret_scalar_bitlen));
 
-    bn_arr[start_idx] = denormalize(bn_t::rand(q), q);
-    bn_arr[start_idx + 1] = denormalize(bn_t::rand(q), q);
+    bn_arr[start_idx] = denormalize(rand_min_bitlen(q, secret_scalar_bitlen), q);
+    bn_arr[start_idx + 1] = denormalize(rand_min_bitlen(q, secret_scalar_bitlen), q);
   } else {
     ecc_pt_arr[start_idx] = ecc_pt_base_a;
     ecc_pt_arr[start_idx + 1] = ecc_pt_base_b;
@@ -69,12 +80,13 @@ static void run_dudect_leakage_test(dudect_state_t expected_state, uint16_t base
   input_generator = generate_ecc_array;
 
   G = curve.generator();
-  P = curve.mul_to_generator(curve.get_random_value());
   q = curve.order();
+  secret_scalar_bitlen = baseline_bitlen;
   small_q = mod_t(bn_t::generate_prime(baseline_bitlen, true), /* multiplicative_dense */ true);
-  base_bn = bn_t::rand(small_q);
-  ecc_pt_base_a = curve.mul_to_generator(bn_t::rand(small_q));
-  ecc_pt_base_b = curve.mul_to_generator(bn_t::rand(small_q));
+  P = curve.mul_to_generator(rand_min_bitlen(q, secret_scalar_bitlen));
+  base_bn = rand_min_bitlen(small_q, secret_scalar_bitlen);
+  ecc_pt_base_a = curve.mul_to_generator(rand_min_bitlen(small_q, secret_scalar_bitlen));
+  ecc_pt_base_b = curve.mul_to_generator(rand_min_bitlen(small_q, secret_scalar_bitlen));
 
   dudect_config_t config = {
       .chunk_size = SECRET_LEN_BYTES,
@@ -104,11 +116,14 @@ static void run_dudect_leakage_test(dudect_state_t expected_state, uint16_t base
     double number_traces_max_t = t->n[0] + t->n[1];
     double max_tau = max_t / sqrt(number_traces_max_t);
     double estimated_measurements = (double)(5 * 5) / (double)(max_tau * max_tau);
+    double raw_measurements = ctx.ttest_ctxs[0]->n[0] + ctx.ttest_ctxs[0]->n[1];
 
     enough_measurements = number_traces_max_t > DUDECT_ENOUGH_MEASUREMENTS;
     if (enough_measurements) {
-      // Stop when estimated measurements to potential detect leakage is 10 M
-      measurement_threshold = (estimated_measurements < 1e7) && (number_traces_max_t < estimated_measurements * 100);
+      // Stop bounded CI runs once no leak has been found within a practical budget.
+      measurement_threshold = (state == DUDECT_NO_LEAKAGE_EVIDENCE_YET) &&
+                              (raw_measurements < kMaxNoLeakageMeasurements) &&
+                              (estimated_measurements < kMaxEstimatedMeasurements);
     } else {
       // Write to outfile for histogram creation
       for (uint16_t i = 0; i < NUMBER_MEASUREMENTS; i++) {

@@ -32,6 +32,42 @@ TEST(OT_Base, PVW) {
   }
 }
 
+TEST(OT_Helpers, MatrixAccessorsAndMessageTuples) {
+  const int requested_cols = 17;
+  h_matrix_256rows_t h_matrix;
+  h_matrix.alloc(requested_cols);
+  EXPECT_EQ(h_matrix.rows(), 256);
+  EXPECT_EQ(h_matrix.cols(), coinbase::bytes_to_bits(coinbase::bits_to_bytes(requested_cols)));
+
+  const buf_t row = crypto::gen_random(coinbase::bits_to_bytes(requested_cols));
+  h_matrix.set_row(3, row);
+  EXPECT_EQ(buf_t(h_matrix.get_row(3)), row);
+
+  v_matrix_256cols_t v_matrix;
+  v_matrix.alloc(2);
+  crypto::gen_random(v_matrix[0]);
+  crypto::gen_random(v_matrix[1]);
+  const v_matrix_256cols_t& const_v_matrix = v_matrix;
+  EXPECT_EQ(const_v_matrix.rows(), 2);
+  EXPECT_EQ(const_v_matrix.cols(), 256);
+  EXPECT_EQ(const_v_matrix[0], v_matrix[0]);
+  EXPECT_EQ(const_v_matrix[1], v_matrix[1]);
+
+  ot_ext_protocol_ctx_t ext;
+  ext.w0 = {buf_t("w0")};
+  ext.w1 = {buf_t("w1")};
+  auto ext_msg2 = ext.msg2();
+  EXPECT_EQ(std::get<0>(ext_msg2), ext.w0);
+  EXPECT_EQ(std::get<1>(ext_msg2), ext.w1);
+
+  ot_protocol_pvw_ctx_t full_ot;
+  full_ot.ext.w0 = {buf_t("full-w0")};
+  full_ot.ext.w1 = {buf_t("full-w1")};
+  auto full_msg3 = full_ot.msg3();
+  EXPECT_EQ(std::get<0>(full_msg3), full_ot.ext.w0);
+  EXPECT_EQ(std::get<1>(full_msg3), full_ot.ext.w1);
+}
+
 TEST(OT_Extension, Main) {
   const int u = 256;
   const int m = 1 << 16;
@@ -171,6 +207,31 @@ TEST(OT, FullOT2P) {
     bn_t x = r[j] ? x1[j] : x0[j];
     EXPECT_EQ(x, bn_t::from_bin(x_bin[j]));
   }
+}
+
+TEST(OT, FullOT2PBnOutputWrapper) {
+  const int m = 16;
+  auto curve = crypto::curve_secp256k1;
+  auto q = curve.order();
+  int l = q.get_bits_count();
+  bits_t r = crypto::gen_random_bits(m);
+
+  std::vector<bn_t> x0(m), x1(m);
+  for (int j = 0; j < m; ++j) {
+    x0[j] = bn_t::rand(q);
+    x1[j] = bn_t::rand(q);
+  }
+
+  std::vector<bn_t> x_out;
+  ot_protocol_pvw_ctx_t ot(curve);
+  ot.base.sid = crypto::gen_random(16);
+  EXPECT_OK(ot.step1_S2R());
+  EXPECT_OK(ot.step2_R2S(r, l));
+  EXPECT_OK(ot.step3_S2R(x0, x1, l));
+  EXPECT_OK(ot.output_R(m, x_out));
+  ASSERT_EQ(x_out.size(), size_t(m));
+
+  for (int j = 0; j < m; ++j) EXPECT_EQ(x_out[j], r[j] ? x1[j] : x0[j]);
 }
 
 TEST(OT, SenderOneInputRandomOT2P) {

@@ -815,6 +815,9 @@ using curve_t = crypto::ecurve_core_t<formula_t>;
 using point_t = curve_t::point_t;
 using generator_point_t = curve_t::generator_point_t;
 
+static_assert(sizeof(crypto::ecp_storage_t) == sizeof(point_t), "ecp_storage_t must match Ed25519 point storage size");
+static_assert(alignof(crypto::ecp_storage_t) >= alignof(point_t), "ecp_storage_t must satisfy Ed25519 point alignment");
+
 }  // namespace coinbase::crypto::ec25519_core
 
 template <>
@@ -979,19 +982,6 @@ static void sign_with_nonce(uint8_t* signature, const uint8_t* message, size_t m
 
   s.to_bin(signature + 32, 32);
   mem_t(signature + 32, 32).reverse();
-}
-
-static void hash_az(uint8_t* az, const uint8_t private_key[32]) {
-  unsigned int hash_len = 0;
-  EVP_MD_CTX* ctx = EVP_MD_CTX_new();
-  EVP_DigestInit(ctx, EVP_sha512());
-  EVP_DigestUpdate(ctx, private_key, 32);
-  EVP_DigestFinal(ctx, az, &hash_len);
-  EVP_MD_CTX_free(ctx);
-
-  az[0] &= 248;
-  az[31] &= 63;
-  az[31] |= 64;
 }
 
 extern "C" int ED25519_sign_with_scalar(uint8_t* out_sig, const uint8_t* message, size_t message_len,

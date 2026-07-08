@@ -1,5 +1,7 @@
 #include <gtest/gtest-spi.h>
 #include <gtest/gtest.h>
+#include <limits>
+#include <utility>
 
 #include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/crypto/base.h>
@@ -42,6 +44,95 @@ TEST(Mod, Initialization) {
   dylog_disable_scope_t no_log_err;
   EXPECT_CB_ASSERT(mod_t(100), "BN_MONT_CTX_set failed");
   EXPECT_CB_ASSERT(mod_t(bn_t::rand_bitlen(256) * 2), "BN_MONT_CTX_set failed");
+}
+
+TEST(Mod, ValidityTracksCopyAndMoveState) {
+  mod_t empty;
+  EXPECT_FALSE(empty.is_valid());
+
+  mod_t copied_empty(empty);
+  EXPECT_FALSE(copied_empty.is_valid());
+
+  mod_t assigned_empty(37);
+  EXPECT_TRUE(assigned_empty.is_valid());
+  assigned_empty = empty;
+  EXPECT_FALSE(assigned_empty.is_valid());
+
+  mod_t moved_empty(std::move(empty));
+  EXPECT_FALSE(moved_empty.is_valid());
+
+  mod_t move_assigned_empty(37);
+  mod_t another_empty;
+  move_assigned_empty = std::move(another_empty);
+  EXPECT_FALSE(move_assigned_empty.is_valid());
+
+  mod_t q(37);
+  mod_t copied_q(q);
+  EXPECT_TRUE(copied_q.is_valid());
+
+  mod_t assigned_q;
+  assigned_q = q;
+  EXPECT_TRUE(assigned_q.is_valid());
+  EXPECT_EQ(assigned_q, bn_t(37));
+}
+
+TEST(Mod, ValueWrappersReflectTheModulus) {
+  const mod_t q(37);
+  const bn_t modulus(37);
+  const bn_t lower(36);
+  const bn_t upper(38);
+
+  EXPECT_EQ(static_cast<const bn_t&>(q), modulus);
+  EXPECT_EQ(q.value(), modulus);
+  EXPECT_EQ(q.get_bin_size(), modulus.get_bin_size());
+  EXPECT_EQ(q.get_bits_count(), modulus.get_bits_count());
+
+  EXPECT_TRUE(q == modulus);
+  EXPECT_TRUE(q != lower);
+  EXPECT_TRUE(q > lower);
+  EXPECT_TRUE(q < upper);
+  EXPECT_TRUE(q >= modulus);
+  EXPECT_TRUE(q <= modulus);
+
+  EXPECT_TRUE(q == 37);
+  EXPECT_TRUE(q != 36);
+  EXPECT_TRUE(q > 36);
+  EXPECT_TRUE(q < 38);
+  EXPECT_TRUE(q >= 37);
+  EXPECT_TRUE(q <= 37);
+
+  EXPECT_EQ(q << 1, bn_t(74));
+  EXPECT_EQ(q >> 1, bn_t(18));
+}
+
+TEST(Mod, MontgomeryRoundTripAndMultiplicationMatchRegularArithmetic) {
+  const mod_t q = crypto::curve_secp256k1.order();
+  const bn_t a = 17;
+  const bn_t b = 23;
+
+  const bn_t a_mont = q.to_mont(a);
+  const bn_t b_mont = q.to_mont(b);
+  EXPECT_EQ(q.from_mont(a_mont), a);
+  EXPECT_EQ(q.from_mont(q.mul_mont(a_mont, b_mont)), q.mul(a, b));
+}
+
+TEST(Mod, IntReductionNormalizesLargeAndNegativeValues) {
+  const mod_t q(37);
+
+  EXPECT_EQ(q.mod(0), 0);
+  EXPECT_EQ(q.mod(36), 36);
+  EXPECT_EQ(q.mod(37), 0);
+  EXPECT_EQ(q.mod(38), 1);
+
+  EXPECT_EQ(q.mod(-1), 36);
+  EXPECT_EQ(q.mod(-36), 1);
+  EXPECT_EQ(q.mod(-37), 0);
+  EXPECT_EQ(q.mod(-38), 36);
+  EXPECT_EQ(q.mod(std::numeric_limits<int>::min()), 15);
+
+  bn_t sum = 36;
+  MODULO(q) { sum += 38; }
+  EXPECT_EQ(sum, 0);
 }
 
 TEST(Mod, Add) {
@@ -200,6 +291,16 @@ TEST(Mod, Coprime) {
       crypto::vartime_scope_t v;
       test_coprime_composite(comp_m);
     }
+  }
+}
+
+TEST(Mod, ModInvIdentityForSmallPrime) {
+  crypto::vartime_scope_t vartime_scope;
+  mod_t q(37);
+  for (int value = 1; value < 37; ++value) {
+    const bn_t a(value);
+    const bn_t inv = q.inv(a);
+    EXPECT_EQ(q.mul(a, inv), 1);
   }
 }
 

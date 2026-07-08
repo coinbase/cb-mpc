@@ -50,4 +50,14 @@ TEST(MLKEM768, SeededEncapsulationIsDeterministic) {
   EXPECT_EQ(shared_secret_1, shared_secret_dec);
 }
 
+TEST(MLKEM768, DecapsulateRejectsMalformedCiphertext) {
+  mlkem768_prv_key_t prv_key;
+  prv_key.generate();
+
+  buf_t shared_secret;
+  buf_t malformed(16);
+  memset(malformed.data(), 0, malformed.size());
+  EXPECT_ER(prv_key.decapsulate(malformed, shared_secret));
+}
+
 }  // namespace

@@ -349,12 +349,12 @@ buf_t ecurve_secp256k1_t::sign(const ecc_prv_key_t& K, mem_t hash) const {
 }
 
 buf_t ecurve_secp256k1_t::pub_to_der(const ecc_pub_key_t& P) const {
-  cb_assert("not implemented");
+  cb_assert(false && "ecurve_secp256k1_t::pub_to_der is not supported");
   return buf_t();
 }
 
 buf_t ecurve_secp256k1_t::prv_to_der(const ecc_prv_key_t& K) const {
-  cb_assert("not implemented");
+  cb_assert(false && "ecurve_secp256k1_t::prv_to_der is not supported");
   return buf_t();
 }
 
@@ -365,13 +365,11 @@ void ecurve_secp256k1_t::set_ossl_point(ecc_point_t& P, const EC_POINT* point) c
 }
 
 error_t ecurve_secp256k1_t::pub_from_der(ecc_pub_key_t& P, mem_t der) const {
-  cb_assert("not implemented");
-  return coinbase::error(E_NOT_SUPPORTED);
+  return coinbase::error(E_NOT_SUPPORTED, "ecurve_secp256k1_t::pub_from_der is not supported");
 }
 
 error_t ecurve_secp256k1_t::prv_from_der(ecc_prv_key_t& K, mem_t der) const {
-  cb_assert("not implemented");
-  return coinbase::error(E_NOT_SUPPORTED);
+  return coinbase::error(E_NOT_SUPPORTED, "ecurve_secp256k1_t::prv_from_der is not supported");
 }
 
 namespace bip340 {

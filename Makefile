@@ -199,6 +199,9 @@ sanitize-docker:
 	$(MAKE) image
 	docker run --rm -v $(shell pwd):/code -t ${DOCKER_IMAGE_NAME} bash -c 'make sanitize'
 
+### Coverage
+include tools/coverage/coverage.makefile
+
 .PHONY: clean
 clean:
 	${RUN_CMD} 'rm -rf build'

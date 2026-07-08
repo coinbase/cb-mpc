@@ -15,6 +15,7 @@ option(CBMPC_PLATFORM_DEP_OUTPUT_DIR
 
 option(BUILD_TESTS "Also build the unit and integration tests" ON)
 option(BUILD_DUDECT "Also build the dudect tests" OFF)
+option(CBMPC_TEST_COVERAGE "Build tests with clang/llvm-cov coverage instrumentation" OFF)
 
 
 # ------------- Setup pathes --------------------
@@ -67,9 +68,19 @@ message("ENABLE_O3:                      ${ENABLE_O3}")
 message("ENABLE_VALIDATION:              ${ENABLE_VALIDATION}")
 message("BUILD_TESTS:                    ${BUILD_TESTS}")
 message("BUILD_DUDECT:                   ${BUILD_DUDECT}")
+message("CBMPC_TEST_COVERAGE:            ${CBMPC_TEST_COVERAGE}")
 
 include(cmake/compilation_flags.cmake)
 include(cmake/openssl.cmake)
+
+if(CBMPC_TEST_COVERAGE)
+  if(NOT IS_CLANG)
+    message(FATAL_ERROR "CBMPC_TEST_COVERAGE requires Clang/LLVM coverage tooling")
+  endif()
+
+  add_compile_options(-O0 -g -fprofile-instr-generate -fcoverage-mapping)
+  add_link_options(-fprofile-instr-generate -fcoverage-mapping)
+endif()
 
 if(CBMPC_PLATFORM_DEP_OUTPUT_DIR)
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY

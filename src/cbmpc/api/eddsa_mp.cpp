@@ -519,7 +519,6 @@ error_t attach_private_scalar(mem_t public_key_blob, mem_t private_scalar_fixed,
 
   coinbase::crypto::bn_t x = coinbase::crypto::bn_t::from_bin(private_scalar_fixed) % q;
   if (!q.is_in_range(x)) return coinbase::error(E_FORMAT, "invalid private_scalar_fixed");
-
   const auto& G = curve.generator();
   if (x * G != Qi_self) return coinbase::error(E_FORMAT, "x_share mismatch key blob");
 

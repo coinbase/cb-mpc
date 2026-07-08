@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/protocol/ecdsa_mp.h>
 
 #include "utils/local_network/mpc_tester.h"
@@ -9,6 +10,79 @@ namespace {
 using namespace coinbase;
 using namespace coinbase::mpc;
 using namespace coinbase::testutils;
+
+class noop_transport_t final : public coinbase::api::data_transport_i {
+ public:
+  error_t send(coinbase::api::party_idx_t receiver, mem_t msg) override {
+    last_receiver = receiver;
+    last_msg = buf_t(msg);
+    return SUCCESS;
+  }
+
+  error_t receive(coinbase::api::party_idx_t sender, buf_t& msg) override {
+    last_sender = sender;
+    msg = last_msg.empty() ? buf_t("noop") : last_msg;
+    return SUCCESS;
+  }
+
+  error_t receive_all(const std::vector<coinbase::api::party_idx_t>& senders, std::vector<buf_t>& msgs) override {
+    msgs.assign(senders.size(), last_msg.empty() ? buf_t("noop") : last_msg);
+    return SUCCESS;
+  }
+
+  coinbase::api::party_idx_t last_receiver = -1;
+  coinbase::api::party_idx_t last_sender = -1;
+  buf_t last_msg;
+};
+
+TEST(MPCJob, PartySetAndAccessors) {
+  party_set_t empty = party_set_t::empty();
+  EXPECT_TRUE(empty.is_empty());
+  EXPECT_FALSE(empty.has(1));
+
+  party_set_t set = party_set_t::of(1);
+  EXPECT_FALSE(set.is_empty());
+  EXPECT_TRUE(set.has(1));
+  EXPECT_FALSE(set.has(2));
+  set.add(2);
+  EXPECT_TRUE(set.has(2));
+  set.remove(1);
+  EXPECT_FALSE(set.has(1));
+  EXPECT_TRUE(set.has(2));
+
+  noop_transport_t transport;
+  job_mp_t job(1, {"alice", "bob", "carol"}, transport);
+  EXPECT_EQ(job.get_party_idx(), 1);
+  EXPECT_EQ(job.get_n_parties(), 3);
+  EXPECT_EQ(job.get_name(), "bob");
+  EXPECT_EQ(job.get_name(0), "alice");
+  EXPECT_EQ(job.get_names(), (std::vector<crypto::pname_t>{"alice", "bob", "carol"}));
+  EXPECT_EQ(job.get_pid(), crypto::pid_from_name("bob"));
+  EXPECT_EQ(job.get_pid(2), crypto::pid_from_name("carol"));
+  EXPECT_EQ(job.get_pids().size(), 3);
+
+  job.set_transport(2, transport);
+  EXPECT_EQ(job.get_party_idx(), 2);
+  EXPECT_EQ(job.get_name(), "carol");
+
+  dylog_disable_scope_t no_log_err;
+  EXPECT_EQ(job.mpc_abort(E_CRYPTO), E_CRYPTO);
+}
+
+TEST(MPCJob, TwoPartyReferenceTransportAccessors) {
+  noop_transport_t transport;
+  job_2p_t job(party_t::p1, "alice", "bob", transport);
+
+  EXPECT_TRUE(job.is_p1());
+  EXPECT_FALSE(job.is_p2());
+  EXPECT_TRUE(job.is_party(party_t::p1));
+  EXPECT_FALSE(job.is_party(party_t::p2));
+  EXPECT_EQ(job.get_party(), party_t::p1);
+  EXPECT_EQ(job.get_name(), "alice");
+  EXPECT_EQ(job.get_name(party_t::p2), "bob");
+  EXPECT_EQ(job.get_pid(), crypto::pid_from_name("alice"));
+  EXPECT_EQ(job.get_pid(party_t::p2), crypto::pid_from_name("bob"));
+}
 
 TEST_F(Network2PC, BasicMessaging) {
   mpc_runner->run_2pc([](job_2p_t& job) {

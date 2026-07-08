@@ -8,6 +8,10 @@
 using namespace coinbase;
 using namespace coinbase::crypto;
 
+namespace coinbase::crypto {
+extern "C" int BN_cmpCT(const BIGNUM* a, const BIGNUM* b);
+}
+
 namespace {
 
 error_t return_inside_modulo_scope(const mod_t& q) {
@@ -306,6 +310,21 @@ TEST(BigNumber, GetBinSize) {
   EXPECT_EQ(a.get_bin_size(), 1);
 }
 
+TEST(BigNumber, SmallHelpersAndStringParseErrors) {
+  EXPECT_EQ(crypto::div_ceil(0, 8), 0);
+  EXPECT_EQ(crypto::div_ceil(1, 8), 1);
+  EXPECT_EQ(crypto::div_ceil(16, 8), 2);
+  EXPECT_EQ(crypto::div_ceil(17, 8), 3);
+
+  EXPECT_EQ(bn_t(1024).div_2_pow(5), 32);
+  EXPECT_EQ(bn_t(-1024).div_2_pow(5), -32);
+
+  bn_t parsed;
+  EXPECT_OK(bn_t::from_string(std::string("123456789"), parsed));
+  EXPECT_EQ(parsed, bn_t::from_string("123456789"));
+  EXPECT_ER(bn_t::from_string(std::string("not-a-number"), parsed));
+}
+
 TEST(BigNumber, ConvertDeserializeOversizedNoThrow) {
   const uint32_t value_size = bn_t::MAX_SERIALIZED_BIGNUM_BYTES + 1;
   const uint32_t header = value_size << 1;  // neg=0
@@ -336,5 +355,108 @@ TEST(BigNumber, ConvertDeserializeOversizedNoThrow) {
   EXPECT_NO_THROW(result.convert(reader));
   EXPECT_TRUE(reader.is_error());
   EXPECT_EQ(reader.get_offset(), header_size);
+}
+
+TEST(BigNumber, ConstantTimeCompareCWrapper) {
+  const bn_t five = 5;
+  const bn_t seven = 7;
+  const bn_t neg_five = -5;
+  const bn_t neg_seven = -7;
+
+  EXPECT_EQ(BN_cmpCT(nullptr, nullptr), 0);
+  EXPECT_EQ(BN_cmpCT((const BIGNUM*)five, nullptr), -1);
+  EXPECT_EQ(BN_cmpCT(nullptr, (const BIGNUM*)five), 1);
+
+  EXPECT_EQ(BN_cmpCT((const BIGNUM*)five, (const BIGNUM*)five), 0);
+  EXPECT_LT(BN_cmpCT((const BIGNUM*)five, (const BIGNUM*)seven), 0);
+  EXPECT_GT(BN_cmpCT((const BIGNUM*)seven, (const BIGNUM*)five), 0);
+  EXPECT_GT(BN_cmpCT((const BIGNUM*)neg_five, (const BIGNUM*)neg_seven), 0);
+}
+
+TEST(BigNumber, BinarySignAndOperatorHelpers) {
+  const bn_t value = bn_t::from_hex("010203");
+  EXPECT_EQ(bn_to_buf(value), value.to_bin());
+  EXPECT_EQ(bn_to_buf(value, 5), bn_t::from_hex("0000010203").to_bin(5));
+  EXPECT_EQ(bn_to_buf(value, 2), value.to_bin());
+
+  bn_t assigned;
+  assigned = (const BIGNUM*)value;
+  EXPECT_EQ(assigned, value);
+
+  uint64_t limbs[2] = {0x0807060504030201ULL, 0x100f0e0d0c0b0a09ULL};
+  bn_t attached;
+  attached.attach(limbs, 2);
+  EXPECT_EQ(attached.to_bin(16), bn_t::from_hex("100f0e0d0c0b0a090807060504030201").to_bin(16));
+  attached.detach();
+  EXPECT_EQ(attached, 0);
+
+  bn_t min_int64;
+  min_int64.set_int64(INT64_MIN);
+  EXPECT_EQ(min_int64.get_int64(), INT64_MIN);
+
+  bn_t inc = 7;
+  EXPECT_EQ(inc++, 7);
+  EXPECT_EQ(inc, 8);
+  EXPECT_EQ(++inc, 9);
+
+  const mod_t q(37);
+  const bn_t q_minus_1 = q.value() - 1;
+  MODULO(q) {
+    bn_t wrap = q_minus_1;
+    EXPECT_EQ(++wrap, 0);
+  }
+
+  bn_t::set_modulo(q);
+  EXPECT_TRUE(bn_t::check_modulo(q));
+  bn_t manual_wrap = q_minus_1;
+  EXPECT_EQ(++manual_wrap, 0);
+  bn_t::reset_modulo(q);
+  EXPECT_FALSE(bn_t::check_modulo(q));
+
+  bn_t arithmetic = 10;
+  arithmetic += 5;
+  EXPECT_EQ(arithmetic, 15);
+  arithmetic -= 3;
+  EXPECT_EQ(arithmetic, 12);
+  arithmetic *= 7;
+  EXPECT_EQ(arithmetic, 84);
+  arithmetic /= 6;
+  EXPECT_EQ(arithmetic, 14);
+  arithmetic /= bn_t(2);
+  EXPECT_EQ(arithmetic, 7);
+  arithmetic %= q;
+  EXPECT_EQ(arithmetic, 7);
+
+  bn_t sign_value = 5;
+  sign_value.set_sign(-1);
+  EXPECT_EQ(sign_value, -5);
+  sign_value.set_sign(1);
+  EXPECT_EQ(sign_value, 5);
+  sign_value.set_sign(0);
+  EXPECT_EQ(sign_value, 0);
+  sign_value.set_sign(-1);
+  EXPECT_EQ(sign_value, 0);
+  EXPECT_TRUE(sign_value.is_zero());
+
+  const bn_t bit_pattern = (bn_t(1) << 80) + 3;
+  EXPECT_EQ(bit_pattern.get_bit(0), 1);
+  EXPECT_EQ(bit_pattern.get_bit(1), 1);
+  EXPECT_EQ(bit_pattern.get_bit(80), 1);
+  EXPECT_EQ(bit_pattern.get_bit(79), 0);
+  EXPECT_EQ(bit_pattern.to_hex(), "0100000000000000000003");
+}
+
+TEST(BigNumber, VectorFromBinConvenienceWrapper) {
+  const mod_t q(37);
+  const std::vector<bn_t> values = {1, 36, 74};
+  const buf_t encoded = bn_t::vector_to_bin(values, 2);
+
+  const std::vector<bn_t> decoded = bn_t::vector_from_bin(encoded, 3, 2, q);
+  ASSERT_EQ(decoded.size(), 3);
+  EXPECT_EQ(decoded[0], 1);
+  EXPECT_EQ(decoded[1], 36);
+  EXPECT_EQ(decoded[2], 0);
+
+  EXPECT_TRUE(bn_t::vector_from_bin(encoded.take(encoded.size() - 1), 3, 2, q).empty());
 }
 }  // namespace

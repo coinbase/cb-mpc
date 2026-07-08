@@ -30,7 +30,7 @@ enum class ecurve_type_e {
   bitcoin = 4,
 };
 
-struct ecp_storage_t {
+struct alignas(32) ecp_storage_t {
   uint64_t x[4];
   uint64_t y[4];
   uint64_t z[4];

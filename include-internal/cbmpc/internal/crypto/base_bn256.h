@@ -74,7 +74,6 @@ struct alignas(32) uint256_t {
 
  private:
   uint64_t add_raw(const uint256_t& a, const uint256_t& b);
-  uint64_t sub_raw(const uint256_t& a, const uint256_t& b);
   uint64_t cnd_add_raw(bool flag, const uint256_t& a);
   uint64_t cnd_sub_raw(bool flag, const uint256_t& a);
   uint64_t cnd_neg_raw(bool flag);

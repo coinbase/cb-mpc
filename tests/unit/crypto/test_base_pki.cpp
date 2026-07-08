@@ -77,6 +77,31 @@ TEST_F(PKI, RSA_KEM_AEAD_EncryptDecrypt) {
   EXPECT_EQ(decrypted, plaintext);
 }
 
+TEST_F(PKI, BuiltInKEMAeadEncryptDecryptWithoutDrbg) {
+  rsa_pke_t::ct_t rsa_ciphertext;
+  EXPECT_OK(rsa_ciphertext.encrypt(rsa_pub_key, label, plaintext));
+
+  buf_t decrypted;
+  EXPECT_OK(rsa_ciphertext.decrypt(rsa_prv_key, label, decrypted));
+  EXPECT_EQ(decrypted, plaintext);
+
+  ecies_t::ct_t ecies_ciphertext;
+  EXPECT_OK(ecies_ciphertext.encrypt(ecc_pub_key, label, plaintext));
+
+  decrypted = buf_t();
+  EXPECT_OK(ecies_ciphertext.decrypt(ecc_prv_key, label, decrypted));
+  EXPECT_EQ(decrypted, plaintext);
+}
+
+TEST_F(PKI, RSAKEMAeadRejectsInvalidPublicKey) {
+  rsa_pub_key_t empty_pub_key;
+  rsa_pke_t::ct_t ciphertext;
+
+  EXPECT_ER(ciphertext.encrypt(empty_pub_key, label, plaintext));
+  EXPECT_TRUE(ciphertext.kem_ct.empty());
+  EXPECT_TRUE(ciphertext.aead_ciphertext.empty());
+}
+
 // -----------------------------------------------------------------------------
 // Additional HPKE and FFI KEM tests
 // -----------------------------------------------------------------------------
@@ -112,6 +137,45 @@ TEST(HPKE_KEM_P256, DeterministicVector) {
   EXPECT_EQ(ss2, shared_secret);
 
   SUCCEED();
+}
+
+TEST_F(PKI, ECIES_RejectsWrongLabel) {
+  ecurve_t curve = curve_p256;
+  ecc_prv_key_t prv_key;
+  prv_key.generate(curve);
+  ecc_pub_key_t pub_key(prv_key.pub());
+
+  drbg_aes_ctr_t drbg(gen_random(32));
+  const buf_t label = buf_t("label");
+  const buf_t wrong_label = buf_t("wrong-label");
+  const buf_t plaintext = buf_t("plaintext");
+
+  ecies_t::ct_t ciphertext;
+  EXPECT_OK(ciphertext.encrypt(pub_key, label, plaintext, &drbg));
+
+  buf_t decrypted;
+  EXPECT_OK(ciphertext.decrypt(prv_key, label, decrypted));
+  EXPECT_EQ(decrypted, plaintext);
+  EXPECT_ER(ciphertext.decrypt(prv_key, wrong_label, decrypted));
+}
+
+TEST_F(PKI, BuiltInKEMAeadRejectsMalformedKemCiphertexts) {
+  rsa_pke_t::ct_t rsa_ciphertext;
+  ASSERT_OK(rsa_ciphertext.encrypt(rsa_pub_key, label, plaintext));
+  ASSERT_FALSE(rsa_ciphertext.kem_ct.empty());
+  rsa_ciphertext.kem_ct[0] ^= 0x01;
+
+  buf_t decrypted;
+  EXPECT_ER(rsa_ciphertext.decrypt(rsa_prv_key, label, decrypted));
+
+  ecies_t::ct_t ecies_ciphertext;
+  ASSERT_OK(ecies_ciphertext.encrypt(ecc_pub_key, label, plaintext));
+
+  ecies_ciphertext.kem_ct = buf_t("not-a-point");
+  EXPECT_ER(ecies_ciphertext.decrypt(ecc_prv_key, label, decrypted));
+
+  ecies_ciphertext.kem_ct = buf_t(1 + 2 * curve_p256.size());
+  EXPECT_ER(ecies_ciphertext.decrypt(ecc_prv_key, label, decrypted));
 }
 
 }  // namespace

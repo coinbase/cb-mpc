@@ -342,6 +342,7 @@ error_t paillier_t::rand_N_star(bn_t& r, bool resample_until_coprime) const {
 
 error_t paillier_t::batch_verify_ciphers(const bn_t* ciphers, int n) const {
   if (n == 0) return SUCCESS;
+  vartime_scope_t vartime_scope;
   error_t rv = UNINITIALIZED_ERROR;
   for (int i = 0; i < n; i++) {
     if (rv = coinbase::crypto::check_open_range(0, ciphers[i], NN)) return rv;

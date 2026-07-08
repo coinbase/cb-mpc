@@ -136,7 +136,9 @@ void ecurve_ed_t::add_consttime(const ecc_point_t& P1, const ecc_point_t& P2, ec
   ec25519_core::add(R.storage, P1.storage, P2.storage);
 }
 
-void ecurve_ed_t::mul_vartime(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const { mul(P, x, R); }
+void ecurve_ed_t::mul_vartime(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const {
+  ec25519_core::mul_vartime(R.storage, P.storage, x);
+}
 
 void ecurve_ed_t::mul(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const {
   ec25519_core::mul(R.storage, P.storage, x);
@@ -155,7 +157,10 @@ bool ecurve_ed_t::hash_to_point(mem_t bin, ecc_point_t& P) const {
   if (bin.size != ed25519::pub_compressed_bin_size()) return false;
   if (0 != from_bin(P, bin)) return false;
 
-  P *= 8;  // clear co-factor
+  // Clear co-factor using repeated doubling instead of generic scalar multiplication.
+  P += P;
+  P += P;
+  P += P;
   return true;
 }
 

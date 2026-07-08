@@ -119,6 +119,15 @@ void ac_owned_t::convert(coinbase::converter_t& c)  // static
   c.convert(exists);
   error_t rv = UNINITIALIZED_ERROR;
 
+  if (!exists) {
+    if (!c.is_write()) {
+      delete root;
+      root = nullptr;
+      curve = nullptr;
+    }
+    return;
+  }
+
   if (exists) {
     c.convert(curve);
     if (!c.is_write() && !curve.valid()) {
@@ -140,8 +149,6 @@ void ac_owned_t::convert(coinbase::converter_t& c)  // static
       rv = validate_tree();
       if (rv == 0) return;
     }
-  } else if (!c.is_write()) {
-    curve = nullptr;
   }
 
   delete root;
@@ -153,14 +160,6 @@ std::vector<node_t*> node_t::get_sorted_children() const {
   std::vector<node_t*> sorted = children;
   std::sort(sorted.begin(), sorted.end(), [](node_t* n1, node_t* n2) -> auto { return n1->name < n2->name; });
   return sorted;
-}
-
-static int find_child_index(const node_t* node, const std::string& name) {
-  int n = int(node->children.size());
-  for (int i = 0; i < n; i++) {
-    if (node->children[i]->name == name) return i;
-  }
-  return -1;
 }
 
 node_t* node_t::clone() const {
@@ -350,7 +349,6 @@ error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t& Q, cons
   if (node == nullptr || node->type != node_e::LEAF) return coinbase::error(E_NOT_FOUND);
 
   ecc_point_t expected_pub_share = si * curve.generator();
-  vartime_scope_t vartime_scope;
   const node_t* child = nullptr;
 
   while (node != nullptr) {
@@ -365,6 +363,7 @@ error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t& Q, cons
         return coinbase::error(E_CRYPTO);
       }
     } else if (node->type == node_e::AND) {
+      vartime_scope_t vartime_scope;
       ecc_point_t expected_sum = curve.infinity();
       for (size_t i = 0; i < sorted_children.size(); i++) {
         auto child_it = pub_data.find(sorted_children[i]->name);
@@ -373,6 +372,7 @@ error_t ac_t::verify_share_against_ancestors_pub_data(const ecc_point_t& Q, cons
       }
       if (expected_sum != my_pub_share) return coinbase::error(E_CRYPTO);
     } else if (node->type == node_e::THRESHOLD) {
+      vartime_scope_t vartime_scope;
       std::vector<ecc_point_t> quorum(node->threshold);
       std::vector<bn_t> quorum_pids(node->threshold);
       for (int i = 0; i < node->threshold; i++) {

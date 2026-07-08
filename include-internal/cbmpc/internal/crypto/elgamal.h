@@ -63,7 +63,7 @@ class ec_elgamal_commitment_t {
   ec_elgamal_commitment_t operator*(const bn_t& s) const;
   ec_elgamal_commitment_t& operator*=(const bn_t& s) { return *this = *this * s; }
   ec_elgamal_commitment_t operator/(const bn_t& s) const;
-  ec_elgamal_commitment_t& operator/=(const bn_t& s) { return *this = *this * s; }
+  ec_elgamal_commitment_t& operator/=(const bn_t& s) { return *this = *this / s; }
 
   bool operator==(const ec_elgamal_commitment_t& E) const { return L == E.L && R == E.R; }
   bool operator!=(const ec_elgamal_commitment_t& E) const { return L != E.L || R != E.R; }

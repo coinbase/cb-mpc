@@ -25,6 +25,9 @@ TEST(ProtocolUtil, TestSUMVectorInt) {
   auto result = SUM(values);
   // Should be 13
   EXPECT_EQ(result, 13);
+
+  std::vector<int> empty;
+  EXPECT_EQ(SUM(empty), 0);
 }
 
 TEST(ProtocolUtil, TestSUMVectorRefInt) {
@@ -34,6 +37,17 @@ TEST(ProtocolUtil, TestSUMVectorRefInt) {
   auto result = SUM(refs);
   // Should mirror TestSUMVectorInt: 13
   EXPECT_EQ(result, 13);
+
+  std::vector<std::reference_wrapper<int>> empty;
+  EXPECT_EQ(SUM(empty), 0);
+}
+
+TEST(ProtocolUtil, TestSUMMap) {
+  std::map<coinbase::crypto::pname_t, int> values{{"p1", 2}, {"p2", 4}, {"p3", 6}};
+  EXPECT_EQ(SUM(values), 12);
+
+  std::map<coinbase::crypto::pname_t, int> empty;
+  EXPECT_EQ(SUM(empty), 0);
 }
 
 TEST(ProtocolUtil, TestSUMBN) {
@@ -62,4 +76,14 @@ TEST(ProtocolUtil, TestMapArgsToTuple) {
   EXPECT_EQ(std::get<0>(resultTuple), 2);
   EXPECT_EQ(std::get<1>(resultTuple), 4);
   EXPECT_EQ(std::get<2>(resultTuple), 6);
+}
+
+TEST(ProtocolUtil, CurveMsgToBnTruncatesToCurveSize) {
+  const ecurve_t curve = curve_secp256k1;
+  const coinbase::buf_t short_msg = coinbase::crypto::gen_random(curve.size() - 1);
+  EXPECT_EQ(curve_msg_to_bn(short_msg, curve), bn_t::from_bin(short_msg));
+
+  const coinbase::buf_t long_msg = coinbase::crypto::gen_random(curve.size() + 5);
+  const bn_t expected = bn_t::from_bin(coinbase::mem_t(long_msg.data(), curve.size()));
+  EXPECT_EQ(curve_msg_to_bn(long_msg, curve), expected);
 }

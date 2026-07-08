@@ -1,6 +1,9 @@
+#include <cstring>
 #include <gtest/gtest.h>
+#include <sstream>
 
 #include <cbmpc/core/buf.h>
+#include <cbmpc/internal/core/convert.h>
 
 using namespace coinbase;
 
@@ -22,6 +25,31 @@ TEST(Buf256Test, MakeAndZero) {
   EXPECT_EQ(b.hi.hi(), hi_part.hi());
 }
 
+TEST(Buf256Test, AssignmentLoadSaveAndMemView) {
+  byte_t raw[32];
+  for (int i = 0; i < 32; i++) raw[i] = byte_t(i + 1);
+
+  buf256_t value;
+  value = mem_t(raw, sizeof(raw));
+  EXPECT_EQ(value, buf256_t::load(mem_t(raw, sizeof(raw))));
+
+  byte_t saved[32] = {};
+  value.save(saved);
+  EXPECT_EQ(memcmp(saved, raw, sizeof(raw)), 0);
+
+  buf_t buf(mem_t(raw, sizeof(raw)));
+  buf256_t from_buf;
+  from_buf = buf;
+  EXPECT_EQ(from_buf, value);
+
+  mem_t view = value;
+  EXPECT_EQ(view.size, 32);
+  EXPECT_EQ(memcmp(view.data, raw, sizeof(raw)), 0);
+
+  value = nullptr;
+  EXPECT_TRUE(value == nullptr);
+}
+
 TEST(Buf256Test, Equality) {
   auto b1 = buf256_t::make(buf128_t::make(0x0123456789ABCDEFULL, 0xFEDCBA9876543210ULL),
                            buf128_t::make(0x1111111122222222ULL, 0x3333333344444444ULL));
@@ -40,6 +68,32 @@ TEST(Buf256Test, Equality) {
   auto z = buf256_t::zero();
   EXPECT_TRUE(z == nullptr);
   EXPECT_FALSE(z != nullptr);
+}
+
+TEST(Buf256Test, CompoundBitwiseOperatorsAndStreamFormat) {
+  auto b = buf256_t::make(buf128_t::make(0xFFFF0000FFFF0000ULL, 0xABCD1234ABCD1234ULL),
+                          buf128_t::make(0x1111FFFF2222FFFFULL, 0xAABBCCDDEEFF0011ULL));
+  const auto x = buf256_t::make(buf128_t::make(0x1234567890ABCDEFULL, 0xFFFF0000FFFF0000ULL),
+                                buf128_t::make(0x9999999999999999ULL, 0x000000000000FFFFULL));
+
+  auto expected_xor = b ^ x;
+  b ^= x;
+  EXPECT_EQ(b, expected_xor);
+
+  auto expected_or = b | x;
+  b |= x;
+  EXPECT_EQ(b, expected_or);
+
+  auto expected_and = b & x;
+  b &= x;
+  EXPECT_EQ(b, expected_and);
+
+  b &= false;
+  EXPECT_EQ(b, ZERO256);
+
+  std::ostringstream oss;
+  oss << x;
+  EXPECT_FALSE(oss.str().empty());
 }
 
 TEST(Buf256Test, BitManipulation) {
@@ -155,6 +209,17 @@ TEST(Buf256Test, Shifts) {
   EXPECT_EQ(c.hi.hi(), 0x0099AABBCCDDEEFFULL);
   // // Also check any bits that shifted into lo
   EXPECT_NE(c.lo.hi(), 0ULL);  // part of the original hi might shift into lo
+
+  auto d = buf256_t::make(buf128_t::make(0x0123456789ABCDEFULL, 0x0FEDCBA987654321ULL),
+                          buf128_t::make(0x1111222233334444ULL, 0x5555666677778888ULL));
+  EXPECT_EQ((d << 128).lo, ZERO128);
+  EXPECT_EQ((d << 128).hi, d.lo);
+  EXPECT_EQ((d << 129).lo, ZERO128);
+  EXPECT_EQ((d << 129).hi, d.lo << 1);
+  EXPECT_EQ((d >> 128).lo, d.hi);
+  EXPECT_EQ((d >> 128).hi, ZERO128);
+  EXPECT_EQ((d >> 129).lo, d.hi >> 1);
+  EXPECT_EQ((d >> 129).hi, ZERO128);
 }
 
 TEST(Buf256Test, ReverseBytes) {
@@ -198,4 +263,31 @@ TEST(Buf256Test, CarrylessMul) {
   // Not trivial to hand-check, but ensure we do not crash and we get a consistent result
   // We can simply verify it's not zero
   EXPECT_FALSE(r2 == buf256_t::zero());
+}
+
+TEST(Buf256Test, ConvertRoundTripsAndRejectsTruncation) {
+  const buf256_t in = buf256_t::make(buf128_t::make(0x0123456789ABCDEFULL, 0x1112131415161718ULL),
+                                     buf128_t::make(0x2122232425262728ULL, 0x3132333435363738ULL));
+
+  converter_t size_counter(true);
+  buf256_t size_value = in;
+  size_value.convert(size_counter);
+  ASSERT_EQ(size_counter.get_rv(), SUCCESS);
+  ASSERT_EQ(size_counter.get_offset(), 32);
+
+  buf_t encoded(size_counter.get_offset());
+  converter_t writer(encoded.data());
+  buf256_t write_value = in;
+  write_value.convert(writer);
+  ASSERT_EQ(writer.get_rv(), SUCCESS);
+
+  buf256_t out = ZERO256;
+  converter_t reader(encoded);
+  out.convert(reader);
+  ASSERT_EQ(reader.get_rv(), SUCCESS);
+  EXPECT_EQ(out, in);
+
+  converter_t bad_reader(mem_t(encoded.data(), 31));
+  out.convert(bad_reader);
+  EXPECT_NE(bad_reader.get_rv(), SUCCESS);
 }

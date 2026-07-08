@@ -23,3 +23,6 @@ cmake_test_discovery_*.json
 # gh-pages files
 docsgen/
 node_modules/
+
+# Internal tool outputs for human review
+internal_tools/doc-generator/pdf-diffs/

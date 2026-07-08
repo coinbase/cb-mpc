@@ -1,7 +1,11 @@
 #include <cstdint>
+#include <cstring>
 #include <gtest/gtest.h>
 
 #include <cbmpc/core/buf.h>
+#include <cbmpc/internal/core/convert.h>
+
+#include "utils/test_macros.h"
 
 using namespace coinbase;
 
@@ -18,6 +22,40 @@ TEST(Buf128, MakeAndAccess) {
   z = nullptr;  // sets to zero
   EXPECT_EQ(z.lo(), 0ULL);
   EXPECT_EQ(z.hi(), 0ULL);
+}
+
+TEST(Buf128, LoadSaveMemAssignmentAndRawConvert) {
+  byte_t raw[16];
+  for (int i = 0; i < 16; i++) raw[i] = byte_t(i + 1);
+
+  buf128_t from_mem;
+  from_mem = mem_t(raw, sizeof(raw));
+  EXPECT_EQ(from_mem, buf128_t::load(mem_t(raw, sizeof(raw))));
+
+  byte_t saved[16] = {};
+  from_mem.save(saved);
+  EXPECT_EQ(memcmp(saved, raw, sizeof(raw)), 0);
+
+  u128_t raw_value = u128_make(0x0102030405060708ULL, 0x1112131415161718ULL);
+  converter_t size_counter(true);
+  u128_convert(size_counter, raw_value);
+  ASSERT_EQ(size_counter.get_rv(), SUCCESS);
+  ASSERT_EQ(size_counter.get_offset(), 16);
+
+  buf_t encoded(size_counter.get_offset());
+  converter_t writer(encoded.data());
+  u128_convert(writer, raw_value);
+  ASSERT_EQ(writer.get_rv(), SUCCESS);
+
+  u128_t decoded = u128_zero();
+  converter_t reader(encoded);
+  u128_convert(reader, decoded);
+  ASSERT_EQ(reader.get_rv(), SUCCESS);
+  EXPECT_TRUE(u128_equ(decoded, raw_value));
+
+  converter_t bad_reader(mem_t(encoded.data(), 15));
+  u128_convert(bad_reader, decoded);
+  EXPECT_NE(bad_reader.get_rv(), SUCCESS);
 }
 
 TEST(Buf128, Equality) {
@@ -37,6 +75,34 @@ TEST(Buf128, Equality) {
   auto z = buf128_t::make(0ULL, 0ULL);
   EXPECT_TRUE(z == nullptr);
   EXPECT_FALSE(z != nullptr);
+}
+
+TEST(Buf128, CompoundBitwiseOperatorsAndRawMask) {
+  auto b = buf128_t::make(0xFFFF000000000000ULL, 0x00000000FFFFFFFFULL);
+  const auto x = buf128_t::make(0x00FF00FF00FF00FFULL, 0xAAAAAAAAAAAAAAAAULL);
+
+  auto expected_xor = b ^ x;
+  b ^= x;
+  EXPECT_EQ(b, expected_xor);
+
+  auto expected_or = b | x;
+  b |= x;
+  EXPECT_EQ(b, expected_or);
+
+  auto expected_and = b & x;
+  b &= x;
+  EXPECT_EQ(b, expected_and);
+
+  b &= false;
+  EXPECT_EQ(b, ZERO128);
+
+  u128_t masked = u128_and(u128_make(0x1234, 0x5678), true);
+  EXPECT_EQ(u128_lo(masked), 0x1234ULL);
+  EXPECT_EQ(u128_hi(masked), 0x5678ULL);
+
+  masked = u128_and(u128_make(0x1234, 0x5678), false);
+  EXPECT_EQ(u128_lo(masked), 0ULL);
+  EXPECT_EQ(u128_hi(masked), 0ULL);
 }
 
 TEST(Buf128, BitManipulation) {
@@ -132,6 +198,12 @@ TEST(Buf128, Shifts) {
   // But in this case, lo = 0, so we'll see a straightforward shift.
   EXPECT_EQ(c.hi(), 0x0011223344556677ULL);
   EXPECT_EQ(c.lo(), 0x88ULL << (64 - 8));  // part from the original hi
+
+  auto d = buf128_t::make(0x0123456789ABCDEFULL, 0x0FEDCBA987654321ULL);
+  EXPECT_EQ((d << 65).lo(), 0ULL);
+  EXPECT_EQ((d << 65).hi(), 0x02468ACF13579BDEULL);
+  EXPECT_EQ((d >> 65).lo(), 0x07F6E5D4C3B2A190ULL);
+  EXPECT_EQ((d >> 65).hi(), 0ULL);
 }
 
 TEST(Buf128, ReverseBytes) {

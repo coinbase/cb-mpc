@@ -15,6 +15,7 @@ using namespace coinbase::crypto::ss;
 #define _js all_received()
 
 namespace coinbase::mpc::eckey {
+
 void dkg_2p_t::step1_p1_to_p2(const bn_t& x1) {
   this->x1 = x1;
   const auto& G = curve.generator();

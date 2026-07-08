@@ -118,7 +118,7 @@ error_t encrypt_ac(const base_pke_i& base_pke, curve_id curve, const access_stru
   // Defensive check: avoid large attacker-controlled allocations when converting `xs[i]` into bignums.
   const int max_x_size = icurve.order().get_bin_size();
   for (const auto& x : xs) {
-    if (x.size > max_x_size) return coinbase::error(E_RANGE, "xs element too large", /*to_print_stack_trace=*/false);
+    if (x.size > max_x_size) return coinbase::error(E_RANGE, "xs element too large");
   }
 
   coinbase::crypto::ss::ac_owned_t ac_internal;

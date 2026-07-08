@@ -185,7 +185,7 @@ error_t encrypt(const base_pke_i& base_pke, curve_id curve, mem_t ek, mem_t labe
 
   // Defensive check: avoid large attacker-controlled allocations when converting `x` into a bignum.
   const int max_x_size = icurve.order().get_bin_size();
-  if (x.size > max_x_size) return coinbase::error(E_RANGE, "x too large", /*to_print_stack_trace=*/false);
+  if (x.size > max_x_size) return coinbase::error(E_RANGE, "x too large");
 
   base_pke_bridge_t bridge(base_pke);
   coinbase::mpc::ec_pve_t pve_ct;
