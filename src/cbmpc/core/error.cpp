@@ -1,7 +1,6 @@
 #include <cbmpc/core/error.h>
 #include <cbmpc/core/macros.h>
 #include <cbmpc/internal/core/log.h>
-#include <cbmpc/internal/core/strext.h>
 
 #if !defined(_DEBUG)
 // #define JSON_ERR
@@ -31,11 +30,9 @@ void out_error(const std::string& s) {
   std::cerr << s;
 }
 
-error_t error(error_t rv, int category, const std::string& text, bool to_print_stack_trace) {
+error_t error(error_t rv, int category, const std::string& text) {
 #if !defined(DY_NO_LOG)
   if (!thread_local_storage_log_disabled && category != ECATEGORY_CONTROL_FLOW) {
-    if (to_print_stack_trace) print_stack_trace();
-
     if (test_error_storing_mode) {
       test_log_fun(0, text.c_str());
     }
@@ -46,8 +43,8 @@ error_t error(error_t rv, int category, const std::string& text, bool to_print_s
     }
 
     ss.begin_line();
-    ss.put("Error ");
-    ss.put_hex(rv);
+    ss.put("Error code ");
+    ss.put(rv);
     if (!text.empty()) {
       ss.put(": ");
       ss.put(text.c_str());
@@ -61,222 +58,9 @@ error_t error(error_t rv, int category, const std::string& text, bool to_print_s
   return rv;
 }
 
-error_t error(error_t rv, const std::string& text, bool to_print_stack_trace) {
-  return error(rv, (rv >> 16) & 0x0f, text, to_print_stack_trace);
-}
-
-error_t error(error_t rv, const std::string& text) { return error(rv, text, true); }
+error_t error(error_t rv, const std::string& text) { return error(rv, (rv >> 16) & 0x0f, text); }
 
 error_t error(error_t rv) { return error(rv, ""); }
-
-struct BacktraceState {
-  void** current;
-  void** end;
-};
-
-static _Unwind_Reason_Code unwindCallback(struct _Unwind_Context* context, void* arg) {
-  BacktraceState* state = static_cast<BacktraceState*>(arg);
-  uintptr_t pc = _Unwind_GetIP(context);
-  if (pc) {
-    if (state->current == state->end)
-      return _URC_END_OF_STACK;
-    else
-      *state->current++ = void_ptr(pc);
-  }
-  return _URC_NO_REASON;
-}
-
-static void str_replace_with_smaller(char* string, const char* substr, const char* replacement) {
-  int len = int(strlen(string));
-  int substr_len = int(strlen(substr));
-  int replacement_len = int(strlen(replacement));
-  char* tok = NULL;
-
-  while (tok = strstr(string, substr)) {
-    memmove(tok, replacement, replacement_len);
-    memmove(tok + replacement_len, tok + substr_len, len - (tok - string) + 1);
-    len -= substr_len - replacement_len;
-  }
-}
-
-static void purify_cpp_symbol(char* symbol) {
-  if (!symbol) return;
-  str_replace_with_smaller(
-      symbol, "std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>", "string");
-  str_replace_with_smaller(symbol, "std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >",
-                           "string");
-
-  str_replace_with_smaller(symbol, "coinbase::", "cb::");
-  str_replace_with_smaller(symbol, "cb::mpc", "mpc");
-  str_replace_with_smaller(symbol, "cb::zk", "zk");
-  str_replace_with_smaller(symbol, "cb::buf_t", "buf_t");
-  str_replace_with_smaller(symbol, "cb::mem_t", "mem_t");
-  str_replace_with_smaller(symbol, "cb::crypto::bn_t", "bn_t");
-  str_replace_with_smaller(symbol, "cb::crypto::mod_t", "mod_t");
-  str_replace_with_smaller(symbol, "cb::crypto::ecc_point_t", "ecc_point_t");
-  str_replace_with_smaller(symbol, "cb::crypto::paillier_t", "paillier_t");
-  str_replace_with_smaller(symbol, "std::__1::map", "map");
-  str_replace_with_smaller(symbol, "std::__1::pair", "pair");
-  str_replace_with_smaller(symbol, "std::__1::tuple", "tuple");
-  str_replace_with_smaller(symbol, "std::__1::vector", "vector");
-
-  str_replace_with_smaller(symbol, "std::__1::allocator", "alloc");
-  str_replace_with_smaller(symbol, "std::allocator", "alloc");
-  str_replace_with_smaller(symbol, "std::__1", "std::");
-}
-
-#ifdef __linux__
-class symbols_t {
- public:
-  void load() {
-    if (sym) return;
-    Dl_info info = {0};
-    dladdr((const void*)&unwindCallback, &info);
-
-    int fd = open(info.dli_fname, O_RDONLY);
-    struct stat statbuf;
-    int err = fstat(fd, &statbuf);
-    sym_base = (const uint8_t*)mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fd, 0);
-    const Elf64_Ehdr* elf_hdr = (const Elf64_Ehdr*)sym_base;
-
-    const Elf64_Shdr* first_section = (const Elf64_Shdr*)(sym_base + elf_hdr->e_shoff);
-    for (int i = 0; i < elf_hdr->e_shnum; i++) {
-      const Elf64_Shdr* section = first_section + i;
-      if (section->sh_type == SHT_SYMTAB) {
-        sym = (const Elf64_Sym*)(sym_base + section->sh_offset);
-        sym_cnt = section->sh_size / sizeof(Elf64_Sym);
-        strings = (char*)(sym_base + first_section[section->sh_link].sh_offset);
-        break;
-      }
-    }
-    void* executable_handle = dlopen(0, RTLD_LAZY);
-    struct link_map* map = nullptr;
-    dlinfo(executable_handle, RTLD_DI_LINKMAP, &map);
-    offset = map->l_addr;
-  }
-  const char* find(const void* addr) {
-    for (auto sym_index = 0; sym_index < sym_cnt; sym_index++) {
-      const auto& s = sym[sym_index];
-      auto val = offset + s.st_value;
-      auto end = val + s.st_size;
-      if (val <= uint64_t(addr) && end > uint64_t(addr)) {
-        return strings + s.st_name;
-      }
-    }
-    return nullptr;
-  }
-
- private:
-  const uint8_t* sym_base = nullptr;
-  const char* strings = nullptr;
-  const Elf64_Sym* sym = nullptr;
-  int sym_cnt = 0;
-  uint64_t offset = 0;
-};
-
-static symbols_t symbols;
-#endif
-
-static std::string get_func_name_from_full_name(const std::string& full_func_name) {
-  size_t len = full_func_name.length();
-#ifdef __APPLE__
-  // Special handling for Objective-C function format: -[ClassName methodName]
-  if (len > 4 && full_func_name[0] == '-' && full_func_name[1] == '[' && full_func_name[len - 1] == ']') {
-    // Drop the leading '-' and return everything except the trailing ']'
-    return full_func_name.substr(1, len - 2);
-  }
-#endif
-
-  // Stop at the first '(' if it exists
-  size_t e = full_func_name.find('(');
-  if (e == std::string::npos) e = len;
-  // Take everything up to '('
-  std::string temp(full_func_name.c_str(), e);
-
-  // Find the last space; function name is typically after the last space
-  auto b = temp.rfind(' ');
-  if (b == std::string::npos) {
-    return temp;
-  }
-  // Return everything after the last space
-  return std::string(temp.c_str() + b + 1, temp.size() - b - 1);
-}
-
-// We'll define a helper function to color only the function name.
-static std::string color_func_name(const char* symbol) {
-  if (!symbol || !symbol[0]) return "";
-  // Convert to std::string.
-  std::string symbol_str = symbol;
-  // Extract just the function name portion (the logic is in get_func_name_from_full_name).
-  std::string func_name = get_func_name_from_full_name(symbol_str);
-  if (func_name.empty()) {
-    return symbol_str;  // Nothing to color if the function name is empty.
-  }
-
-  // Build the colored function name.
-  std::string colored_name = "\x1B[33m" + func_name + "\x1B[0m";
-
-  // Replace the first occurrence of func_name with the colored version.
-  size_t pos = symbol_str.find(func_name);
-  if (pos != std::string::npos) {
-    symbol_str.replace(pos, func_name.size(), colored_name);
-  }
-
-  return symbol_str;
-}
-
-void print_stack_trace() {
-#ifdef __linux__
-  symbols.load();
-#endif
-
-  void* buffer[64];
-  BacktraceState state = {buffer, buffer + 64};
-  _Unwind_Backtrace(unwindCallback, &state);
-  int count = state.current - buffer;
-  for (int idx = 0; idx < count; ++idx) {
-    const void* addr = buffer[idx];
-    const char* symbol = "";
-    const char* module = "";
-    char name_buf[2048];
-
-    Dl_info info = {0};
-    dladdr(addr, &info);
-    symbol = info.dli_sname;
-
-#ifdef __linux__
-    if (!symbol || symbol[0] == 0) symbol = symbols.find(addr);
-#endif
-
-    if (symbol && symbol[0]) {
-      size_t len = sizeof(name_buf);
-      int status = 0;
-      const char* cpp_symbol = abi::__cxa_demangle(symbol, name_buf, &len, &status);
-      if (cpp_symbol) {
-        purify_cpp_symbol(name_buf);
-        symbol = name_buf;
-      }
-    }
-    if (!symbol) symbol = "";
-
-    if (info.dli_fname) {
-      module = strrchr(info.dli_fname, '/');
-      if (module)
-        module++;
-      else
-        module = info.dli_fname;
-    }
-
-    // Use our new helper to color only the function name portion:
-    std::string final_symbol = color_func_name(symbol);
-
-    log_string_buf_t ss;
-    ss.begin_line();
-    ss << "##" << idx << " " << module << " " << addr << " " << final_symbol.c_str();
-    ss.end_line();
-    out_error(ss.get());
-  }
-}
 
 void assert_failed(const char* msg, const char* file, int line) {
   if (!thread_local_storage_log_disabled) {
@@ -295,25 +79,15 @@ void assert_failed(const char* msg, const char* file, int line) {
     ss << "Line: " << line;
     ss.end_line();
 #else
-    // Plain text mode uses a single line
-    // First strip out everything before "src/" so the file path is relative
-    std::string relativeFile(file);
-    auto pos = relativeFile.find("src/");
-    if (pos != std::string::npos) {
-      relativeFile.erase(0, pos);
-    }
+    (void)file;
+    (void)line;
     ss.begin_line();
-    ss << "[ASSERTION FAILED] "
-       << "\x1B[1;33m" << msg << "\x1B[0m"
-       << " (File: " << relativeFile.c_str() << "#L" << line << ")";
+    ss << "Assertion failed: " << msg;
     ss.end_line();
 #endif
     out_error(ss.get());
   }
 
-  if (!thread_local_storage_log_disabled) {
-    print_stack_trace();
-  }
   throw assertion_failed_t(msg);
 }
 

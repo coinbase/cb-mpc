@@ -43,8 +43,7 @@ enum {
 // clang-format on
 namespace coinbase {
 
-error_t error(error_t rv, int category, const std::string& text, bool to_print_stack_trace);
-error_t error(error_t rv, const std::string& text, bool to_print_stack_trace);
+error_t error(error_t rv, int category, const std::string& text);
 error_t error(error_t rv, const std::string& text);
 error_t error(error_t rv);
 
@@ -59,8 +58,6 @@ struct error_message_t {
   int code;
   std::string message;
 };
-
-void print_stack_trace();
 
 void assert_failed(const char* msg, const char* file, int line);
 

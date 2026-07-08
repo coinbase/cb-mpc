@@ -52,6 +52,17 @@ TEST_F(Lagrange, Basis) {
   EXPECT_CB_ASSERT(lagrange_basis(x, {-1, 3, 4, 5, 7}, 0, q, numerator, denominator), "pids must be positive");
 }
 
+TEST_F(Lagrange, BasisConvenienceWrapperMatchesNumeratorOverDenominator) {
+  const std::vector<int> pids = {1, 3, 4, 5, 7};
+  const bn_t x = 0;
+
+  bn_t numerator;
+  bn_t denominator;
+  lagrange_basis(x, pids, 3, q, numerator, denominator);
+
+  EXPECT_EQ(lagrange_basis(x, pids, 3, q), q.div(numerator, denominator));
+}
+
 TEST_F(Lagrange, Interpolate) {
   std::vector<bn_t> pids = {1, 4, 5};
   std::vector<bn_t> a(t);
@@ -130,4 +141,20 @@ TEST_F(Lagrange, PartialInterpolateExponent) {
   ecc_point_t interpolated_point_half_1 = lagrange_partial_interpolate_exponent(0, shares_half_1, pids_half_1, pids);
   ecc_point_t interpolated_point_half_2 = lagrange_partial_interpolate_exponent(0, shares_half_2, pids_half_2, pids);
   EXPECT_EQ(A[0], interpolated_point_half_1 + interpolated_point_half_2);
+}
+
+TEST_F(Lagrange, DuplicatePidsDoNotRecoverSecret) {
+  std::vector<bn_t> valid_pids = {1, 4, 5};
+  std::vector<bn_t> coeffs(t);
+  std::vector<bn_t> valid_shares(t);
+  for (int i = 0; i < t; i++) coeffs[i] = bn_t::rand(q);
+  for (int i = 0; i < t; i++) valid_shares[i] = horner_poly(q, coeffs, valid_pids[i]);
+
+  const bn_t secret = lagrange_interpolate(0, valid_shares, valid_pids, q);
+  EXPECT_EQ(secret, coeffs[0]);
+
+  std::vector<bn_t> duplicate_pids = {1, 1, 5};
+  std::vector<bn_t> duplicate_shares = {valid_shares[0], valid_shares[1], valid_shares[2]};
+  const bn_t bad_secret = lagrange_interpolate(0, duplicate_shares, duplicate_pids, q);
+  EXPECT_NE(bad_secret, secret);
 }

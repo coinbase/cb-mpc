@@ -24,6 +24,7 @@ class HDMPC_EdDSA_2P : public Network2PC {
   }
 
   static void check_key_pair(const eddsa2pc::key_t k1, const eddsa2pc::key_t k2) {
+    crypto::vartime_scope_t vartime_scope;
     EXPECT_EQ(k1.curve, k2.curve);
     const auto& G = k1.curve.generator();
     auto q = k1.curve.order();

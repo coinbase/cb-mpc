@@ -4,6 +4,8 @@
 #include <cbmpc/internal/crypto/base.h>
 #include <cbmpc/internal/crypto/ro.h>
 
+#include "utils/test_macros.h"
+
 using namespace coinbase;
 using namespace coinbase::crypto;
 
@@ -266,6 +268,60 @@ TEST(CryptoEdDSA, SetEdBinValidatesKeyLength) {
     ecc_point_t pub = key.pub();
     EXPECT_TRUE(pub.is_on_curve());
   }
+}
+
+TEST(CryptoEdDSA, ScalarKeySignsAndVerifies) {
+  ecc_prv_key_t key;
+  key.set(curve_ed25519, bn_t(7));
+  const ecc_pub_key_t pub_key = key.pub();
+  const buf_t message = buf_t("ed25519 scalar signing path");
+
+  const buf_t signature = key.sign(message);
+  EXPECT_EQ(signature.size(), size_t(ed25519::signature_size()));
+  EXPECT_OK(pub_key.verify(message, signature));
+  EXPECT_ER(pub_key.verify(buf_t("different message"), signature));
+}
+
+TEST(CryptoEdDSA, DerEncodingRoundTripsPublicMaterialAndRawPrivateSeed) {
+  ecc_prv_key_t key;
+  key.generate(curve_ed25519);
+  const ecc_pub_key_t pub_key = key.pub();
+
+  ecurve_ed_t ed_curve;
+  const buf_t pub_der = pub_key.to_der();
+  ecc_pub_key_t parsed_pub(curve_ed25519.infinity());
+  EXPECT_OK(ed_curve.pub_from_der(parsed_pub, pub_der));
+  EXPECT_TRUE(parsed_pub == pub_key);
+
+  buf_t bad_pub_der = pub_der;
+  bad_pub_der[0] ^= 0x01;
+  EXPECT_ER(ed_curve.pub_from_der(parsed_pub, bad_pub_der));
+  EXPECT_ER(ed_curve.pub_from_der(parsed_pub, pub_der.take(pub_der.size() - 1)));
+
+  const buf_t prv_der = ed_curve.prv_to_der(key);
+  ecc_prv_key_t parsed_prv;
+  EXPECT_OK(ed_curve.prv_from_der(parsed_prv, prv_der));
+  EXPECT_EQ(parsed_prv.get_ed_bin(), key.get_ed_bin());
+
+  buf_t bad_prv_der = prv_der;
+  bad_prv_der[0] ^= 0x01;
+  EXPECT_ER(ed_curve.prv_from_der(parsed_prv, bad_prv_der));
+  EXPECT_ER(ed_curve.prv_from_der(parsed_prv, prv_der.take(prv_der.size() - 1)));
+}
+
+TEST(CryptoEdDSA, CurveMetadataAndConditionalCopy) {
+  EXPECT_EQ(ed25519::bits(), 256);
+  EXPECT_EQ(curve_ed25519.p().value(),
+            bn_t::from_string("57896044618658097711785492504343953926634992332820282019728792003956564819949"));
+
+  const ecc_point_t src = bn_t(11) * curve_ed25519.generator();
+  ecc_point_t dst = curve_ed25519.infinity();
+  EXPECT_TRUE(curve_ed25519.cnd_copy_point(true, src, dst));
+  EXPECT_TRUE(dst == src);
+
+  ecc_point_t unchanged = curve_ed25519.infinity();
+  EXPECT_TRUE(curve_ed25519.cnd_copy_point(false, src, unchanged));
+  EXPECT_TRUE(unchanged.is_infinity());
 }
 
 }  // namespace

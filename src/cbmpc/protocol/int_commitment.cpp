@@ -1,8 +1,27 @@
+#include <cbmpc/internal/core/strext.h>
 #include <cbmpc/internal/crypto/base.h>
 #include <cbmpc/internal/protocol/int_commitment.h>
 #include <cbmpc/internal/zk/zk_paillier.h>
 
 namespace coinbase::crypto {
+
+namespace {
+
+void print_generated_unknown_order_pedersen_params(const mod_t& N, const bn_t& g, const bn_t& h, mem_t sid,
+                                                   const zk::unknown_order_dl_t& unknown_order) {
+  // This generator is a one-off utility for refreshing the hard-coded constants below.
+  // Keep the output in copy/paste-friendly initializer form.
+  std::cout << "N = bn_t::from_string(\"" << N.value() << "\");" << std::endl;
+  std::cout << "g = bn_t::from_string(\"" << g << "\");" << std::endl;
+  std::cout << "h = bn_t::from_string(\"" << h << "\");" << std::endl;
+  std::cout << "sid_hex = \"" << strext::to_hex(sid) << "\";" << std::endl;
+  std::cout << "e_str = \"" << bn_t(unknown_order.e) << "\";" << std::endl;
+  for (size_t i = 0; i < SEC_P_COM; i++) {
+    std::cout << "z_str[i++] = \"" << unknown_order.z[i] << "\";" << std::endl;
+  }
+}
+
+}  // namespace
 
 const unknown_order_pedersen_params_t& unknown_order_pedersen_params_t::get() {
   static unknown_order_pedersen_params_t params;
@@ -28,13 +47,7 @@ unknown_order_pedersen_params_t unknown_order_pedersen_params_t::generate() {
   int l = N.get_bits_count() + SEC_P_STAT;
   unknown_order.prove(h, g, N, l, alpha, sid, 0);
 
-  std::cout << "N = bn_t::from_string(\"" << N.value() << "\");" << std::endl;
-  std::cout << "g = bn_t::from_string(\"" << g << "\");" << std::endl;
-  std::cout << "h = bn_t::from_string(\"" << h << "\");" << std::endl;
-  std::cout << "e_str = \"" << bn_t(unknown_order.e) << "\";" << std::endl;
-  for (size_t i = 0; i < SEC_P_COM; i++) {
-    std::cout << "z_str[i++] = \"" << unknown_order.z[i] << "\";" << std::endl;
-  }
+  print_generated_unknown_order_pedersen_params(N, g, h, sid, unknown_order);
   return unknown_order_pedersen_params_t(N, g, h, sid, unknown_order.e, unknown_order.z);
 }
 

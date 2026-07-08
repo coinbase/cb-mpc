@@ -119,18 +119,4 @@ class rsa_oaep_t {
   const rsa_prv_key_t* key;
 };
 
-static int evp_md_size(hash_e type) { return hash_alg_t::get(type).size; }
-static int evp_digest_init_ex(hash_t& ctx, hash_e type, void* impl) {
-  ctx.init();
-  return 1;
-}
-static int evp_digest_update(hash_t& ctx, const void* d, size_t cnt) {
-  ctx.update(const_byte_ptr(d), int(cnt));
-  return 1;
-}
-static int evp_digest_final_ex(hash_t& ctx, unsigned char* md, unsigned int* s) {
-  ctx.final(md);
-  return 1;
-}
-
 }  // namespace coinbase::crypto

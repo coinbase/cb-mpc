@@ -94,33 +94,41 @@ static const char* crypto_ec_group_2_name(const EC_GROUP* group) {
 }
 
 error_t ossl_ecdsa_verify(const EC_GROUP* group, EC_POINT* point, mem_t hash, mem_t signature) {
-  uint8_t oct[65];
-  cb_assert(EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, oct, 65,
+  error_t rv = UNINITIALIZED_ERROR;
+  ecurve_t curve = ecurve_t::find(group);
+  if (!curve) return coinbase::error(E_CRYPTO, "ossl_ecdsa_verify: unsupported curve");
+
+  ecdsa_signature_t sig;
+  if (rv = sig.from_der(curve, signature)) return rv;
+
+  const mod_t& q = curve.order();
+  const bn_t& r = sig.get_r();
+  const bn_t& s = sig.get_s();
+  if (r <= 0 || r >= q || s <= 0 || s >= q) return coinbase::error(E_CRYPTO, "ossl_ecdsa_verify: invalid scalar");
+
+  int curve_size = curve.size();
+  if (hash.size >= curve_size) hash.size = curve_size;
+  const bn_t e = bn_t::from_bin(hash);
+
+  buf_t oct(curve.point_bin_size());
+  cb_assert(EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, oct.data(), oct.size(),
                                bn_t::thread_local_storage_bn_ctx()) > 0);
 
-  OSSL_PARAM_BLD* param_bld = OSSL_PARAM_BLD_new();
-  cb_assert(param_bld);
-  cb_assert(OSSL_PARAM_BLD_push_utf8_string(param_bld, "group", crypto_ec_group_2_name(group), 0) > 0);
-  cb_assert(OSSL_PARAM_BLD_push_octet_string(param_bld, "pub", oct, 65) > 0);
-  OSSL_PARAM* params = OSSL_PARAM_BLD_to_param(param_bld);
-  cb_assert(params);
-  EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
-  cb_assert(ctx);
-  cb_assert(EVP_PKEY_fromdata_init(ctx) > 0);
-  EVP_PKEY* pkey = NULL;
-  cb_assert(EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, params) > 0);
-  EVP_PKEY_CTX_free(ctx);
-  OSSL_PARAM_BLD_free(param_bld);
-  OSSL_PARAM_free(params);
+  ecc_point_t Q;
+  if (rv = Q.from_oct(curve, oct)) return rv;
+  if (rv = curve.check(Q)) return rv;
 
-  ctx = EVP_PKEY_CTX_new(pkey, NULL);
-  cb_assert(ctx);
-  cb_assert(EVP_PKEY_verify_init(ctx) > 0);
-  int res = EVP_PKEY_verify(ctx, signature.data, signature.size, hash.data, hash.size);
-  EVP_PKEY_CTX_free(ctx);
+  bn_t u1, u2;
+  MODULO(q) {
+    const bn_t w = q.inv(s);
+    u1 = e * w;
+    u2 = r * w;
+  }
 
-  EVP_PKEY_free(pkey);
-  if (res != 1) return coinbase::error(E_CRYPTO, "EVP_PKEY_verify failed in ossl_ecdsa_verify");
+  vartime_scope_t vartime_scope;
+  const ecc_point_t R = curve.mul_add(u1, Q, u2);
+  if (R.is_infinity()) return coinbase::error(E_CRYPTO, "ossl_ecdsa_verify: R is infinity");
+  if (q.mod(R.get_x()) != r) return coinbase::error(E_CRYPTO, "ossl_ecdsa_verify: invalid signature");
   return SUCCESS;
 }
 
@@ -331,12 +339,12 @@ bool ecurve_ossl_t::hash_to_point(mem_t bin, ecc_point_t& Q) const {
 }
 
 buf_t ecurve_ossl_t::pub_to_der(const ecc_pub_key_t& P) const {
-  cb_assert("not-implemented");
+  cb_assert(false && "ecurve_ossl_t::pub_to_der is not supported");
   return buf_t();
 }
 
 buf_t ecurve_ossl_t::prv_to_der(const ecc_prv_key_t& K) const {
-  cb_assert("not-implemented");
+  cb_assert(false && "ecurve_ossl_t::prv_to_der is not supported");
   return buf_t();
 }
 
@@ -346,13 +354,11 @@ error_t ecurve_ossl_t::verify(const ecc_pub_key_t& P, mem_t hash, mem_t sig) con
 buf_t ecurve_ossl_t::sign(const ecc_prv_key_t& K, mem_t hash) const { return ossl_ecdsa_sign(group, K.value(), hash); }
 
 error_t ecurve_ossl_t::pub_from_der(ecc_pub_key_t& P, mem_t der) const {
-  cb_assert("not-implemented");
-  return coinbase::error(E_NOT_SUPPORTED);
+  return coinbase::error(E_NOT_SUPPORTED, "ecurve_ossl_t::pub_from_der is not supported");
 }
 
 error_t ecurve_ossl_t::prv_from_der(ecc_prv_key_t& K, mem_t der) const {
-  cb_assert("not-implemented");
-  return coinbase::error(E_NOT_SUPPORTED);
+  return coinbase::error(E_NOT_SUPPORTED, "ecurve_ossl_t::prv_from_der is not supported");
 }
 
 // ----------------------- ecc_pub_key_t --------------------
@@ -810,6 +816,7 @@ bool ecc_point_t::is_infinity() const {
 
 ecc_point_t ecc_point_t::add(const ecc_point_t& val1, const ecc_point_t& val2)  // static
 {
+  cb_assert(val1.curve == val2.curve && "ecc_point_t::add: curve mismatch");
   ecc_point_t result(val1.curve);
   val1.curve.ptr->add(val1, val2, result);
   return result;
@@ -817,6 +824,7 @@ ecc_point_t ecc_point_t::add(const ecc_point_t& val1, const ecc_point_t& val2)  
 
 ecc_point_t ecc_point_t::add_consttime(const ecc_point_t& val1, const ecc_point_t& val2)  // static
 {
+  cb_assert(val1.curve == val2.curve && "ecc_point_t::add_consttime: curve mismatch");
   if (!is_vartime_scope()) {
     ecc_point_t result(val1.curve);
     val1.curve.ptr->add_consttime(val1, val2, result);
@@ -844,6 +852,7 @@ ecc_point_t ecc_point_t::mul(const ecc_point_t& val1, const bn_t& val2)  // stat
 }
 
 ecc_point_t ecc_point_t::weighted_sum(const bn_t& x0, const ecc_point_t& P0, const bn_t& x1, const ecc_point_t& P1) {
+  cb_assert(P0.curve == P1.curve && "ecc_point_t::weighted_sum: curve mismatch");
   if (is_vartime_scope()) {
     return x0 * P0 + x1 * P1;
   } else {
@@ -878,20 +887,21 @@ ecc_point_t& ecc_point_t::operator+=(const ecc_point_t& val) {
   if (is_consttime_point_add_scope()) {
     *this = ecc_point_t::add_consttime(*this, val);
   } else {
-    curve.ptr->add(val, *this, *this);
+    *this = ecc_point_t::add(*this, val);
   }
   return *this;
 }
 
 ecc_point_t& ecc_point_t::operator-=(const ecc_point_t& val) {
-  ecc_point_t temp = val;
-  temp.invert();
-  curve.ptr->add(temp, *this, *this);
+  *this = ecc_point_t::sub(*this, val);
   return *this;
 }
 
 ecc_point_t& ecc_point_t::operator*=(const bn_t& val) {
-  curve.ptr->mul(*this, val, *this);
+  if (is_vartime_scope())
+    curve.ptr->mul_vartime(*this, val, *this);
+  else
+    curve.ptr->mul(*this, val, *this);
   return *this;
 }
 

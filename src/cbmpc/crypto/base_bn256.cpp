@@ -656,15 +656,6 @@ uint64_t uint256_t::add_raw(const uint256_t& a, const uint256_t& b) {
   return carry;
 }
 
-uint64_t uint256_t::sub_raw(const uint256_t& a, const uint256_t& b) {
-  uint64_t borrow = 0;
-  w0 = subx(a.w0, b.w0, borrow);
-  w1 = subx(a.w1, b.w1, borrow);
-  w2 = subx(a.w2, b.w2, borrow);
-  w3 = subx(a.w3, b.w3, borrow);
-  return borrow;
-}
-
 uint64_t uint256_t::cnd_add_raw(bool flag, const uint256_t& a) {
   uint64_t mask = constant_time_mask_64(flag);
   uint64_t s0 = a.w0 & mask;

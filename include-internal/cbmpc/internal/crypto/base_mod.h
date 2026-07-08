@@ -18,6 +18,12 @@ class vartime_scope_t {
 
 bool is_vartime_scope();
 
+#define CBMPC_EVAL_VARTIME(expr)                           \
+  ([&]() {                                                 \
+    coinbase::crypto::vartime_scope_t cbmpc_vartime_scope; \
+    return (expr);                                         \
+  }())
+
 class mod_t {
  public:
   inline static constexpr int MAX_MODULUS_BITS = 8192;
@@ -49,15 +55,7 @@ class mod_t {
   
   bn_t pow(const bn_t& x, const bn_t& e) const { bn_t r; _pow(r, x, e); return r; }
   bn_t mod(const bn_t& a) const                { bn_t r; _mod(r, a);    return r; }
-  bn_t mod(int a) const {
-    // NOTE: Avoid `-INT_MIN` signed overflow / UB when `a == INT_MIN`.
-    if (a >= 0) return bn_t(a);
-    const BN_ULONG abs_a = static_cast<BN_ULONG>(-static_cast<unsigned int>(a));
-    bn_t tmp;
-    int res = BN_set_word(tmp, abs_a);
-    cb_assert(res);
-    return neg(tmp);
-  }
+  bn_t mod(int a) const;
   // clang-format on
 
   // only works with odd m

@@ -52,12 +52,15 @@ mod_t::mod_t(mod_t&& src)
 
 mod_t& mod_t::operator=(const mod_t& src) {
   if (&src != this) {
-    if (!mont) mont = BN_MONT_CTX_new();
-    if (!mont) throw std::bad_alloc();
-
     if (src.mont) {
+      if (!mont) mont = BN_MONT_CTX_new();
+      if (!mont) throw std::bad_alloc();
+
       auto res = BN_MONT_CTX_copy(mont, src.mont);
       cb_assert(res);
+    } else if (mont) {
+      BN_MONT_CTX_free(mont);
+      mont = nullptr;
     }
     m = src.m;
     mu = src.mu;
@@ -178,6 +181,24 @@ void mod_t::_mul(bn_t& r, const bn_t& a, const bn_t& b) const {
 }
 
 bn_t mod_t::div(const bn_t& a, const bn_t& b) const { return mul(a, inv(b)); }
+
+bn_t mod_t::mod(int a) const {
+  bn_t abs_a;
+  const bool is_negative = a < 0;
+  if (is_negative) {
+    // Avoid `-INT_MIN` signed overflow / UB when `a == INT_MIN`.
+    const BN_ULONG word = static_cast<BN_ULONG>(-static_cast<unsigned int>(a));
+    int res = BN_set_word(abs_a, word);
+    cb_assert(res);
+  } else {
+    abs_a = a;
+  }
+
+  bn_t reduced_abs = abs_a;
+  if (reduced_abs >= m) reduced_abs = mod(reduced_abs);
+  if (is_negative && reduced_abs != 0) return neg(reduced_abs);
+  return reduced_abs;
+}
 
 static BN_ULONG div_words_by_two(int n, BN_ULONG* r) {
   uint64_t carry = 0;

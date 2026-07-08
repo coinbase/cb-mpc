@@ -108,8 +108,8 @@ error_t key_share_ecdsa_hdmpc_2p_t::derive_keys(job_2p_t& job, const key_share_e
 
   bn_t x_share = key.root.x_share;
   bn_t k_share = key.root.k_share;
-  ecc_point_t K_share = key.root.K_share();
-  ecc_point_t other_K_share = key.root.other_K_share();
+  ecc_point_t K_share = key.root.get_K_share();
+  ecc_point_t other_K_share = key.root.get_other_K_share();
   ecc_point_t Q = key.root.Q;
 
   // This is VRF-Compute-2P in the spec

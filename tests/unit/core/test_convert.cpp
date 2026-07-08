@@ -100,6 +100,15 @@ TEST(CoreConvert, CompositeType) {
   }
 }
 
+TEST(CoreConvert, VectorBoolRoundTripPreservesPackedBooleanValues) {
+  std::vector<bool> in = {true, false, true, true, false};
+  std::vector<bool> out;
+
+  buf_t buf = coinbase::ser(in);
+  EXPECT_OK(deser(buf, out));
+  EXPECT_EQ(in, out);
+}
+
 TEST(CoreConvert, CustomStruct) {
   struct custom_t {
     int a;
@@ -122,6 +131,16 @@ TEST(CoreConvert, CustomStruct) {
   EXPECT_EQ(out.s, "");
 }
 
+TEST(CoreConvert, ReferenceWrapperSerializesReferencedValue) {
+  int value = 42;
+  std::reference_wrapper<int> ref(value);
+  buf_t buf = coinbase::ser(ref);
+
+  int out = 0;
+  EXPECT_OK(deser(buf, out));
+  EXPECT_EQ(out, value);
+}
+
 TEST(CoreConvert, EmptyBitsRoundTrip) {
   bits_t in;
   buf_t buf = coinbase::ser(in);
@@ -130,6 +149,33 @@ TEST(CoreConvert, EmptyBitsRoundTrip) {
   EXPECT_OK(deser(buf, out));
   EXPECT_TRUE(out.empty());
   EXPECT_EQ(out.count(), 0);
+}
+
+TEST(CoreConvert, ConvertLenBoundaryEncodingsRoundTrip) {
+  const std::vector<uint32_t> values = {
+      0, 0x7f, 0x80, 0x3fff, 0x4000, 0x1fffff, 0x200000, converter_t::MAX_CONVERT_LEN,
+  };
+  const std::vector<int> expected_sizes = {1, 1, 2, 2, 3, 3, 4, 4};
+
+  for (size_t i = 0; i < values.size(); ++i) {
+    uint32_t len = values[i];
+    converter_t size_counter(true);
+    size_counter.convert_len(len);
+    ASSERT_EQ(size_counter.get_rv(), SUCCESS);
+    EXPECT_EQ(size_counter.get_offset(), expected_sizes[i]);
+
+    buf_t encoded(size_counter.get_offset());
+    converter_t writer(encoded.data());
+    writer.convert_len(len);
+    ASSERT_EQ(writer.get_rv(), SUCCESS);
+
+    uint32_t decoded = 0;
+    converter_t reader(encoded);
+    reader.convert_len(decoded);
+    ASSERT_EQ(reader.get_rv(), SUCCESS);
+    EXPECT_EQ(decoded, values[i]);
+    EXPECT_EQ(reader.get_offset(), expected_sizes[i]);
+  }
 }
 
 TEST(CoreConvert, ConvertLenRejectsOversizedLengths) {
@@ -151,6 +197,259 @@ TEST(CoreConvert, ConvertLenAllowsMaxValue) {
   converter.convert_len(len);
   EXPECT_EQ(converter.get_rv(), SUCCESS);
   EXPECT_EQ(len, converter_t::MAX_CONVERT_LEN);
+}
+
+TEST(CoreConvert, ConvertLenTruncatedInputFailsWithoutConsumingGarbageLength) {
+  byte_t bin[] = {0x80};
+  converter_t converter(mem_t(bin, sizeof(bin)));
+
+  uint32_t len = 123;
+  converter.convert_len(len);
+
+  EXPECT_NE(converter.get_rv(), SUCCESS);
+  EXPECT_EQ(len, 0u);
+}
+
+TEST(CoreConvert, ConvertLenTruncatedMultiByteInputsFailCleanly) {
+  for (const std::vector<byte_t>& bin : {
+           std::vector<byte_t>{0xC0, 0x01},
+           std::vector<byte_t>{0xE0, 0x01, 0x02},
+       }) {
+    converter_t converter(mem_t(bin.data(), int(bin.size())));
+    uint32_t len = 123;
+    converter.convert_len(len);
+    EXPECT_NE(converter.get_rv(), SUCCESS);
+    EXPECT_EQ(len, 0u);
+  }
+}
+
+TEST(CoreConvert, PrimitiveReadsRejectTruncatedInput) {
+  byte_t one_byte[] = {0x12};
+  byte_t three_bytes[] = {0x12, 0x34, 0x56};
+  byte_t seven_bytes[] = {0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE};
+
+  uint16_t u16 = 0;
+  converter_t read_u16(mem_t(one_byte, sizeof(one_byte)));
+  read_u16.convert(u16);
+  EXPECT_NE(read_u16.get_rv(), SUCCESS);
+
+  uint32_t u32 = 0;
+  converter_t read_u32(mem_t(three_bytes, sizeof(three_bytes)));
+  read_u32.convert(u32);
+  EXPECT_NE(read_u32.get_rv(), SUCCESS);
+
+  uint64_t u64 = 0;
+  converter_t read_u64(mem_t(seven_bytes, sizeof(seven_bytes)));
+  read_u64.convert(u64);
+  EXPECT_NE(read_u64.get_rv(), SUCCESS);
+}
+
+TEST(CoreConvert, StringDeserializationRejectsNegativeAndTruncatedLengths) {
+  {
+    byte_t bin[] = {0xFF, 0xFF};
+    std::string out = "unchanged";
+    converter_t converter(mem_t(bin, sizeof(bin)));
+    converter.convert(out);
+    EXPECT_NE(converter.get_rv(), SUCCESS);
+  }
+
+  {
+    byte_t bin[] = {0x00, 0x03, 'a', 'b'};
+    std::string out;
+    converter_t converter(mem_t(bin, sizeof(bin)));
+    converter.convert(out);
+    EXPECT_NE(converter.get_rv(), SUCCESS);
+  }
+}
+
+TEST(CoreConvert, VectorBoolRejectsNegativeCount) {
+  byte_t bin[] = {0xFF, 0xFF};
+  std::vector<bool> out = {true};
+  converter_t converter(mem_t(bin, sizeof(bin)));
+  converter.convert(out);
+
+  EXPECT_NE(converter.get_rv(), SUCCESS);
+  EXPECT_TRUE(out.empty());
+}
+
+TEST(CoreConvert, ConvertFlagsRejectsUnknownBits) {
+  byte_t bin[] = {0, 0, 0, 0, 0, 0, 0, 4};
+  converter_t converter(mem_t(bin, sizeof(bin)));
+
+  bool first = false;
+  bool second = false;
+  converter.convert_flags(first, second);
+
+  EXPECT_NE(converter.get_rv(), SUCCESS);
+  EXPECT_FALSE(first);
+  EXPECT_FALSE(second);
+}
+
+TEST(CoreConvert, ConvertFlagsRoundTripKnownBits) {
+  bool first = true;
+  bool second = false;
+  bool third = true;
+
+  converter_t size_counter(true);
+  size_counter.convert_flags(first, second, third);
+  ASSERT_EQ(size_counter.get_rv(), SUCCESS);
+  ASSERT_EQ(size_counter.get_offset(), 8);
+
+  buf_t encoded(size_counter.get_offset());
+  converter_t writer(encoded.data());
+  writer.convert_flags(first, second, third);
+  ASSERT_EQ(writer.get_rv(), SUCCESS);
+
+  bool out_first = false;
+  bool out_second = true;
+  bool out_third = false;
+  converter_t reader(encoded);
+  reader.convert_flags(out_first, out_second, out_third);
+  EXPECT_EQ(reader.get_rv(), SUCCESS);
+  EXPECT_TRUE(out_first);
+  EXPECT_FALSE(out_second);
+  EXPECT_TRUE(out_third);
+}
+
+TEST(CoreConvert, EmptyFlagsRoundTripAndCodeTypeProbe) {
+  converter_t size_counter(true);
+  size_counter.convert_flags();
+  EXPECT_EQ(size_counter.get_rv(), SUCCESS);
+  ASSERT_EQ(size_counter.get_offset(), 8);
+
+  buf_t encoded(size_counter.get_offset());
+  converter_t writer(encoded.data());
+  writer.convert_flags();
+  EXPECT_EQ(writer.get_rv(), SUCCESS);
+
+  converter_t reader(encoded);
+  reader.convert_flags();
+  EXPECT_EQ(reader.get_rv(), SUCCESS);
+
+  constexpr uint64_t code_type = 0x0102030405060708ULL;
+  buf_t code = coinbase::ser(code_type);
+  EXPECT_TRUE(converter_t::is_code_type(code, code_type));
+  EXPECT_FALSE(converter_t::is_code_type(code, 0x1111111111111111ULL));
+  EXPECT_FALSE(converter_t::is_code_type(mem_t(code.data(), 7), code_type));
+}
+
+TEST(CoreConvert, BoundsHelpersRejectInvalidSizes) {
+  converter_t reader(mem_t(nullptr, 0));
+  EXPECT_FALSE(reader.at_least(-1));
+  EXPECT_FALSE(reader.at_least(1));
+  EXPECT_EQ(reader.get_size(), 0);
+
+  converter_t writer(true);
+  EXPECT_EQ(writer.get_size(), 0);
+  EXPECT_CB_ASSERT(writer.forward(-1), "false");
+}
+
+TEST(CoreConvert, ConvertCodeTypeAcceptsAlternatesAndRejectsUnexpectedCode) {
+  constexpr uint64_t code1 = 0x1111111111111111ULL;
+  constexpr uint64_t code2 = 0x2222222222222222ULL;
+  constexpr uint64_t bad_code = 0x3333333333333333ULL;
+
+  {
+    buf_t encoded = coinbase::ser(code2);
+    converter_t converter(encoded);
+    EXPECT_EQ(converter.convert_code_type(code1, code2), code2);
+    EXPECT_EQ(converter.get_rv(), SUCCESS);
+  }
+
+  {
+    buf_t encoded = coinbase::ser(bad_code);
+    converter_t converter(encoded);
+    EXPECT_EQ(converter.convert_code_type(code1, code2), 0u);
+    EXPECT_NE(converter.get_rv(), SUCCESS);
+  }
+}
+
+TEST(CoreConvert, ConvertCodeTypeWritesPrimaryCode) {
+  constexpr uint64_t code1 = 0x1111111111111111ULL;
+  constexpr uint64_t code2 = 0x2222222222222222ULL;
+
+  converter_t size_counter(true);
+  EXPECT_EQ(size_counter.convert_code_type(code1, code2), code1);
+  ASSERT_EQ(size_counter.get_rv(), SUCCESS);
+  ASSERT_EQ(size_counter.get_offset(), 8);
+
+  buf_t encoded(size_counter.get_offset());
+  converter_t writer(encoded.data());
+  EXPECT_EQ(writer.convert_code_type(code1, code2), code1);
+  ASSERT_EQ(writer.get_rv(), SUCCESS);
+
+  converter_t reader(encoded);
+  EXPECT_EQ(reader.convert_code_type(code1, code2), code1);
+  EXPECT_EQ(reader.get_rv(), SUCCESS);
+}
+
+TEST(CoreConvert, ConvertCodeTypeAcceptsAllAlternateSlots) {
+  constexpr uint64_t code1 = 0x1111111111111111ULL;
+  constexpr uint64_t code2 = 0x2222222222222222ULL;
+  constexpr uint64_t code3 = 0x3333333333333333ULL;
+  constexpr uint64_t code4 = 0x4444444444444444ULL;
+  constexpr uint64_t code5 = 0x5555555555555555ULL;
+  constexpr uint64_t code6 = 0x6666666666666666ULL;
+  constexpr uint64_t code7 = 0x7777777777777777ULL;
+  constexpr uint64_t code8 = 0x8888888888888888ULL;
+
+  for (uint64_t expected : {code1, code2, code3, code4, code5, code6, code7, code8}) {
+    buf_t encoded = coinbase::ser(expected);
+    converter_t converter(encoded);
+    EXPECT_EQ(converter.convert_code_type(code1, code2, code3, code4, code5, code6, code7, code8), expected);
+    EXPECT_EQ(converter.get_rv(), SUCCESS);
+  }
+}
+
+TEST(CoreConvert, MapDeserializationRejectsDuplicateKeys) {
+  byte_t bin[] = {
+      0x02,                    // two map entries
+      0x00, 0x00, 0x00, 0x2a,  // key 42
+      0x00, 0x00, 0x00, 0x01,  // value 1
+      0x00, 0x00, 0x00, 0x2a,  // duplicate key 42
+      0x00, 0x00, 0x00, 0x02,  // value 2
+  };
+
+  std::map<int32_t, int32_t> out;
+  EXPECT_NE(deser(mem_t(bin, sizeof(bin)), out), SUCCESS);
+}
+
+TEST(CoreConvert, VectorDeserializationRejectsOversizedElementCountBeforeAllocating) {
+  constexpr uint32_t too_many = converter_t::MAX_CONTAINER_ELEMENTS + 1;
+  byte_t bin[] = {
+      byte_t((too_many >> 16) | 0xc0),
+      byte_t(too_many >> 8),
+      byte_t(too_many),
+  };
+
+  std::vector<int32_t> out = {1, 2, 3};
+  converter_t converter(mem_t(bin, sizeof(bin)));
+  converter.convert(out);
+
+  EXPECT_NE(converter.get_rv(), SUCCESS);
+  EXPECT_TRUE(out.empty());
+}
+
+TEST(CoreConvert, MapDeserializationRejectsOversizedElementCountBeforeReadingEntries) {
+  constexpr uint32_t too_many = converter_t::MAX_CONTAINER_ELEMENTS + 1;
+  byte_t bin[] = {
+      byte_t((too_many >> 16) | 0xc0),
+      byte_t(too_many >> 8),
+      byte_t(too_many),
+  };
+
+  std::map<int32_t, int32_t> out = {{1, 2}};
+  converter_t converter(mem_t(bin, sizeof(bin)));
+  converter.convert(out);
+
+  EXPECT_NE(converter.get_rv(), SUCCESS);
+  EXPECT_TRUE(out.empty());
+}
+
+TEST(CoreConvert, ConvertRejectsInvalidSourceMemory) {
+  int out = 0;
+  EXPECT_NE(convert(out, mem_t(nullptr, 1)), SUCCESS);
+  EXPECT_NE(convert(out, mem_t(reinterpret_cast<const_byte_ptr>(""), -1)), SUCCESS);
 }
 
 TEST(CoreConvert, ConvertLastRejectsNegRemainingSize) {

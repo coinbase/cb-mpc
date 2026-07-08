@@ -104,7 +104,9 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
     if (h._j != h._i) return coinbase::error(E_CRYPTO);
     if (Ri._j.size() != msgs.size())
       return coinbase::error(E_CRYPTO, "schnorrmp::sign_batch: inconsistent batch size (Ri)");
-    // Verification of Ri._j is done in the zk verify function
+    for (const auto& point : Ri._j) {
+      if (rv = curve.check(point)) return coinbase::error(rv, "schnorr_mp_t::sign_batch: check Ri failed");
+    }
     if (rv = pi._j.verify(Ri._j, sid._i, j)) return coinbase::error(rv, "schnorr_mp_t::sign_batch: verify pi failed");
 
     if (rv = coinbase::crypto::commitment_t(sid_i._j, job.get_pid(j)).set(rho._j, c._j).open(Ri._j)) return rv;

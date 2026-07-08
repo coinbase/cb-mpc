@@ -8,10 +8,8 @@ struct hd_root_t {
   bn_t k_share;
   ecc_point_t Q;
   ecc_point_t K;
-  ecc_point_t Q_share() const { return Q.get_curve().mul_to_generator(x_share); }
-  ecc_point_t K_share() const { return K.get_curve().mul_to_generator(k_share); }
-  ecc_point_t other_Q_share() const { return Q - Q_share(); }
-  ecc_point_t other_K_share() const { return K - K_share(); }
+  ecc_point_t get_K_share() const { return K.get_curve().mul_to_generator(k_share); }
+  ecc_point_t get_other_K_share() const { return K - get_K_share(); }
 
   void convert(coinbase::converter_t& converter) {
     x_share.convert(converter);

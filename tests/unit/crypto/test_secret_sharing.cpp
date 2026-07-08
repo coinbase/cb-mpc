@@ -11,6 +11,7 @@ namespace {
 
 using namespace coinbase::crypto;
 using namespace coinbase::crypto::ss;
+using coinbase::buf_t;
 
 class SSNode : public coinbase::testutils::TestNodes {};
 
@@ -55,6 +56,78 @@ TEST_F(SSNode, InvalidNode) {
   EXPECT_OK(root.validate_tree());  // threshold node with not enough child
 
   EXPECT_OK(test_root->validate_tree());
+}
+
+TEST_F(SSNode, InvalidNodeKindsAreRejected) {
+  {
+    node_t root(node_e::AND, "", 0, {new node_t(node_e::LEAF, "")});
+    EXPECT_ER(root.validate_tree());
+  }
+  {
+    node_t root(node_e::AND, "", 0, {new node_t(node_e::LEAF, "dup"), new node_t(node_e::LEAF, "dup")});
+    EXPECT_ER(root.validate_tree());
+  }
+  {
+    node_t root(node_e::LEAF, "", 1);
+    EXPECT_ER(root.validate_tree());
+  }
+  {
+    node_t root(node_e::LEAF, "", 0, {new node_t(node_e::LEAF, "child")});
+    EXPECT_ER(root.validate_tree());
+  }
+  {
+    node_t root(node_e::AND, "", 1, {new node_t(node_e::LEAF, "child")});
+    EXPECT_ER(root.validate_tree());
+  }
+  {
+    node_t root(node_e::AND, "", 0);
+    EXPECT_ER(root.validate_tree());
+  }
+  {
+    node_t root(node_e::OR, "", 1, {new node_t(node_e::LEAF, "child")});
+    EXPECT_ER(root.validate_tree());
+  }
+  {
+    node_t root(node_e::OR, "", 0);
+    EXPECT_ER(root.validate_tree());
+  }
+  {
+    node_t root(node_e::THRESHOLD, "", 0, {new node_t(node_e::LEAF, "child")});
+    EXPECT_ER(root.validate_tree());
+  }
+  {
+    node_t root(node_e::NONE, "");
+    EXPECT_ER(root.validate_tree());
+    EXPECT_FALSE(root.enough_for_quorum({"leaf"}));
+  }
+}
+
+TEST_F(SSNode, NodePathsFindAndRemoval) {
+  node_t root(node_e::AND, "", 0,
+              {
+                  new node_t(node_e::LEAF, "leaf1"),
+                  new node_t(node_e::OR, "branch", 0,
+                             {
+                                 new node_t(node_e::LEAF, "leaf2"),
+                                 new node_t(node_e::LEAF, "leaf3"),
+                             }),
+              });
+
+  EXPECT_EQ(root.get_path(), "");
+  EXPECT_EQ(root.find("branch")->get_path(), "/branch");
+  EXPECT_EQ(root.find("leaf2")->get_path(), "/branch/leaf2");
+  EXPECT_EQ(root.find("missing"), nullptr);
+
+  const std::vector<std::string> paths = root.list_leaf_paths();
+  EXPECT_EQ(paths, (std::vector<std::string>{"/leaf1", "/branch/leaf2", "/branch/leaf3"}));
+  EXPECT_EQ(node_t::pid_from_path("/branch/leaf2"), node_t(node_e::LEAF, "leaf2").get_pid());
+
+  node_t* removed = new node_t(node_e::LEAF, "removed");
+  root.add_child_node(removed);
+  ASSERT_EQ(root.get_n(), 3);
+  removed->remove_and_delete();
+  EXPECT_EQ(root.get_n(), 2);
+  EXPECT_EQ(root.find("removed"), nullptr);
 }
 
 TEST_F(SSNode, NodeClone) {
@@ -163,6 +236,66 @@ TEST_F(SecretSharing, ShareThreshold) {
   EXPECT_EQ(b.size(), threshold);
   EXPECT_EQ(x, b[0]);
   for (int i = 0; i < n; i++) EXPECT_EQ(shares[i], horner_poly(q, b, pids[i]));
+}
+
+TEST_F(SecretSharing, ShareHelpersUseDrbgDeterministically) {
+  const buf_t seed = bn_t(0x123456).to_bin(32);
+  drbg_aes_ctr_t drbg1(seed);
+  drbg_aes_ctr_t drbg2(seed);
+
+  const std::vector<bn_t> shares1 = share_and(q, x, n, &drbg1);
+  const std::vector<bn_t> shares2 = share_and(q, x, n, &drbg2);
+  EXPECT_EQ(shares1, shares2);
+
+  bn_t sum = 0;
+  for (const auto& share : shares1) {
+    MODULO(q) sum += share;
+  }
+  EXPECT_EQ(sum, x);
+
+  drbg_aes_ctr_t threshold_drbg1(seed);
+  drbg_aes_ctr_t threshold_drbg2(seed);
+  const std::vector<bn_t> pids = {1, 3, 8, 10, 5};
+  const auto [threshold_shares1, coeffs1] = share_threshold(q, x, 3, n, pids, &threshold_drbg1);
+  const auto [threshold_shares2, coeffs2] = share_threshold(q, x, 3, n, pids, &threshold_drbg2);
+
+  EXPECT_EQ(threshold_shares1, threshold_shares2);
+  EXPECT_EQ(coeffs1, coeffs2);
+  EXPECT_EQ(x, coeffs1[0]);
+}
+
+TEST_F(SecretSharing, AccessStructureAccessorsAndValidation) {
+  ac_t empty;
+  EXPECT_FALSE(empty.has_root());
+  EXPECT_FALSE(empty.has_curve());
+  EXPECT_EQ(empty.get_root(), nullptr);
+  EXPECT_FALSE(empty.enough_for_quorum(std::set<pname_t>{"leaf1"}));
+  EXPECT_FALSE(empty.enough_for_quorum(ac_shares_t{{"leaf1", bn_t(1)}}));
+  EXPECT_ER(empty.validate_tree());
+
+  ac_t curve_only(curve_secp256k1);
+  EXPECT_FALSE(curve_only.has_root());
+  EXPECT_TRUE(curve_only.has_curve());
+  EXPECT_EQ(curve_only.get_curve(), curve_secp256k1);
+  EXPECT_FALSE(curve_only.enough_for_quorum(std::set<pname_t>{"leaf1"}));
+  EXPECT_ER(curve_only.validate_tree());
+
+  ac_t missing_curve(simple_and_node);
+  EXPECT_TRUE(missing_curve.has_root());
+  EXPECT_FALSE(missing_curve.has_curve());
+  EXPECT_ER(missing_curve.validate_tree());
+
+  ac_t ac(simple_threshold_node, curve_secp256k1);
+  EXPECT_EQ(ac.get_root(), simple_threshold_node);
+  EXPECT_TRUE(ac.has_curve());
+  EXPECT_EQ(ac.get_curve(), curve_secp256k1);
+  EXPECT_OK(ac.validate_tree());
+  EXPECT_TRUE(ac.enough_for_quorum(std::set<pname_t>{"leaf1", "leaf2"}));
+  EXPECT_FALSE(ac.enough_for_quorum(std::set<pname_t>{"leaf1"}));
+
+  EXPECT_EQ(ac.get_pub_data_size(simple_and_node), simple_and_node->get_n());
+  EXPECT_EQ(ac.get_pub_data_size(simple_threshold_node), simple_threshold_node->threshold);
+  EXPECT_EQ(ac.get_pub_data_size(simple_threshold_node->find("leaf1")), 0);
 }
 
 TEST_F(SecretSharing, ACShare) {
@@ -311,6 +444,123 @@ TEST_F(SecretSharing, ReconstructExpRejectsNonSubgroup) {
 
   ecc_point_t P;
   EXPECT_ER(ac.reconstruct_exponent(pub_shares, P));
+}
+
+TEST_F(SecretSharing, VerifyShareAcceptsValidShare) {
+  ecurve_t curve = curve_secp256k1;
+  ac_t ac(simple_and_node, curve);
+
+  ac_shares_t shares;
+  ac_internal_shares_t internal_shares;
+  ac_internal_pub_shares_t pub_data;
+  ASSERT_OK(ac.share_with_internals(q, x, shares, internal_shares, pub_data));
+
+  vartime_scope_t vartime_scope;
+  const ecc_point_t Q = x * curve.generator();
+  EXPECT_OK(ac.verify_share_against_ancestors_pub_data(Q, shares.at("leaf1"), pub_data, "leaf1"));
+}
+
+TEST_F(SecretSharing, VerifyShareCoversThresholdPubData) {
+  ecurve_t curve = curve_secp256k1;
+  ac_t ac(simple_threshold_node, curve);
+
+  ac_shares_t shares;
+  ac_internal_shares_t internal_shares;
+  ac_internal_pub_shares_t pub_data;
+  ASSERT_OK(ac.share_with_internals(q, x, shares, internal_shares, pub_data));
+
+  vartime_scope_t vartime_scope;
+  const ecc_point_t Q = x * curve.generator();
+  EXPECT_OK(ac.verify_share_against_ancestors_pub_data(Q, shares.at("leaf3"), pub_data, "leaf3"));
+
+  ac_internal_pub_shares_t missing_quorum_pub_data = pub_data;
+  missing_quorum_pub_data.erase("leaf1");
+  EXPECT_ER(ac.verify_share_against_ancestors_pub_data(Q, shares.at("leaf3"), missing_quorum_pub_data, "leaf3"));
+
+  ac_internal_pub_shares_t tampered_root_pub_data = pub_data;
+  tampered_root_pub_data[""] = tampered_root_pub_data[""] + curve.generator();
+  EXPECT_ER(ac.verify_share_against_ancestors_pub_data(Q, shares.at("leaf3"), tampered_root_pub_data, "leaf3"));
+}
+
+TEST_F(SecretSharing, ShareWithInternalsRejectsInvalidInputs) {
+  ac_shares_t shares;
+  ac_internal_shares_t internal_shares;
+  ac_internal_pub_shares_t pub_data;
+
+  ac_t missing_root(nullptr, curve_secp256k1);
+  EXPECT_ER(missing_root.share_with_internals(q, x, shares, internal_shares, pub_data));
+
+  ac_t missing_curve(simple_and_node);
+  EXPECT_ER(missing_curve.share_with_internals(q, x, shares, internal_shares, pub_data));
+
+  ac_t wrong_modulus(simple_and_node, curve_p256);
+  EXPECT_ER(wrong_modulus.share_with_internals(q, x, shares, internal_shares, pub_data));
+
+  ac_t ac(simple_and_node, curve_secp256k1);
+  vartime_scope_t vartime_scope;
+  EXPECT_ER(ac.verify_share_against_ancestors_pub_data(x * curve_p256.generator(), x, pub_data, "leaf1"));
+  EXPECT_ER(ac.verify_share_against_ancestors_pub_data(x * curve_secp256k1.generator(), x, pub_data, "missing"));
+}
+
+TEST_F(SecretSharing, AcOwnedCopyMovePreservesTreeState) {
+  ac_owned_t root_only(simple_and_node);
+  EXPECT_TRUE(root_only.has_root());
+  EXPECT_FALSE(root_only.has_curve());
+  EXPECT_NE(root_only.get_root(), simple_and_node);
+  EXPECT_EQ(root_only.list_leaf_names(), simple_and_node->list_leaf_names());
+  EXPECT_ER(root_only.validate_tree());
+
+  ac_owned_t owned(simple_and_node, curve_secp256k1);
+  EXPECT_OK(owned.validate_tree());
+
+  ac_owned_t copied = owned;
+  EXPECT_OK(copied.validate_tree());
+  EXPECT_EQ(copied.list_leaf_names(), owned.list_leaf_names());
+  EXPECT_EQ(copied.get_curve(), curve_secp256k1);
+
+  ac_owned_t moved = std::move(owned);
+  EXPECT_OK(moved.validate_tree());
+  EXPECT_EQ(moved.get_curve(), curve_secp256k1);
+}
+
+TEST_F(SecretSharing, AcOwnedAssignmentAndSerializationPreserveTreeState) {
+  ac_owned_t empty;
+  const buf_t empty_bin = coinbase::convert(empty);
+  ac_owned_t empty_roundtrip;
+  ASSERT_OK(coinbase::convert(empty_roundtrip, empty_bin));
+  EXPECT_FALSE(empty_roundtrip.has_root());
+  EXPECT_FALSE(empty_roundtrip.has_curve());
+
+  ac_t threshold_ref(simple_threshold_node, curve_secp256k1);
+  ac_owned_t owned(threshold_ref);
+  EXPECT_OK(owned.validate_tree());
+
+  ac_owned_t assigned;
+  assigned = owned;
+  EXPECT_OK(assigned.validate_tree());
+  EXPECT_EQ(assigned.list_leaf_names(), owned.list_leaf_names());
+  EXPECT_EQ(assigned.get_curve(), curve_secp256k1);
+
+  assigned = assigned;
+  EXPECT_OK(assigned.validate_tree());
+  EXPECT_EQ(assigned.list_leaf_names(), owned.list_leaf_names());
+
+  const buf_t encoded = coinbase::convert(assigned);
+  ac_owned_t decoded;
+  ASSERT_OK(coinbase::convert(decoded, encoded));
+  EXPECT_OK(decoded.validate_tree());
+  EXPECT_EQ(decoded.list_leaf_names(), owned.list_leaf_names());
+  EXPECT_EQ(decoded.get_curve(), curve_secp256k1);
+
+  ac_owned_t moved_target(simple_and_node, curve_p256);
+  moved_target = std::move(decoded);
+  EXPECT_OK(moved_target.validate_tree());
+  EXPECT_EQ(moved_target.list_leaf_names(), owned.list_leaf_names());
+  EXPECT_EQ(moved_target.get_curve(), curve_secp256k1);
+
+  moved_target = std::move(moved_target);
+  EXPECT_OK(moved_target.validate_tree());
+  EXPECT_EQ(moved_target.list_leaf_names(), owned.list_leaf_names());
 }
 
 TEST_F(SecretSharing, VerifyShareMissingPubDataKeyCrashes) {

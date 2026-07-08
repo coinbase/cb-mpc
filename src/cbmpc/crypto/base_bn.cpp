@@ -534,15 +534,13 @@ std::vector<bn_t> bn_t::vector_from_bin(mem_t mem, int n, int size, const mod_t&
 }
 
 error_t bn_t::vector_from_bin(mem_t mem, int n, int size, const mod_t& q, std::vector<bn_t>& out) {  // static
-  if (n < 0) return coinbase::error(E_BADARG, "vector_from_bin: negative n", /*to_print_stack_trace=*/false);
-  if (size < 0)
-    return coinbase::error(E_BADARG, "vector_from_bin: negative element size", /*to_print_stack_trace=*/false);
-  if (mem.size < 0)
-    return coinbase::error(E_BADARG, "vector_from_bin: negative input size", /*to_print_stack_trace=*/false);
+  if (n < 0) return coinbase::error(E_BADARG, "vector_from_bin: negative n");
+  if (size < 0) return coinbase::error(E_BADARG, "vector_from_bin: negative element size");
+  if (mem.size < 0) return coinbase::error(E_BADARG, "vector_from_bin: negative input size");
 
   const int64_t expected_size = static_cast<int64_t>(n) * static_cast<int64_t>(size);
   if (expected_size != static_cast<int64_t>(mem.size))
-    return coinbase::error(E_BADARG, "vector_from_bin: input size mismatch", /*to_print_stack_trace=*/false);
+    return coinbase::error(E_BADARG, "vector_from_bin: input size mismatch");
 
   out.resize(n);
   for (int i = 0; i < n; i++, mem = mem.skip(size)) out[i] = bn_t::from_bin(mem.take(size)) % q;

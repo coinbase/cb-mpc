@@ -34,7 +34,7 @@ class bn256_t;
 class mod_t;
 class ecc_point_t;
 
-error_t error(const std::string& text, bool print_stack = true);
+error_t error(const std::string& text);
 error_t openssl_error(const std::string& text);
 error_t openssl_error(int rv, const std::string& text);
 std::string openssl_get_last_error_string();
