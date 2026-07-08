@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779463100936,
+  "lastUpdate": 1783521319372,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1344,6 +1344,48 @@ window.BENCHMARK_DATA = {
             "value": 13778.288647057812,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13777.282803921564 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ba33d3dcbc35f24a65048977c907e9b311428680",
+          "message": "fix: harden crypto helpers and add coverage tooling (#121)\n\nSimplify error reporting by removing stack trace emission from ordinary error paths and trimming unused string/error helpers, while keeping API argument validation on structured error returns.\n\nFix several crypto helper edge cases: mod_t assignment now drops stale Montgomery contexts, mod_t::mod(int) handles negative values and INT_MIN without signed overflow, ElGamal /= performs division, and Paillier batch cipher validation runs in an explicit variable-time scope.\n\nTighten ECC behavior by validating curves and signature scalars during ECDSA verification, asserting same-curve point operations, preserving variable-time scalar multiplication when requested, and enforcing Ed25519 point storage alignment.\n\nHarden protocol paths by checking Schnorr nonce points before proof verification, using explicit variable-time evaluation in HD EdDSA derivation, simplifying HD root K-share helpers, and preserving empty access structures during deserialization.\n\nAdd Clang/LLVM coverage configuration and Make targets for text and HTML coverage reports, and ignore generated PDF diff artifacts from internal tooling.",
+          "timestamp": "2026-07-08T06:57:56-07:00",
+          "tree_id": "cdb97949eff97ff7fcd7e8f501dc48686f17193b",
+          "url": "https://github.com/coinbase/cb-mpc/commit/ba33d3dcbc35f24a65048977c907e9b311428680"
+        },
+        "date": 1783521318957,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24505.671068960382,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24502.816 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 105732.6668571607,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 105724.21642857141 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13902.631860000838,
+            "unit": "us/iter",
+            "extra": "iterations: 50\ncpu: 13901.406200000003 us\nthreads: 1"
           }
         ]
       }
