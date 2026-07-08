@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779463091373,
+  "lastUpdate": 1783521311657,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -3288,6 +3288,126 @@ window.BENCHMARK_DATA = {
             "value": 64.29592328163174,
             "unit": "us/iter",
             "extra": "iterations: 10897\ncpu: 64.29181444434253 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ba33d3dcbc35f24a65048977c907e9b311428680",
+          "message": "fix: harden crypto helpers and add coverage tooling (#121)\n\nSimplify error reporting by removing stack trace emission from ordinary error paths and trimming unused string/error helpers, while keeping API argument validation on structured error returns.\n\nFix several crypto helper edge cases: mod_t assignment now drops stale Montgomery contexts, mod_t::mod(int) handles negative values and INT_MIN without signed overflow, ElGamal /= performs division, and Paillier batch cipher validation runs in an explicit variable-time scope.\n\nTighten ECC behavior by validating curves and signature scalars during ECDSA verification, asserting same-curve point operations, preserving variable-time scalar multiplication when requested, and enforcing Ed25519 point storage alignment.\n\nHarden protocol paths by checking Schnorr nonce points before proof verification, using explicit variable-time evaluation in HD EdDSA derivation, simplifying HD root K-share helpers, and preserving empty access structures during deserialization.\n\nAdd Clang/LLVM coverage configuration and Make targets for text and HTML coverage reports, and ignore generated PDF diff artifacts from internal tooling.",
+          "timestamp": "2026-07-08T06:57:56-07:00",
+          "tree_id": "cdb97949eff97ff7fcd7e8f501dc48686f17193b",
+          "url": "https://github.com/coinbase/cb-mpc/commit/ba33d3dcbc35f24a65048977c907e9b311428680"
+        },
+        "date": 1783521311346,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.3583627535880535,
+            "unit": "us/iter",
+            "extra": "iterations: 1953858\ncpu: 0.3583261490855528 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.36575118898345743,
+            "unit": "us/iter",
+            "extra": "iterations: 1915502\ncpu: 0.3657255466191108 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 2.2513739799713237,
+            "unit": "us/iter",
+            "extra": "iterations: 310653\ncpu: 2.251175552787193 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.3711032353302789,
+            "unit": "us/iter",
+            "extra": "iterations: 1887968\ncpu: 0.37106983381074227 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.41125823235605,
+            "unit": "us/iter",
+            "extra": "iterations: 16915\ncpu: 41.40987939698493 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 66.00576500516902,
+            "unit": "us/iter",
+            "extra": "iterations: 10613\ncpu: 66.00167831904265 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 31.82296488513627,
+            "unit": "us/iter",
+            "extra": "iterations: 21985\ncpu: 31.820555833522853 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 61.06863918155152,
+            "unit": "us/iter",
+            "extra": "iterations: 11485\ncpu: 61.06445171963438 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 20.00259759476809,
+            "unit": "us/iter",
+            "extra": "iterations: 35007\ncpu: 20.000846145056666 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 13.62398452116001,
+            "unit": "us/iter",
+            "extra": "iterations: 51102\ncpu: 13.623028844272229 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 20.036069894015817,
+            "unit": "us/iter",
+            "extra": "iterations: 34910\ncpu: 20.033572071039828 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.211669284457495,
+            "unit": "us/iter",
+            "extra": "iterations: 97283\ncpu: 7.21092362488821 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 64.18099872636424,
+            "unit": "us/iter",
+            "extra": "iterations: 10992\ncpu: 64.17714710698692 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 80.09277120291823,
+            "unit": "us/iter",
+            "extra": "iterations: 8737\ncpu: 80.08709854641185 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/secp256k1",
+            "value": 2.000889387490657,
+            "unit": "us/iter",
+            "extra": "iterations: 350313\ncpu: 2.0006949956182 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/Ed25519",
+            "value": 66.62346701041218,
+            "unit": "us/iter",
+            "extra": "iterations: 10473\ncpu: 66.61475575288836 us\nthreads: 1"
           }
         ]
       }
