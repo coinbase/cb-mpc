@@ -34,6 +34,7 @@ class ac_owned_t;
 struct node_t {
   friend class ac_t;
   friend class ac_owned_t;
+  static constexpr int MAX_AC_TREE_LEVEL = 64;
 
   node_e type;
   pname_t name;
@@ -76,7 +77,7 @@ struct node_t {
 
  private:
   node_t() {}
-  void convert_node(coinbase::converter_t& c);
+  void convert_node(coinbase::converter_t& c, int level);
 };
 
 static std::string get_node_path(const std::string& parent_path, const node_t* node) {

@@ -1,44 +1,35 @@
-if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
-  set(IS_WASM true)
-  if(DEFINED ENV{WASM_GEN_TYPES})
-    set(IS_WASM_TYPES true)
-  endif()
-  set(CMAKE_OS "JS")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Android")
-  set(ANDROID_SDK 21)
-  set(IS_ANDROID true)
-  set(CMAKE_OS "Android")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set(IS_LINUX true)
   set(CMAKE_OS "Linux")
-elseif(CMAKE_OSX_SYSROOT MATCHES ".*iPhoneSimulator.*")
-  set(IS_IOS_SIMULATOR true)
-  set(CMAKE_OS "iOSSimulator")
-elseif(CMAKE_SYSTEM_NAME MATCHES "iOS")
-  set(IS_IOS true)
-  set(CMAKE_OS "iOS")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  string(TOLOWER "${CMAKE_OSX_SYSROOT}" _cbmpc_osx_sysroot)
+  if(_cbmpc_osx_sysroot MATCHES "(iphone|appletv|watch|xros)")
+    message(
+      FATAL_ERROR
+        "Unsupported Apple SDK '${CMAKE_OSX_SYSROOT}'. cb-mpc supports only macOS."
+    )
+  endif()
   set(IS_MACOS true)
   set(CMAKE_OS "Darwin")
+else()
+  message(
+    FATAL_ERROR
+      "Unsupported platform '${CMAKE_SYSTEM_NAME}'. cb-mpc supports only 64-bit macOS and Linux."
+  )
 endif()
 
-if(IS_MACOS
-   OR IS_IOS
-   OR IS_IOS_SIMULATOR)
-  set(IS_APPLE true)
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+  message(
+    FATAL_ERROR
+      "Unsupported pointer size '${CMAKE_SIZEOF_VOID_P}'. cb-mpc supports only 64-bit targets."
+  )
 endif()
 
-if(IS_ANDROID AND (ANDROID_ABI MATCHES "arm64-v8a"))
+if(CMAKE_OSX_ARCHITECTURES MATCHES "arm64" OR
+   CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
   set(IS_ARM64 true)
-elseif(IS_ANDROID AND (ANDROID_ABI MATCHES "x86_64"))
-  set(IS_X86_64 true)
-elseif(CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
-  set(IS_ARM64 true)
-elseif(CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
-  set(IS_X86_64 true)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-  set(IS_ARM64 true)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+elseif(CMAKE_OSX_ARCHITECTURES MATCHES "x86_64" OR
+       CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
   set(IS_X86_64 true)
 endif()
 
@@ -50,13 +41,7 @@ message("======= Build system: ${CMAKE_SYSTEM_NAME} =======")
 message("IS_X86_64:                      ${IS_X86_64}")
 message("IS_ARM64:                       ${IS_ARM64}")
 message("IS_LINUX:                       ${IS_LINUX}")
-message("IS_APPLE:                       ${IS_APPLE}")
-message("IS_IOS:                         ${IS_IOS}")
-message("IS_IOS_SIMULATOR:               ${IS_IOS_SIMULATOR}")
-message("IS_ANDROID:                     ${IS_ANDROID}")
 message("IS_MACOS:                       ${IS_MACOS}")
-message("IS_WASM:                        ${IS_WASM}")
-message("IS_WASM_TYPES:                  ${IS_WASM_TYPES}")
 message("IS_CLANG:                       ${IS_CLANG}")
 message("CMAKE_OS:                       ${CMAKE_OS}")
 message("CMAKE_ARCH:                     ${CMAKE_ARCH}")

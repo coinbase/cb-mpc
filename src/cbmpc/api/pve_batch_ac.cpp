@@ -36,6 +36,13 @@ static error_t parse_ac_ciphertext(mem_t ciphertext, pve_ac_ciphertext_blob_v1_t
   return SUCCESS;
 }
 
+static error_t parse_ac_ciphertext_body(mem_t ciphertext_body, uint32_t batch_count, uint32_t max_quorum_c_elements,
+                                        coinbase::mpc::ec_pve_ac_t& out_ct) {
+  coinbase::converter_t converter(ciphertext_body);
+  out_ct.convert(converter, batch_count, max_quorum_c_elements);
+  return converter.get_rv();
+}
+
 static error_t to_internal_ac_and_leaves(const access_structure_t& ac_in, const coinbase::crypto::ecurve_t& curve,
                                          coinbase::crypto::ss::ac_owned_t& out_ac,
                                          std::set<std::string>& out_leaf_names) {
@@ -179,7 +186,8 @@ error_t verify_ac(const base_pke_i& base_pke, curve_id curve, const access_struc
     return coinbase::error(E_BADARG, "Q count mismatch");
 
   coinbase::mpc::ec_pve_ac_t pve_ct;
-  if (rv = coinbase::convert(pve_ct, blob.ct)) return rv;
+  if (rv = parse_ac_ciphertext_body(blob.ct, blob.batch_count, static_cast<uint32_t>(leaf_names.size()), pve_ct))
+    return rv;
 
   // Validate ciphertext curve.
   for (const auto& q : pve_ct.get_Q()) {
@@ -232,7 +240,8 @@ error_t partial_decrypt_ac_attempt(const base_pke_i& base_pke, curve_id curve, c
   if (rv = parse_ac_ciphertext(ciphertext, blob)) return rv;
 
   coinbase::mpc::ec_pve_ac_t pve_ct;
-  if (rv = coinbase::convert(pve_ct, blob.ct)) return rv;
+  if (rv = parse_ac_ciphertext_body(blob.ct, blob.batch_count, static_cast<uint32_t>(leaf_names.size()), pve_ct))
+    return rv;
 
   for (const auto& q : pve_ct.get_Q()) {
     if (q.get_curve() != icurve) return coinbase::error(E_BADARG, "ciphertext curve mismatch");
@@ -331,7 +340,8 @@ error_t combine_ac(const base_pke_i& base_pke, curve_id curve, const access_stru
   if (rv = parse_ac_ciphertext(ciphertext, blob)) return rv;
 
   coinbase::mpc::ec_pve_ac_t pve_ct;
-  if (rv = coinbase::convert(pve_ct, blob.ct)) return rv;
+  if (rv = parse_ac_ciphertext_body(blob.ct, blob.batch_count, static_cast<uint32_t>(leaf_names.size()), pve_ct))
+    return rv;
 
   for (const auto& q : pve_ct.get_Q()) {
     if (q.get_curve() != icurve) return coinbase::error(E_BADARG, "ciphertext curve mismatch");
@@ -392,7 +402,9 @@ error_t get_public_keys_compressed_ac(mem_t ciphertext, std::vector<buf_t>& out_
   if (rv = parse_ac_ciphertext(ciphertext, blob)) return rv;
 
   coinbase::mpc::ec_pve_ac_t pve_ct;  // base PKE not used for extraction
-  if (rv = coinbase::convert(pve_ct, blob.ct)) return rv;
+  if (rv = parse_ac_ciphertext_body(blob.ct, blob.batch_count, coinbase::api::detail::MAX_ACCESS_STRUCTURE_NODES,
+                                    pve_ct))
+    return rv;
 
   std::vector<buf_t> out_local;
   out_local.reserve(pve_ct.get_Q().size());

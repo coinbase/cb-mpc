@@ -90,7 +90,12 @@ error_t node_t::validate_tree(std::set<pname_t>& names) const {
   return SUCCESS;
 }
 
-void node_t::convert_node(coinbase::converter_t& c) {
+void node_t::convert_node(coinbase::converter_t& c, int level) {
+  if (level > MAX_AC_TREE_LEVEL) {
+    c.set_error();
+    return;
+  }
+
   int temp = int(type);
   c.convert(temp);
   type = node_e(temp);
@@ -101,7 +106,7 @@ void node_t::convert_node(coinbase::converter_t& c) {
 
   for (int i = 0; i < n; i++) {
     node_t* child = c.is_write() ? children[i] : new node_t();
-    child->convert_node(c);
+    child->convert_node(c, level + 1);
 
     if (c.is_error()) {
       if (!c.is_write()) delete child;
@@ -142,7 +147,7 @@ void ac_owned_t::convert(coinbase::converter_t& c)  // static
       root = new node_t();
     }
 
-    ((node_t*)root)->convert_node(c);
+    ((node_t*)root)->convert_node(c, 1);
     if (c.is_write()) return;
 
     if (!c.is_error()) {

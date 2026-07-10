@@ -3,15 +3,6 @@
 
 #include <cbmpc/core/precompiled.h>
 
-#ifdef __APPLE__
-#include <TargetConditionals.h>
-
-#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_WATCH
-#define TARGET_OS_IOSX 1
-#endif
-
-#endif
-
 #define __vectorcall
 
 #define STDCALL

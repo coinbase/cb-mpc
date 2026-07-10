@@ -105,31 +105,26 @@ TEST(CryptoEdDSA, hash_to_point) {
   EXPECT_EQ(in_group_counter, point_counter);
 }
 
-TEST(CryptoEdDSA, MulByOrderIsInfinityForSubgroup) {
+TEST(CryptoEdDSA, GeneratorMulByOrderIsInfinityForSubgroup) {
   crypto::vartime_scope_t vartime_scope;
   ecurve_t curve = crypto::curve_ed25519;
   const bn_t q = curve.order().value();
   const bn_t q_minus_1 = q - 1;
 
-  // Generator and infinity are in the prime-order subgroup.
-  const ecc_point_t G = curve.generator();
+  const ecc_generator_point_t& G = curve.generator();
   const ecc_point_t I = curve.infinity();
   {
-    ecc_point_t R = G;
-    R *= q;
+    ecc_point_t R = q * G;
     EXPECT_TRUE(R.is_infinity());
     EXPECT_TRUE(R == I);
   }
   {
-    ecc_point_t R = G;
-    R *= q_minus_1;
+    ecc_point_t R = q_minus_1 * G;
     EXPECT_TRUE(R == -G);
   }
   {
-    ecc_point_t R = I;
-    R *= q;
-    EXPECT_TRUE(R.is_infinity());
-    EXPECT_TRUE(R == I);
+    ecc_point_t R = (q + 1) * G;
+    EXPECT_TRUE(R == G);
   }
   {
     ecc_point_t R = I;
@@ -139,7 +134,7 @@ TEST(CryptoEdDSA, MulByOrderIsInfinityForSubgroup) {
   }
 
   // Additional coverage: for many subgroup points (hash_to_point clears cofactor),
-  // multiplying by the subgroup order yields infinity.
+  // multiplication by a scalar just below the subgroup order behaves as expected.
   const int want = 64;
   const int max_tries = 10000;
   int got = 0;
@@ -158,11 +153,6 @@ TEST(CryptoEdDSA, MulByOrderIsInfinityForSubgroup) {
     ASSERT_TRUE(P.is_on_curve());
     ASSERT_TRUE(P.is_in_subgroup());
 
-    ecc_point_t R = P;
-    R *= q;
-    EXPECT_TRUE(R.is_infinity());
-    EXPECT_TRUE(R == I);
-
     ecc_point_t R2 = P;
     R2 *= q_minus_1;
     EXPECT_TRUE(R2 == -P);
@@ -171,6 +161,41 @@ TEST(CryptoEdDSA, MulByOrderIsInfinityForSubgroup) {
   }
 
   EXPECT_EQ(got, want);
+}
+
+TEST(CryptoEdDSA, GenericMulRejectsOrderScalarForTorsionPoint) {
+  ecurve_t curve = crypto::curve_ed25519;
+  const bn_t q = curve.order().value();
+
+  uint8_t order2[32];
+  order2[0] = 0xec;
+  for (int i = 1; i < 31; i++) order2[i] = 0xff;
+  order2[31] = 0x7f;
+
+  ecc_point_t T(curve);
+  ASSERT_EQ(T.from_bin(curve, mem_t(order2, 32)), SUCCESS);
+  ASSERT_TRUE(T.is_on_curve());
+  ASSERT_FALSE(T.is_in_subgroup());
+
+  {
+    dylog_disable_scope_t no_log_err;
+    EXPECT_THROW(
+        {
+          ecc_point_t R = T;
+          R *= q;
+        },
+        coinbase::assertion_failed_t);
+  }
+  {
+    crypto::vartime_scope_t vartime_scope;
+    dylog_disable_scope_t no_log_err;
+    EXPECT_THROW(
+        {
+          ecc_point_t R = T;
+          R *= q;
+        },
+        coinbase::assertion_failed_t);
+  }
 }
 
 TEST(CryptoEdDSA, subgroup_check) {

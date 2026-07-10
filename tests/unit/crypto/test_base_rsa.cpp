@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/crypto/base.h>
 #include <cbmpc/internal/crypto/base_hash.h>
 #include <cbmpc/internal/crypto/base_pki.h>
@@ -43,6 +44,11 @@ buf_t small_raw_rsa_plaintext(int size) {
   memset(raw.data(), 0, raw.size());
   raw[raw.size() - 1] = 0x2a;
   return raw;
+}
+
+buf_t serialized_rsa_public_components(const bn_t& n, const bn_t& e) {
+  constexpr uint8_t kPartsEAndN = 0x03;
+  return coinbase::ser(kPartsEAndN, e, n);
 }
 
 void expect_rsa_private_key_works(const rsa_prv_key_t& key, const rsa_pub_key_t& pub_key) {
@@ -121,6 +127,24 @@ TEST(RSA, PublicKeyConversionRoundTripsUsableKey) {
   rsa_pub_key_t invalid;
   EXPECT_ER(coinbase::deser(mem_t(&unsupported_parts, 1), invalid));
   EXPECT_EQ(invalid.size(), 0);
+}
+
+TEST(RSA, PublicKeyConversionRejectsInvalidPublicParameters) {
+  rsa_prv_key_t prv_key;
+  prv_key.generate(RSA_KEY_LENGTH);
+  const bn_t n = prv_key.get_n();
+
+  dylog_disable_scope_t no_log_err;
+
+  const buf_t encoded_e_one = serialized_rsa_public_components(n, bn_t(1));
+  rsa_pub_key_t decoded_e_one;
+  EXPECT_ER(coinbase::deser(encoded_e_one, decoded_e_one));
+  EXPECT_EQ(decoded_e_one.size(), 0);
+
+  const buf_t encoded_even_e = serialized_rsa_public_components(n, bn_t(4));
+  rsa_pub_key_t decoded_even_e;
+  EXPECT_ER(coinbase::deser(encoded_even_e, decoded_even_e));
+  EXPECT_EQ(decoded_even_e.size(), 0);
 }
 
 TEST(RSA, PrivateKeyConversionRoundTripsUsableKey) {

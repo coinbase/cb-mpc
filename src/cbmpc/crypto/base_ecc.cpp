@@ -736,7 +736,15 @@ buf_t ecc_point_t::to_bin() const {
 void ecc_point_t::convert(coinbase::converter_t& converter) {
   ecurve_t c = curve;
   c.convert(converter);
-  if (!c) return;
+  if (converter.is_error()) return;
+  if (!c) {
+    if (!converter.is_write()) {
+      free();
+      curve = nullptr;
+      ptr = nullptr;
+    }
+    return;
+  }
   convert_fixed_curve(converter, c);
 }
 
@@ -1048,7 +1056,7 @@ error_t ecdh_t::execute(const ecc_point_t& P, buf_t& out) const {
     return SUCCESS;
   } else {
     buf_t pub_oct = P.to_oct();
-    return exec(ctx, mem_t(pub_oct.data(), pub_oct.size()), out);
+    return (*exec)(ctx, mem_t(pub_oct.data(), pub_oct.size()), out);
   }
 }
 

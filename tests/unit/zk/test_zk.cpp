@@ -373,6 +373,18 @@ TEST(ZKVerifierRejection, PaillierProofsRejectMalformedAndTamperedTranscripts) {
                                         interactive_equal.v_p2, interactive_equal.c2, interactive_equal.msg1,
                                         bad_msg3));
 
+  auto non_coprime_r0_hat = interactive_equal.msg3;
+  non_coprime_r0_hat.r0_hat[0] = interactive_equal.v_p1.get_N();
+  EXPECT_ER(interactive_equal.zk.verify(interactive_equal.q, interactive_equal.v_p1, interactive_equal.c1,
+                                        interactive_equal.v_p2, interactive_equal.c2, interactive_equal.msg1,
+                                        non_coprime_r0_hat));
+
+  auto non_coprime_r1_hat = interactive_equal.msg3;
+  non_coprime_r1_hat.r1_hat[0] = interactive_equal.v_p2.get_N();
+  EXPECT_ER(interactive_equal.zk.verify(interactive_equal.q, interactive_equal.v_p1, interactive_equal.c1,
+                                        interactive_equal.v_p2, interactive_equal.c2, interactive_equal.msg1,
+                                        non_coprime_r1_hat));
+
   test_nizk_pdl pdl(coinbase::crypto::curve_secp256k1);
   pdl.setup();
   pdl.prove();

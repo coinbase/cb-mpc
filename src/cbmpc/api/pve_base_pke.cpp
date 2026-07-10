@@ -349,7 +349,10 @@ error_t get_public_key_compressed(mem_t ciphertext, buf_t& out_Q_compressed) {
   coinbase::mpc::ec_pve_t pve_ct;  // base PKE not used for extraction
   if (rv = coinbase::convert(pve_ct, blob.ct)) return rv;
 
-  out_Q_compressed = pve_ct.get_Q().to_compressed_bin();
+  const auto& Q = pve_ct.get_Q();
+  if (!Q.get_curve().valid() || !Q.valid()) return coinbase::error(E_FORMAT, "invalid public key in ciphertext");
+
+  out_Q_compressed = Q.to_compressed_bin();
   return SUCCESS;
 }
 

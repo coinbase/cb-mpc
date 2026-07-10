@@ -39,6 +39,10 @@ static const mod_t& order() {
   return order_value;
 }
 
+static void assert_scalar_in_order_range(const bn_t& x) {
+  cb_assert(order().is_in_range(x) && "Ed25519 point scalar must be in [0, order)");
+}
+
 // see https://www.rfc-editor.org/rfc/rfc8032#section-3.2
 bn_t prv_key_to_scalar(mem_t bin) {
   if (bin.size != 32) return bn_t(0);
@@ -137,10 +141,12 @@ void ecurve_ed_t::add_consttime(const ecc_point_t& P1, const ecc_point_t& P2, ec
 }
 
 void ecurve_ed_t::mul_vartime(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const {
+  ed25519::assert_scalar_in_order_range(x);
   ec25519_core::mul_vartime(R.storage, P.storage, x);
 }
 
 void ecurve_ed_t::mul(const ecc_point_t& P, const bn_t& x, ecc_point_t& R) const {
+  ed25519::assert_scalar_in_order_range(x);
   ec25519_core::mul(R.storage, P.storage, x);
 }
 

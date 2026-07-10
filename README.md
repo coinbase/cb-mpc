@@ -100,7 +100,7 @@ This repository provides a native C++ cryptographic library. It is intended to b
 
 The environments that we support are:
 
-- **Native development:** macOS (`x86_64` and Apple Silicon) and Linux
+- **Native development:** 64-bit macOS (`x86_64` and Apple Silicon) and 64-bit Linux
 - **Containerized / CI environment:** Linux in the provided Docker image
 - **Compiler/toolchain guidance:** C++17 with Clang 20 or newer is recommended for the closest match to our testing environment
 
@@ -112,7 +112,7 @@ This library is **not** a hosted service and does **not** provide a production n
 - Protecting secret material at rest and in memory.
 - Managing process/container isolation, rollout, monitoring, and incident response.
 
-The library is intended for native environments where the integrating application can enforce those controls. In an MPC deployment, that may mean all parties run in backend services or that some parties run in native client applications on supported platforms. Other targets, such as browsers, WebAssembly, Windows, or mobile platforms, are not currently documented in this repository as supported deployment environments.
+The library is intended for native environments where the integrating application can enforce those controls. In an MPC deployment, that may mean all parties run in backend services or that some parties run in native client applications on supported platforms. Other targets, including 32-bit systems, browsers, WebAssembly, Windows, and mobile platforms, are not supported.
 
 ## Key Management Responsibilities
 

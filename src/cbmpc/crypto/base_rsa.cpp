@@ -20,6 +20,22 @@ enum {
   part_qinv = 1 << 7,
 };
 
+namespace {
+
+constexpr int kMaxRsaPublicExponentBits = 256;
+
+error_t validate_rsa_public_components(const BIGNUM* n, const BIGNUM* e) {
+  if (!n || !e) return coinbase::error(E_BADARG, "missing RSA public key component");
+  if (BN_is_negative(n) || BN_is_zero(n) || BN_is_one(n) || !BN_is_odd(n))
+    return coinbase::error(E_CRYPTO, "invalid RSA public modulus");
+  if (BN_is_negative(e) || BN_is_zero(e) || BN_is_one(e) || !BN_is_odd(e))
+    return coinbase::error(E_CRYPTO, "invalid RSA public exponent");
+  if (BN_num_bits(e) > kMaxRsaPublicExponentBits) return coinbase::error(E_CRYPTO, "RSA public exponent is too large");
+  return SUCCESS;
+}
+
+}  // namespace
+
 // ------------------------------ rsa_pub_key_t -------------------------
 
 error_t rsa_pub_key_t::encrypt_raw(mem_t in, buf_t& out) const {
@@ -128,6 +144,11 @@ void rsa_pub_key_t::convert(coinbase::converter_t& converter) {
       case 0:
         break;
       case part_e | part_n:
+        if (error_t rv = validate_rsa_public_components(n, e)) {
+          converter.set_error(rv);
+          free();
+          return;
+        }
         set(n, e);
         break;
       default:

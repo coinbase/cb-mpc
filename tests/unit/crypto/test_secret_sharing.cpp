@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
+#include <string>
 
+#include <cbmpc/internal/core/convert.h>
 #include <cbmpc/internal/crypto/base.h>
 #include <cbmpc/internal/crypto/lagrange.h>
 #include <cbmpc/internal/crypto/secret_sharing.h>
@@ -561,6 +563,23 @@ TEST_F(SecretSharing, AcOwnedAssignmentAndSerializationPreserveTreeState) {
   moved_target = std::move(moved_target);
   EXPECT_OK(moved_target.validate_tree());
   EXPECT_EQ(moved_target.list_leaf_names(), owned.list_leaf_names());
+}
+
+TEST_F(SecretSharing, AcOwnedSerializationRejectsTooDeepTree) {
+  node_t* root = new node_t(node_e::AND, "", 0);
+  node_t* parent = root;
+  for (int level = 2; level <= node_t::MAX_AC_TREE_LEVEL + 1; level++) {
+    node_t* child = new node_t(node_e::AND, "node" + std::to_string(level), 0);
+    parent->add_child_node(child);
+    parent = child;
+  }
+
+  ac_owned_t owned(root, curve_secp256k1);
+  delete root;
+
+  coinbase::converter_t size_counter(true);
+  owned.convert(size_counter);
+  EXPECT_NE(size_counter.get_rv(), SUCCESS);
 }
 
 TEST_F(SecretSharing, VerifyShareMissingPubDataKeyCrashes) {

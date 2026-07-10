@@ -154,7 +154,7 @@ error_t key_share_mp_t::dkg(job_mp_t& job, ecurve_t curve, key_share_mp_t& key, 
 
     if (rv = crypto::commitment_t(sid_i._j, job.get_pid(j)).set(rho._j, c._j).open(Qi._j)) return rv;
 
-    // curve check of Qi._j is done inside the zk verify function
+    if (rv = curve.check(Qi._j)) return coinbase::error(rv, "ec_dkg: Qi is not on the session curve");
     if (rv = pi._j.verify(Qi._j, sid, j)) return rv;
   }
 
@@ -219,14 +219,13 @@ error_t key_share_mp_t::refresh(job_mp_t& job, buf_t& sid, const key_share_mp_t&
   for (int j = 0; j < n; j++) {
     if (j == i) continue;
 
-    // Curve check of R._j[l] is done inside the zk verify function further below
-
     if (h._j != h) return coinbase::error(E_CRYPTO);
     if (R._j.size() != size_t(n)) return coinbase::error(E_CRYPTO, "ec_dkg: inconsistent batch size (R)");
     if (pi_r._j.size() != size_t(n)) return coinbase::error(E_CRYPTO, "ec_dkg: inconsistent batch size (pi_r)");
 
     if (rv = com_R.id(sid, job.get_pid(j)).set(rho._j, c._j).open(R._j, pi_r._j)) return rv;
     for (int l = 0; l < n; l++) {
+      if (rv = curve.check(R._j[l])) return coinbase::error(rv, "ec_dkg: R is not on the session curve");
       if (l == j) continue;
       if (rv = pi_r._j[l].verify(R._j[l], sid, j * n + l)) return rv;
     }
@@ -387,7 +386,9 @@ error_t key_share_mp_t::dkg_or_refresh_ac(job_mp_t& job, const ecurve_t& curve, 
     if (rv = com_R_tag.open(Rs, pi_r_all._j)) return coinbase::error(rv, "Failed to open com_R_tag");
 
     cs[j] = c_all._j;
-    // Verifying that R values are on the curve and subgroup is done in the zk verify function
+    for (const auto& R : Rs) {
+      if (rv = curve.check(R)) return coinbase::error(rv, "ec_dkg: R is not on the session curve");
+    }
     if (rv = pi_r_all._j.verify(Rs, sid, j)) return coinbase::error(rv, "Failed to verify pi_r_all");
     if (is_refresh) {
       ac_pub_all._j[ac.root->name] = curve.infinity();

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/crypto/base_ecc.h>
 #include <cbmpc/internal/protocol/ecdsa_2p.h>
 
 #include "utils/local_network/mpc_tester.h"
@@ -204,6 +205,44 @@ TEST_F(ECDSA2PC, KeygenSign) {
   });
 
   check_key_pair(keys[0], keys[1]);
+}
+
+TEST_F(ECDSA2PC, RefreshManyTimesThenSign) {
+  constexpr int kRefreshCount = 20;
+  buf_t data = coinbase::crypto::gen_random(32);
+  std::vector<ecdsa2pc::key_t> keys(2);
+  std::vector<buf_t> sigs(2);
+
+  mpc_runner->run_2pc([&data, &keys, &sigs](job_2p_t& job) {
+    error_t rv = UNINITIALIZED_ERROR;
+    auto party_index = job.get_party_idx();
+    ecurve_t curve = coinbase::crypto::curve_secp256k1;
+
+    ecdsa2pc::key_t key;
+    rv = ecdsa2pc::dkg(job, curve, key);
+    ASSERT_EQ(rv, 0);
+
+    for (int i = 0; i < kRefreshCount; i++) {
+      ecdsa2pc::key_t refreshed_key;
+      rv = ecdsa2pc::refresh(job, key, refreshed_key);
+      ASSERT_EQ(rv, 0);
+      key = refreshed_key;
+    }
+
+    keys[party_index] = key;
+
+    buf_t session_id;
+    rv = sign(job, session_id, key, data, sigs[party_index]);
+    ASSERT_EQ(rv, 0);
+  });
+
+  check_key_pair(keys[0], keys[1]);
+  EXPECT_GT(keys[0].x_share.get_bits_count(), keys[0].curve.order().get_bits_count());
+
+  const crypto::ecc_pub_key_t verify_key(keys[0].Q);
+  ASSERT_GT(sigs[0].size(), 0);
+  EXPECT_EQ(sigs[1].size(), 0);
+  ASSERT_EQ(verify_key.verify(data, sigs[0]), SUCCESS);
 }
 
 TEST_F(ECDSA2PC, Integer_Commit) {

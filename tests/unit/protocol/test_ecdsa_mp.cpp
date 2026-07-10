@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <cbmpc/internal/crypto/commitment.h>
 #include <cbmpc/internal/crypto/lagrange.h>
 #include <cbmpc/internal/crypto/secret_sharing.h>
 #include <cbmpc/internal/protocol/ecdsa_mp.h>
+#include <cbmpc/internal/zk/zk_ec.h>
 
 #include "utils/local_network/mpc_tester.h"
 #include "utils/test_macros.h"
@@ -33,6 +35,38 @@ class ECDSA4PC : public Network4PC {
   }
 };
 
+error_t broadcast_foreign_curve_dkg_share(job_mp_t& job, ecurve_t session_curve, ecurve_t proof_curve) {
+  error_t rv = UNINITIALIZED_ERROR;
+  const int n = job.get_n_parties();
+  const int i = job.get_party_idx();
+
+  auto h_consistency = job.uniform_msg<buf256_t>();
+  h_consistency.msg = crypto::sha256_t::hash(std::string(session_curve.get_name()));
+
+  auto sid_i = job.uniform_msg<buf_t>(crypto::gen_random_bitlen(SEC_P_COM));
+  const bn_t x = bn_t::rand(proof_curve.order());
+  auto Qi = job.uniform_msg<ecc_point_t>(x * proof_curve.generator());
+
+  crypto::commitment_t com(sid_i, job.get_pid(i));
+  com.gen(Qi.msg);
+  auto c = job.uniform_msg<buf_t>(com.msg);
+  if (rv = job.plain_broadcast(sid_i, c, h_consistency)) return rv;
+
+  for (int j = 0; j < n; j++) {
+    if (j == i) continue;
+    if (h_consistency.received(j) != h_consistency) return coinbase::error(E_CRYPTO);
+  }
+
+  const buf_t sid = crypto::sha256_t::hash(sid_i.all_received());
+  auto h = job.uniform_msg<buf256_t>(crypto::sha256_t::hash(c.all_received()));
+  auto pi = job.uniform_msg<zk::uc_dl_t>();
+  pi.prove(Qi, x, sid, i);
+
+  auto rho = job.uniform_msg<buf256_t>(com.rand);
+  auto sid_msg = job.uniform_msg<buf_t>(sid);
+  return job.plain_broadcast(sid_msg, h, Qi, rho, pi);
+}
+
 std::vector<std::vector<int>> test_ot_role(int n) {
   std::vector<std::vector<int>> ot_role_map(n, std::vector<int>(n));
   for (int i = 0; i < n; i++) {
@@ -49,6 +83,29 @@ std::vector<std::vector<int>> test_ot_role(int n) {
 }
 
 class ECDSAMPC : public NetworkMPC {};
+
+TEST_F(ECDSA4PC, RejectsForeignCurveDkgShareGracefully) {
+  constexpr int malicious_index = 1;
+  std::vector<ecdsampc::key_t> keys(4);
+  std::vector<error_t> results(4, UNINITIALIZED_ERROR);
+
+  mpc_runner->run_mpc([&](job_mp_t& job) {
+    const int party_index = job.get_party_idx();
+    if (party_index == malicious_index) {
+      results[party_index] = broadcast_foreign_curve_dkg_share(job, crypto::curve_secp256k1, crypto::curve_p521);
+      return;
+    }
+
+    buf_t sid;
+    results[party_index] = ecdsampc::dkg(job, crypto::curve_secp256k1, keys[party_index], sid);
+  });
+
+  EXPECT_OK(results[malicious_index]);
+  for (int i = 0; i < int(results.size()); i++) {
+    if (i == malicious_index) continue;
+    EXPECT_ER(results[i]);
+  }
+}
 
 TEST_F(ECDSA4PC, RejectsInvalidOtRoleMapDimensions) {
   buf_t data = crypto::gen_random(32);
