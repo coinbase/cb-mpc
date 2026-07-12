@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783521319372,
+  "lastUpdate": 1783850533138,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1386,6 +1386,48 @@ window.BENCHMARK_DATA = {
             "value": 13902.631860000838,
             "unit": "us/iter",
             "extra": "iterations: 50\ncpu: 13901.406200000003 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3a2f7c22b8c54d909accc5278ef8a4519088f160",
+          "message": "fix: harden serialization validation and restrict supported platforms (#122)\n\nCrypto hardening:\n- Validate RSA public modulus/exponent on deserialization and bound the public exponent size\n- Bound accept-control tree recursion depth in secret-sharing convert\n- Reject degenerate/non-coprime accumulators before use in the two-Paillier equality proof and range-check the PDL response\n- Fix ecc_point_t deserialization to clear state on a null curve and call the ECDH exec function pointer correctly\n\nBuild system (#106, #120):\n- Drop iOS/Android/WASM support and Xcode helpers; support only 64-bit macOS and Linux, failing fast on unsupported platforms/architectures\n- Always enable stack protector and debug symbols\n\nExpand unit-test coverage across the affected crypto, protocol, and API paths.",
+          "timestamp": "2026-07-12T02:23:24-07:00",
+          "tree_id": "c625f9916f5c335e2510512c01399197b5d516ec",
+          "url": "https://github.com/coinbase/cb-mpc/commit/3a2f7c22b8c54d909accc5278ef8a4519088f160"
+        },
+        "date": 1783850532553,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24559.039137925694,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24557.52544827586 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 105657.67257146165,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 105651.71314285716 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13884.04617647015,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13883.334156862746 us\nthreads: 1"
           }
         ]
       }
