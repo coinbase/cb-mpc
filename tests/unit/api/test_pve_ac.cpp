@@ -7,6 +7,7 @@
 #include <cbmpc/core/access_structure.h>
 #include <cbmpc/core/macros.h>
 #include <cbmpc/internal/crypto/base_ecc.h>
+#include <cbmpc/internal/protocol/pve_ac.h>
 
 namespace {
 
@@ -40,6 +41,62 @@ class toy_base_pke_t final : public coinbase::api::pve::base_pke_i {
     return SUCCESS;
   }
 };
+
+static void append_u32_be(std::vector<uint8_t>& out, uint32_t value) {
+  out.push_back(static_cast<uint8_t>(value >> 24));
+  out.push_back(static_cast<uint8_t>(value >> 16));
+  out.push_back(static_cast<uint8_t>(value >> 8));
+  out.push_back(static_cast<uint8_t>(value));
+}
+
+static void append_convert_len(std::vector<uint8_t>& out, uint32_t len) {
+  if (len <= 0x7f) {
+    out.push_back(static_cast<uint8_t>(len));
+  } else if (len <= 0x3fff) {
+    out.push_back(static_cast<uint8_t>(len >> 8) | 0x80);
+    out.push_back(static_cast<uint8_t>(len));
+  } else if (len <= 0x1fffff) {
+    out.push_back(static_cast<uint8_t>(len >> 16) | 0xc0);
+    out.push_back(static_cast<uint8_t>(len >> 8));
+    out.push_back(static_cast<uint8_t>(len));
+  } else {
+    out.push_back(static_cast<uint8_t>(len >> 24) | 0xe0);
+    out.push_back(static_cast<uint8_t>(len >> 16));
+    out.push_back(static_cast<uint8_t>(len >> 8));
+    out.push_back(static_cast<uint8_t>(len));
+  }
+}
+
+static void append_buf(std::vector<uint8_t>& out, mem_t value) {
+  append_convert_len(out, static_cast<uint32_t>(value.size));
+  if (value.size > 0) out.insert(out.end(), value.data, value.data + value.size);
+}
+
+static buf_t ac_ciphertext_with_inner_counts(uint32_t Q_count, uint32_t quorum_c_count) {
+  std::vector<uint8_t> inner;
+  append_convert_len(inner, Q_count);  // Q vector
+  append_buf(inner, mem_t());          // L
+  inner.insert(inner.end(), 16, 0);
+
+  for (int i = 0; i < coinbase::mpc::ec_pve_ac_t::kappa; i++) {
+    append_buf(inner, mem_t());  // x_bin
+    append_buf(inner, mem_t());  // r
+    append_buf(inner, mem_t());  // c
+    append_convert_len(inner, i == 0 ? quorum_c_count : 0);
+  }
+
+  std::vector<uint8_t> outer;
+  append_u32_be(outer, 1);  // PVE-AC ciphertext version
+  append_u32_be(outer, 1);  // batch_count
+  append_buf(outer, mem_t(inner.data(), static_cast<int>(inner.size())));
+  return buf_t(outer.data(), static_cast<int>(outer.size()));
+}
+
+static buf_t ac_ciphertext_with_first_quorum_c_count(uint32_t quorum_c_count) {
+  return ac_ciphertext_with_inner_counts(0, quorum_c_count);
+}
+
+static buf_t ac_ciphertext_with_Q_count(uint32_t Q_count) { return ac_ciphertext_with_inner_counts(Q_count, 0); }
 
 }  // namespace
 
@@ -719,6 +776,91 @@ TEST(ApiPveAcNeg, PartialDecryptAcAttempt_GarbageCiphertext) {
             SUCCESS);
 }
 
+TEST(ApiPveAcNeg, VerifyAc_RejectsQuorumCAboveLeafCount) {
+  const toy_base_pke_t base_pke;
+  const buf_t label = buf_t("label");
+
+  const coinbase::api::access_structure_t ac = coinbase::api::access_structure_t::Threshold(
+      2, {coinbase::api::access_structure_t::leaf("p1"), coinbase::api::access_structure_t::leaf("p2"),
+          coinbase::api::access_structure_t::leaf("p3")});
+
+  const buf_t ek1 = buf_t("ek1");
+  const buf_t ek2 = buf_t("ek2");
+  const buf_t ek3 = buf_t("ek3");
+  coinbase::api::pve::leaf_keys_t ac_pks;
+  ac_pks.emplace("p1", mem_t(ek1.data(), ek1.size()));
+  ac_pks.emplace("p2", mem_t(ek2.data(), ek2.size()));
+  ac_pks.emplace("p3", mem_t(ek3.data(), ek3.size()));
+
+  const buf_t ct = ac_ciphertext_with_first_quorum_c_count(4);
+  const buf_t q = buf_t("q");
+  std::vector<mem_t> Qs_compressed;
+  Qs_compressed.emplace_back(q.data(), q.size());
+
+  EXPECT_NE(coinbase::api::pve::verify_ac(base_pke, curve_id::secp256k1, ac, ac_pks, ct, Qs_compressed, label),
+            SUCCESS);
+}
+
+TEST(ApiPveAcNeg, VerifyAc_RejectsQAboveBatchCount) {
+  const toy_base_pke_t base_pke;
+  const buf_t label = buf_t("label");
+
+  const coinbase::api::access_structure_t ac = coinbase::api::access_structure_t::Threshold(
+      2, {coinbase::api::access_structure_t::leaf("p1"), coinbase::api::access_structure_t::leaf("p2"),
+          coinbase::api::access_structure_t::leaf("p3")});
+
+  const buf_t ek1 = buf_t("ek1");
+  const buf_t ek2 = buf_t("ek2");
+  const buf_t ek3 = buf_t("ek3");
+  coinbase::api::pve::leaf_keys_t ac_pks;
+  ac_pks.emplace("p1", mem_t(ek1.data(), ek1.size()));
+  ac_pks.emplace("p2", mem_t(ek2.data(), ek2.size()));
+  ac_pks.emplace("p3", mem_t(ek3.data(), ek3.size()));
+
+  const buf_t ct = ac_ciphertext_with_Q_count(2);
+  const buf_t q = buf_t("q");
+  std::vector<mem_t> Qs_compressed;
+  Qs_compressed.emplace_back(q.data(), q.size());
+
+  EXPECT_NE(coinbase::api::pve::verify_ac(base_pke, curve_id::secp256k1, ac, ac_pks, ct, Qs_compressed, label),
+            SUCCESS);
+}
+
+TEST(ApiPveAcNeg, PartialDecryptAcAttempt_RejectsQuorumCAboveLeafCount) {
+  const toy_base_pke_t base_pke;
+  const buf_t label = buf_t("label");
+
+  const coinbase::api::access_structure_t ac = coinbase::api::access_structure_t::Threshold(
+      2, {coinbase::api::access_structure_t::leaf("p1"), coinbase::api::access_structure_t::leaf("p2"),
+          coinbase::api::access_structure_t::leaf("p3")});
+
+  const buf_t ct = ac_ciphertext_with_first_quorum_c_count(4);
+  const buf_t dk = buf_t("dk1");
+  buf_t share;
+
+  EXPECT_NE(
+      coinbase::api::pve::partial_decrypt_ac_attempt(base_pke, curve_id::secp256k1, ac, ct, 0, "p1", dk, label, share),
+      SUCCESS);
+}
+
+TEST(ApiPveAcNeg, CombineAc_RejectsQuorumCAboveLeafCount) {
+  const toy_base_pke_t base_pke;
+  const buf_t label = buf_t("label");
+
+  const coinbase::api::access_structure_t ac = coinbase::api::access_structure_t::Threshold(
+      2, {coinbase::api::access_structure_t::leaf("p1"), coinbase::api::access_structure_t::leaf("p2"),
+          coinbase::api::access_structure_t::leaf("p3")});
+
+  const buf_t ct = ac_ciphertext_with_first_quorum_c_count(4);
+  const buf_t share = buf_t("share");
+  coinbase::api::pve::leaf_shares_t quorum;
+  quorum.emplace("p1", mem_t(share.data(), share.size()));
+  quorum.emplace("p2", mem_t(share.data(), share.size()));
+
+  std::vector<buf_t> xs_out;
+  EXPECT_NE(coinbase::api::pve::combine_ac(base_pke, curve_id::secp256k1, ac, ct, 0, label, quorum, xs_out), SUCCESS);
+}
+
 TEST(ApiPveAcNeg, CombineAc_InvalidCurve) {
   const toy_base_pke_t base_pke;
   const buf_t label = buf_t("label");
@@ -895,6 +1037,12 @@ TEST(ApiPveAcNeg, GetPublicKeysCompressedAc_GarbageCiphertext) {
   const std::array<uint8_t, 4> garbage = {0xDE, 0xAD, 0xBE, 0xEF};
   std::vector<buf_t> Qs;
   EXPECT_NE(coinbase::api::pve::get_public_keys_compressed_ac(mem_t(garbage.data(), 4), Qs), SUCCESS);
+}
+
+TEST(ApiPveAcNeg, GetPublicKeysCompressedAc_RejectsQuorumCAboveAccessStructureNodeLimit) {
+  const buf_t ct = ac_ciphertext_with_first_quorum_c_count(coinbase::api::detail::MAX_ACCESS_STRUCTURE_NODES + 1);
+  std::vector<buf_t> Qs;
+  EXPECT_NE(coinbase::api::pve::get_public_keys_compressed_ac(ct, Qs), SUCCESS);
 }
 
 TEST(ApiPveAcNeg, ValidateAccessStructureNodeAcceptsInvalidNodeType) {

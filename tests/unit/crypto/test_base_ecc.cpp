@@ -214,6 +214,19 @@ TEST_F(ECC, PointOctetWrappersWriteIntoCallerBuffers) {
   EXPECT_TRUE(roundtrip == point);
 }
 
+TEST_F(ECC, EmptyPointSerializationRoundTripsAndClearsDestination) {
+  const ecc_point_t empty;
+  const buf_t encoded = coinbase::ser(empty);
+
+  ecc_point_t decoded = bn_t(5) * curve_p256.generator();
+  ASSERT_TRUE(decoded.valid());
+
+  EXPECT_OK(coinbase::deser(encoded, decoded));
+  EXPECT_FALSE(decoded.valid());
+  EXPECT_FALSE(decoded.get_curve().valid());
+  EXPECT_EQ(coinbase::ser(decoded), encoded);
+}
+
 TEST_F(ECC, DetachTransfersOsslPointOwnershipUntilReattached) {
   const ecc_point_t original = bn_t(5) * curve_p256.generator();
   ecc_point_t detached_source(original);

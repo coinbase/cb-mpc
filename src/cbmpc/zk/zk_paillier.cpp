@@ -421,7 +421,14 @@ error_t two_paillier_equal_interactive_t::verify(const mod_t& q, const crypto::p
 
     MODULO(N0) H0_test *= msg2.r0_hat[i] * msg2.c0_tilde[i];
     MODULO(N1) H1_test *= msg2.r1_hat[i] * msg2.c1_tilde[i];
+  }
 
+  if (H0_test == 0) return coinbase::error(E_CRYPTO);
+  if (H1_test == 0) return coinbase::error(E_CRYPTO);
+  if (!mod_t::coprime(H0_test, N0)) return coinbase::error(E_CRYPTO);
+  if (!mod_t::coprime(H1_test, N1)) return coinbase::error(E_CRYPTO);
+
+  for (int i = 0; i < param::t; i++) {
     bn_t ei = param::get_log_alpha_bits(e, i);
     bn_t t0, t1;
     MODULO(NN0) t0 = c0.pow(ei) * msg2.c0_tilde[i];
@@ -430,11 +437,6 @@ error_t two_paillier_equal_interactive_t::verify(const mod_t& q, const crypto::p
     if (t0 != P0.encrypt(msg2.d[i], msg2.r0_hat[i])) return coinbase::error(E_CRYPTO);
     if (t1 != P1.encrypt(msg2.d[i], msg2.r1_hat[i])) return coinbase::error(E_CRYPTO);
   }
-
-  if (H0_test == 0) return coinbase::error(E_CRYPTO);
-  if (H1_test == 0) return coinbase::error(E_CRYPTO);
-  if (!mod_t::coprime(H0_test, N0)) return coinbase::error(E_CRYPTO);
-  if (!mod_t::coprime(H1_test, N1)) return coinbase::error(E_CRYPTO);
 
   c1_plaintext_range = zk_flag::verified;
   return SUCCESS;
@@ -515,7 +517,7 @@ error_t pdl_t::verify(const bn_t& c_key, const crypto::paillier_t& paillier, con
 
   if (z * G != R + e * Q1) return coinbase::error(E_CRYPTO);
 
-  if (z >= (qq + 1) << SEC_P_STAT) return coinbase::error(E_CRYPTO);
+  if (rv = coinbase::crypto::check_right_open_range(0, z, (qq + 1) << SEC_P_STAT)) return rv;
 
   crypto::paillier_t::elem_t c_z = paillier.elem(c_r) + (paillier.elem(c_key) * e);
   if (paillier.encrypt(z, r_z) != c_z.to_bn()) return coinbase::error(E_CRYPTO);

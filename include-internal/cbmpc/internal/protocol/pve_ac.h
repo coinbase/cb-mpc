@@ -24,13 +24,18 @@ class ec_pve_ac_t {
   ec_pve_ac_t() : rows(kappa) {}
 
   void convert(coinbase::converter_t& converter) {
-    converter.convert(Q, L, b);
+    convert(converter, coinbase::converter_t::MAX_CONTAINER_ELEMENTS, coinbase::converter_t::MAX_CONTAINER_ELEMENTS);
+  }
+
+  void convert(coinbase::converter_t& converter, uint32_t max_Q_elements, uint32_t max_quorum_c_elements) {
+    converter.convert_vector(Q, max_Q_elements);
+    converter.convert(L, b);
 
     for (int i = 0; i < kappa; i++) {
       converter.convert(rows[i].x_bin);
       converter.convert(rows[i].r);
       converter.convert(rows[i].c);
-      converter.convert(rows[i].quorum_c);
+      converter.convert_vector(rows[i].quorum_c, max_quorum_c_elements);
     }
   }
 

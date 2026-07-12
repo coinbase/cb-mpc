@@ -113,13 +113,23 @@ class converter_t {
 
   template <typename T>
   void convert(std::vector<T>& value) {
+    convert_vector(value, MAX_CONTAINER_ELEMENTS);
+  }
+
+  template <typename T>
+  void convert_vector(std::vector<T>& value, uint32_t max_elements) {
     if (!write) value.clear();
 
     uint32_t count = (uint32_t)value.size();
     convert_len(count);
 
     if (!write) {
-      if (count > MAX_CONTAINER_ELEMENTS) {
+      if (is_error()) return;
+      if (count > MAX_CONTAINER_ELEMENTS || count > max_elements) {
+        set_error();
+        return;
+      }
+      if (!at_least(static_cast<int>(count))) {
         set_error();
         return;
       }

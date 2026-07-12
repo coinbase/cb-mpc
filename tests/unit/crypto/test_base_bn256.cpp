@@ -22,6 +22,24 @@ bn_t wide_to_bn(const uint320_t& value) {
   return limbs_to_bn(limbs);
 }
 
+TEST(BigNumber256, LimbAddAndSubUseFullWidth) {
+  uint64_t carry = 1;
+  EXPECT_EQ(addx(0x12345678ffffffffULL, 0, carry), 0x1234567900000000ULL);
+  EXPECT_EQ(carry, 0);
+
+  carry = 0;
+  EXPECT_EQ(addx(0xffffffffffffffffULL, 1, carry), 0);
+  EXPECT_EQ(carry, 1);
+
+  uint64_t borrow = 1;
+  EXPECT_EQ(subx(0x1234567800000000ULL, 0, borrow), 0x12345677ffffffffULL);
+  EXPECT_EQ(borrow, 0);
+
+  borrow = 0;
+  EXPECT_EQ(subx(0, 1, borrow), 0xffffffffffffffffULL);
+  EXPECT_EQ(borrow, 1);
+}
+
 TEST(BigNumber256, Elementary) {
   const mod_t q = bn_t::from_string("7237005577332262213973186563042994240857116359379907606001950938285454250989");
 

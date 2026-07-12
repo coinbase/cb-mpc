@@ -262,6 +262,16 @@ TEST(CoreConvert, StringDeserializationRejectsNegativeAndTruncatedLengths) {
   }
 }
 
+TEST(CoreConvert, VectorDeserializationRejectsCountLargerThanRemainingInput) {
+  byte_t bin[] = {0x03, 0xaa, 0xbb};
+  std::vector<uint8_t> out = {0xcc};
+  converter_t converter(mem_t(bin, sizeof(bin)));
+  converter.convert(out);
+
+  EXPECT_NE(converter.get_rv(), SUCCESS);
+  EXPECT_TRUE(out.empty());
+}
+
 TEST(CoreConvert, VectorBoolRejectsNegativeCount) {
   byte_t bin[] = {0xFF, 0xFF};
   std::vector<bool> out = {true};

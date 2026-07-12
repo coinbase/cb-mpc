@@ -1,10 +1,6 @@
 #ifndef DY_PRECOMPILED_H
 #define DY_PRECOMPILED_H
 
-#ifdef __APPLE__
-#include <TargetConditionals.h>
-#endif
-
 #if defined(__x86_64__)
 #include <cpuid.h>
 #endif

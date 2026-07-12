@@ -30,8 +30,7 @@ macro(link_openssl TARGET_NAME)
     set(_cbmpc_openssl_include "${CBMPC_OPENSSL_ROOT}/include")
     set(_cbmpc_openssl_lib "${CBMPC_OPENSSL_ROOT}/lib/libcrypto.a")
   else()
-    message(STATUS "link_openssl: skipping (unsupported platform)")
-    return()
+    message(FATAL_ERROR "link_openssl: unsupported platform")
   endif()
 
   # Note: Do not hard-fail on missing OpenSSL here to keep compatibility with

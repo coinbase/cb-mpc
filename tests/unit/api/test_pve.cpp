@@ -15,6 +15,15 @@ using coinbase::mem_t;
 
 using coinbase::api::curve_id;
 
+constexpr uint32_t pve_ciphertext_version_v1 = 1;
+
+struct pve_ciphertext_blob_v1_t {
+  uint32_t version = pve_ciphertext_version_v1;
+  buf_t ct;
+
+  void convert(coinbase::converter_t& c) { c.convert(version, ct); }
+};
+
 class toy_base_pke_t final : public coinbase::api::pve::base_pke_i {
  public:
   explicit toy_base_pke_t(bool mutate) : mutate_(mutate) {}
@@ -79,6 +88,18 @@ constexpr uint32_t base_pke_key_blob_version_v1 = 1;
 enum class base_pke_key_type_v1 : uint32_t {
   rsa_oaep_2048 = 1,
   ecies_p256 = 2,
+};
+
+struct forged_rsa_ek_blob_v1_t {
+  uint32_t version = base_pke_key_blob_version_v1;
+  uint32_t key_type = static_cast<uint32_t>(base_pke_key_type_v1::rsa_oaep_2048);
+  coinbase::crypto::bn_t e, n;
+
+  void convert(coinbase::converter_t& c) {
+    c.convert(version, key_type);
+    uint8_t parts = 0x03;
+    c.convert(parts, e, n);
+  }
 };
 
 struct base_pke_dk_blob_v1_t {
@@ -441,6 +462,24 @@ TEST(ApiPveNeg, EncryptGarbageEk) {
   EXPECT_NE(coinbase::api::pve::encrypt(curve_id::secp256k1, mem_t(garbage, 4), label, x_mem, ct), SUCCESS);
 }
 
+TEST(ApiPveNeg, EncryptRejectsRsaEkWithInvalidExponent) {
+  coinbase::crypto::rsa_prv_key_t sk;
+  sk.generate(coinbase::crypto::RSA_KEY_LENGTH);
+
+  forged_rsa_ek_blob_v1_t forged_ek;
+  forged_ek.e = coinbase::crypto::bn_t(1);
+  forged_ek.n = sk.get_n();
+  const buf_t ek = coinbase::convert(forged_ek);
+
+  const buf_t label = buf_t("label");
+  std::array<uint8_t, 32> x_bytes{};
+  x_bytes[0] = 1;
+  const mem_t x_mem(x_bytes.data(), static_cast<int>(x_bytes.size()));
+  buf_t ct;
+  dylog_disable_scope_t no_log_err;
+  EXPECT_NE(coinbase::api::pve::encrypt(curve_id::secp256k1, ek, label, x_mem, ct), SUCCESS);
+}
+
 TEST(ApiPveNeg, VerifyInvalidCurve) {
   const toy_base_pke_t base_pke(/*mutate=*/false);
   const buf_t ek = buf_t("ek");
@@ -710,6 +749,37 @@ TEST(ApiPveNeg, GetPublicKeyCompressedGarbageCiphertext) {
   buf_t Q;
   dylog_disable_scope_t no_log_err;
   EXPECT_NE(coinbase::api::pve::get_public_key_compressed(mem_t(garbage, 4), Q), SUCCESS);
+}
+
+TEST(ApiPveNeg, GetPublicKeyCompressedRejectsZeroCurveQ) {
+  const toy_base_pke_t base_pke(/*mutate=*/false);
+  const buf_t ek = buf_t("ek");
+  const buf_t label = buf_t("label");
+  std::array<uint8_t, 32> x_bytes{};
+  x_bytes[0] = 1;
+  const mem_t x_mem(x_bytes.data(), static_cast<int>(x_bytes.size()));
+
+  buf_t ct;
+  ASSERT_EQ(coinbase::api::pve::encrypt(base_pke, curve_id::secp256k1, ek, label, x_mem, ct), SUCCESS);
+
+  pve_ciphertext_blob_v1_t blob;
+  ASSERT_EQ(coinbase::convert(blob, ct), SUCCESS);
+  ASSERT_EQ(blob.version, pve_ciphertext_version_v1);
+
+  const int q_body_size = coinbase::crypto::curve_secp256k1.compressed_point_bin_size();
+  ASSERT_GE(blob.ct.size(), 2 + q_body_size);
+
+  buf_t malformed_ct;
+  malformed_ct += blob.ct.range(0, 2);
+  malformed_ct[0] = 0;
+  malformed_ct[1] = 0;
+  malformed_ct += blob.ct.skip(2 + q_body_size);
+  blob.ct = malformed_ct;
+
+  const buf_t malformed = coinbase::convert(blob);
+  buf_t Q;
+  dylog_disable_scope_t no_log_err;
+  EXPECT_NE(coinbase::api::pve::get_public_key_compressed(malformed, Q), SUCCESS);
 }
 
 TEST(ApiPveNeg, GetLabelEmptyCiphertext) {

@@ -143,7 +143,7 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
     if (i == j) continue;
     if (h_gen._j != h_gen.msg) return coinbase::error(E_CRYPTO);
     if (rv = coinbase::crypto::commitment_t(sid_i._j, job.get_pid(j)).set(rho._j, c._j).open(Ei_gen._j, j)) return rv;
-    // Verifying that Ei_gen values are valid is done in the following verification function
+    if (rv = curve.check(Ei_gen._j)) return coinbase::error(rv, "ecdsa_mp: Ei_gen is not on the session curve");
     if (rv = pi_s._j.verify(Ei_gen._j, sid, peers_count + j)) return rv;
   }
   const std::vector<ecc_point_t>& E_i = Ei_gen.all_received();

@@ -8,6 +8,10 @@
 
 // All the functions have two versions: additive and ac. Additive means that the
 // sharing is additive, while ac means that the sharing is according to a given access structure.
+//
+// Security note: key blobs contain private key-share material. See
+// SECURE_USAGE.md for blob confidentiality, integrity, and trust-boundary
+// requirements.
 namespace coinbase::api::eddsa_mp {
 
 // Run the multi-party key generation protocol for EdDSA.
