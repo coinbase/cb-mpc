@@ -135,6 +135,7 @@ ecc_point_t lagrange_interpolate_exponent(const bn_t& x, const std::vector<ecc_p
 }
 
 bn_t horner_poly(const mod_t& q, const std::vector<bn_t>& a, const bn_t& x) {
+  cb_assert(!a.empty());
   int count = int(a.size());
   bn_t b = a[count - 1];
   for (int i = count - 2; i >= 0; i--) {
@@ -143,11 +144,48 @@ bn_t horner_poly(const mod_t& q, const std::vector<bn_t>& a, const bn_t& x) {
   return b;
 }
 
+bn256_t horner_poly(const mod_t& q, const std::vector<bn256_t>& a, const bn256_t& x) {
+  cb_assert(!a.empty());
+  int count = int(a.size());
+  bn256_t b = a[count - 1];
+  MODULO(q) {
+    for (int i = count - 2; i >= 0; i--) b = a[i] + b * x;
+  }
+  return b;
+}
+
 ecc_point_t horner_poly(const std::vector<ecc_point_t>& A, const bn_t& x) {
+  cb_assert(!A.empty());
   int count = int(A.size());
   ecc_point_t B = A[count - 1];
   for (int i = count - 2; i >= 0; i--) {
     B = A[i] + x * B;
+  }
+  return B;
+}
+
+static ecc_point_t small_mul_vartime(unsigned magnitude, const ecc_point_t& P) {
+  ecc_point_t doubled = P;
+  ecc_point_t result = P.get_curve().infinity();
+  while (magnitude) {
+    if (magnitude & 1U) result += doubled;
+    doubled += doubled;
+    magnitude >>= 1U;
+  }
+  return result;
+}
+
+ecc_point_t horner_poly_small_vartime(const std::vector<ecc_point_t>& A, int x) {
+  cb_assert(!A.empty());
+  const bool negative = x < 0;
+  const unsigned unsigned_x = static_cast<unsigned>(x);
+  const unsigned magnitude = negative ? 0U - unsigned_x : unsigned_x;
+
+  int count = int(A.size());
+  ecc_point_t B = A[count - 1];
+  for (int i = count - 2; i >= 0; i--) {
+    const ecc_point_t product = small_mul_vartime(magnitude, B);
+    B = negative ? A[i] - product : A[i] + product;
   }
   return B;
 }

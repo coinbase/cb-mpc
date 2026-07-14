@@ -75,28 +75,150 @@ error_t uc_dl_t::verify(const ecc_point_t& Q, mem_t session_id, uint64_t aux) co
   bn_t z_sum = 0;
   bn_t e_sum = 0;
   ecc_point_t A_sum = curve.infinity();
+  std::vector<bn_t> sigmas(rho);
 
   for (int i = 0; i < rho; i++) {
     if (rv = crypto::check_right_open_range(0, z[i], q)) return rv;
 
-    bn_t sigma = bn_t::rand_bitlen(SEC_P_STAT);
+    bn_t& sigma = sigmas[i];
+    sigma = bn_t::rand_bitlen(SEC_P_STAT);
     MODULO(q) {
       z_sum += sigma * z[i];
       e_sum += sigma * bn_t(e[i]);
     }
-    A_sum += sigma * A[i];
 
     uint32_t h = hash32bit_for_zk_fischlin(common_hash, i, e[i], z[i]) & b_mask;
     if (h != 0) return coinbase::error(E_CRYPTO, "uc_dl_t::verify: zk_fischlin hash not equal zero");
   }
 
+  A_sum = crypto::sum_mul(A, sigmas);
   if (A_sum != z_sum * G - e_sum * Q) return coinbase::error(E_CRYPTO, "uc_dl_t::verify: A != z * G - e * Q");
   return SUCCESS;
 }
 
+namespace {
+
+bn_t to_bn(const bn_t& value) { return value; }
+bn_t to_bn(const bn256_t& value) { return static_cast<bn_t>(value); }
+
+void add_mod(bn_t& result, const bn_t& a, const bn_t& b, const mod_t& q) {
+  int res = bn_mod_add_fixed_top(result, a, b, q.value());
+  cb_assert(res && "modular addition failed");
+}
+
+void add_mod(bn256_t& result, const bn256_t& a, const bn256_t& b, const mod_t& q) {
+  MODULO(q) { result = a + b; }
+}
+
+template <typename BN>
+void prove_batch_dl(uc_batch_dl_finite_difference_impl_t& proof, const std::vector<ecc_point_t>& Q,
+                    const std::vector<bn_t>& w, mem_t session_id, uint64_t aux) {
+  const int n = int(w.size());
+  std::vector<BN> r(proof.params.rho);
+  const ecurve_t curve = Q[0].get_curve();
+  const auto& G = curve.generator();
+  const mod_t& q = curve.order();
+
+  std::vector<BN> pw0 = {BN(0)};
+  std::vector<BN> pw1;
+  for (int j = 0; j < n; j++) {
+    cb_assert(q.is_in_range(w[j]) && "w[j] < q");
+    if ((j % 2) == 0)
+      pw1.push_back(BN(w[j]));
+    else
+      pw0.push_back(BN(w[j]));
+  }
+
+  const int rho = proof.params.rho;
+  proof.R.resize(rho);
+  proof.e.resize(rho);
+  proof.z.resize(rho);
+
+  buf_t common_hash;
+  BN ri, z_tag;
+
+  const int n_half = (n + 1) / 2;
+  typename uc_batch_dl_finite_difference_impl_t::matrix_sum_impl_t<BN> matrix_sum(n);
+  typename uc_batch_dl_finite_difference_impl_t::vector_sum_impl_t<BN> sum(n, proof.params.t);
+
+  for (int ei = 0; ei <= n_half; ei++) {
+    const BN ei_value(ei);
+    BN ei_square;
+    MODULO(q) { ei_square = ei_value * ei_value; }
+    const BN alpha = crypto::horner_poly(q, pw0, ei_square);
+    const BN beta = crypto::horner_poly(q, pw1, ei_square);
+    MODULO(q) {
+      const BN beta_times_ei = beta * ei_value;
+      sum[ei] = matrix_sum[ei][0] = alpha + beta_times_ei;
+      sum[-ei] = matrix_sum[-ei][0] = alpha - beta_times_ei;
+    }
+  }
+
+  int k = n_half;
+  std::vector<BN>* last = &matrix_sum[n_half];
+  std::vector<BN>* current = &matrix_sum[n_half + 1];
+
+  for (int i = 1; i <= n; i++) {
+    for (int j = n_half - i; j >= -n_half; j--)
+      MODULO(q) matrix_sum[j][i] = matrix_sum[j + 1][i - 1] - matrix_sum[j][i - 1];
+  }
+  matrix_sum[-n_half + 1][n] = matrix_sum[-n_half][n];
+  for (int j = -n_half + 2; j <= n_half; j++) {
+    matrix_sum[j][n] = matrix_sum[j - 1][n];
+    for (int i = n - 1; i >= n_half - j + 1; i--)
+      add_mod(matrix_sum[j][i], matrix_sum[j - 1][i], matrix_sum[j - 1][i + 1], q);
+  }
+
+  fischlin_prove(
+      proof.params,
+      // initialize
+      [&]() {
+        for (int i = 0; i < rho; i++) {
+          r[i] = BN::rand(q);
+          proof.R[i] = to_bn(r[i]) * G;
+        }
+        common_hash = crypto::ro::hash_string(G, Q, proof.R, session_id, aux).bitlen(2 * SEC_P_COM);
+      },
+
+      // response_begin
+      [&](int i) {
+        ri = r[i];
+        const int ei = 0 - n_half;
+        MODULO(q) { z_tag = ri + matrix_sum[ei][0]; }
+      },
+
+      // hash
+      [&](int i, int try_number) -> uint32_t {
+        const int ei = try_number - n_half;
+        return hash32bit_for_zk_fischlin(common_hash, i, ei, z_tag);
+      },
+
+      // save
+      [&](int i, int try_number) {
+        proof.e[i] = try_number - n_half;
+        proof.z[i] = to_bn(z_tag);
+      },
+
+      // response_next
+      [&](int try_number) {
+        const int ei = try_number - n_half;
+        if (ei > k) {
+          current->at(n) = last->at(n);
+          for (int i = n - 1; i >= 0; i--) add_mod(current->at(i), last->at(i), last->at(i + 1), q);
+          sum[ei] = current->at(0);
+          std::swap(current, last);
+          k++;
+        }
+        add_mod(z_tag, ri, sum[ei], q);
+      });
+}
+
+}  // namespace
+
 void uc_batch_dl_finite_difference_impl_t::prove(const std::vector<ecc_point_t>& Q, const std::vector<bn_t>& w,
                                                  mem_t session_id, uint64_t aux) {
-  int n = int(w.size());
+  cb_assert(!Q.empty() && Q.size() == w.size());
+  const int n = int(w.size());
   if (n <= 28) {
     params.rho = 43;
     params.b = 3 + int_log2(n);
@@ -106,109 +228,10 @@ void uc_batch_dl_finite_difference_impl_t::prove(const std::vector<ecc_point_t>&
   }
   params.t = params.b + 5;
 
-  std::vector<bn_t> r(params.rho);
-  ecurve_t curve = Q[0].get_curve();
-  const auto& G = curve.generator();
-  const mod_t& q = curve.order();
-
-  std::vector<bn_t> pw0;
-  pw0.push_back(0);
-  std::vector<bn_t> pw1;
-  for (int j = 0; j < n; j++) {
-    cb_assert(w[j] < q && "w[j] exceeds the order of the curve");
-    if ((j % 2) == 0)
-      pw1.push_back(w[j]);
-    else
-      pw0.push_back(w[j]);
-  }
-
-  int rho = params.rho;
-  R.resize(rho);
-  e.resize(rho);
-  z.resize(rho);
-
-  bn_t q_value = bn_t(q);
-  buf_t common_hash;
-  bn_t ri, z_tag;
-
-  int n_half = (n + 1) / 2;
-  matrix_sum_t matrix_sum(n);
-  vector_sum_t sum(n, params.t);
-
-  for (int ei = 0; ei <= n_half; ei++) {
-    bn_t ei_square = ei * ei;
-    bn_t alpha = crypto::horner_poly(q, pw0, ei_square);
-    bn_t beta = crypto::horner_poly(q, pw1, ei_square);
-    MODULO(q) {
-      sum[ei] = matrix_sum[ei][0] = alpha + beta * ei;    // for positive
-      sum[-ei] = matrix_sum[-ei][0] = alpha - beta * ei;  // for negative
-    }
-  }
-  int k = n_half;
-  std::vector<bn_t>* last = &matrix_sum[n_half];
-  std::vector<bn_t>* current = &matrix_sum[n_half + 1];
-
-  for (int i = 1; i <= n; i++) {
-    for (int j = n_half - i; j >= -n_half; j--)
-      MODULO(q) matrix_sum[j][i] = matrix_sum[j + 1][i - 1] - matrix_sum[j][i - 1];
-  }
-  matrix_sum[-n_half + 1][n] = matrix_sum[-n_half][n];
-  for (int j = -n_half + 2; j <= n_half; j++) {
-    matrix_sum[j][n] = matrix_sum[j - 1][n];
-    for (int i = n - 1; i >= n_half - j + 1; i--) {
-      int res = bn_mod_add_fixed_top(matrix_sum[j][i], matrix_sum[j - 1][i], matrix_sum[j - 1][i + 1], q_value);
-      cb_assert(res && "matrix_sum[j][i] = matrix_sum[j - 1][i] + matrix_sum[j - 1][i + 1] (mod q) failed");
-    }
-  }
-
-  fischlin_prove(
-      params,
-      // initialize
-      [&]() {
-        for (int i = 0; i < rho; i++) {
-          r[i] = bn_t::rand(q);
-          R[i] = r[i] * G;
-        }
-        common_hash = crypto::ro::hash_string(G, Q, R, session_id, aux).bitlen(2 * SEC_P_COM);
-      },
-
-      // response_begin
-      [&](int i) {
-        ri = r[i];
-        int32_t ei = 0 - n_half;
-        MODULO(q) { z_tag = ri + matrix_sum[ei][0]; }
-      },
-
-      // hash
-      [&](int i, int try_number) -> uint32_t {
-        int ei = try_number - n_half;
-        return hash32bit_for_zk_fischlin(common_hash, i, ei, z_tag);
-      },
-
-      // save
-      [&](int i, int try_number) {
-        int ei = try_number - n_half;
-        e[i] = ei;
-        z[i] = z_tag;
-      },
-
-      // response_next
-      [&](int try_number) {
-        int ei = try_number - n_half;
-        if (ei > k) {
-          current->at(n) = last->at(n);
-          for (int i = n - 1; i >= 0; i--) {
-            int res = bn_mod_add_fixed_top(current->at(i), last->at(i), last->at(i + 1), q_value);
-            cb_assert(res);
-          }
-          sum[ei] = current->at(0);
-          std::swap(current, last);
-          k++;
-        }
-
-        int res = bn_mod_add_fixed_top(z_tag, ri, sum[ei], q_value);
-        cb_assert(res && "z' = z' + sum[ei] (mod q) failed");
-      });
+  if (Q[0].get_curve().order().get_bin_size() == 32)
+    prove_batch_dl<bn256_t>(*this, Q, w, session_id, aux);
+  else
+    prove_batch_dl<bn_t>(*this, Q, w, session_id, aux);
 }
 
 error_t uc_batch_dl_finite_difference_impl_t::verify(const std::vector<ecc_point_t>& Q, mem_t session_id,
@@ -250,10 +273,7 @@ error_t uc_batch_dl_finite_difference_impl_t::verify(const std::vector<ecc_point
   for (int i = 0; i < rho; i++) {
     if (rv = crypto::check_right_open_range(0, z[i], q)) return rv;
 
-    bn_t ei = e[i];
-    if (ei < 0) ei += q;
-
-    ecc_point_t R_test = z[i] * G - crypto::horner_poly(PQ, ei);
+    ecc_point_t R_test = z[i] * G - crypto::horner_poly_small_vartime(PQ, e[i]);
     if (R[i] != R_test)
       return coinbase::error(E_CRYPTO, "uc_batch_dl_finite_difference_impl_t::verify: R[i] does not match");
 

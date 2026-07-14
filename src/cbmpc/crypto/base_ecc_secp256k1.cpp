@@ -86,6 +86,10 @@ ecurve_secp256k1_t::ecurve_secp256k1_t() noexcept {
 
   secp256k1_gej_set_ge(&G, &secp256k1_ge_const_g);
   secp256k1_ecmult_gen_context_build(&secp256k1_ecmult_gen_ctx);
+  byte_t blind_seed[32];
+  gen_random(blind_seed, sizeof(blind_seed));
+  secp256k1_ecmult_gen_blind(&secp256k1_ecmult_gen_ctx, blind_seed);
+  secure_bzero(blind_seed);
 }
 
 const mod_t& ecurve_secp256k1_t::order() const { return q; }
@@ -151,8 +155,11 @@ void ecurve_secp256k1_t::invert_point(ecc_point_t& P) const {
 }
 
 void ecurve_secp256k1_t::add(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const {
-  secp256k1_gej_add_var((secp256k1_gej*)R.secp256k1, (const secp256k1_gej*)P1.secp256k1,
-                        (const secp256k1_gej*)P2.secp256k1, nullptr);
+  if (P1.secp256k1 == P2.secp256k1)
+    secp256k1_gej_double_var((secp256k1_gej*)R.secp256k1, (const secp256k1_gej*)P1.secp256k1, nullptr);
+  else
+    secp256k1_gej_add_var((secp256k1_gej*)R.secp256k1, (const secp256k1_gej*)P1.secp256k1,
+                          (const secp256k1_gej*)P2.secp256k1, nullptr);
 }
 
 void ecurve_secp256k1_t::add_consttime(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const {
@@ -252,6 +259,7 @@ void ecurve_secp256k1_t::mul_to_generator(const bn_t& x, ecc_point_t& P) const {
 
 int ecurve_secp256k1_t::to_compressed_bin(const ecc_point_t& P, byte_ptr out) const {
   if (out) {
+    memset(out, 0, 33);
     size_t size = 0;
     secp256k1_ge ge = secp256k1_gej_to_ge((const secp256k1_gej*)P.secp256k1);
     secp256k1_eckey_pubkey_serialize(&ge, out, &size, 1);
@@ -261,6 +269,7 @@ int ecurve_secp256k1_t::to_compressed_bin(const ecc_point_t& P, byte_ptr out) co
 
 int ecurve_secp256k1_t::to_bin(const ecc_point_t& P, byte_ptr out) const {
   if (out) {
+    memset(out, 0, 65);
     size_t size = 0;
     secp256k1_ge ge = secp256k1_gej_to_ge((const secp256k1_gej*)P.secp256k1);
     secp256k1_eckey_pubkey_serialize(&ge, out, &size, 0);
@@ -328,7 +337,7 @@ bool ecurve_secp256k1_t::hash_to_point(mem_t bin, ecc_point_t& Q) const {
 }
 
 static EC_POINT* to_ossl_point(const EC_GROUP* group, secp256k1::point_ptr_t ptr) {
-  byte_t bin[65];
+  byte_t bin[65] = {0};
 
   size_t size = 0;
   secp256k1_ge ge = secp256k1_gej_to_ge((const secp256k1_gej*)ptr);

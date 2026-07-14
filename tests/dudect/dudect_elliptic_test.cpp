@@ -2,6 +2,8 @@
 
 #define DUDECT_IMPLEMENTATION
 
+#include <cbmpc/internal/zk/zk_ec.h>
+
 #include "dudect_util/dudect_implementation.h"
 namespace coinbase::dudect {
 
@@ -26,6 +28,16 @@ static int secret_scalar_bitlen;
 static ecc_point_t ecc_pt_arr[NUMBER_MEASUREMENTS * NUMBER_OPERANDS];
 static bn_t bn_arr[NUMBER_MEASUREMENTS * NUMBER_OPERANDS];
 
+static constexpr int BATCH_SIZE = 4;
+static std::vector<ecc_point_t> batch_points[NUMBER_MEASUREMENTS * NUMBER_OPERANDS];
+static std::vector<bn_t> batch_witnesses[NUMBER_MEASUREMENTS * NUMBER_OPERANDS];
+static buf_t batch_sids[NUMBER_MEASUREMENTS * NUMBER_OPERANDS];
+static uint64_t batch_aux[NUMBER_MEASUREMENTS * NUMBER_OPERANDS];
+static std::vector<ecc_point_t> base_batch_points;
+static std::vector<bn_t> base_batch_witnesses;
+static buf_t base_batch_sid;
+static uint64_t base_batch_aux;
+
 static bn_t rand_min_bitlen(const mod_t& q, int bits) {
   cb_assert(bits > 192);
   cb_assert(bits <= q.get_bits_count());
@@ -47,6 +59,28 @@ void generate_ecc_array(uint8_t c, uint16_t idx) {
 
     bn_arr[start_idx] = denormalize(base_bn, q);
     bn_arr[start_idx + 1] = denormalize(base_bn, q);
+  }
+}
+
+void generate_batch_dl_array(uint8_t c, uint16_t idx) {
+  const uint16_t start_idx = NUMBER_OPERANDS * idx;
+  for (int operand = 0; operand < NUMBER_OPERANDS; operand++) {
+    const uint16_t output_idx = start_idx + operand;
+    if (c == 1) {
+      batch_points[output_idx].resize(BATCH_SIZE);
+      batch_witnesses[output_idx].resize(BATCH_SIZE);
+      for (int i = 0; i < BATCH_SIZE; i++) {
+        batch_witnesses[output_idx][i] = bn_t::rand(q);
+        batch_points[output_idx][i] = batch_witnesses[output_idx][i] * G;
+      }
+      batch_sids[output_idx] = crypto::gen_random(16);
+      batch_aux[output_idx] = crypto::gen_random_int<uint64_t>();
+    } else {
+      batch_points[output_idx] = base_batch_points;
+      batch_witnesses[output_idx] = base_batch_witnesses;
+      batch_sids[output_idx] = base_batch_sid;
+      batch_aux[output_idx] = base_batch_aux;
+    }
   }
 }
 
@@ -76,17 +110,29 @@ uint8_t test_muladd(uint8_t* data) {
   curve.mul_add(bn_arr[start_idx], P, bn_arr[start_idx + 1]);
   return 0;
 }
-static void run_dudect_leakage_test(dudect_state_t expected_state, uint16_t baseline_bitlen) {
-  input_generator = generate_ecc_array;
 
-  G = curve.generator();
-  q = curve.order();
-  secret_scalar_bitlen = baseline_bitlen;
-  small_q = mod_t(bn_t::generate_prime(baseline_bitlen, true), /* multiplicative_dense */ true);
-  P = curve.mul_to_generator(rand_min_bitlen(q, secret_scalar_bitlen));
-  base_bn = rand_min_bitlen(small_q, secret_scalar_bitlen);
-  ecc_pt_base_a = curve.mul_to_generator(rand_min_bitlen(small_q, secret_scalar_bitlen));
-  ecc_pt_base_b = curve.mul_to_generator(rand_min_bitlen(small_q, secret_scalar_bitlen));
+uint8_t test_batch_dl_prove(uint8_t* data) {
+  static zk::uc_batch_dl_t proof;
+  const uint16_t start_idx = get_start_idx(data, NUMBER_OPERANDS);
+  proof.prove(batch_points[start_idx], batch_witnesses[start_idx], batch_sids[start_idx], batch_aux[start_idx]);
+  return 0;
+}
+
+static void run_dudect_leakage_test(dudect_state_t expected_state, uint16_t baseline_bitlen,
+                                    void (*generator)(uint8_t, uint16_t) = generate_ecc_array,
+                                    bool initialize_ecc_inputs = true) {
+  input_generator = generator;
+
+  if (initialize_ecc_inputs) {
+    G = curve.generator();
+    q = curve.order();
+    secret_scalar_bitlen = baseline_bitlen;
+    small_q = mod_t(bn_t::generate_prime(baseline_bitlen, true), /* multiplicative_dense */ true);
+    P = curve.mul_to_generator(rand_min_bitlen(q, secret_scalar_bitlen));
+    base_bn = rand_min_bitlen(small_q, secret_scalar_bitlen);
+    ecc_pt_base_a = curve.mul_to_generator(rand_min_bitlen(small_q, secret_scalar_bitlen));
+    ecc_pt_base_b = curve.mul_to_generator(rand_min_bitlen(small_q, secret_scalar_bitlen));
+  }
 
   dudect_config_t config = {
       .chunk_size = SECRET_LEN_BYTES,
@@ -178,5 +224,22 @@ TEST(DUDECT_CT_ECC, Ed25519MulAdd) {
   curve = coinbase::crypto::curve_ed25519;
   active_funct = test_muladd;
   run_dudect_leakage_test(DUDECT_NO_LEAKAGE_EVIDENCE_YET, 200);
+}
+
+TEST(DUDECT_CT_ZK, BatchDLProve) {
+  curve = coinbase::crypto::curve_secp256k1;
+  G = curve.generator();
+  q = curve.order();
+  base_batch_points.resize(BATCH_SIZE);
+  base_batch_witnesses.resize(BATCH_SIZE);
+  for (int i = 0; i < BATCH_SIZE; i++) {
+    base_batch_witnesses[i] = bn_t::rand(q);
+    base_batch_points[i] = base_batch_witnesses[i] * G;
+  }
+  base_batch_sid = crypto::gen_random(16);
+  base_batch_aux = crypto::gen_random_int<uint64_t>();
+
+  active_funct = test_batch_dl_prove;
+  run_dudect_leakage_test(DUDECT_NO_LEAKAGE_EVIDENCE_YET, 200, generate_batch_dl_array, false);
 }
 }  // namespace coinbase::dudect

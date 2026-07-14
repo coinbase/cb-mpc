@@ -265,6 +265,9 @@ class ecc_generator_point_t : public ecc_point_t {
 ecc_point_t operator*(const bn_t& x, const ecc_point_t& X);
 ecc_point_t operator*(const bn_t& x, const ecc_generator_point_t& X);
 
+// Variable-time multi-scalar multiplication for non-secret verifier inputs.
+ecc_point_t sum_mul(const std::vector<ecc_point_t>& points, const std::vector<bn_t>& scalars);
+
 struct sig_with_pub_key_t {
   ecc_point_t Q;
   buf_t sig;

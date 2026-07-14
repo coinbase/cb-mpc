@@ -167,6 +167,10 @@ TEST(ZKVerifierRejection, UCBatchDLRejectsMalformedAndTamperedTranscripts) {
   out_of_range_z.z[0] = proof.q;
   EXPECT_ER(out_of_range_z.verify(proof.Qs, proof.sid, proof.aux));
 
+  auto extreme_challenge = proof.zk;
+  extreme_challenge.e[0] = std::numeric_limits<int>::min();
+  EXPECT_ER(extreme_challenge.verify(proof.Qs, proof.sid, proof.aux));
+
   EXPECT_ER(proof.zk.verify({}, proof.sid, proof.aux));
 }
 
@@ -571,6 +575,50 @@ TEST(UCZKBatchDLHelpers, ConstAccessPreservesSignedOffsets) {
   EXPECT_EQ(const_vector[-2], bn_t(19));
   EXPECT_EQ(const_vector[0], bn_t(23));
   EXPECT_EQ(const_vector[2], bn_t(29));
+}
+
+TEST(UCZKBatchDLHelpers, Bn256FischlinHashMatchesLengthPrefixedBigNumberEncoding) {
+  coinbase::buf_t common_hash(32);
+  for (int i = 0; i < common_hash.size(); i++) common_hash[i] = uint8_t(i);
+  constexpr int index = 0x01020304;
+  constexpr int challenge = -2;
+
+  auto check_single = [&](const bn_t& value, uint32_t expected) {
+    bn_t value_bn = value;
+    bn256_t value_bn256(value);
+    EXPECT_EQ(coinbase::zk::hash32bit_for_zk_fischlin(common_hash, index, challenge, value_bn), expected);
+    EXPECT_EQ(coinbase::zk::hash32bit_for_zk_fischlin(common_hash, index, challenge, value_bn256), expected);
+  };
+
+  check_single(bn_t(0), 0x481dfcfdU);
+  check_single(bn_t(1), 0x12b8ea6dU);
+  check_single(bn_t(0x100), 0xa726b981U);
+  check_single((bn_t(1) << 256) - 1, 0x55c618dfU);
+
+  bn_t one = 1;
+  bn_t two = 2;
+  bn256_t one256(one);
+  bn256_t two256(two);
+  EXPECT_EQ(coinbase::zk::hash32bit_for_zk_fischlin(common_hash, index, challenge, one, two), 0xf837d0cfU);
+  EXPECT_EQ(coinbase::zk::hash32bit_for_zk_fischlin(common_hash, index, challenge, one256, two256), 0xf837d0cfU);
+
+  bn_t one_two = 0x0102;
+  bn_t zero = 0;
+  bn256_t one_two256(one_two);
+  bn256_t zero256(zero);
+  EXPECT_EQ(coinbase::zk::hash32bit_for_zk_fischlin(common_hash, index, challenge, one_two, zero), 0x60b39751U);
+  EXPECT_EQ(coinbase::zk::hash32bit_for_zk_fischlin(common_hash, index, challenge, one_two256, zero256), 0x60b39751U);
+}
+
+TEST(UCZKBatchDLHelpers, BoundarySizesUseOptimizedAndWideFallbackArithmetic) {
+  for (const ecurve_t& curve : {curve_p256, curve_p384, curve_p521, curve_secp256k1, curve_ed25519}) {
+    for (int size : {28, 29}) {
+      test_niuc_batch_dl_t proof(curve, size);
+      proof.setup();
+      proof.prove();
+      ASSERT_OK(proof.verify());
+    }
+  }
 }
 
 TEST(FischlinParams, RejectsB31ToPreventUB) {

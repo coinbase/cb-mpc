@@ -603,6 +603,7 @@ error_t ecurve_t::check(const ecc_point_t& point) const {
 void ecurve_t::convert(coinbase::converter_t& converter) {
   uint16_t curve_code = ptr ? ptr->openssl_code : 0;
   converter.convert(curve_code);
+  if (converter.is_error()) return;
   if (curve_code) {
     ecurve_t curve = ecurve_t::find(curve_code);
     if (!curve) {
@@ -610,8 +611,12 @@ void ecurve_t::convert(coinbase::converter_t& converter) {
       return;
     }
     ptr = curve.ptr;
-  } else
+  } else if (converter.is_write()) {
     ptr = nullptr;
+  } else {
+    converter.set_error();
+    return;
+  }
 }
 
 ecc_point_t ecurve_t::infinity() const {
@@ -890,6 +895,47 @@ ecc_point_t operator-(const ecc_point_t& val1, const ecc_point_t& val2) { return
 ecc_point_t operator*(const bn_t& val1, const ecc_point_t& val2) { return ecc_point_t::mul(val2, val1); }
 
 ecc_point_t operator*(const bn_t& val1, const ecc_generator_point_t& val2) { return val2.curve.mul_to_generator(val1); }
+
+ecc_point_t sum_mul(const std::vector<ecc_point_t>& points, const std::vector<bn_t>& scalars) {
+  cb_assert(!points.empty());
+  cb_assert(points.size() == scalars.size());
+
+  const ecurve_t curve = points[0].get_curve();
+  for (const ecc_point_t& point : points)
+    cb_assert(point.valid() && point.get_curve() == curve && "sum_mul: point curve mismatch");
+
+  ecc_point_t result = curve.infinity();
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
+  if (curve == curve_p256) {
+    std::vector<const EC_POINT*> point_ptrs(points.size());
+    std::vector<const BIGNUM*> scalar_ptrs(scalars.size());
+    for (size_t i = 0; i < points.size(); i++) {
+      point_ptrs[i] = points[i];
+      scalar_ptrs[i] = scalars[i];
+    }
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+    const int res = EC_POINTs_mul(curve.get_group(), result, nullptr, points.size(), point_ptrs.data(),
+                                  scalar_ptrs.data(), bn_t::thread_local_storage_bn_ctx());
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+    cb_assert(res > 0 && "EC_POINTs_mul failed");
+    return result;
+  }
+#endif
+
+  for (size_t i = 0; i < points.size(); i++) result += scalars[i] * points[i];
+  return result;
+}
 
 ecc_point_t& ecc_point_t::operator+=(const ecc_point_t& val) {
   if (is_consttime_point_add_scope()) {

@@ -30,8 +30,7 @@ void mod_t::convert(coinbase::converter_t& converter) {
   }
 }
 
-mod_t::mod_t(const mod_t& src)
-    : m(src.m), mu(src.mu), b_pow_k_plus1(src.b_pow_k_plus1), multiplicative_dense(src.multiplicative_dense) {
+mod_t::mod_t(const mod_t& src) : m(src.m), mu(src.mu), multiplicative_dense(src.multiplicative_dense) {
   if (src.mont) {
     mont = BN_MONT_CTX_new();
     if (!mont) throw std::bad_alloc();
@@ -42,11 +41,7 @@ mod_t::mod_t(const mod_t& src)
 }
 
 mod_t::mod_t(mod_t&& src)
-    : m(std::move(src.m)),
-      mu(std::move(src.mu)),
-      b_pow_k_plus1(std::move(src.b_pow_k_plus1)),
-      mont(src.mont),
-      multiplicative_dense(src.multiplicative_dense) {
+    : m(std::move(src.m)), mu(std::move(src.mu)), mont(src.mont), multiplicative_dense(src.multiplicative_dense) {
   src.mont = nullptr;
 }
 
@@ -64,7 +59,6 @@ mod_t& mod_t::operator=(const mod_t& src) {
     }
     m = src.m;
     mu = src.mu;
-    b_pow_k_plus1 = src.b_pow_k_plus1;
     multiplicative_dense = src.multiplicative_dense;
   }
   return *this;
@@ -77,7 +71,6 @@ mod_t& mod_t::operator=(mod_t&& src) {
     src.mont = nullptr;
     m = std::move(src.m);
     mu = std::move(src.mu);
-    b_pow_k_plus1 = std::move(src.b_pow_k_plus1);
     multiplicative_dense = src.multiplicative_dense;
   }
   return *this;
@@ -418,9 +411,8 @@ void mod_t::init(const bn_t& m) {
 
   // barrett
   int k = (m.get_bits_count() + 63) / 64;
-  bn_t b_pow_2k = bn_t(1).mul_2_pow(2 * k * 64);    // b^{2k}
-  mu = b_pow_2k / m;                                // µ = ⌊b^{2k} / m⌋
-  b_pow_k_plus1 = bn_t(1).mul_2_pow((k + 1) * 64);  // b^{k+1}
+  bn_t b_pow_2k = bn_t(1).mul_2_pow(2 * k * 64);  // b^{2k}
+  mu = b_pow_2k / m;                              // µ = ⌊b^{2k} / m⌋
 }
 
 static void barrett_partial_mul(int ResultLength, BN_ULONG r[], int M, const BN_ULONG u[], int N, const BN_ULONG v[]) {

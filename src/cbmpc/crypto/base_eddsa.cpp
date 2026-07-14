@@ -117,7 +117,6 @@ bool ecurve_ed_t::cnd_copy_point(bool flag, const ecc_point_t& Src, ecc_point_t&
 bool ecurve_ed_t::is_on_curve(const ecc_point_t& P) const { return ec25519_core::is_on_curve(P.storage); }
 
 bool ecurve_ed_t::is_in_subgroup(const ecc_point_t& P) const {
-  // NOTE: There is a more efficient way to check: https://eprint.iacr.org/2022/1164.pdf
   if (!is_on_curve(P)) return false;
   return ec25519_core::is_in_subgroup(P.storage);
 }
@@ -133,7 +132,10 @@ bool ecurve_ed_t::equ_points(const ecc_point_t& P1, const ecc_point_t& P2) const
 }
 
 void ecurve_ed_t::add(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const {
-  ec25519_core::add(R.storage, P1.storage, P2.storage);
+  if (P1.storage == P2.storage)
+    ec25519_core::dbl(R.storage, P1.storage);
+  else
+    ec25519_core::add(R.storage, P1.storage, P2.storage);
 }
 
 void ecurve_ed_t::add_consttime(const ecc_point_t& P1, const ecc_point_t& P2, ecc_point_t& R) const {

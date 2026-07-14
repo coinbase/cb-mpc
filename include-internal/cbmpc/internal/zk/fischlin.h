@@ -1,12 +1,30 @@
 #pragma once
 
 #include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_bn256.h>
 #include <cbmpc/internal/crypto/ro.h>
 
 namespace coinbase::zk {
 
 // Variadic template function to serialize all bn_t objects and update the SHA256 context
 inline void sha256_update_zs(EVP_MD_CTX* ctx) {}
+
+template <typename... REST>
+void sha256_update_zs(EVP_MD_CTX* ctx, const bn256_t& first, REST&... rest) {
+  byte_t temp[32];
+  first.to_bin(temp);
+  int offset = 0;
+  while (offset < int(sizeof(temp)) && temp[offset] == 0) offset++;
+  const int len = int(sizeof(temp)) - offset;
+
+  byte_t len_be[4];
+  coinbase::be_set_4(len_be, uint32_t(len));
+  EVP_DigestUpdate(ctx, len_be, sizeof(len_be));
+  EVP_DigestUpdate(ctx, temp + offset, len);
+
+  sha256_update_zs(ctx, rest...);
+}
+
 template <typename... REST>
 void sha256_update_zs(EVP_MD_CTX* ctx, const bn_t& first, REST&... rest) {
   alignas(64) byte_t temp[256];
