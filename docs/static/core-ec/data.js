@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783850524399,
+  "lastUpdate": 1784129931074,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -3528,6 +3528,138 @@ window.BENCHMARK_DATA = {
             "value": 65.87875129484081,
             "unit": "us/iter",
             "extra": "iterations: 10619\ncpu: 65.87315086166302 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "490d4c20e7cec3982417d398de162b1ad4a2e22e",
+          "message": "feat: harden crypto/ZK/protocol primitives and expand test coverage (#123)\n\nCrypto:\n- add bn_t::jacobi and variable-time sum_mul (multi-scalar mul)\n- validate ecurve_t serialization and zero-fill secp256k1 point buffers\n- blind the secp256k1 ecmult gen context and handle equal-point doubling in secp256k1/ed25519 point addition\n- replace ed25519 is_in_subgroup with the point-halving test (eprint 2022/1164) and add fe half/sqrt helpers\n- drop the unused mod_t::b_pow_k_plus1 Barrett field\n- add horner_poly bn256_t and small-scalar variable-time variants\n\nZK:\n- template uc_batch_dl over bn_t/bn256_t so ed25519 uses bn256 arithmetic\n- add bn256_t support to Fischlin transcript hashing\n- use sum_mul in uc_dl verification\n\nProtocol:\n- reject non-positive bitlen in agree_random\n- validate contribution sizes in generate_sid_fixed_mp\n- check curve membership before hashing in the ECDSA-2PC ZK verify",
+          "timestamp": "2026-07-15T08:01:28-07:00",
+          "tree_id": "3240785428af1d0726825fae5bb83494491fec21",
+          "url": "https://github.com/coinbase/cb-mpc/commit/490d4c20e7cec3982417d398de162b1ad4a2e22e"
+        },
+        "date": 1784129930344,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.32540379573909944,
+            "unit": "us/iter",
+            "extra": "iterations: 2150622\ncpu: 0.3253713479170212 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.33663712531402346,
+            "unit": "us/iter",
+            "extra": "iterations: 2072936\ncpu: 0.3366123295654086 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/SelfAdd/secp256k1",
+            "value": 0.13998452387632243,
+            "unit": "us/iter",
+            "extra": "iterations: 5007197\ncpu: 0.13996234420175607 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/SelfAdd/Ed25519",
+            "value": 0.1751219724559171,
+            "unit": "us/iter",
+            "extra": "iterations: 3985326\ncpu: 0.1751028272216627 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 3.1361262464726116,
+            "unit": "us/iter",
+            "extra": "iterations: 223230\ncpu: 3.135495484477894 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.33159483497151593,
+            "unit": "us/iter",
+            "extra": "iterations: 2082428\ncpu: 0.331559836882716 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 39.98769214498164,
+            "unit": "us/iter",
+            "extra": "iterations: 17492\ncpu: 39.98231077063801 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 62.620559276448404,
+            "unit": "us/iter",
+            "extra": "iterations: 10780\ncpu: 62.61296196660488 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 29.573051276619896,
+            "unit": "us/iter",
+            "extra": "iterations: 23617\ncpu: 29.567563450057154 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 57.943166473322634,
+            "unit": "us/iter",
+            "extra": "iterations: 12068\ncpu: 57.936632830626415 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 17.06230576416751,
+            "unit": "us/iter",
+            "extra": "iterations: 41012\ncpu: 17.06055588608215 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.731110170917187,
+            "unit": "us/iter",
+            "extra": "iterations: 47626\ncpu: 14.729709360433372 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 17.078312153821916,
+            "unit": "us/iter",
+            "extra": "iterations: 40983\ncpu: 17.077272991240243 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.0538830519381825,
+            "unit": "us/iter",
+            "extra": "iterations: 99386\ncpu: 7.0533467691626575 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 60.29256092091591,
+            "unit": "us/iter",
+            "extra": "iterations: 11597\ncpu: 60.283627748555624 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 77.66586445380645,
+            "unit": "us/iter",
+            "extra": "iterations: 9008\ncpu: 77.65536423179387 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/secp256k1",
+            "value": 2.9133906179727846,
+            "unit": "us/iter",
+            "extra": "iterations: 240140\ncpu: 2.913162538519191 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/Ed25519",
+            "value": 32.0092281770946,
+            "unit": "us/iter",
+            "extra": "iterations: 22316\ncpu: 32.00638994443449 us\nthreads: 1"
           }
         ]
       }
