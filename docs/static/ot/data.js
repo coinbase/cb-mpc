@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783850533138,
+  "lastUpdate": 1784129942888,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1428,6 +1428,48 @@ window.BENCHMARK_DATA = {
             "value": 13884.04617647015,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13883.334156862746 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "490d4c20e7cec3982417d398de162b1ad4a2e22e",
+          "message": "feat: harden crypto/ZK/protocol primitives and expand test coverage (#123)\n\nCrypto:\n- add bn_t::jacobi and variable-time sum_mul (multi-scalar mul)\n- validate ecurve_t serialization and zero-fill secp256k1 point buffers\n- blind the secp256k1 ecmult gen context and handle equal-point doubling in secp256k1/ed25519 point addition\n- replace ed25519 is_in_subgroup with the point-halving test (eprint 2022/1164) and add fe half/sqrt helpers\n- drop the unused mod_t::b_pow_k_plus1 Barrett field\n- add horner_poly bn256_t and small-scalar variable-time variants\n\nZK:\n- template uc_batch_dl over bn_t/bn256_t so ed25519 uses bn256 arithmetic\n- add bn256_t support to Fischlin transcript hashing\n- use sum_mul in uc_dl verification\n\nProtocol:\n- reject non-positive bitlen in agree_random\n- validate contribution sizes in generate_sid_fixed_mp\n- check curve membership before hashing in the ECDSA-2PC ZK verify",
+          "timestamp": "2026-07-15T08:01:28-07:00",
+          "tree_id": "3240785428af1d0726825fae5bb83494491fec21",
+          "url": "https://github.com/coinbase/cb-mpc/commit/490d4c20e7cec3982417d398de162b1ad4a2e22e"
+        },
+        "date": 1784129941798,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24089.79924136694,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24088.607689655175 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 103864.8035714037,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 103859.78771428569 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13852.970620000633,
+            "unit": "us/iter",
+            "extra": "iterations: 50\ncpu: 13851.589219999996 us\nthreads: 1"
           }
         ]
       }
