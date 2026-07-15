@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cbmpc/internal/core/convert.h>
 #include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/crypto/base_ecc.h>
 #include <cbmpc/internal/protocol/ecdsa_2p.h>
@@ -295,6 +296,96 @@ TEST_F(ECDSA2PC, Integer_Commit) {
   zk.prove(paillier, c_key_tag, pai_c, Q2, R2, m, r, k2, x2, rho, rc, sid, 0);
   rv = zk.verify(curve, paillier, c_key_tag, pai_c, Q2, R2, m, r, sid, 0);
   ASSERT_EQ(rv, 0);
+}
+
+// ---------------------------------------------------------------------------
+// Security regression test: null-curve ecc_point_t deserialization DoS.
+//
+// During ECDSA-2PC signing, P2 sends P1 the ZK proof
+// `zk_ecdsa_sign_2pc_integer_commit_t` (via job_2p_t::p2_to_p1 -> receive ->
+// deser). Previously, a malicious P2 could serialize one of the proof's
+// ecc_point_t fields (here `G_tag`) with curve_code == 0x0000. The decoder
+// accepted that sentinel on the read path and produced an ecc_point_t whose
+// curve pointer was null.
+//
+// `zk_ecdsa_sign_2pc_integer_commit_t::verify()` also fed `G_tag` into
+// `crypto::ro::hash_string(...)` before `curve.check(G_tag)`, so an in-memory
+// null-curve proof object could dereference the null curve pointer before
+// validation.
+//
+// The regression checks both defenses:
+//   1. verify() validates proof points before hashing them,
+//   2. deserialization rejects curve_code == 0 for an ecc_point_t field.
+TEST_F(ECDSA2PC, Integer_Commit_NullCurvePoint_Rejected) {
+  ecurve_t curve = coinbase::crypto::curve_secp256k1;
+  ecc_point_t G = curve.generator();
+  const mod_t& q = curve.order();
+
+  bn_t m = bn_t::rand(q);
+
+  crypto::paillier_t paillier;
+  paillier.generate();
+  const mod_t& N = paillier.get_N();
+
+  bn_t x1 = bn_t::rand(q);
+  bn_t x2 = bn_t::rand(q);
+
+  bn_t k1 = curve.get_random_value();
+  bn_t k2 = curve.get_random_value();
+  bn_t k2_inv = q.inv(k2, mod_t::inv_algo_e::RandomMasking);
+
+  ecc_point_t Q1 = x1 * G;
+  ecc_point_t Q2 = x2 * G;
+
+  ecc_point_t R1 = k1 * G;
+  ecc_point_t R2 = k2 * G;
+
+  ecc_point_t R = R1 + R2;
+  bn_t r = R.get_x() % q;
+
+  bn_t r_key = bn_t::rand(N);
+  bn_t c_key = paillier.encrypt(x1, r_key);
+
+  bn_t rho = bn_t::rand((q * q) << (SEC_P_STAT * 2));
+
+  bn_t temp;
+  MODULO(q) temp = k2_inv * x2;
+  temp = k2_inv * m + temp * r + rho * q;
+  bn_t rc = bn_t::rand(N);
+  ASSERT_EQ(mod_t::coprime(rc, N), 1);
+  auto c_tag = paillier.enc(temp, rc);
+
+  crypto::paillier_t::rerand_scope_t paillier_rerand(crypto::paillier_t::rerand_e::off);
+  crypto::paillier_t::elem_t c_key_tag = paillier.elem(c_key) + (q << SEC_P_STAT);
+  crypto::paillier_t::elem_t pai_c = c_key_tag * (k2_inv * r) + c_tag;
+
+  buf_t sid = coinbase::crypto::gen_random_bitlen(SEC_P_COM);
+
+  zk_ecdsa_sign_2pc_integer_commit_t zk;
+  zk.prove(paillier, c_key_tag, pai_c, Q2, R2, m, r, k2, x2, rho, rc, sid, 0);
+
+  // Baseline: the honest, untampered proof verifies successfully.
+  ASSERT_EQ(zk.verify(curve, paillier, c_key_tag, pai_c, Q2, R2, m, r, sid, 0), SUCCESS);
+
+  // Malicious P2 replaces G_tag with a null-curve point.
+  zk.G_tag = ecc_point_t();
+  ASSERT_FALSE(zk.G_tag.get_curve().valid());
+
+  // Defense in depth: verify() must reject the invalid point before hashing it.
+  {
+    dylog_disable_scope_t no_log_err;
+    EXPECT_NE(zk.verify(curve, paillier, c_key_tag, pai_c, Q2, R2, m, r, sid, 0), SUCCESS);
+  }
+
+  // `ser`/`deser` are the exact codec used by job_2p_t messaging. A null-curve
+  // ecc_point_t emits curve_code == 0x0000 on write, but that sentinel is no
+  // longer accepted from attacker-controlled input on read.
+  buf_t wire = coinbase::ser(zk);
+  zk_ecdsa_sign_2pc_integer_commit_t received;
+  {
+    dylog_disable_scope_t no_log_err;
+    EXPECT_NE(coinbase::deser(wire, received), SUCCESS);
+  }
 }
 
 }  // namespace

@@ -1,12 +1,15 @@
 #pragma once
 #include <cbmpc/internal/crypto/base.h>
+#include <cbmpc/internal/crypto/base_bn256.h>
 #include <cbmpc/internal/crypto/elgamal.h>
 #include <cbmpc/internal/crypto/ro.h>
 
 namespace coinbase::crypto {
 
 bn_t horner_poly(const mod_t& q, const std::vector<bn_t>& a, const bn_t& x);
+bn256_t horner_poly(const mod_t& q, const std::vector<bn256_t>& a, const bn256_t& x);
 ecc_point_t horner_poly(const std::vector<ecc_point_t>& A, const bn_t& x);
+ecc_point_t horner_poly_small_vartime(const std::vector<ecc_point_t>& A, int x);
 
 /* Lagrange */
 

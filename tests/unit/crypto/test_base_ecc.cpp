@@ -168,6 +168,46 @@ TEST_F(ECC, secp256k1_batch_get_coordinates_rejects_wrong_curve) {
   EXPECT_CB_ASSERT(ecurve_secp256k1_t::get_coordinates(points, xs, ys), "curve_secp256k1");
 }
 
+TEST_F(ECC, SumMulMatchesSequentialEvaluation) {
+  auto check = [](ecurve_t curve, int count) {
+    const auto& G = curve.generator();
+    std::vector<ecc_point_t> points(count);
+    std::vector<bn_t> scalars(count);
+    ecc_point_t expected = curve.infinity();
+    vartime_scope_t vartime_scope;
+    for (int i = 0; i < count; i++) {
+      points[i] = bn_t(i + 2) * G;
+      scalars[i] = (i % 5 == 0) ? bn_t(0) : bn_t(i + 3);
+      expected += scalars[i] * points[i];
+    }
+
+    EXPECT_EQ(sum_mul(points, scalars), expected);
+  };
+
+  check(curve_p256, 32);
+  check(curve_p256, 31);
+  check(curve_secp256k1, 32);
+
+  std::vector<ecc_point_t> zero_points(32, curve_p256.generator());
+  std::vector<bn_t> zero_scalars(32, bn_t(0));
+  EXPECT_TRUE(sum_mul(zero_points, zero_scalars).is_infinity());
+
+  dylog_disable_scope_t no_log;
+  EXPECT_CB_ASSERT(sum_mul({}, {}), "!points.empty()");
+  EXPECT_CB_ASSERT(sum_mul({curve_p256.generator()}, {}), "points.size() == scalars.size()");
+
+  std::vector<ecc_point_t> mixed_points(32, curve_p256.generator());
+  std::vector<bn_t> mixed_scalars(32, bn_t(1));
+  mixed_points[7] = curve_secp256k1.generator();
+  EXPECT_CB_ASSERT(sum_mul(mixed_points, mixed_scalars), "sum_mul: point curve mismatch");
+
+  std::vector<ecc_point_t> detached_points(32, curve_p256.generator());
+  std::vector<bn_t> detached_scalars(32, bn_t(1));
+  EC_POINT* detached = detached_points[0].detach();
+  EXPECT_CB_ASSERT(sum_mul(detached_points, detached_scalars), "sum_mul: point curve mismatch");
+  EC_POINT_free(detached);
+}
+
 TEST_F(ECC, RejectsInvalidPointEncoding) {
   ecurve_t curve = curve_secp256k1;
   ecc_point_t point(curve);
@@ -179,6 +219,20 @@ TEST_F(ECC, RejectsInvalidPointEncoding) {
   buf_t truncated(32);
   truncated[0] = 0x02;
   EXPECT_ER(point.from_bin(curve, truncated));
+}
+
+TEST_F(ECC, Secp256k1InfinitySerializationZeroesFullOutput) {
+  const ecc_point_t infinity = curve_secp256k1.infinity();
+
+  buf_t compressed(33);
+  memset(compressed.data(), 0xa5, compressed.size());
+  EXPECT_EQ(infinity.to_compressed_bin(compressed.data()), compressed.size());
+  for (int i = 0; i < compressed.size(); i++) EXPECT_EQ(compressed[i], 0);
+
+  buf_t uncompressed(65);
+  memset(uncompressed.data(), 0xa5, uncompressed.size());
+  EXPECT_EQ(infinity.to_bin(uncompressed.data()), uncompressed.size());
+  for (int i = 0; i < uncompressed.size(); i++) EXPECT_EQ(uncompressed[i], 0);
 }
 
 TEST_F(ECC, PointOctetWrappersRoundTrip) {
@@ -214,17 +268,24 @@ TEST_F(ECC, PointOctetWrappersWriteIntoCallerBuffers) {
   EXPECT_TRUE(roundtrip == point);
 }
 
-TEST_F(ECC, EmptyPointSerializationRoundTripsAndClearsDestination) {
+TEST_F(ECC, EmptyPointSerializationIsRejectedOnDeserialize) {
+  // Empty ecc_point_t still serializes to the historical null-curve sentinel,
+  // but that sentinel is no longer accepted from untrusted input on read.
   const ecc_point_t empty;
   const buf_t encoded = coinbase::ser(empty);
+  ASSERT_EQ(encoded.size(), 2);
+  EXPECT_EQ(encoded[0], 0);
+  EXPECT_EQ(encoded[1], 0);
 
-  ecc_point_t decoded = bn_t(5) * curve_p256.generator();
+  const ecc_point_t original = bn_t(5) * curve_p256.generator();
+  ecc_point_t decoded = original;
   ASSERT_TRUE(decoded.valid());
 
-  EXPECT_OK(coinbase::deser(encoded, decoded));
-  EXPECT_FALSE(decoded.valid());
-  EXPECT_FALSE(decoded.get_curve().valid());
-  EXPECT_EQ(coinbase::ser(decoded), encoded);
+  {
+    dylog_disable_scope_t no_log_err;
+    EXPECT_ER(coinbase::deser(encoded, decoded));
+  }
+  EXPECT_TRUE(decoded == original);
 }
 
 TEST_F(ECC, DetachTransfersOsslPointOwnershipUntilReattached) {
@@ -310,6 +371,21 @@ TEST_F(ECC, ConstTimeAddAndConditionalCopy) {
   ecc_point_t unchanged = curve.infinity();
   curve.cnd_copy_point(false, a, unchanged);
   EXPECT_TRUE(unchanged.is_infinity());
+}
+
+TEST_F(ECC, SelfAdditionMatchesDistinctStorageAndScalarDoubling) {
+  for (const ecurve_t& curve : {curve_secp256k1, curve_ed25519}) {
+    const ecc_point_t point = bn_t(7) * curve.generator();
+    const ecc_point_t equal_but_distinct = point;
+    const ecc_point_t expected = bn_t(14) * curve.generator();
+
+    EXPECT_EQ(ecc_point_t::add(point, point), expected);
+    EXPECT_EQ(ecc_point_t::add(point, equal_but_distinct), expected);
+    EXPECT_EQ(ecc_point_t::add_consttime(point, point), expected);
+
+    const ecc_point_t infinity = curve.infinity();
+    EXPECT_TRUE(ecc_point_t::add(infinity, infinity).is_infinity());
+  }
 }
 
 TEST_F(ECC, EcdhExecuteSupportsKeyAndCallbackBackends) {

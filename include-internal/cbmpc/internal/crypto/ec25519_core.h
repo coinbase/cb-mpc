@@ -10,6 +10,7 @@ void free_point(crypto::ecp_storage_t* a);
 void copy(crypto::ecp_storage_t* r, const crypto::ecp_storage_t* a);
 bool equ(const crypto::ecp_storage_t* a, const crypto::ecp_storage_t* b);
 void add(crypto::ecp_storage_t* r, const crypto::ecp_storage_t* a, const crypto::ecp_storage_t* b);
+void dbl(crypto::ecp_storage_t* r, const crypto::ecp_storage_t* a);
 void sub(crypto::ecp_storage_t* r, const crypto::ecp_storage_t* a, const crypto::ecp_storage_t* b);
 void neg(crypto::ecp_storage_t* r, const crypto::ecp_storage_t* a);
 int to_bin(const crypto::ecp_storage_t* r, uint8_t* out);

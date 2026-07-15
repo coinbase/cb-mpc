@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <limits>
 
 #include <cbmpc/internal/crypto/lagrange.h>
 
@@ -115,6 +116,49 @@ TEST_F(Lagrange, InterpolateExponent) {
   for (int i = 0; i < 5; i++) {
     bn_t r = bn_t::rand(q);
     EXPECT_EQ(horner_poly(A, r), lagrange_interpolate_exponent(r, pub_shares, pids));
+  }
+}
+
+TEST_F(Lagrange, SmallPublicScalarHornerMatchesGenericEvaluation) {
+  const std::vector<int> values = {std::numeric_limits<int>::min(), -100, -2, -1, 0, 1, 2, 100,
+                                   std::numeric_limits<int>::max()};
+
+  for (const ecurve_t& test_curve : {curve_p256, curve_p384, curve_p521, curve_secp256k1, curve_ed25519}) {
+    const mod_t& order = test_curve.order();
+    const auto& G = test_curve.generator();
+    std::vector<ecc_point_t> coefficients = {
+        test_curve.infinity(), bn_t(3) * G, bn_t(5) * G, bn_t(7) * G, bn_t(11) * G,
+    };
+
+    for (int value : values) {
+      SCOPED_TRACE(std::string(test_curve.get_name()) + " x=" + std::to_string(value));
+      const bn_t reduced = order.mod(value);
+      EXPECT_EQ(horner_poly_small_vartime(coefficients, value), horner_poly(coefficients, reduced));
+    }
+
+    const std::vector<ecc_point_t> singleton = {bn_t(13) * G};
+    EXPECT_EQ(horner_poly_small_vartime(singleton, std::numeric_limits<int>::min()), singleton[0]);
+  }
+
+  EXPECT_CB_ASSERT(horner_poly_small_vartime({}, 1), "");
+}
+
+TEST_F(Lagrange, Bn256HornerMatchesBigNumberHorner) {
+  for (const ecurve_t& test_curve : {curve_p256, curve_secp256k1, curve_ed25519}) {
+    const mod_t& order = test_curve.order();
+    for (int size : {1, 2, 3, 16, 64}) {
+      std::vector<bn_t> coefficients(size);
+      std::vector<bn256_t> coefficients256(size);
+      for (int i = 0; i < size; i++) {
+        coefficients[i] = bn_t::rand(order);
+        coefficients256[i] = coefficients[i];
+      }
+
+      for (const bn_t& x : {bn_t(0), bn_t(1), order.value() - 1}) {
+        const bn256_t x256(x);
+        EXPECT_EQ(static_cast<bn_t>(horner_poly(order, coefficients256, x256)), horner_poly(order, coefficients, x));
+      }
+    }
   }
 }
 

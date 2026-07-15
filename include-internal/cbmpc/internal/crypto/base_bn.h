@@ -135,6 +135,7 @@ class bn_t {
   static bn_t generate_prime(int bits, bool safe, gen_prime_callback callback = nullptr, void* ctx = nullptr);
   bool prime() const;
   static bn_t gcd(const bn_t& val1, const bn_t& val2);
+  static int jacobi(const bn_t& a, const bn_t& b);
 
   int get_bit(int n) const;
   int get_bin_size() const;

@@ -693,6 +693,11 @@ bn_t bn_t::gcd(const bn_t& src1, const bn_t& src2) {
   return result;
 }
 
+int bn_t::jacobi(const bn_t& a, const bn_t& b) {
+  if (b <= 0) return -2;
+  return BN_kronecker(a, b, thread_local_storage_bn_ctx());
+}
+
 void bn_t::set_modulo(const mod_t& mod) { thread_local_storage_set_mod(&mod); }
 bool bn_t::check_modulo(const mod_t& mod) { return thread_local_storage_mod() != nullptr; }
 void bn_t::reset_modulo(const mod_t& mod) { thread_local_storage_set_mod(nullptr); }

@@ -14,6 +14,14 @@ static void BM_ECAdd(benchmark::State& state, const ecurve_t& curve) {
   }
 }
 
+static void BM_ECSelfAdd(benchmark::State& state, const ecurve_t& curve) {
+  ecc_point_t P = ro::hash_curve(gen_random(8)).curve(curve);
+
+  for (auto _ : state) {
+    benchmark::DoNotOptimize(ecc_point_t::add(P, P));
+  }
+}
+
 static void BM_ECAdd_CT(benchmark::State& state, const ecurve_t& curve) {
   ecc_point_t P1 = ro::hash_curve(gen_random(8)).curve(curve);
   ecc_point_t P2 = ro::hash_curve(gen_random(8)).curve(curve);
@@ -88,6 +96,8 @@ static void BM_ECCheck(benchmark::State& state, const ecurve_t& curve) {
 // clang-format off
 BM_CURVE(Core/EC/Add/secp256k1, BM_ECAdd, curve_secp256k1);
 BM_CURVE(Core/EC/Add/Ed25519, BM_ECAdd, curve_ed25519);
+BM_CURVE(Core/EC/SelfAdd/secp256k1, BM_ECSelfAdd, curve_secp256k1);
+BM_CURVE(Core/EC/SelfAdd/Ed25519, BM_ECSelfAdd, curve_ed25519);
 BM_CURVE(Core/EC/Add_CT/secp256k1, BM_ECAdd_CT, curve_secp256k1);
 BM_CURVE(Core/EC/Add_CT/Ed25519, BM_ECAdd_CT, curve_ed25519);
 

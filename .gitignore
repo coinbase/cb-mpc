@@ -13,6 +13,10 @@ a.out
 *.dSYM/
 *.sancov
 
+# Coverage artifacts
+*.profraw
+*.profdata
+
 # CMake generated files
 **build/
 cmake_test_discovery_*.json

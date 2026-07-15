@@ -105,6 +105,13 @@ TEST(BigNumber, GCD) {
   EXPECT_EQ(bn_t::gcd(0, 456), 456);
 }
 
+TEST(BigNumber, JacobiSymbol) {
+  EXPECT_EQ(bn_t::jacobi(5, 11), 1);
+  EXPECT_EQ(bn_t::jacobi(2, 11), -1);
+  EXPECT_EQ(bn_t::jacobi(0, 11), 0);
+  EXPECT_EQ(bn_t::jacobi(1, 0), -2);
+}
+
 // Newly added tests:
 TEST(BigNumber, Pow) {
   bn_t base(2);

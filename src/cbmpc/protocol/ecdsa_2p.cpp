@@ -535,6 +535,13 @@ error_t zk_ecdsa_sign_2pc_integer_commit_t::verify(const ecurve_t curve, const c
   const mod_t& q = curve.order();
   const auto& G = curve.generator();
 
+  if (rv = curve.check(Q2)) return coinbase::error(rv, "zk_ecdsa_sign_2pc_integer_commit_t::verify: check Q2 failed");
+  if (rv = curve.check(R2)) return coinbase::error(rv, "zk_ecdsa_sign_2pc_integer_commit_t::verify: check R2 failed");
+  if (rv = curve.check(G_tag))
+    return coinbase::error(rv, "zk_ecdsa_sign_2pc_integer_commit_t::verify: check G_tag failed");
+  if (rv = curve.check(Q2_tag))
+    return coinbase::error(rv, "zk_ecdsa_sign_2pc_integer_commit_t::verify: check Q2_tag failed");
+
   buf_t e_buf = crypto::ro::hash_string(N, c_key, c, Q2, R2, m_tag, r, W1, W2, W3, W1_tag, W2_tag, W3_tag, G_tag,
                                         Q2_tag, C_enc_tag, sid, aux)
                     .bitlen(SEC_P_COM);
@@ -546,13 +553,6 @@ error_t zk_ecdsa_sign_2pc_integer_commit_t::verify(const ecurve_t curve, const c
   if (rv = check_right_open_range(0, r1_w_tag_tag, N_ped << (2 * SEC_P_STAT + SEC_P_COM + 1))) return rv;
   if (rv = check_right_open_range(0, r2_w_tag_tag, N_ped << (2 * SEC_P_STAT + SEC_P_COM + 1))) return rv;
   if (rv = check_right_open_range(0, r3_w_tag_tag, N_ped << (2 * SEC_P_STAT + SEC_P_COM + 1))) return rv;
-
-  if (rv = curve.check(Q2)) return coinbase::error(rv, "zk_ecdsa_sign_2pc_integer_commit_t::verify: check Q2 failed");
-  if (rv = curve.check(R2)) return coinbase::error(rv, "zk_ecdsa_sign_2pc_integer_commit_t::verify: check R2 failed");
-  if (rv = curve.check(G_tag))
-    return coinbase::error(rv, "zk_ecdsa_sign_2pc_integer_commit_t::verify: check G_tag failed");
-  if (rv = curve.check(Q2_tag))
-    return coinbase::error(rv, "zk_ecdsa_sign_2pc_integer_commit_t::verify: check Q2_tag failed");
 
   if (rv = check_right_open_range(0, m_tag, q)) return rv;
   if (rv = check_right_open_range(0, r, q)) return rv;

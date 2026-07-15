@@ -9,6 +9,7 @@
 #include <cbmpc/api/ecdsa_2p.h>
 #include <cbmpc/core/job.h>
 #include <cbmpc/internal/core/convert.h>
+#include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/crypto/base_ecc.h>
 #include <cbmpc/internal/crypto/base_paillier.h>
 
@@ -287,6 +288,120 @@ static void exercise_detach_attach(curve_id curve, const coinbase::crypto::ecurv
   EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(public_1, bad_x1, Qi_full_1, bad_merged), SUCCESS);
 }
 
+static bool read_convert_len_for_tamper(const buf_t& msg, int& offset, uint32_t& len) {
+  if (offset < 0 || offset >= msg.size()) return false;
+
+  uint8_t b = msg[offset++];
+  if ((b & 0x80) == 0) {
+    len = b;
+    return true;
+  }
+
+  if ((b & 0x40) == 0) {
+    if (offset > msg.size() - 1) return false;
+    len = static_cast<uint32_t>(b & 0x3f);
+    len = (len << 8) | msg[offset++];
+    return true;
+  }
+
+  if ((b & 0x20) == 0) {
+    if (offset > msg.size() - 2) return false;
+    len = static_cast<uint32_t>(b & 0x1f);
+    len = (len << 8) | msg[offset++];
+    len = (len << 8) | msg[offset++];
+    return true;
+  }
+
+  if (offset > msg.size() - 3) return false;
+  len = static_cast<uint32_t>(b & 0x1f);
+  len = (len << 8) | msg[offset++];
+  len = (len << 8) | msg[offset++];
+  len = (len << 8) | msg[offset++];
+  return true;
+}
+
+static bool skip_bytes_for_tamper(const buf_t& msg, int& offset, uint32_t count) {
+  if (count > static_cast<uint32_t>(msg.size())) return false;
+  if (offset < 0 || offset > msg.size() - static_cast<int>(count)) return false;
+  offset += static_cast<int>(count);
+  return true;
+}
+
+static bool skip_bn_for_tamper(const buf_t& msg, int& offset) {
+  uint32_t header = 0;
+  if (!read_convert_len_for_tamper(msg, offset, header)) return false;
+  const uint32_t value_size = header >> 1;
+  return skip_bytes_for_tamper(msg, offset, value_size);
+}
+
+// Mutate the public-API ECDSA-2PC signing round-4 P2->P1 message.
+//
+// The message is `ser(std::vector<bn_t> c, std::vector<zk_ecdsa_sign_2pc_integer_commit_t> zk_ecdsa)`.
+// For a single signature, G_tag is reached by skipping:
+//   c[0], zk_ecdsa count, then W1/W2/W3/W1_tag/W2_tag/W3_tag.
+// We then patch G_tag.curve_code from secp256k1 (0x02ca) to 0x0000 and remove
+// the 33-byte compressed point body that the vulnerable ecc_point_t::convert()
+// did not consume after accepting the null curve code.
+static bool tamper_sign_round4_g_tag_to_null_curve(buf_t& msg) {
+  int offset = 0;
+  uint32_t count = 0;
+
+  if (!read_convert_len_for_tamper(msg, offset, count) || count != 1) return false;
+  if (!skip_bn_for_tamper(msg, offset)) return false;
+
+  if (!read_convert_len_for_tamper(msg, offset, count) || count != 1) return false;
+  for (int i = 0; i < 6; i++) {
+    if (!skip_bn_for_tamper(msg, offset)) return false;
+  }
+
+  constexpr int kSecp256k1CompressedPointSize = 33;
+  constexpr uint8_t kSecp256k1CurveCodeHi = 0x02;
+  constexpr uint8_t kSecp256k1CurveCodeLo = 0xca;
+  if (offset < 0 || offset > msg.size() - (2 + kSecp256k1CompressedPointSize)) return false;
+  if (msg[offset] != kSecp256k1CurveCodeHi || msg[offset + 1] != kSecp256k1CurveCodeLo) return false;
+  if (msg[offset + 2] != 0x02 && msg[offset + 2] != 0x03) return false;
+
+  msg[offset] = 0x00;
+  msg[offset + 1] = 0x00;
+
+  const int remove_from = offset + 2;
+  const int remove_to = remove_from + kSecp256k1CompressedPointSize;
+  std::memmove(msg.data() + remove_from, msg.data() + remove_to, static_cast<size_t>(msg.size() - remove_to));
+  msg.resize(msg.size() - kSecp256k1CompressedPointSize);
+  return true;
+}
+
+class tamper_sign_round4_transport_t final : public data_transport_i {
+ public:
+  explicit tamper_sign_round4_transport_t(std::shared_ptr<mpc_net_context_t> ctx) : ctx_(std::move(ctx)) {}
+
+  error_t send(party_idx_t receiver, mem_t msg) override {
+    buf_t out(msg);
+    if (receiver == static_cast<party_idx_t>(party_t::p1) && ++p2_to_p1_sends_ == 2) {
+      if (!tamper_sign_round4_g_tag_to_null_curve(out)) return E_GENERAL;
+      tampered_ = true;
+    }
+    ctx_->send(receiver, out);
+    return SUCCESS;
+  }
+
+  error_t receive(party_idx_t sender, buf_t& msg) override { return ctx_->receive(sender, msg); }
+
+  error_t receive_all(const std::vector<party_idx_t>& senders, std::vector<buf_t>& msgs) override {
+    std::vector<coinbase::mpc::party_idx_t> s;
+    s.reserve(senders.size());
+    for (auto x : senders) s.push_back(static_cast<coinbase::mpc::party_idx_t>(x));
+    return ctx_->receive_all(s, msgs);
+  }
+
+  bool tampered() const { return tampered_; }
+
+ private:
+  std::shared_ptr<mpc_net_context_t> ctx_;
+  int p2_to_p1_sends_ = 0;
+  bool tampered_ = false;
+};
+
 }  // namespace
 
 TEST(ApiEcdsa2pc, DkgSignRefreshSign) {
@@ -402,6 +517,77 @@ TEST(ApiEcdsa2pc, TransportSendFailNoDeadlock) {
 
   EXPECT_NE(rv1, SUCCESS);
   EXPECT_NE(rv2, SUCCESS);
+}
+
+TEST(ApiEcdsa2pc, SignRound4NullCurvePointFromP2Rejected) {
+  auto dkg_c1 = std::make_shared<mpc_net_context_t>(0);
+  auto dkg_c2 = std::make_shared<mpc_net_context_t>(1);
+  std::vector<std::shared_ptr<mpc_net_context_t>> dkg_peers = {dkg_c1, dkg_c2};
+  dkg_c1->init_with_peers(dkg_peers);
+  dkg_c2->init_with_peers(dkg_peers);
+
+  local_api_transport_t dkg_t1(dkg_c1);
+  local_api_transport_t dkg_t2(dkg_c2);
+
+  buf_t key_blob_1;
+  buf_t key_blob_2;
+  error_t rv1 = UNINITIALIZED_ERROR;
+  error_t rv2 = UNINITIALIZED_ERROR;
+
+  const coinbase::api::job_2p_t dkg_job1{party_t::p1, "p1", "p2", dkg_t1};
+  const coinbase::api::job_2p_t dkg_job2{party_t::p2, "p1", "p2", dkg_t2};
+  run_2pc(
+      dkg_c1, dkg_c2, [&] { return coinbase::api::ecdsa_2p::dkg(dkg_job1, curve_id::secp256k1, key_blob_1); },
+      [&] { return coinbase::api::ecdsa_2p::dkg(dkg_job2, curve_id::secp256k1, key_blob_2); }, rv1, rv2);
+  ASSERT_EQ(rv1, SUCCESS);
+  ASSERT_EQ(rv2, SUCCESS);
+
+  buf_t msg_hash(32);
+  for (int i = 0; i < msg_hash.size(); i++) msg_hash[i] = static_cast<uint8_t>(i);
+
+  // Public-API reachability test for the reported DoS:
+  //   P1 and P2 both call api::ecdsa_2p::sign().
+  //   The only malicious component is P2's public data_transport_i, which mutates
+  //   the serialized round-4 P2->P1 message in transit.
+  //
+  // Before the fix, P1 deterministically dereferenced a null curve pointer while
+  // hashing the attacker-controlled G_tag point. The hardened code must reject
+  // the malformed message and return an error to P1 instead of crashing.
+  auto sign_c1 = std::make_shared<mpc_net_context_t>(0);
+  auto sign_c2 = std::make_shared<mpc_net_context_t>(1);
+  std::vector<std::shared_ptr<mpc_net_context_t>> sign_peers = {sign_c1, sign_c2};
+  sign_c1->init_with_peers(sign_peers);
+  sign_c2->init_with_peers(sign_peers);
+
+  local_api_transport_t sign_t1(sign_c1);
+  tamper_sign_round4_transport_t sign_t2(sign_c2);
+
+  const coinbase::api::job_2p_t sign_job1{party_t::p1, "p1", "p2", sign_t1};
+  const coinbase::api::job_2p_t sign_job2{party_t::p2, "p1", "p2", sign_t2};
+
+  // Pre-set the same SID on both parties so the final P2->P1 signing message is
+  // the second P2 send during this api::ecdsa_2p::sign() call.
+  buf_t sid1(32);
+  for (int i = 0; i < sid1.size(); i++) sid1[i] = static_cast<uint8_t>(0xa0 + i);
+  buf_t sid2 = sid1;
+
+  buf_t sig1;
+  buf_t sig2;
+  error_t sign_rv1 = UNINITIALIZED_ERROR;
+  error_t sign_rv2 = UNINITIALIZED_ERROR;
+  run_2pc(
+      sign_c1, sign_c2,
+      [&] {
+        dylog_disable_scope_t no_log_err;
+        return coinbase::api::ecdsa_2p::sign(sign_job1, key_blob_1, msg_hash, sid1, sig1);
+      },
+      [&] { return coinbase::api::ecdsa_2p::sign(sign_job2, key_blob_2, msg_hash, sid2, sig2); }, sign_rv1, sign_rv2);
+
+  EXPECT_TRUE(sign_t2.tampered());
+  EXPECT_NE(sign_rv1, SUCCESS);
+  EXPECT_EQ(sign_rv2, SUCCESS);
+  EXPECT_EQ(sig1.size(), 0);
+  EXPECT_EQ(sig2.size(), 0);
 }
 
 // ------------ Disclaimer: All the following tests have been generated by AI ------------

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/core/strext.h>
 #include <cbmpc/internal/crypto/base.h>
 #include <cbmpc/internal/crypto/ro.h>
 
@@ -28,6 +29,9 @@ TEST(CryptoEdDSA, RejectTorsionAndFixInfinityEq) {
   EXPECT_FALSE(P.is_infinity());
   EXPECT_FALSE(P.is_in_subgroup());
   EXPECT_NE(curve.check(P), SUCCESS);
+  EXPECT_TRUE(ecc_point_t::add(P, P).is_infinity());
+  const ecc_point_t P_copy = P;
+  EXPECT_TRUE(ecc_point_t::add(P, P_copy).is_infinity());
 
   // Sanity: infinity should not compare equal to the generator.
   const ecc_point_t G = curve.generator();
@@ -163,6 +167,38 @@ TEST(CryptoEdDSA, GeneratorMulByOrderIsInfinityForSubgroup) {
   EXPECT_EQ(got, want);
 }
 
+TEST(CryptoEdDSA, VariableBaseMulHandlesZeroWindowsAndIdentity) {
+  const ecurve_t curve = crypto::curve_ed25519;
+  const mod_t& q = curve.order();
+  const ecc_generator_point_t& G = curve.generator();
+  const ecc_point_t P = bn_t(7) * G;
+  const ecc_point_t identity = curve.infinity();
+
+  const std::vector<bn_t> scalars = {bn_t(0),      bn_t(1), bn_t(16), bn_t(256), bn_t::from_hex("10000000000000001"),
+                                     q.value() - 1};
+
+  for (const bn_t& scalar : scalars) {
+    bn_t expected_scalar;
+    MODULO(q) expected_scalar = scalar * 7;
+    const ecc_point_t expected = expected_scalar * G;
+
+    const ecc_point_t result = scalar * P;
+    EXPECT_TRUE(result == expected);
+
+    ecc_point_t vartime_result;
+    {
+      crypto::vartime_scope_t vartime_scope;
+      vartime_result = scalar * P;
+    }
+    EXPECT_TRUE(vartime_result == expected);
+
+    if (scalar == 0) {
+      EXPECT_TRUE(result.is_infinity());
+      EXPECT_EQ(result.to_compressed_bin(), identity.to_compressed_bin());
+    }
+  }
+}
+
 TEST(CryptoEdDSA, GenericMulRejectsOrderScalarForTorsionPoint) {
   ecurve_t curve = crypto::curve_ed25519;
   const bn_t q = curve.order().value();
@@ -196,6 +232,122 @@ TEST(CryptoEdDSA, GenericMulRejectsOrderScalarForTorsionPoint) {
         },
         coinbase::assertion_failed_t);
   }
+}
+
+TEST(CryptoEdDSA, RejectsCanonicalTorsionAndMixedOrderPoints) {
+  static const char* torsion_encodings[] = {
+      "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+      "0000000000000000000000000000000000000000000000000000000000000000",
+      "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+      "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+      "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05",
+      "0000000000000000000000000000000000000000000000000000000000000080",
+      "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+      "0100000000000000000000000000000000000000000000000000000000000000",
+  };
+
+  const ecurve_t curve = crypto::curve_ed25519;
+  const ecc_generator_point_t& G = curve.generator();
+  for (const char* hex : torsion_encodings) {
+    buf_t encoded;
+    ASSERT_TRUE(strext::from_hex(encoded, hex));
+    ASSERT_EQ(encoded.size(), 32);
+
+    ecc_point_t torsion;
+    ASSERT_OK(torsion.from_bin(curve, encoded));
+    ASSERT_TRUE(torsion.is_on_curve());
+
+    const bool is_identity = torsion.is_infinity();
+    EXPECT_EQ(torsion.is_in_subgroup(), is_identity);
+    if (is_identity) continue;
+
+    ecc_point_t mixed_order;
+    {
+      crypto::vartime_scope_t vartime_scope;
+      mixed_order = G + torsion;
+    }
+    EXPECT_TRUE(mixed_order.is_on_curve());
+    EXPECT_FALSE(mixed_order.is_infinity());
+    EXPECT_FALSE(mixed_order.is_in_subgroup());
+  }
+}
+
+TEST(CryptoEdDSA, MalformedAndNoncanonicalEncodingsNeverPassValidation) {
+  const ecurve_t curve = crypto::curve_ed25519;
+
+  buf_t malformed;
+  ASSERT_TRUE(strext::from_hex(malformed, "0200000000000000000000000000000000000000000000000000000000000000"));
+  ecc_point_t malformed_point;
+  {
+    dylog_disable_scope_t no_log;
+    EXPECT_ER(malformed_point.from_bin(curve, malformed));
+  }
+
+  static const char* noncanonical_encodings[] = {
+      "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",  // p
+      "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",  // p + 1
+      "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",  // p + 1, x sign set
+      "efffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",  // p + 2
+      "f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",  // p + 3
+      "f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",  // p + 3, x sign set
+  };
+
+  int decoded_count = 0;
+  int rejected_count = 0;
+  for (const char* hex : noncanonical_encodings) {
+    buf_t encoded;
+    ASSERT_TRUE(strext::from_hex(encoded, hex));
+
+    ecc_point_t point;
+    dylog_disable_scope_t no_log;
+    if (point.from_bin(curve, encoded)) {
+      rejected_count++;
+      continue;
+    }
+    decoded_count++;
+    EXPECT_NE(curve.check(point), SUCCESS);
+  }
+
+  EXPECT_GT(decoded_count, 0);
+  EXPECT_GT(rejected_count, 0);
+}
+
+TEST(CryptoEdDSA, SubgroupCheckMatchesScalarMultiplicationReference) {
+  const ecurve_t curve = crypto::curve_ed25519;
+  const bn_t q_minus_1 = curve.order().value() - 1;
+  int parsed_count = 0;
+  int subgroup_count = 0;
+  int non_subgroup_count = 0;
+
+  for (int i = 0; i < 2048; i++) {
+    ro::hash_string_t h;
+    h.encode_and_update(i);
+    const buf_t encoded = h.bitlen(curve.bits());
+
+    ecc_point_t point;
+    {
+      dylog_disable_scope_t no_log;
+      if (point.from_bin(curve, encoded)) continue;
+    }
+    ASSERT_TRUE(point.is_on_curve());
+    parsed_count++;
+
+    bool expected;
+    {
+      crypto::vartime_scope_t vartime_scope;
+      expected = (q_minus_1 * point) == -point;
+    }
+    const bool actual = point.is_in_subgroup();
+    EXPECT_EQ(actual, expected) << "candidate " << i;
+    if (expected)
+      subgroup_count++;
+    else
+      non_subgroup_count++;
+  }
+
+  EXPECT_GT(parsed_count, 500);
+  EXPECT_GT(subgroup_count, 50);
+  EXPECT_GT(non_subgroup_count, 400);
 }
 
 TEST(CryptoEdDSA, subgroup_check) {

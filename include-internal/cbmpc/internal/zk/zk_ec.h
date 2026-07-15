@@ -51,27 +51,31 @@ struct uc_batch_dl_finite_difference_impl_t {
    */
   error_t verify(const std::vector<ecc_point_t>& Q, mem_t session_id, uint64_t aux) const;
 
-  struct matrix_sum_t {
+  template <typename BN>
+  struct matrix_sum_impl_t {
    public:
-    matrix_sum_t(int n) : offset((n + 1) / 2), data(n + 3, std::vector<bn_t>(n + 1)) {}
-    const std::vector<bn_t>& operator[](int i) const { return data[i + offset]; }
-    std::vector<bn_t>& operator[](int i) { return data[i + offset]; }
+    matrix_sum_impl_t(int n) : offset((n + 1) / 2), data(n + 3, std::vector<BN>(n + 1)) {}
+    const std::vector<BN>& operator[](int i) const { return data[i + offset]; }
+    std::vector<BN>& operator[](int i) { return data[i + offset]; }
 
    private:
     int offset;
-    std::vector<std::vector<bn_t>> data;
+    std::vector<std::vector<BN>> data;
   };
+  using matrix_sum_t = matrix_sum_impl_t<bn_t>;
 
-  struct vector_sum_t {
+  template <typename BN>
+  struct vector_sum_impl_t {
    public:
-    vector_sum_t(int n, int t) : offset((n + 1) / 2), data(1 << t) {}
-    const bn_t& operator[](int i) const { return data[i + offset]; }
-    bn_t& operator[](int i) { return data[i + offset]; }
+    vector_sum_impl_t(int n, int t) : offset((n + 1) / 2), data(1 << t) {}
+    const BN& operator[](int i) const { return data[i + offset]; }
+    BN& operator[](int i) { return data[i + offset]; }
 
    private:
     int offset;
-    std::vector<bn_t> data;
+    std::vector<BN> data;
   };
+  using vector_sum_t = vector_sum_impl_t<bn_t>;
 };
 using uc_batch_dl_t = uc_batch_dl_finite_difference_impl_t;
 

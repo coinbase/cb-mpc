@@ -100,7 +100,6 @@ class mod_t {
  private:
   bn_t m;
   bn_t mu;
-  bn_t b_pow_k_plus1;
   BN_MONT_CTX* mont = nullptr;
   bool multiplicative_dense = false;
 

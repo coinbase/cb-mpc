@@ -446,7 +446,7 @@ struct ecurve_core_t {
   static void mul(const point_t& P, const bn_t& v, point_t& R) {
 #define tab_size 17
     point_t tab[tab_size];
-    tab[0] = {fe_t::zero(), fe_t::zero(), fe_t::zero()};
+    tab[0].set_infinity();
     tab[1] = P;
 
     dbl(tab[2], tab[1]);

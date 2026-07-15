@@ -30,6 +30,16 @@ TEST_F(AgreeRandom2PC, AgreeRandom) {
   }
 }
 
+TEST_F(AgreeRandom2PC, AgreeRandomRejectsNonpositiveBitLength) {
+  for (int bitlen : {0, -1}) {
+    mpc_runner->run_2pc([bitlen](job_2p_t& job) {
+      buf_t result;
+      EXPECT_EQ(agree_random(job, bitlen, result), E_BADARG);
+      EXPECT_TRUE(result.empty());
+    });
+  }
+}
+
 TEST_F(AgreeRandom2PC, WeakAgreeRandomP1First) {
   for (int bitlen : {128, 129, 1024}) {
     std::array<buf_t, 2> results;
@@ -116,6 +126,19 @@ TEST_F(GenerateSidMPC, GenerateSidDynamicMPSortsPids) {
 
   for (int i = 1; i < 4; i++) EXPECT_EQ(results[0], results[i]);
   EXPECT_EQ(results[0].size(), crypto::hash_alg_t::get(crypto::hash_e::sha256).size);
+}
+
+TEST(GenerateSid, FixedMPContributionValidationRejectsWrongSizes) {
+  const int expected_size = coinbase::bits_to_bytes(SEC_P_COM);
+  std::vector<buf_t> contributions(4);
+  for (buf_t& contribution : contributions) contribution = crypto::gen_random(expected_size);
+  EXPECT_OK(coinbase::mpc::detail::validate_sid_fixed_mp_contributions(contributions));
+
+  for (int invalid_size : {0, expected_size - 1, expected_size + 1}) {
+    std::vector<buf_t> malformed = contributions;
+    malformed[2] = buf_t(invalid_size);
+    EXPECT_ER(coinbase::mpc::detail::validate_sid_fixed_mp_contributions(malformed));
+  }
 }
 
 TEST_P(AgreeRandomMPC, MultiAgreeRandom) {
