@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783850521266,
+  "lastUpdate": 1784129927164,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -4080,6 +4080,126 @@ window.BENCHMARK_DATA = {
             "value": 1321.895857678213,
             "unit": "us/iter",
             "extra": "iterations: 534\ncpu: 1321.900086142357 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "490d4c20e7cec3982417d398de162b1ad4a2e22e",
+          "message": "feat: harden crypto/ZK/protocol primitives and expand test coverage (#123)\n\nCrypto:\n- add bn_t::jacobi and variable-time sum_mul (multi-scalar mul)\n- validate ecurve_t serialization and zero-fill secp256k1 point buffers\n- blind the secp256k1 ecmult gen context and handle equal-point doubling in secp256k1/ed25519 point addition\n- replace ed25519 is_in_subgroup with the point-halving test (eprint 2022/1164) and add fe half/sqrt helpers\n- drop the unused mod_t::b_pow_k_plus1 Barrett field\n- add horner_poly bn256_t and small-scalar variable-time variants\n\nZK:\n- template uc_batch_dl over bn_t/bn256_t so ed25519 uses bn256 arithmetic\n- add bn256_t support to Fischlin transcript hashing\n- use sum_mul in uc_dl verification\n\nProtocol:\n- reject non-positive bitlen in agree_random\n- validate contribution sizes in generate_sid_fixed_mp\n- check curve membership before hashing in the ECDSA-2PC ZK verify",
+          "timestamp": "2026-07-15T08:01:28-07:00",
+          "tree_id": "3240785428af1d0726825fae5bb83494491fec21",
+          "url": "https://github.com/coinbase/cb-mpc/commit/490d4c20e7cec3982417d398de162b1ad4a2e22e"
+        },
+        "date": 1784129924488,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.07593206860870139,
+            "unit": "us/iter",
+            "extra": "iterations: 9267630\ncpu: 0.07592487280998486 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.47546288466521425,
+            "unit": "us/iter",
+            "extra": "iterations: 1473717\ncpu: 0.4754120546889285 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.07769058995331067,
+            "unit": "us/iter",
+            "extra": "iterations: 8974812\ncpu: 0.07768177283267873 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.5456481064003859,
+            "unit": "us/iter",
+            "extra": "iterations: 1281950\ncpu: 0.5456085471352203 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.16748398925269012,
+            "unit": "us/iter",
+            "extra": "iterations: 4178537\ncpu: 0.16745463256637272 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 11.984993735154545,
+            "unit": "us/iter",
+            "extra": "iterations: 58102\ncpu: 11.98385537503014 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 14.765007997807526,
+            "unit": "us/iter",
+            "extra": "iterations: 47388\ncpu: 14.763578184350393 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 14941.336765961285,
+            "unit": "us/iter",
+            "extra": "iterations: 47\ncpu: 14939.785765957451 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 15.927173284215346,
+            "unit": "us/iter",
+            "extra": "iterations: 43974\ncpu: 15.925392709328044 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 682.5719200000227,
+            "unit": "us/iter",
+            "extra": "iterations: 1025\ncpu: 682.5062985365926 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 20.551288616167213,
+            "unit": "us/iter",
+            "extra": "iterations: 33082\ncpu: 20.549420198295337 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1260.101208928534,
+            "unit": "us/iter",
+            "extra": "iterations: 560\ncpu: 1259.9915482142978 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 21.10508143134802,
+            "unit": "us/iter",
+            "extra": "iterations: 32948\ncpu: 21.10377849945396 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1258.0172999999409,
+            "unit": "us/iter",
+            "extra": "iterations: 560\ncpu: 1256.3650553571242 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 23.86010045937725,
+            "unit": "us/iter",
+            "extra": "iterations: 29823\ncpu: 23.859208262079427 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1432.7654478523675,
+            "unit": "us/iter",
+            "extra": "iterations: 489\ncpu: 1432.6090306748793 us\nthreads: 1"
           }
         ]
       }
