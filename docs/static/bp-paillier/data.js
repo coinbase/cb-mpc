@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783850528839,
+  "lastUpdate": 1784129936958,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2244,6 +2244,72 @@ window.BENCHMARK_DATA = {
             "value": 8329.846023809208,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8328.86825 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "490d4c20e7cec3982417d398de162b1ad4a2e22e",
+          "message": "feat: harden crypto/ZK/protocol primitives and expand test coverage (#123)\n\nCrypto:\n- add bn_t::jacobi and variable-time sum_mul (multi-scalar mul)\n- validate ecurve_t serialization and zero-fill secp256k1 point buffers\n- blind the secp256k1 ecmult gen context and handle equal-point doubling in secp256k1/ed25519 point addition\n- replace ed25519 is_in_subgroup with the point-halving test (eprint 2022/1164) and add fe half/sqrt helpers\n- drop the unused mod_t::b_pow_k_plus1 Barrett field\n- add horner_poly bn256_t and small-scalar variable-time variants\n\nZK:\n- template uc_batch_dl over bn_t/bn256_t so ed25519 uses bn256 arithmetic\n- add bn256_t support to Fischlin transcript hashing\n- use sum_mul in uc_dl verification\n\nProtocol:\n- reject non-positive bitlen in agree_random\n- validate contribution sizes in generate_sid_fixed_mp\n- check curve membership before hashing in the ECDSA-2PC ZK verify",
+          "timestamp": "2026-07-15T08:01:28-07:00",
+          "tree_id": "3240785428af1d0726825fae5bb83494491fec21",
+          "url": "https://github.com/coinbase/cb-mpc/commit/490d4c20e7cec3982417d398de162b1ad4a2e22e"
+        },
+        "date": 1784129936098,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 46635.36906665892,
+            "unit": "us/iter",
+            "extra": "iterations: 15\ncpu: 46631.505733333324 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4082.010308138706,
+            "unit": "us/iter",
+            "extra": "iterations: 172\ncpu: 4081.276197674419 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 7802.768622221063,
+            "unit": "us/iter",
+            "extra": "iterations: 90\ncpu: 7801.7005222222215 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4424.2823037971975,
+            "unit": "us/iter",
+            "extra": "iterations: 158\ncpu: 4423.896696202532 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 12.08499688349193,
+            "unit": "us/iter",
+            "extra": "iterations: 57757\ncpu: 12.083941340443587 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 14.40835874199578,
+            "unit": "us/iter",
+            "extra": "iterations: 48553\ncpu: 14.407108314625248 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 7717.824780219426,
+            "unit": "us/iter",
+            "extra": "iterations: 91\ncpu: 7716.8089560439585 us\nthreads: 1"
           }
         ]
       }
