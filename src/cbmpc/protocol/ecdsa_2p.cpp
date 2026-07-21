@@ -358,6 +358,10 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
     if (c.size() != n_sigs) return coinbase::error(E_CRYPTO, "ecdsa_2p: inconsistent batch size (c)");
     if (!global_abort_mode && zk_ecdsa.size() != n_sigs)
       return coinbase::error(E_CRYPTO, "ecdsa_2p: inconsistent batch size (zk_ecdsa)");
+    const mod_t& N = key.paillier.get_N();
+    // N is odd, so (N + 1) / 2 is the first integer in the upper half of [0, N).
+    const bn_t N_half = (N.value() + 1) >> 1;
+    const bn_t N_mod_q = q.mod(N.value());
     for (int i = 0; i < n_sigs; i++) {
       r[i] = R[i].get_x() % q;
 
@@ -380,7 +384,9 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
       }
 
       bn_t s = key.paillier.decrypt(c[i]);
+      const bool is_negative = (s >= N_half);
       s = q.mod(s);
+      MODULO(q) { s -= N_mod_q * static_cast<int>(is_negative); }
 
       MODULO(q) { s /= k1[i]; }
 
