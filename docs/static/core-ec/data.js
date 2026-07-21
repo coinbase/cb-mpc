@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784129931074,
+  "lastUpdate": 1784662196813,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -3660,6 +3660,138 @@ window.BENCHMARK_DATA = {
             "value": 32.0092281770946,
             "unit": "us/iter",
             "extra": "iterations: 22316\ncpu: 32.00638994443449 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "23b1ac68670255ce1629b175a242af45f9f07174",
+          "message": "fix: correct sign of Paillier-decrypted s in ECDSA-2P signing resulting in a security bug (#124)",
+          "timestamp": "2026-07-21T11:50:04-07:00",
+          "tree_id": "cd237abad1d771cbabda64536b264ec1afabe5d7",
+          "url": "https://github.com/coinbase/cb-mpc/commit/23b1ac68670255ce1629b175a242af45f9f07174"
+        },
+        "date": 1784662196438,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.40574842959555635,
+            "unit": "us/iter",
+            "extra": "iterations: 1720735\ncpu: 0.40573975190834155 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.4048925907187688,
+            "unit": "us/iter",
+            "extra": "iterations: 1737429\ncpu: 0.4048570220711178 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/SelfAdd/secp256k1",
+            "value": 0.17550056408004439,
+            "unit": "us/iter",
+            "extra": "iterations: 4011842\ncpu: 0.17512717474915507 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/SelfAdd/Ed25519",
+            "value": 0.22074004361880276,
+            "unit": "us/iter",
+            "extra": "iterations: 3172940\ncpu: 0.22072517318323068 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 2.7040126566166,
+            "unit": "us/iter",
+            "extra": "iterations: 259153\ncpu: 2.70391499616057 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.40667626782691363,
+            "unit": "us/iter",
+            "extra": "iterations: 1719931\ncpu: 0.4066405012759232 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 46.252231719398964,
+            "unit": "us/iter",
+            "extra": "iterations: 15139\ncpu: 46.250414096043336 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 75.64195022674603,
+            "unit": "us/iter",
+            "extra": "iterations: 9262\ncpu: 75.63041772835246 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 36.41667912031598,
+            "unit": "us/iter",
+            "extra": "iterations: 19325\ncpu: 36.41640781371278 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 69.63570895151167,
+            "unit": "us/iter",
+            "extra": "iterations: 10043\ncpu: 69.6303148461616 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 21.242064036868392,
+            "unit": "us/iter",
+            "extra": "iterations: 32981\ncpu: 21.24039598556745 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 15.67792005635087,
+            "unit": "us/iter",
+            "extra": "iterations: 44719\ncpu: 15.676441065319022 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 21.186173210232855,
+            "unit": "us/iter",
+            "extra": "iterations: 33035\ncpu: 21.18461232026639 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 8.049167446579622,
+            "unit": "us/iter",
+            "extra": "iterations: 86762\ncpu: 8.04885208962449 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 70.1929777443596,
+            "unit": "us/iter",
+            "extra": "iterations: 9975\ncpu: 70.18478917293234 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 92.11159889531129,
+            "unit": "us/iter",
+            "extra": "iterations: 7604\ncpu: 92.11300604944756 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/secp256k1",
+            "value": 2.4522574144755795,
+            "unit": "us/iter",
+            "extra": "iterations: 285590\ncpu: 2.452108319619035 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/Ed25519",
+            "value": 33.38859058467045,
+            "unit": "us/iter",
+            "extra": "iterations: 20456\ncpu: 33.38828045561197 us\nthreads: 1"
           }
         ]
       }
