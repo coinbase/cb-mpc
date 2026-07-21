@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784129942888,
+  "lastUpdate": 1784662209667,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1470,6 +1470,48 @@ window.BENCHMARK_DATA = {
             "value": 13852.970620000633,
             "unit": "us/iter",
             "extra": "iterations: 50\ncpu: 13851.589219999996 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "23b1ac68670255ce1629b175a242af45f9f07174",
+          "message": "fix: correct sign of Paillier-decrypted s in ECDSA-2P signing resulting in a security bug (#124)",
+          "timestamp": "2026-07-21T11:50:04-07:00",
+          "tree_id": "cd237abad1d771cbabda64536b264ec1afabe5d7",
+          "url": "https://github.com/coinbase/cb-mpc/commit/23b1ac68670255ce1629b175a242af45f9f07174"
+        },
+        "date": 1784662209252,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 27547.58696000863,
+            "unit": "us/iter",
+            "extra": "iterations: 25\ncpu: 27542.969600000004 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 118190.56516666629,
+            "unit": "us/iter",
+            "extra": "iterations: 6\ncpu: 118184.01566666666 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 15808.005866670606,
+            "unit": "us/iter",
+            "extra": "iterations: 45\ncpu: 15804.546600000001 us\nthreads: 1"
           }
         ]
       }
