@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784662209667,
+  "lastUpdate": 1784754278646,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1512,6 +1512,48 @@ window.BENCHMARK_DATA = {
             "value": 15808.005866670606,
             "unit": "us/iter",
             "extra": "iterations: 45\ncpu: 15804.546600000001 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bf82c0baf8f5f37d0e1937c37544002740873e22",
+          "message": "fix: validate R1/R2 points are on curve in ECDSA2P (#125)",
+          "timestamp": "2026-07-22T13:25:18-07:00",
+          "tree_id": "87911b0d6617e12399e3be4251db083487cd3a89",
+          "url": "https://github.com/coinbase/cb-mpc/commit/bf82c0baf8f5f37d0e1937c37544002740873e22"
+        },
+        "date": 1784754278044,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24413.801827590916,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24412.521896551723 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 105393.90814281952,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 105386.673 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 14154.92183999959,
+            "unit": "us/iter",
+            "extra": "iterations: 50\ncpu: 14153.458859999999 us\nthreads: 1"
           }
         ]
       }
