@@ -295,7 +295,9 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
   std::vector<ecc_point_t> R(n_sigs);
 
   if (job.is_p1()) {
-    // Checking that R2 values are valid is done in the verify function.
+    for (int i = 0; i < n_sigs; i++) {
+      if (rv = curve.check(R2[i])) return coinbase::error(rv, "ecdsa_2p: R2 is not on the signing curve");
+    }
     if (rv = pi_2.verify(R2, sid, 2)) return rv;
     for (int i = 0; i < n_sigs; i++) {
       R[i] = k1[i] * R2[i];
@@ -313,7 +315,9 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
     if (R1.size() != n_sigs) return coinbase::error(E_CRYPTO, "ecdsa_2p: inconsistent batch size (R1)");
     if (rv = com.open(msgs, R1, pi_1)) return rv;
 
-    // Checking that R1 values are valid is done in the verify function.
+    for (int i = 0; i < n_sigs; i++) {
+      if (rv = curve.check(R1[i])) return coinbase::error(rv, "ecdsa_2p: R1 is not on the signing curve");
+    }
     if (rv = pi_1.verify(R1, sid, 1)) return rv;
     for (int i = 0; i < n_sigs; i++) {
       R[i] = k2[i] * R1[i];
