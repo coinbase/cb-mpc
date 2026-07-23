@@ -18,6 +18,8 @@ enum class variant_e {
 /**
  * @specs:
  * - schnorr-spec | Schnorr-2PC-Sign-2P
+ * @notes:
+ * - `sigs` is cleared before execution and populated only if every signature verifies successfully.
  */
 error_t sign_batch(job_2p_t& job, key_t& key, const std::vector<mem_t>& msgs, std::vector<buf_t>& sigs,
                    variant_e variant);

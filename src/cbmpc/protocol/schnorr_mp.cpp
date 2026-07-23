@@ -1,4 +1,5 @@
 #include <iostream>
+#include <utility>
 #include <vector>
 
 #include <cbmpc/internal/crypto/base_ecc_secp256k1.h>
@@ -51,12 +52,12 @@ error_t sign(job_mp_t& job, key_t& key, const mem_t& msg, party_idx_t sig_receiv
 
 error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, party_idx_t sig_receiver,
                    std::vector<buf_t>& sigs, variant_e variant) {
+  sigs.clear();
   error_t rv = UNINITIALIZED_ERROR;
 
   int n = job.get_n_parties();
   int i = job.get_party_idx();
   crypto::pname_t pname = job.get_name();
-  sigs.resize(msgs.size());
 
   ecurve_t curve = key.curve;
   const mod_t& q = curve.order();
@@ -152,6 +153,7 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
 
   if (rv = job.send_message_all_to_one(sig_receiver, ssi)) return rv;
 
+  std::vector<buf_t> candidate_sigs(msgs.size());
   if (job.is_party_idx(sig_receiver)) {
     std::vector<bn_t> ss(msgs.size(), 0);
     for (int j = 0; j < n; j++) {
@@ -163,15 +165,15 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
     crypto::ecc_pub_key_t verify_key(key.Q);
     if (key.curve == crypto::curve_ed25519) {
       for (size_t l = 0; l < msgs.size(); l++) {
-        sigs[l] = R[l].to_compressed_bin() + ss[l].to_bin(crypto::ed25519::prv_bin_size()).rev();
-        if (rv = verify_key.verify(msgs[l], sigs[l])) return coinbase::error(rv, "ed25519 verify failed");
+        candidate_sigs[l] = R[l].to_compressed_bin() + ss[l].to_bin(crypto::ed25519::prv_bin_size()).rev();
+        if (rv = verify_key.verify(msgs[l], candidate_sigs[l])) return coinbase::error(rv, "ed25519 verify failed");
       }
     } else if (key.curve == crypto::curve_secp256k1) {
       bn_t rx, ry;
       for (size_t l = 0; l < msgs.size(); l++) {
         R[l].get_coordinates(rx, ry);
-        sigs[l] = rx.to_bin(32) + ss[l].to_bin(32);
-        if (rv = crypto::bip340::verify(verify_key, msgs[l], sigs[l])) {
+        candidate_sigs[l] = rx.to_bin(32) + ss[l].to_bin(32);
+        if (rv = crypto::bip340::verify(verify_key, msgs[l], candidate_sigs[l])) {
           return coinbase::error(rv, "bip340 verify failed");
         }
       }
@@ -179,6 +181,7 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
       cb_assert(false && "schnorr_mp: non-existing variant");
     }
   }
+  sigs = std::move(candidate_sigs);
   return SUCCESS;
 }
 

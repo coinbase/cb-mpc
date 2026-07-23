@@ -44,6 +44,8 @@ error_t refresh_ac(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::
 /**
  * @specs:
  * - schnorr-spec | Schnorr-MPC-Sign-MP
+ * @notes:
+ * - `sigs` is cleared before execution and populated only if every signature verifies successfully.
  */
 error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, party_idx_t sig_receiver,
                    std::vector<buf_t>& sigs, variant_e variant);
