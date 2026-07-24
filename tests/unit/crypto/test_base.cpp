@@ -262,10 +262,12 @@ TEST(BaseTest, AesGcmTamperAndWrongAuthFail) {
   buf_t tampered = enc;
   tampered[0] ^= 0x01;
   EXPECT_ER(aes_gcm_t::decrypt(key, iv, auth, 16, tampered, dec));
+  EXPECT_TRUE(dec.empty());
 
   buf_t wrong_auth = auth;
   wrong_auth[0] ^= 0x01;
   EXPECT_ER(aes_gcm_t::decrypt(key, iv, wrong_auth, 16, enc, dec));
+  EXPECT_TRUE(dec.empty());
 }
 
 TEST(BaseTest, AesGcmSupports192BitKeysAndRejectsShortCiphertext) {
@@ -281,6 +283,7 @@ TEST(BaseTest, AesGcmSupports192BitKeysAndRejectsShortCiphertext) {
   EXPECT_OK(aes_gcm_t::decrypt(key, iv, auth, 16, enc, dec));
   EXPECT_EQ(dec, data);
   EXPECT_ER(aes_gcm_t::decrypt(key, iv, auth, 16, mem_t(enc.data(), 15), dec));
+  EXPECT_TRUE(dec.empty());
 }
 
 TEST(BaseTest, AesGcmSupports256BitKeysAndEmptyAuth) {

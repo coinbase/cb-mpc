@@ -157,6 +157,7 @@ TEST_F(PKI, ECIES_RejectsWrongLabel) {
   EXPECT_OK(ciphertext.decrypt(prv_key, label, decrypted));
   EXPECT_EQ(decrypted, plaintext);
   EXPECT_ER(ciphertext.decrypt(prv_key, wrong_label, decrypted));
+  EXPECT_TRUE(decrypted.empty());
 }
 
 TEST_F(PKI, BuiltInKEMAeadRejectsMalformedKemCiphertexts) {

@@ -1,3 +1,5 @@
+#include <utility>
+
 #include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/crypto/base.h>
 #include <cbmpc/internal/crypto/scope.h>
@@ -171,13 +173,18 @@ void aes_gcm_t::encrypt(mem_t key, mem_t iv, mem_t auth, int tag_size, mem_t in,
 }
 
 error_t aes_gcm_t::decrypt(mem_t key, mem_t iv, mem_t auth, int tag_size, mem_t in, buf_t& out) {
+  out.free();
   if (in.size < tag_size) return coinbase::error(E_CRYPTO);
 
   aes_gcm_t gcm;
   gcm.decrypt_init(key, iv, auth);
   int data_size = in.size - tag_size;
-  gcm.cipher.update(mem_t(in.data, data_size), out.alloc(data_size));
-  return gcm.decrypt_final(mem_t(in.data + data_size, tag_size));
+  buf_t candidate(data_size);
+  if (gcm.cipher.update(mem_t(in.data, data_size), candidate.data()) != data_size) return coinbase::error(E_CRYPTO);
+  if (error_t rv = gcm.decrypt_final(mem_t(in.data + data_size, tag_size))) return rv;
+
+  out = std::move(candidate);
+  return SUCCESS;
 }
 
 void aes_gcm_t::encrypt_init(mem_t key, mem_t iv, mem_t auth) {
