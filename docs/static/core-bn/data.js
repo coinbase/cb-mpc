@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784754265708,
+  "lastUpdate": 1784869823793,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -4440,6 +4440,126 @@ window.BENCHMARK_DATA = {
             "value": 1319.8170321966486,
             "unit": "us/iter",
             "extra": "iterations: 528\ncpu: 1319.7712992424167 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4181ea23cbb8e99b014df24656e0e965bc74d966",
+          "message": "fix: never return unverified output on failure (#126)\n\nAES-GCM decrypt now clears the output buffer up front and only assigns the decrypted plaintext after the auth tag verifies, so a failed decryption (tampered ciphertext, wrong auth data, short input) leaves no unauthenticated bytes in the caller's buffer. Also check the cipher update length before finalizing.\n\nSchnorr 2P/MP sign_batch now build signatures into a local buffer and only move them into the caller's `sigs` vector once every signature has verified. On any failure `sigs` is left cleared instead of holding partial or unverified signatures. Documented this contract in the protocol headers.\n\nAdds regression tests asserting the output buffers are empty after failed AES-GCM decrypt and ECIES decrypt.",
+          "timestamp": "2026-07-23T21:33:18-07:00",
+          "tree_id": "efc66b5c4ae8b5bdaad1284f62c82213f5377228",
+          "url": "https://github.com/coinbase/cb-mpc/commit/4181ea23cbb8e99b014df24656e0e965bc74d966"
+        },
+        "date": 1784869821171,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.09488914358129522,
+            "unit": "us/iter",
+            "extra": "iterations: 7262791\ncpu: 0.09488287711982901 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.5056525819528359,
+            "unit": "us/iter",
+            "extra": "iterations: 1384243\ncpu: 0.5056450038035203 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.08214775811141158,
+            "unit": "us/iter",
+            "extra": "iterations: 8500244\ncpu: 0.08213965257938481 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.5685451985590616,
+            "unit": "us/iter",
+            "extra": "iterations: 1228048\ncpu: 0.568515772184806 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.17229967903340282,
+            "unit": "us/iter",
+            "extra": "iterations: 4075190\ncpu: 0.17229615428973766 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 11.180887391648016,
+            "unit": "us/iter",
+            "extra": "iterations: 62411\ncpu: 11.179730031564855 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 17.034972628048116,
+            "unit": "us/iter",
+            "extra": "iterations: 41137\ncpu: 17.03428021002998 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16536.690785712726,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16535.75304761899 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 16.525242513059816,
+            "unit": "us/iter",
+            "extra": "iterations: 42307\ncpu: 16.52443486893433 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 670.5514540229219,
+            "unit": "us/iter",
+            "extra": "iterations: 1044\ncpu: 670.5204885057456 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 24.7434126989782,
+            "unit": "us/iter",
+            "extra": "iterations: 28144\ncpu: 24.741547683342873 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1153.7967366666635,
+            "unit": "us/iter",
+            "extra": "iterations: 600\ncpu: 1153.7447083333063 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 24.959450277227255,
+            "unit": "us/iter",
+            "extra": "iterations: 28136\ncpu: 24.95726151549583 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1154.6395867768776,
+            "unit": "us/iter",
+            "extra": "iterations: 605\ncpu: 1154.552543801651 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 28.200156773886107,
+            "unit": "us/iter",
+            "extra": "iterations: 24934\ncpu: 28.199352971845766 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1328.7323676190897,
+            "unit": "us/iter",
+            "extra": "iterations: 525\ncpu: 1328.6477161904843 us\nthreads: 1"
           }
         ]
       }
