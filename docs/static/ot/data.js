@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784754278646,
+  "lastUpdate": 1784869837838,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1554,6 +1554,48 @@ window.BENCHMARK_DATA = {
             "value": 14154.92183999959,
             "unit": "us/iter",
             "extra": "iterations: 50\ncpu: 14153.458859999999 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4181ea23cbb8e99b014df24656e0e965bc74d966",
+          "message": "fix: never return unverified output on failure (#126)\n\nAES-GCM decrypt now clears the output buffer up front and only assigns the decrypted plaintext after the auth tag verifies, so a failed decryption (tampered ciphertext, wrong auth data, short input) leaves no unauthenticated bytes in the caller's buffer. Also check the cipher update length before finalizing.\n\nSchnorr 2P/MP sign_batch now build signatures into a local buffer and only move them into the caller's `sigs` vector once every signature has verified. On any failure `sigs` is left cleared instead of holding partial or unverified signatures. Documented this contract in the protocol headers.\n\nAdds regression tests asserting the output buffers are empty after failed AES-GCM decrypt and ECIES decrypt.",
+          "timestamp": "2026-07-23T21:33:18-07:00",
+          "tree_id": "efc66b5c4ae8b5bdaad1284f62c82213f5377228",
+          "url": "https://github.com/coinbase/cb-mpc/commit/4181ea23cbb8e99b014df24656e0e965bc74d966"
+        },
+        "date": 1784869836987,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24504.166035707643,
+            "unit": "us/iter",
+            "extra": "iterations: 28\ncpu: 24502.972321428573 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 105658.66499999694,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 105655.14714285717 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13925.913100001708,
+            "unit": "us/iter",
+            "extra": "iterations: 50\ncpu: 13924.680299999998 us\nthreads: 1"
           }
         ]
       }
