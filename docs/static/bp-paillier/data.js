@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784754273896,
+  "lastUpdate": 1784869832706,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2442,6 +2442,72 @@ window.BENCHMARK_DATA = {
             "value": 8331.953059523368,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8331.200964285714 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4181ea23cbb8e99b014df24656e0e965bc74d966",
+          "message": "fix: never return unverified output on failure (#126)\n\nAES-GCM decrypt now clears the output buffer up front and only assigns the decrypted plaintext after the auth tag verifies, so a failed decryption (tampered ciphertext, wrong auth data, short input) leaves no unauthenticated bytes in the caller's buffer. Also check the cipher update length before finalizing.\n\nSchnorr 2P/MP sign_batch now build signatures into a local buffer and only move them into the caller's `sigs` vector once every signature has verified. On any failure `sigs` is left cleared instead of holding partial or unverified signatures. Documented this contract in the protocol headers.\n\nAdds regression tests asserting the output buffers are empty after failed AES-GCM decrypt and ECIES decrypt.",
+          "timestamp": "2026-07-23T21:33:18-07:00",
+          "tree_id": "efc66b5c4ae8b5bdaad1284f62c82213f5377228",
+          "url": "https://github.com/coinbase/cb-mpc/commit/4181ea23cbb8e99b014df24656e0e965bc74d966"
+        },
+        "date": 1784869831856,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 40138.56643749136,
+            "unit": "us/iter",
+            "extra": "iterations: 16\ncpu: 40135.1520625 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4517.17653548463,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4516.720361290321 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8570.520695121648,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8570.054048780485 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4750.616911564202,
+            "unit": "us/iter",
+            "extra": "iterations: 147\ncpu: 4749.923136054424 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.260285891070087,
+            "unit": "us/iter",
+            "extra": "iterations: 62223\ncpu: 11.259614097680933 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 13.584501115920517,
+            "unit": "us/iter",
+            "extra": "iterations: 51527\ncpu: 13.582715430745054 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8326.125428571428,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8325.409964285715 us\nthreads: 1"
           }
         ]
       }
