@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784754269226,
+  "lastUpdate": 1784869827625,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -3924,6 +3924,138 @@ window.BENCHMARK_DATA = {
             "value": 33.878420574522586,
             "unit": "us/iter",
             "extra": "iterations: 21026\ncpu: 33.87641168077626 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4181ea23cbb8e99b014df24656e0e965bc74d966",
+          "message": "fix: never return unverified output on failure (#126)\n\nAES-GCM decrypt now clears the output buffer up front and only assigns the decrypted plaintext after the auth tag verifies, so a failed decryption (tampered ciphertext, wrong auth data, short input) leaves no unauthenticated bytes in the caller's buffer. Also check the cipher update length before finalizing.\n\nSchnorr 2P/MP sign_batch now build signatures into a local buffer and only move them into the caller's `sigs` vector once every signature has verified. On any failure `sigs` is left cleared instead of holding partial or unverified signatures. Documented this contract in the protocol headers.\n\nAdds regression tests asserting the output buffers are empty after failed AES-GCM decrypt and ECIES decrypt.",
+          "timestamp": "2026-07-23T21:33:18-07:00",
+          "tree_id": "efc66b5c4ae8b5bdaad1284f62c82213f5377228",
+          "url": "https://github.com/coinbase/cb-mpc/commit/4181ea23cbb8e99b014df24656e0e965bc74d966"
+        },
+        "date": 1784869826851,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.36161020291110757,
+            "unit": "us/iter",
+            "extra": "iterations: 1940407\ncpu: 0.3615909383959139 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.3667156262475611,
+            "unit": "us/iter",
+            "extra": "iterations: 1893596\ncpu: 0.3666937303416356 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/SelfAdd/secp256k1",
+            "value": 0.15680342392069482,
+            "unit": "us/iter",
+            "extra": "iterations: 4464531\ncpu: 0.15679557942368416 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/SelfAdd/Ed25519",
+            "value": 0.20363483608701982,
+            "unit": "us/iter",
+            "extra": "iterations: 3441460\ncpu: 0.20360292521197398 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 2.449959687469514,
+            "unit": "us/iter",
+            "extra": "iterations: 285668\ncpu: 2.4498789608916645 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.3755292560044898,
+            "unit": "us/iter",
+            "extra": "iterations: 1862968\ncpu: 0.3754983139807017 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 41.5728750000044,
+            "unit": "us/iter",
+            "extra": "iterations: 16864\ncpu: 41.571614089184045 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 65.82988513958665,
+            "unit": "us/iter",
+            "extra": "iterations: 10639\ncpu: 65.8228188739543 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 32.91582210944842,
+            "unit": "us/iter",
+            "extra": "iterations: 21873\ncpu: 32.91234636309608 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 61.115451263214595,
+            "unit": "us/iter",
+            "extra": "iterations: 11439\ncpu: 61.10781904012585 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 19.900378847920543,
+            "unit": "us/iter",
+            "extra": "iterations: 34824\ncpu: 19.899169825407732 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 14.032317525277367,
+            "unit": "us/iter",
+            "extra": "iterations: 49848\ncpu: 14.030394599582731 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 19.92982296772885,
+            "unit": "us/iter",
+            "extra": "iterations: 35084\ncpu: 19.928102582373754 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 7.155448661307928,
+            "unit": "us/iter",
+            "extra": "iterations: 97782\ncpu: 7.154802847149769 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 64.11577998534328,
+            "unit": "us/iter",
+            "extra": "iterations: 10922\ncpu: 64.10958176158219 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 80.95222761707502,
+            "unit": "us/iter",
+            "extra": "iterations: 8712\ncpu: 80.95016448576676 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/secp256k1",
+            "value": 2.2121105076589913,
+            "unit": "us/iter",
+            "extra": "iterations: 315960\ncpu: 2.211919942397771 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/Ed25519",
+            "value": 33.31905658792327,
+            "unit": "us/iter",
+            "extra": "iterations: 21418\ncpu: 33.317721402558526 us\nthreads: 1"
           }
         ]
       }
