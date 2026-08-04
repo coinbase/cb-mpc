@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784869832706,
+  "lastUpdate": 1785866396858,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2508,6 +2508,72 @@ window.BENCHMARK_DATA = {
             "value": 8326.125428571428,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8325.409964285715 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "56ff32418fd35ff97052ec86132998142a31296a",
+          "message": "docs: clarify ECDSA-2P scalar-detached blob is not public-only (#128)",
+          "timestamp": "2026-08-04T10:20:12-07:00",
+          "tree_id": "bdf27b9c3246b39e8289adba74337605688e9071",
+          "url": "https://github.com/coinbase/cb-mpc/commit/56ff32418fd35ff97052ec86132998142a31296a"
+        },
+        "date": 1785866396384,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 66623.28479999359,
+            "unit": "us/iter",
+            "extra": "iterations: 10\ncpu: 66610.4213 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 5117.236554744429,
+            "unit": "us/iter",
+            "extra": "iterations: 137\ncpu: 5117.027270072992 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 9686.876152774934,
+            "unit": "us/iter",
+            "extra": "iterations: 72\ncpu: 9685.541291666666 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 5332.784755725996,
+            "unit": "us/iter",
+            "extra": "iterations: 131\ncpu: 5332.336702290076 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 12.432141901960211,
+            "unit": "us/iter",
+            "extra": "iterations: 56384\ncpu: 12.430907828461976 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 14.959009174902118,
+            "unit": "us/iter",
+            "extra": "iterations: 46867\ncpu: 14.958839716644956 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 9436.42249999787,
+            "unit": "us/iter",
+            "extra": "iterations: 74\ncpu: 9435.120364864866 us\nthreads: 1"
           }
         ]
       }
