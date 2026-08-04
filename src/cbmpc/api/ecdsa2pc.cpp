@@ -205,7 +205,7 @@ error_t get_public_share_compressed(mem_t key_blob, buf_t& out_public_share_comp
   return SUCCESS;
 }
 
-error_t detach_private_scalar(mem_t key_blob, buf_t& out_public_key_blob, buf_t& out_private_scalar) {
+error_t detach_private_scalar(mem_t key_blob, buf_t& out_scalar_detached_key_blob, buf_t& out_private_scalar) {
   if (const error_t rv = coinbase::api::detail::validate_mem_arg_max_size(key_blob, "key_blob",
                                                                           coinbase::api::detail::MAX_OPAQUE_BLOB_SIZE))
     return rv;
@@ -220,31 +220,32 @@ error_t detach_private_scalar(mem_t key_blob, buf_t& out_public_key_blob, buf_t&
   // Variable-length big-endian encoding (may grow after refresh).
   out_private_scalar = key.x_share.to_bin();
 
-  // Produce a v1-format blob with an invalid (out-of-range) scalar share so it is
-  // rejected by sign/refresh APIs.
-  key_blob_v1_t pub;
-  pub.role = static_cast<uint32_t>(key.role);
-  pub.curve = static_cast<uint32_t>(cid);
-  pub.Q_compressed = key.Q.to_compressed_bin();
-  pub.x_share = key.paillier.get_N().value();  // x_share == N is out of range
-  pub.c_key = key.c_key;
-  pub.paillier = key.paillier;
-  out_public_key_blob = coinbase::convert(pub);
+  // Produce a scalar-detached v1-format blob with an invalid (out-of-range)
+  // scalar share so it is rejected by sign/refresh APIs. This preserves all
+  // other role-specific key material, including P1's private Paillier state.
+  key_blob_v1_t detached;
+  detached.role = static_cast<uint32_t>(key.role);
+  detached.curve = static_cast<uint32_t>(cid);
+  detached.Q_compressed = key.Q.to_compressed_bin();
+  detached.x_share = key.paillier.get_N().value();  // x_share == N is out of range
+  detached.c_key = key.c_key;
+  detached.paillier = key.paillier;
+  out_scalar_detached_key_blob = coinbase::convert(detached);
   return SUCCESS;
 }
 
-error_t attach_private_scalar(mem_t public_key_blob, mem_t private_scalar, mem_t public_share_compressed,
+error_t attach_private_scalar(mem_t scalar_detached_key_blob, mem_t private_scalar, mem_t public_share_compressed,
                               buf_t& out_key_blob) {
-  if (const error_t rv = coinbase::api::detail::validate_mem_arg_max_size(public_key_blob, "public_key_blob",
-                                                                          coinbase::api::detail::MAX_OPAQUE_BLOB_SIZE))
+  if (const error_t rv = coinbase::api::detail::validate_mem_arg_max_size(
+          scalar_detached_key_blob, "scalar_detached_key_blob", coinbase::api::detail::MAX_OPAQUE_BLOB_SIZE))
     return rv;
-  key_blob_v1_t pub;
-  error_t rv = coinbase::convert(pub, public_key_blob);
+  key_blob_v1_t detached;
+  error_t rv = coinbase::convert(detached, scalar_detached_key_blob);
   if (rv) return rv;
-  if (pub.version != key_blob_version_v1) return coinbase::error(E_FORMAT, "unsupported key blob version");
-  if (pub.role > 1) return coinbase::error(E_FORMAT, "invalid key blob role");
+  if (detached.version != key_blob_version_v1) return coinbase::error(E_FORMAT, "unsupported key blob version");
+  if (detached.role > 1) return coinbase::error(E_FORMAT, "invalid key blob role");
 
-  const auto cid = static_cast<curve_id>(pub.curve);
+  const auto cid = static_cast<curve_id>(detached.curve);
   if (cid == curve_id::ed25519) return coinbase::error(E_FORMAT, "invalid key blob curve");
   auto curve = to_internal_curve(cid);
   if (!curve.valid()) return coinbase::error(E_FORMAT, "invalid key blob curve");
@@ -255,15 +256,15 @@ error_t attach_private_scalar(mem_t public_key_blob, mem_t private_scalar, mem_t
     return rvp;
 
   // Validate Paillier material (c_key + key) is well-formed.
-  const bool paillier_has_private = pub.paillier.has_private_key();
-  if ((pub.role == 0) != paillier_has_private) return coinbase::error(E_FORMAT, "invalid key blob");
+  const bool paillier_has_private = detached.paillier.has_private_key();
+  if ((detached.role == 0) != paillier_has_private) return coinbase::error(E_FORMAT, "invalid key blob");
 
-  const auto& N = pub.paillier.get_N();
+  const auto& N = detached.paillier.get_N();
   if (N.value().get_bits_count() < coinbase::crypto::paillier_t::bit_size)
     return coinbase::error(E_FORMAT, "invalid key blob");
   {
     coinbase::crypto::vartime_scope_t vartime_scope;
-    if (pub.paillier.verify_cipher(pub.c_key)) return coinbase::error(E_FORMAT, "invalid key blob");
+    if (detached.paillier.verify_cipher(detached.c_key)) return coinbase::error(E_FORMAT, "invalid key blob");
   }
 
   // Interpret scalar and ensure it stays in Z_N (matching key blob invariants).
@@ -273,7 +274,7 @@ error_t attach_private_scalar(mem_t public_key_blob, mem_t private_scalar, mem_t
   // If we have the private key (P1), bind the share to its Paillier encryption.
   if (paillier_has_private) {
     coinbase::crypto::vartime_scope_t vartime_scope;
-    const coinbase::crypto::bn_t plain = pub.paillier.decrypt(pub.c_key);
+    const coinbase::crypto::bn_t plain = detached.paillier.decrypt(detached.c_key);
     if (plain != N.mod(x_share)) return coinbase::error(E_FORMAT, "x_share mismatch key blob");
   }
 
@@ -290,12 +291,12 @@ error_t attach_private_scalar(mem_t public_key_blob, mem_t private_scalar, mem_t
 
   // Validate and normalize global public key encoding.
   coinbase::crypto::ecc_point_t Q(curve);
-  if (rv = Q.from_bin(curve, pub.Q_compressed)) return coinbase::error(rv, "invalid key blob");
+  if (rv = Q.from_bin(curve, detached.Q_compressed)) return coinbase::error(rv, "invalid key blob");
   if (rv = curve.check(Q)) return coinbase::error(rv, "invalid key blob");
 
-  pub.Q_compressed = Q.to_compressed_bin();
-  pub.x_share = std::move(x_share);
-  out_key_blob = coinbase::convert(pub);
+  detached.Q_compressed = Q.to_compressed_bin();
+  detached.x_share = std::move(x_share);
+  out_key_blob = coinbase::convert(detached);
   return SUCCESS;
 }
 

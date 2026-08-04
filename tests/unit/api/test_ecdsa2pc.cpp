@@ -216,26 +216,26 @@ static void exercise_detach_attach(curve_id curve, const coinbase::crypto::ecurv
   ASSERT_EQ(Q.from_bin(verify_curve, pub1), SUCCESS);
   const coinbase::crypto::ecc_pub_key_t verify_key(Q);
 
-  // Detach into scalar-redacted blob + variable-length scalar.
-  buf_t public_1;
-  buf_t public_2;
+  // Detach into scalar-detached blob + variable-length scalar.
+  buf_t detached_1;
+  buf_t detached_2;
   buf_t x1;
   buf_t x2;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(refreshed_1, public_1, x1), SUCCESS);
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(refreshed_2, public_2, x2), SUCCESS);
-  EXPECT_GT(public_1.size(), 0);
-  EXPECT_GT(public_2.size(), 0);
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(refreshed_1, detached_1, x1), SUCCESS);
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(refreshed_2, detached_2, x2), SUCCESS);
+  EXPECT_GT(detached_1.size(), 0);
+  EXPECT_GT(detached_2.size(), 0);
   EXPECT_GT(x1.size(), 0);
   EXPECT_GT(x2.size(), 0);
 
-  // Capture share points before detaching (public blobs no longer carry them).
+  // Capture share points before detaching (scalar-detached blobs cannot be loaded as full key blobs).
   buf_t Qi_full_1;
   ASSERT_EQ(coinbase::api::ecdsa_2p::get_public_share_compressed(refreshed_1, Qi_full_1), SUCCESS);
 
   buf_t Qi_full_2;
   ASSERT_EQ(coinbase::api::ecdsa_2p::get_public_share_compressed(refreshed_2, Qi_full_2), SUCCESS);
 
-  // Public blob should not be usable for signing.
+  // Scalar-detached blob should not be usable for signing.
   buf_t msg_hash(32);
   for (int i = 0; i < msg_hash.size(); i++) msg_hash[i] = static_cast<uint8_t>(i);
   {
@@ -251,21 +251,21 @@ static void exercise_detach_attach(curve_id curve, const coinbase::crypto::ecurv
     const coinbase::api::job_2p_t bad_job{party_t::p1, "p1", "p2", t};
     buf_t sid;
     buf_t sig;
-    EXPECT_NE(coinbase::api::ecdsa_2p::sign(bad_job, public_1, msg_hash, sid, sig), SUCCESS);
+    EXPECT_NE(coinbase::api::ecdsa_2p::sign(bad_job, detached_1, msg_hash, sid, sig), SUCCESS);
   }
 
   // Attach scalars back and sign.
   buf_t merged_1;
   buf_t merged_2;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::attach_private_scalar(public_1, x1, Qi_full_1, merged_1), SUCCESS);
-  ASSERT_EQ(coinbase::api::ecdsa_2p::attach_private_scalar(public_2, x2, Qi_full_2, merged_2), SUCCESS);
+  ASSERT_EQ(coinbase::api::ecdsa_2p::attach_private_scalar(detached_1, x1, Qi_full_1, merged_1), SUCCESS);
+  ASSERT_EQ(coinbase::api::ecdsa_2p::attach_private_scalar(detached_2, x2, Qi_full_2, merged_2), SUCCESS);
 
   // Leading-zero padded encoding should also be accepted (variable-length encoding).
   buf_t x1_padded(static_cast<int>(x1.size()) + 1);
   x1_padded[0] = 0x00;
   std::memcpy(x1_padded.data() + 1, x1.data(), static_cast<size_t>(x1.size()));
   buf_t merged_1_padded;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::attach_private_scalar(public_1, x1_padded, Qi_full_1, merged_1_padded), SUCCESS);
+  ASSERT_EQ(coinbase::api::ecdsa_2p::attach_private_scalar(detached_1, x1_padded, Qi_full_1, merged_1_padded), SUCCESS);
 
   buf_t sid1;
   buf_t sid2;
@@ -285,7 +285,7 @@ static void exercise_detach_attach(curve_id curve, const coinbase::crypto::ecurv
   buf_t bad_x1 = x1;
   bad_x1[0] ^= 0x01;
   buf_t bad_merged;
-  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(public_1, bad_x1, Qi_full_1, bad_merged), SUCCESS);
+  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(detached_1, bad_x1, Qi_full_1, bad_merged), SUCCESS);
 }
 
 static bool read_convert_len_for_tamper(const buf_t& msg, int& offset, uint32_t& len) {
@@ -409,7 +409,7 @@ TEST(ApiEcdsa2pc, DkgSignRefreshSign) {
   exercise_curve(curve_id::p256, coinbase::crypto::curve_p256);
 }
 
-TEST(ApiEcdsa2pc, KeyBlobPrivScalar_NoPubSign) {
+TEST(ApiEcdsa2pc, KeyBlobDetachAttach_NoDetachedSign) {
   exercise_detach_attach(curve_id::secp256k1, coinbase::crypto::curve_secp256k1);
   exercise_detach_attach(curve_id::p256, coinbase::crypto::curve_p256);
 }
@@ -750,33 +750,35 @@ TEST(ApiEcdsa2pc, NegGetPubShareOversizedBlob) {
 
 TEST(ApiEcdsa2pc, NegDetachAllZeroBlob) {
   uint8_t zeros[64] = {};
-  buf_t pub_blob, scalar;
-  EXPECT_NE(coinbase::api::ecdsa_2p::detach_private_scalar(mem_t(zeros, sizeof(zeros)), pub_blob, scalar), SUCCESS);
+  buf_t detached_blob, scalar;
+  EXPECT_NE(coinbase::api::ecdsa_2p::detach_private_scalar(mem_t(zeros, sizeof(zeros)), detached_blob, scalar),
+            SUCCESS);
 }
 
 TEST(ApiEcdsa2pc, NegDetachEmptyBlob) {
-  buf_t pub_blob, scalar;
-  EXPECT_NE(coinbase::api::ecdsa_2p::detach_private_scalar(mem_t(), pub_blob, scalar), SUCCESS);
+  buf_t detached_blob, scalar;
+  EXPECT_NE(coinbase::api::ecdsa_2p::detach_private_scalar(mem_t(), detached_blob, scalar), SUCCESS);
 }
 
 TEST(ApiEcdsa2pc, NegDetachGarbageBlob) {
   uint8_t garbage[] = {0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02, 0x03, 0x04};
-  buf_t pub_blob, scalar;
-  EXPECT_NE(coinbase::api::ecdsa_2p::detach_private_scalar(mem_t(garbage, sizeof(garbage)), pub_blob, scalar), SUCCESS);
+  buf_t detached_blob, scalar;
+  EXPECT_NE(coinbase::api::ecdsa_2p::detach_private_scalar(mem_t(garbage, sizeof(garbage)), detached_blob, scalar),
+            SUCCESS);
 }
 
 TEST(ApiEcdsa2pc, NegDetachOversizedBlob) {
   buf_t big(1024 * 1024 + 1);
   std::memset(big.data(), 0xAB, static_cast<size_t>(big.size()));
-  buf_t pub_blob, scalar;
-  EXPECT_NE(coinbase::api::ecdsa_2p::detach_private_scalar(big, pub_blob, scalar), SUCCESS);
+  buf_t detached_blob, scalar;
+  EXPECT_NE(coinbase::api::ecdsa_2p::detach_private_scalar(big, detached_blob, scalar), SUCCESS);
 }
 
 // ==========================================================================
 // Negative: attach_private_scalar
 // ==========================================================================
 
-TEST(ApiEcdsa2pc, NegAttachEmptyPublicKeyBlob) {
+TEST(ApiEcdsa2pc, NegAttachEmptyScalarDetachedKeyBlob) {
   uint8_t scalar[] = {0x01};
   uint8_t point[33] = {};
   point[0] = 0x02;
@@ -784,7 +786,7 @@ TEST(ApiEcdsa2pc, NegAttachEmptyPublicKeyBlob) {
   EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(mem_t(), mem_t(scalar, 1), mem_t(point, 33), out), SUCCESS);
 }
 
-TEST(ApiEcdsa2pc, NegAttachGarbagePublicKeyBlob) {
+TEST(ApiEcdsa2pc, NegAttachGarbageScalarDetachedKeyBlob) {
   uint8_t garbage[] = {0xDE, 0xAD, 0xBE, 0xEF};
   uint8_t scalar[] = {0x01};
   uint8_t point[33] = {};
@@ -795,7 +797,7 @@ TEST(ApiEcdsa2pc, NegAttachGarbagePublicKeyBlob) {
             SUCCESS);
 }
 
-TEST(ApiEcdsa2pc, NegAttachOversizedPublicKeyBlob) {
+TEST(ApiEcdsa2pc, NegAttachOversizedScalarDetachedKeyBlob) {
   buf_t big(1024 * 1024 + 1);
   std::memset(big.data(), 0xAB, static_cast<size_t>(big.size()));
   uint8_t scalar[] = {0x01};
@@ -806,19 +808,19 @@ TEST(ApiEcdsa2pc, NegAttachOversizedPublicKeyBlob) {
 }
 
 TEST_F(ApiEcdsa2pcNegWithBlobs, NegAttachEmptyPrivateScalar) {
-  buf_t pub_blob, x;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, pub_blob, x), SUCCESS);
+  buf_t detached_blob, x;
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, detached_blob, x), SUCCESS);
 
   buf_t Qi;
   ASSERT_EQ(coinbase::api::ecdsa_2p::get_public_share_compressed(blob1_, Qi), SUCCESS);
 
   buf_t out;
-  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(pub_blob, mem_t(), Qi, out), SUCCESS);
+  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(detached_blob, mem_t(), Qi, out), SUCCESS);
 }
 
 TEST_F(ApiEcdsa2pcNegWithBlobs, NegAttachGarbagePrivateScalar) {
-  buf_t pub_blob, x;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, pub_blob, x), SUCCESS);
+  buf_t detached_blob, x;
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, detached_blob, x), SUCCESS);
 
   buf_t Qi;
   ASSERT_EQ(coinbase::api::ecdsa_2p::get_public_share_compressed(blob1_, Qi), SUCCESS);
@@ -826,83 +828,83 @@ TEST_F(ApiEcdsa2pcNegWithBlobs, NegAttachGarbagePrivateScalar) {
   uint8_t garbage[512];
   std::memset(garbage, 0xFF, sizeof(garbage));
   buf_t out;
-  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(pub_blob, mem_t(garbage, sizeof(garbage)), Qi, out),
+  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(detached_blob, mem_t(garbage, sizeof(garbage)), Qi, out),
             SUCCESS);
 }
 
 TEST_F(ApiEcdsa2pcNegWithBlobs, NegAttachGarbagePublicShare) {
-  buf_t pub_blob, x;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, pub_blob, x), SUCCESS);
+  buf_t detached_blob, x;
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, detached_blob, x), SUCCESS);
 
   uint8_t bad_point[33];
   bad_point[0] = 0x05;
   std::memset(bad_point + 1, 0xAB, 32);
   buf_t out;
-  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(pub_blob, x, mem_t(bad_point, 33), out), SUCCESS);
+  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(detached_blob, x, mem_t(bad_point, 33), out), SUCCESS);
 }
 
 TEST_F(ApiEcdsa2pcNegWithBlobs, NegAttachEmptyPublicShare) {
-  buf_t pub_blob, x;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, pub_blob, x), SUCCESS);
+  buf_t detached_blob, x;
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, detached_blob, x), SUCCESS);
 
   buf_t out;
-  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(pub_blob, x, mem_t(), out), SUCCESS);
+  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(detached_blob, x, mem_t(), out), SUCCESS);
 }
 
 TEST_F(ApiEcdsa2pcNegWithBlobs, NegAttachSwappedScalars) {
-  buf_t pub1, x1, pub2, x2;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, pub1, x1), SUCCESS);
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob2_, pub2, x2), SUCCESS);
+  buf_t detached1, x1, detached2, x2;
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, detached1, x1), SUCCESS);
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob2_, detached2, x2), SUCCESS);
 
   buf_t Qi1;
   ASSERT_EQ(coinbase::api::ecdsa_2p::get_public_share_compressed(blob1_, Qi1), SUCCESS);
 
   buf_t out;
-  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(pub1, x2, Qi1, out), SUCCESS);
+  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(detached1, x2, Qi1, out), SUCCESS);
 }
 
 TEST_F(ApiEcdsa2pcNegWithBlobs, NegAttachSwappedPublicShares) {
-  buf_t pub1, x1;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, pub1, x1), SUCCESS);
+  buf_t detached1, x1;
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, detached1, x1), SUCCESS);
 
   buf_t Qi2;
   ASSERT_EQ(coinbase::api::ecdsa_2p::get_public_share_compressed(blob2_, Qi2), SUCCESS);
 
   buf_t out;
-  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(pub1, x1, Qi2, out), SUCCESS);
+  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(detached1, x1, Qi2, out), SUCCESS);
 }
 
 TEST_F(ApiEcdsa2pcNegWithBlobs, NegAttachZeroScalar) {
-  buf_t pub_blob, x;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, pub_blob, x), SUCCESS);
+  buf_t detached_blob, x;
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, detached_blob, x), SUCCESS);
 
   buf_t Qi;
   ASSERT_EQ(coinbase::api::ecdsa_2p::get_public_share_compressed(blob1_, Qi), SUCCESS);
 
   uint8_t zero[32] = {};
   buf_t out;
-  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(pub_blob, mem_t(zero, 32), Qi, out), SUCCESS);
+  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(detached_blob, mem_t(zero, 32), Qi, out), SUCCESS);
 }
 
 TEST_F(ApiEcdsa2pcNegWithBlobs, NegAttachSingleByteZeroScalar) {
-  buf_t pub_blob, x;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, pub_blob, x), SUCCESS);
+  buf_t detached_blob, x;
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, detached_blob, x), SUCCESS);
 
   buf_t Qi;
   ASSERT_EQ(coinbase::api::ecdsa_2p::get_public_share_compressed(blob1_, Qi), SUCCESS);
 
   uint8_t zero_byte = 0x00;
   buf_t out;
-  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(pub_blob, mem_t(&zero_byte, 1), Qi, out), SUCCESS);
+  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(detached_blob, mem_t(&zero_byte, 1), Qi, out), SUCCESS);
 }
 
 TEST_F(ApiEcdsa2pcNegWithBlobs, NegAttachAllZeroPublicShare) {
-  buf_t pub_blob, x;
-  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, pub_blob, x), SUCCESS);
+  buf_t detached_blob, x;
+  ASSERT_EQ(coinbase::api::ecdsa_2p::detach_private_scalar(blob1_, detached_blob, x), SUCCESS);
 
   uint8_t zero_point[33] = {};
   buf_t out;
-  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(pub_blob, x, mem_t(zero_point, 33), out), SUCCESS);
+  EXPECT_NE(coinbase::api::ecdsa_2p::attach_private_scalar(detached_blob, x, mem_t(zero_point, 33), out), SUCCESS);
 }
 
 // ==========================================================================

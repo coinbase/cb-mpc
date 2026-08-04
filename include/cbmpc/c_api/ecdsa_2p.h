@@ -60,28 +60,31 @@ cbmpc_error_t cbmpc_ecdsa_2p_get_public_key_compressed(cmem_t key_blob, cmem_t* 
 // Ownership: same as `cbmpc_ecdsa_2p_get_public_key_compressed`.
 cbmpc_error_t cbmpc_ecdsa_2p_get_public_share_compressed(cmem_t key_blob, cmem_t* out_public_share);
 
-// Detach a key blob into a scalar-removed blob + private scalar.
+// Detach a key blob into a scalar-detached blob + private scalar.
 //
 // Notes:
 // - Unlike ECDSA-MP, the scalar encoding is NOT fixed-length: after refresh,
 //   ECDSA-2PC keeps the share as a Paillier-compatible integer representative and
 //   it may grow.
+// - The scalar-detached blob is not public-only material. For P1, it retains the
+//   Paillier private key and `c_key`, whose decryption recovers the private scalar.
+//   Protect it exactly like the full P1 key blob.
 //
 // Ownership:
-// - On success, `out_public_key_blob->data` and `out_private_scalar->data` are
+// - On success, `out_scalar_detached_key_blob->data` and `out_private_scalar->data` are
 //   allocated by the library and must be freed with `cbmpc_cmem_free(...)`.
 // - On failure, outputs are set to `{NULL, 0}`.
-cbmpc_error_t cbmpc_ecdsa_2p_detach_private_scalar(cmem_t key_blob, cmem_t* out_public_key_blob,
+cbmpc_error_t cbmpc_ecdsa_2p_detach_private_scalar(cmem_t key_blob, cmem_t* out_scalar_detached_key_blob,
                                                    cmem_t* out_private_scalar);
 
-// Attach a variable-length private scalar into a scalar-removed key blob,
+// Attach a variable-length private scalar into a scalar-detached key blob,
 // validating it against the expected public share point.
 //
 // Ownership:
 // - On success, `out_key_blob->data` is allocated by the library and must be
 //   freed with `cbmpc_cmem_free(*out_key_blob)`.
 // - On failure, `*out_key_blob` is set to `{NULL, 0}`.
-cbmpc_error_t cbmpc_ecdsa_2p_attach_private_scalar(cmem_t public_key_blob, cmem_t private_scalar,
+cbmpc_error_t cbmpc_ecdsa_2p_attach_private_scalar(cmem_t scalar_detached_key_blob, cmem_t private_scalar,
                                                    cmem_t public_share_compressed, cmem_t* out_key_blob);
 
 #ifdef __cplusplus

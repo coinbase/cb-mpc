@@ -132,7 +132,7 @@ The integrating application is responsible for:
 A few practical tips:
 
 - If a party loses its only local `key_blob` / `keyset_blob` and no protected backup exists, recovery may depend on the protocol and access structure; do not assume `cb-mpc` can recreate that party-local secret material for you.
-- If recovery is a requirement, the application should maintain encrypted backups of each party's local secret material. For supported signing key types, the relevant public API exposes `detach_private_scalar`, `get_public_share_compressed`, and `attach_private_scalar` helpers for application-managed backup and restore flows, including verifiable backup schemes such as publicly verifiable encryption (PVE).
+- If recovery is a requirement, the application should maintain encrypted backups of each party's local secret material. For supported signing key types, the relevant public API exposes `detach_private_scalar`, `get_public_share_compressed`, and `attach_private_scalar` helpers for application-managed backup and restore flows, including verifiable backup schemes such as publicly verifiable encryption (PVE). Follow each protocol's API guidance for the detached output: in particular, an ECDSA-2P P1 scalar-detached blob retains sensitive Paillier material and must be protected like the full key blob.
 - Use the corresponding `refresh*` APIs when you want fresh shares for the same (combined) key; if your operational policy requires replacing the key entirely, run a new `dkg*` flow and migrate in the application layer.
 - If compromise is suspected, stop signing with the affected material until the application's incident process decides whether to refresh the shares under controlled conditions or retire the key entirely.
 
