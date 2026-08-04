@@ -51,21 +51,25 @@ error_t get_public_key_compressed(mem_t key_blob, buf_t& pub_key);
 //   returned public share point separately (or call this API before detaching).
 error_t get_public_share_compressed(mem_t key_blob, buf_t& out_public_share_compressed);
 
-// Detach the private scalar share from a key blob, producing:
-// - a key blob with its private scalar removed, and
+// Detach the private scalar share field from a key blob, producing:
+// - a scalar-detached key blob that cannot be used directly for signing/refresh, and
 // - the private scalar x encoded as a big-endian buffer.
 //
-// The scalar-removed blob is not usable for signing/refresh until restored with
-// `attach_private_scalar`.
+// Security:
+// - The scalar-detached blob is not public-only material.
+// - For P1, it retains the Paillier private key and `c_key`, whose decryption
+//   recovers the private scalar. Protect it exactly like the full P1 key blob.
+// - Detachment disables direct signing/refresh use; it does not sanitize all
+//   material from which the scalar can be recovered.
 //
 // Note (ECDSA-2PC encoding):
 // - Unlike ECDSA-MP, this scalar encoding is NOT fixed-length. ECDSA-2PC keeps
 //   the share as a Paillier-compatible integer representative and it may grow
 //   after refresh.
-error_t detach_private_scalar(mem_t key_blob, buf_t& out_public_key_blob, buf_t& out_private_scalar);
+error_t detach_private_scalar(mem_t key_blob, buf_t& out_scalar_detached_key_blob, buf_t& out_private_scalar);
 
 // Restore a full key blob by attaching a big-endian private scalar share x into a
-// scalar-removed key blob (produced by `detach_private_scalar`).
+// scalar-detached key blob (produced by `detach_private_scalar`).
 //
 // This validates that x matches the expected share point by checking:
 // (x mod q)*G == public_share_compressed.
@@ -74,7 +78,7 @@ error_t detach_private_scalar(mem_t key_blob, buf_t& out_public_key_blob, buf_t&
 // - `private_scalar` is a big-endian scalar encoding (variable-length).
 // - `public_share_compressed` must be the SEC1 compressed point encoding of this
 //   party's share public point (Qi_self), e.g. from `get_public_share_compressed`.
-error_t attach_private_scalar(mem_t public_key_blob, mem_t private_scalar, mem_t public_share_compressed,
+error_t attach_private_scalar(mem_t scalar_detached_key_blob, mem_t private_scalar, mem_t public_share_compressed,
                               buf_t& out_key_blob);
 
 }  // namespace coinbase::api::ecdsa_2p

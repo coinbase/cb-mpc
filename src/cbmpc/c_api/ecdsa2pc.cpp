@@ -186,34 +186,34 @@ cbmpc_error_t cbmpc_ecdsa_2p_get_public_share_compressed(cmem_t key_blob, cmem_t
   }
 }
 
-cbmpc_error_t cbmpc_ecdsa_2p_detach_private_scalar(cmem_t key_blob, cmem_t* out_public_key_blob,
+cbmpc_error_t cbmpc_ecdsa_2p_detach_private_scalar(cmem_t key_blob, cmem_t* out_scalar_detached_key_blob,
                                                    cmem_t* out_private_scalar) {
   try {
-    if (!out_public_key_blob || !out_private_scalar) return E_BADARG;
-    *out_public_key_blob = cmem_t{nullptr, 0};
+    if (!out_scalar_detached_key_blob || !out_private_scalar) return E_BADARG;
+    *out_scalar_detached_key_blob = cmem_t{nullptr, 0};
     *out_private_scalar = cmem_t{nullptr, 0};
     const auto vkb = validate_cmem(key_blob);
     if (vkb) return vkb;
 
-    coinbase::buf_t public_blob;
+    coinbase::buf_t scalar_detached_blob;
     coinbase::buf_t private_scalar;
     const coinbase::error_t rv =
-        coinbase::api::ecdsa_2p::detach_private_scalar(view_cmem(key_blob), public_blob, private_scalar);
+        coinbase::api::ecdsa_2p::detach_private_scalar(view_cmem(key_blob), scalar_detached_blob, private_scalar);
     if (rv) return rv;
 
-    const auto r1 = alloc_cmem_from_buf(public_blob, out_public_key_blob);
+    const auto r1 = alloc_cmem_from_buf(scalar_detached_blob, out_scalar_detached_key_blob);
     if (r1) return r1;
     const auto r2 = alloc_cmem_from_buf(private_scalar, out_private_scalar);
     if (r2) {
-      cbmpc_cmem_free(*out_public_key_blob);
-      *out_public_key_blob = cmem_t{nullptr, 0};
+      cbmpc_cmem_free(*out_scalar_detached_key_blob);
+      *out_scalar_detached_key_blob = cmem_t{nullptr, 0};
       return r2;
     }
     return CBMPC_SUCCESS;
   } catch (const std::bad_alloc&) {
-    if (out_public_key_blob) {
-      cbmpc_cmem_free(*out_public_key_blob);
-      *out_public_key_blob = cmem_t{nullptr, 0};
+    if (out_scalar_detached_key_blob) {
+      cbmpc_cmem_free(*out_scalar_detached_key_blob);
+      *out_scalar_detached_key_blob = cmem_t{nullptr, 0};
     }
     if (out_private_scalar) {
       cbmpc_cmem_free(*out_private_scalar);
@@ -221,9 +221,9 @@ cbmpc_error_t cbmpc_ecdsa_2p_detach_private_scalar(cmem_t key_blob, cmem_t* out_
     }
     return E_INSUFFICIENT;
   } catch (...) {
-    if (out_public_key_blob) {
-      cbmpc_cmem_free(*out_public_key_blob);
-      *out_public_key_blob = cmem_t{nullptr, 0};
+    if (out_scalar_detached_key_blob) {
+      cbmpc_cmem_free(*out_scalar_detached_key_blob);
+      *out_scalar_detached_key_blob = cmem_t{nullptr, 0};
     }
     if (out_private_scalar) {
       cbmpc_cmem_free(*out_private_scalar);
@@ -233,13 +233,13 @@ cbmpc_error_t cbmpc_ecdsa_2p_detach_private_scalar(cmem_t key_blob, cmem_t* out_
   }
 }
 
-cbmpc_error_t cbmpc_ecdsa_2p_attach_private_scalar(cmem_t public_key_blob, cmem_t private_scalar,
+cbmpc_error_t cbmpc_ecdsa_2p_attach_private_scalar(cmem_t scalar_detached_key_blob, cmem_t private_scalar,
                                                    cmem_t public_share_compressed, cmem_t* out_key_blob) {
   try {
     if (!out_key_blob) return E_BADARG;
     *out_key_blob = cmem_t{nullptr, 0};
-    const auto vpb = validate_cmem(public_key_blob);
-    if (vpb) return vpb;
+    const auto vdb = validate_cmem(scalar_detached_key_blob);
+    if (vdb) return vdb;
     const auto vx = validate_cmem(private_scalar);
     if (vx) return vx;
     const auto vq = validate_cmem(public_share_compressed);
@@ -247,7 +247,7 @@ cbmpc_error_t cbmpc_ecdsa_2p_attach_private_scalar(cmem_t public_key_blob, cmem_
 
     coinbase::buf_t merged;
     const coinbase::error_t rv = coinbase::api::ecdsa_2p::attach_private_scalar(
-        view_cmem(public_key_blob), view_cmem(private_scalar), view_cmem(public_share_compressed), merged);
+        view_cmem(scalar_detached_key_blob), view_cmem(private_scalar), view_cmem(public_share_compressed), merged);
     if (rv) return rv;
     return alloc_cmem_from_buf(merged, out_key_blob);
   } catch (const std::bad_alloc&) {

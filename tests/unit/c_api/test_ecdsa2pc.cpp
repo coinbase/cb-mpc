@@ -518,33 +518,33 @@ TEST(CApiEcdsa2pc, NegDetachNullOutputs) {
 TEST(CApiEcdsa2pc, NegDetachBadBlob) {
   {
     uint8_t zeros[64] = {};
-    cmem_t pub{nullptr, 0};
+    cmem_t detached{nullptr, 0};
     cmem_t scalar{nullptr, 0};
-    EXPECT_NE(cbmpc_ecdsa_2p_detach_private_scalar(cmem_t{zeros, 64}, &pub, &scalar), CBMPC_SUCCESS);
-    EXPECT_EQ(pub.data, nullptr);
+    EXPECT_NE(cbmpc_ecdsa_2p_detach_private_scalar(cmem_t{zeros, 64}, &detached, &scalar), CBMPC_SUCCESS);
+    EXPECT_EQ(detached.data, nullptr);
     EXPECT_EQ(scalar.data, nullptr);
   }
   {
-    cmem_t pub{nullptr, 0};
+    cmem_t detached{nullptr, 0};
     cmem_t scalar{nullptr, 0};
-    EXPECT_NE(cbmpc_ecdsa_2p_detach_private_scalar(cmem_t{nullptr, 0}, &pub, &scalar), CBMPC_SUCCESS);
-    EXPECT_EQ(pub.data, nullptr);
+    EXPECT_NE(cbmpc_ecdsa_2p_detach_private_scalar(cmem_t{nullptr, 0}, &detached, &scalar), CBMPC_SUCCESS);
+    EXPECT_EQ(detached.data, nullptr);
     EXPECT_EQ(scalar.data, nullptr);
   }
   {
     uint8_t garbage[] = {0xDE, 0xAD, 0xBE, 0xEF};
-    cmem_t pub{nullptr, 0};
+    cmem_t detached{nullptr, 0};
     cmem_t scalar{nullptr, 0};
-    EXPECT_NE(cbmpc_ecdsa_2p_detach_private_scalar(cmem_t{garbage, 4}, &pub, &scalar), CBMPC_SUCCESS);
-    EXPECT_EQ(pub.data, nullptr);
+    EXPECT_NE(cbmpc_ecdsa_2p_detach_private_scalar(cmem_t{garbage, 4}, &detached, &scalar), CBMPC_SUCCESS);
+    EXPECT_EQ(detached.data, nullptr);
     EXPECT_EQ(scalar.data, nullptr);
   }
   {
     uint8_t data[] = {0x01};
-    cmem_t pub{nullptr, 0};
+    cmem_t detached{nullptr, 0};
     cmem_t scalar{nullptr, 0};
-    EXPECT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(cmem_t{data, -1}, &pub, &scalar), E_BADARG);
-    EXPECT_EQ(pub.data, nullptr);
+    EXPECT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(cmem_t{data, -1}, &detached, &scalar), E_BADARG);
+    EXPECT_EQ(detached.data, nullptr);
     EXPECT_EQ(scalar.data, nullptr);
   }
 }
@@ -592,25 +592,25 @@ TEST(CApiEcdsa2pc, NegAttachBadCmemInputs) {
 }
 
 TEST_F(CApiEcdsa2pcNegWithBlobs, NegAttachEmptyPrivateScalar) {
-  cmem_t pub{nullptr, 0};
+  cmem_t detached{nullptr, 0};
   cmem_t x{nullptr, 0};
-  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &pub, &x), CBMPC_SUCCESS);
+  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &detached, &x), CBMPC_SUCCESS);
 
   cmem_t Qi{nullptr, 0};
   ASSERT_EQ(cbmpc_ecdsa_2p_get_public_share_compressed(blob1_, &Qi), CBMPC_SUCCESS);
 
   cmem_t out{nullptr, 0};
-  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(pub, cmem_t{nullptr, 0}, Qi, &out), CBMPC_SUCCESS);
+  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(detached, cmem_t{nullptr, 0}, Qi, &out), CBMPC_SUCCESS);
 
-  cbmpc_cmem_free(pub);
+  cbmpc_cmem_free(detached);
   cbmpc_cmem_free(x);
   cbmpc_cmem_free(Qi);
 }
 
 TEST_F(CApiEcdsa2pcNegWithBlobs, NegAttachGarbagePrivateScalar) {
-  cmem_t pub{nullptr, 0};
+  cmem_t detached{nullptr, 0};
   cmem_t x{nullptr, 0};
-  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &pub, &x), CBMPC_SUCCESS);
+  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &detached, &x), CBMPC_SUCCESS);
 
   cmem_t Qi{nullptr, 0};
   ASSERT_EQ(cbmpc_ecdsa_2p_get_public_share_compressed(blob1_, &Qi), CBMPC_SUCCESS);
@@ -618,109 +618,109 @@ TEST_F(CApiEcdsa2pcNegWithBlobs, NegAttachGarbagePrivateScalar) {
   uint8_t garbage[512];
   std::memset(garbage, 0xFF, sizeof(garbage));
   cmem_t out{nullptr, 0};
-  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(pub, cmem_t{garbage, 512}, Qi, &out), CBMPC_SUCCESS);
+  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(detached, cmem_t{garbage, 512}, Qi, &out), CBMPC_SUCCESS);
 
-  cbmpc_cmem_free(pub);
+  cbmpc_cmem_free(detached);
   cbmpc_cmem_free(x);
   cbmpc_cmem_free(Qi);
 }
 
 TEST_F(CApiEcdsa2pcNegWithBlobs, NegAttachGarbagePublicShare) {
-  cmem_t pub{nullptr, 0};
+  cmem_t detached{nullptr, 0};
   cmem_t x{nullptr, 0};
-  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &pub, &x), CBMPC_SUCCESS);
+  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &detached, &x), CBMPC_SUCCESS);
 
   uint8_t bad_point[33];
   bad_point[0] = 0x05;
   std::memset(bad_point + 1, 0xAB, 32);
   cmem_t out{nullptr, 0};
-  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(pub, x, cmem_t{bad_point, 33}, &out), CBMPC_SUCCESS);
+  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(detached, x, cmem_t{bad_point, 33}, &out), CBMPC_SUCCESS);
 
-  cbmpc_cmem_free(pub);
+  cbmpc_cmem_free(detached);
   cbmpc_cmem_free(x);
 }
 
 TEST_F(CApiEcdsa2pcNegWithBlobs, NegAttachSwappedScalars) {
-  cmem_t pub1{nullptr, 0};
+  cmem_t detached1{nullptr, 0};
   cmem_t x1{nullptr, 0};
-  cmem_t pub2{nullptr, 0};
+  cmem_t detached2{nullptr, 0};
   cmem_t x2{nullptr, 0};
-  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &pub1, &x1), CBMPC_SUCCESS);
-  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob2_, &pub2, &x2), CBMPC_SUCCESS);
+  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &detached1, &x1), CBMPC_SUCCESS);
+  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob2_, &detached2, &x2), CBMPC_SUCCESS);
 
   cmem_t Qi1{nullptr, 0};
   ASSERT_EQ(cbmpc_ecdsa_2p_get_public_share_compressed(blob1_, &Qi1), CBMPC_SUCCESS);
 
   cmem_t out{nullptr, 0};
-  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(pub1, x2, Qi1, &out), CBMPC_SUCCESS);
+  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(detached1, x2, Qi1, &out), CBMPC_SUCCESS);
 
-  cbmpc_cmem_free(pub1);
+  cbmpc_cmem_free(detached1);
   cbmpc_cmem_free(x1);
-  cbmpc_cmem_free(pub2);
+  cbmpc_cmem_free(detached2);
   cbmpc_cmem_free(x2);
   cbmpc_cmem_free(Qi1);
 }
 
 TEST_F(CApiEcdsa2pcNegWithBlobs, NegAttachSwappedPublicShares) {
-  cmem_t pub1{nullptr, 0};
+  cmem_t detached1{nullptr, 0};
   cmem_t x1{nullptr, 0};
-  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &pub1, &x1), CBMPC_SUCCESS);
+  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &detached1, &x1), CBMPC_SUCCESS);
 
   cmem_t Qi2{nullptr, 0};
   ASSERT_EQ(cbmpc_ecdsa_2p_get_public_share_compressed(blob2_, &Qi2), CBMPC_SUCCESS);
 
   cmem_t out{nullptr, 0};
-  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(pub1, x1, Qi2, &out), CBMPC_SUCCESS);
+  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(detached1, x1, Qi2, &out), CBMPC_SUCCESS);
 
-  cbmpc_cmem_free(pub1);
+  cbmpc_cmem_free(detached1);
   cbmpc_cmem_free(x1);
   cbmpc_cmem_free(Qi2);
 }
 
 TEST_F(CApiEcdsa2pcNegWithBlobs, NegAttachZeroScalar) {
-  cmem_t pub{nullptr, 0};
+  cmem_t detached{nullptr, 0};
   cmem_t x{nullptr, 0};
-  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &pub, &x), CBMPC_SUCCESS);
+  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &detached, &x), CBMPC_SUCCESS);
 
   cmem_t Qi{nullptr, 0};
   ASSERT_EQ(cbmpc_ecdsa_2p_get_public_share_compressed(blob1_, &Qi), CBMPC_SUCCESS);
 
   uint8_t zero[32] = {};
   cmem_t out{nullptr, 0};
-  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(pub, cmem_t{zero, 32}, Qi, &out), CBMPC_SUCCESS);
+  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(detached, cmem_t{zero, 32}, Qi, &out), CBMPC_SUCCESS);
 
-  cbmpc_cmem_free(pub);
+  cbmpc_cmem_free(detached);
   cbmpc_cmem_free(x);
   cbmpc_cmem_free(Qi);
 }
 
 TEST_F(CApiEcdsa2pcNegWithBlobs, NegAttachSingleByteZeroScalar) {
-  cmem_t pub{nullptr, 0};
+  cmem_t detached{nullptr, 0};
   cmem_t x{nullptr, 0};
-  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &pub, &x), CBMPC_SUCCESS);
+  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &detached, &x), CBMPC_SUCCESS);
 
   cmem_t Qi{nullptr, 0};
   ASSERT_EQ(cbmpc_ecdsa_2p_get_public_share_compressed(blob1_, &Qi), CBMPC_SUCCESS);
 
   uint8_t zero_byte = 0x00;
   cmem_t out{nullptr, 0};
-  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(pub, cmem_t{&zero_byte, 1}, Qi, &out), CBMPC_SUCCESS);
+  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(detached, cmem_t{&zero_byte, 1}, Qi, &out), CBMPC_SUCCESS);
 
-  cbmpc_cmem_free(pub);
+  cbmpc_cmem_free(detached);
   cbmpc_cmem_free(x);
   cbmpc_cmem_free(Qi);
 }
 
 TEST_F(CApiEcdsa2pcNegWithBlobs, NegAttachAllZeroPublicShare) {
-  cmem_t pub{nullptr, 0};
+  cmem_t detached{nullptr, 0};
   cmem_t x{nullptr, 0};
-  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &pub, &x), CBMPC_SUCCESS);
+  ASSERT_EQ(cbmpc_ecdsa_2p_detach_private_scalar(blob1_, &detached, &x), CBMPC_SUCCESS);
 
   uint8_t zero_point[33] = {};
   cmem_t out{nullptr, 0};
-  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(pub, x, cmem_t{zero_point, 33}, &out), CBMPC_SUCCESS);
+  EXPECT_NE(cbmpc_ecdsa_2p_attach_private_scalar(detached, x, cmem_t{zero_point, 33}, &out), CBMPC_SUCCESS);
 
-  cbmpc_cmem_free(pub);
+  cbmpc_cmem_free(detached);
   cbmpc_cmem_free(x);
 }
 
