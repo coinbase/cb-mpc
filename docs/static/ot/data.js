@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784869837838,
+  "lastUpdate": 1785866401014,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1596,6 +1596,48 @@ window.BENCHMARK_DATA = {
             "value": 13925.913100001708,
             "unit": "us/iter",
             "extra": "iterations: 50\ncpu: 13924.680299999998 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "56ff32418fd35ff97052ec86132998142a31296a",
+          "message": "docs: clarify ECDSA-2P scalar-detached blob is not public-only (#128)",
+          "timestamp": "2026-08-04T10:20:12-07:00",
+          "tree_id": "bdf27b9c3246b39e8289adba74337605688e9071",
+          "url": "https://github.com/coinbase/cb-mpc/commit/56ff32418fd35ff97052ec86132998142a31296a"
+        },
+        "date": 1785866400522,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 27623.57935998807,
+            "unit": "us/iter",
+            "extra": "iterations: 25\ncpu: 27620.681079999995 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 118362.09533331991,
+            "unit": "us/iter",
+            "extra": "iterations: 6\ncpu: 118352.1831666667 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 15574.045555553716,
+            "unit": "us/iter",
+            "extra": "iterations: 45\ncpu: 15572.462311111116 us\nthreads: 1"
           }
         ]
       }
