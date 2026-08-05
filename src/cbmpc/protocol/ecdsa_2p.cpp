@@ -398,15 +398,20 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
       if (q_minus_s < s) s = q_minus_s;
 
       crypto::ecdsa_signature_t sig(curve, r[i], s);
-      sigs[i] = sig.to_der();
+      // Verify from a local buffer and only publish to the caller's output
+      // vector after verification succeeds (same candidate-then-commit
+      // pattern as schnorr_2p). Writing straight into sigs[i] would leave an
+      // unverified signature in caller-visible state on the failure path.
+      buf_t der = sig.to_der();
 
-      // verify
       crypto::ecc_pub_key_t ecc_verification_key(key.Q);
-      if (rv = ecc_verification_key.verify(msgs[i], sigs[i]))
+      if (rv = ecc_verification_key.verify(msgs[i], der)) {
         if (global_abort_mode)
           return coinbase::error(E_ECDSA_2P_BIT_LEAK, "signature verification failed");
         else
           return coinbase::error(rv, "signature verification failed");
+      }
+      sigs[i] = std::move(der);
     }
   }
 
