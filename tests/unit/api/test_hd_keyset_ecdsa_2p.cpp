@@ -486,6 +486,43 @@ TEST_F(ApiHdKeysetEcdsa2pNegWithBlobs, DeriveRoleMismatchP1BlobWithP2Job) {
   EXPECT_NE(rv2, SUCCESS);
 }
 
+TEST_F(ApiHdKeysetEcdsa2pNegWithBlobs, DeriveMismatchedNonHardenedPaths) {
+  auto c1 = std::make_shared<mpc_net_context_t>(0);
+  auto c2 = std::make_shared<mpc_net_context_t>(1);
+  std::vector<std::shared_ptr<mpc_net_context_t>> peers = {c1, c2};
+  c1->init_with_peers(peers);
+  c2->init_with_peers(peers);
+
+  local_api_transport_t t1(c1);
+  local_api_transport_t t2(c2);
+
+  const coinbase::api::job_2p_t job1{party_t::p1, "p1", "p2", t1};
+  const coinbase::api::job_2p_t job2{party_t::p2, "p1", "p2", t2};
+
+  coinbase::api::hd_keyset_ecdsa_2p::bip32_path_t hard;
+  hard.indices = {0x8000002c, 0x80000000, 0x80000000};
+  const std::vector<coinbase::api::hd_keyset_ecdsa_2p::bip32_path_t> non_hard1 = {{{0, 0}}};
+  const std::vector<coinbase::api::hd_keyset_ecdsa_2p::bip32_path_t> non_hard2 = {{{0, 1}}};
+
+  buf_t sid1, sid2;
+  std::vector<buf_t> out1, out2;
+  error_t rv1 = UNINITIALIZED_ERROR, rv2 = UNINITIALIZED_ERROR;
+  run_2pc(
+      c1, c2,
+      [&] {
+        return coinbase::api::hd_keyset_ecdsa_2p::derive_ecdsa_2p_keys(job1, blob1_, hard, non_hard1, sid1, out1);
+      },
+      [&] {
+        return coinbase::api::hd_keyset_ecdsa_2p::derive_ecdsa_2p_keys(job2, blob2_, hard, non_hard2, sid2, out2);
+      },
+      rv1, rv2);
+
+  EXPECT_NE(rv1, SUCCESS);
+  EXPECT_NE(rv2, SUCCESS);
+  EXPECT_TRUE(out1.empty());
+  EXPECT_TRUE(out2.empty());
+}
+
 TEST_F(ApiHdKeysetEcdsa2pNegWithBlobs, DeriveEmptyNonHardenedPaths) {
   auto c1 = std::make_shared<mpc_net_context_t>(0);
   auto c2 = std::make_shared<mpc_net_context_t>(1);

@@ -97,6 +97,8 @@ error_t key_share_eddsa_hdmpc_2p_t::derive_keys(job_2p_t& job, const key_share_e
   if (sid.empty()) {
     if (rv = generate_sid_fixed_2p(job, party_t::p2, sid)) return rv;
   }
+  const buf256_t derive_sid = crypto::sha256_t::hash(std::string("eddsa-hd-keyset-2p-derive"), uint64_t(sid.size()),
+                                                     sid, hardened_path, non_hardened_paths);
 
   ecurve_t curve = key.curve;
   const auto& G = curve.generator();
@@ -120,21 +122,21 @@ error_t key_share_eddsa_hdmpc_2p_t::derive_keys(job_2p_t& job, const key_share_e
   zk::dh_t zk_dh1, zk_dh2;
 
   if (job.is_p1()) {
-    zk_dh1.prove(P, K_share, Z1, k_share, sid, 1);
+    zk_dh1.prove(P, K_share, Z1, k_share, derive_sid, 1);
   }
 
   if (rv = job.p1_to_p2(Z1, zk_dh1)) return rv;
 
   if (job.is_p2()) {
     // Verification that Z1 is valid is done in the verify function
-    if (rv = zk_dh1.verify(P, other_K_share, Z1, sid, 1)) return rv;
-    zk_dh2.prove(P, K_share, Z2, k_share, sid, 2);
+    if (rv = zk_dh1.verify(P, other_K_share, Z1, derive_sid, 1)) return rv;
+    zk_dh2.prove(P, K_share, Z2, k_share, derive_sid, 2);
   }
 
   if (rv = job.p2_to_p1(Z2, zk_dh2)) return rv;
 
   if (job.is_p1()) {
-    if (rv = zk_dh2.verify(P, other_K_share, Z2, sid, 2)) return rv;
+    if (rv = zk_dh2.verify(P, other_K_share, Z2, derive_sid, 2)) return rv;
   }
   ecc_point_t Z = CBMPC_EVAL_VARTIME(Z1 + Z2);
   // The rest of Hard-Derive-2P
