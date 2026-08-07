@@ -17,7 +17,7 @@ CBMPC_PREFIX_PUBLIC="${CBMPC_PREFIX_PUBLIC:-${ROOT_PATH}/build/install/public}"
 CBMPC_PREFIX_FULL="${CBMPC_PREFIX_FULL:-${ROOT_PATH}/build/install/full}"
 # OpenSSL path is used by demos (C++ via CMake; Go via CGO_LDFLAGS). Keep it
 # configurable and consistent with `cmake/openssl.cmake`.
-CBMPC_OPENSSL_ROOT="${CBMPC_OPENSSL_ROOT:-/usr/local/opt/openssl@3.6.1}"
+CBMPC_OPENSSL_ROOT="${CBMPC_OPENSSL_ROOT:-/usr/local/opt/openssl@3.6.3}"
 
 CPP_DEMOS=("basic_primitive" "zk" "parallel_transport")
 API_DEMOS=("pve" "hd_keyset_ecdsa_2p" "ecdsa_mp_pve_backup" "schnorr_2p_pve_batch_backup")
