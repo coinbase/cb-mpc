@@ -370,10 +370,11 @@ error_t key_share_mp_t::dkg_or_refresh_ac(job_mp_t& job, const ecurve_t& curve, 
 
   std::map<party_idx_t, buf_t> cs;
   for (int j = 0; j < n; j++) {
-    if (j == i) continue;
     if (!quorum_party_set.has(j)) continue;
 
     if (h_all._j != h_all.received(representative_quorum_pid_index)) return coinbase::error(E_CRYPTO, "h_all mismatch");
+    // Include our locally computed h_all in the agreement check, but skip validating values we generated ourselves.
+    if (j == i) continue;
 
     crypto::commitment_t com_R_tag(quorum_pids[j]);
     // deviation from the spec: since we are sending `c` to all parties, we open them for all parties.

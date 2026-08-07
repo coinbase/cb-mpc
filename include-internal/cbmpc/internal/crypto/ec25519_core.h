@@ -34,6 +34,4 @@ int ED25519_verify(const uint8_t* message, size_t message_len, const uint8_t sig
                    const uint8_t public_key[32]);
 int ED25519_sign(uint8_t* out_sig, const uint8_t* message, size_t message_len, const uint8_t public_key[32],
                  const uint8_t private_key[32]);
-int ED25519_sign_with_scalar(uint8_t* out_sig, const uint8_t* message, size_t message_len, const uint8_t public_key[32],
-                             const uint8_t private_key[32]);
 }

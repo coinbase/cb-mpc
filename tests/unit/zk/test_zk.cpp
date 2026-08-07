@@ -690,9 +690,20 @@ TEST(SmallPrimes, AcceptsPrimeAfterScanningAllConfiguredPrimes) {
   EXPECT_EQ(coinbase::zk::check_integer_with_small_primes(prime, std::numeric_limits<int>::max()), SUCCESS);
 }
 
-TEST(SmallPrimes, StopsAtAlphaLimit) {
+TEST(SmallPrimes, RejectsLastConfiguredPrime) {
   coinbase::crypto::vartime_scope_t vartime_scope;
-  EXPECT_EQ(coinbase::zk::check_integer_with_small_primes(bn_t(101), 32), SUCCESS);
+  const bn_t last_small_prime = coinbase::zk::small_primes[coinbase::zk::small_primes_count - 1];
+  EXPECT_NE(coinbase::zk::check_integer_with_small_primes(last_small_prime, std::numeric_limits<int>::max()), SUCCESS);
+}
+
+TEST(SmallPrimes, DoesNotCheckFactorsAboveAlpha) {
+  coinbase::crypto::vartime_scope_t vartime_scope;
+  EXPECT_EQ(coinbase::zk::check_integer_with_small_primes(bn_t(37), 32), SUCCESS);
+}
+
+TEST(SmallPrimes, ChecksFactorEqualToAlpha) {
+  coinbase::crypto::vartime_scope_t vartime_scope;
+  EXPECT_NE(coinbase::zk::check_integer_with_small_primes(bn_t(37), 37), SUCCESS);
 }
 
 }  // namespace

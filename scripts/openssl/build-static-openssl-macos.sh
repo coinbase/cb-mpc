@@ -20,9 +20,9 @@ fi
 export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-16.0}"
 
 cd /tmp
-curl -L https://github.com/openssl/openssl/releases/download/openssl-3.6.1/openssl-3.6.1.tar.gz --output openssl-3.6.1.tar.gz
-expectedHash='b1bfedcd5b289ff22aee87c9d600f515767ebf45f77168cb6d64f231f518a82e'
-fileHash=$(sha256sum openssl-3.6.1.tar.gz | cut -d " " -f 1 )
+curl -L https://github.com/openssl/openssl/releases/download/openssl-3.6.3/openssl-3.6.3.tar.gz --output openssl-3.6.3.tar.gz
+expectedHash='243a86649cf6f23eeb6a2ff2456e09e5d77dd9018a54d3d96b0c6bdd6ba6c7f1'
+fileHash=$(sha256sum openssl-3.6.3.tar.gz | cut -d " " -f 1 )
 
 if [ $expectedHash != $fileHash ]
 then
@@ -33,8 +33,8 @@ then
 fi
 
 
-tar -xzf openssl-3.6.1.tar.gz
-cd openssl-3.6.1
+tar -xzf openssl-3.6.3.tar.gz
+cd openssl-3.6.3
 sed -i -e 's/^static//' crypto/ec/curve25519.c
 
 
@@ -44,7 +44,7 @@ sed -i -e 's/^static//' crypto/ec/curve25519.c
   no-gost no-http no-idea no-mdc2 no-md2 no-md4 no-module no-nextprotoneg no-ocb no-ocsp no-psk no-padlockeng no-poly1305 \
   no-quic no-rc2 no-rc4 no-rc5 no-rfc3779 no-scrypt no-sctp no-seed no-siphash no-sm2 no-sm3 no-sm4 no-sock no-srtp no-srp \
   no-ssl-trace no-ssl3 no-stdio no-tests no-tls no-ts no-unit-test no-uplink no-whirlpool no-zlib \
-  --prefix="${CBMPC_OPENSSL_ROOT:-/usr/local/opt/openssl@3.6.1}" darwin64-x86_64-cc
+  --prefix="${CBMPC_OPENSSL_ROOT:-/usr/local/opt/openssl@3.6.3}" darwin64-x86_64-cc
 
 make -j
 make install_sw

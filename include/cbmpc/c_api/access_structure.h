@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#include <cbmpc/core/access_structure_limits.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -18,6 +20,9 @@ extern "C" {
 //
 // Requirements:
 // - `root_index` must be a valid index in [0, nodes_count).
+// - `nodes_count` must not exceed `CBMPC_ACCESS_STRUCTURE_MAX_NODES`.
+// - Tree depth (number of edges from the root) must not exceed
+//   `CBMPC_ACCESS_STRUCTURE_MAX_DEPTH`.
 // - The node graph rooted at `root_index` must be a tree:
 //   - no cycles
 //   - no node reuse (DAGs are rejected)

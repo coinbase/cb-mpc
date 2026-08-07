@@ -447,16 +447,12 @@ TEST(CryptoEdDSA, SetEdBinValidatesKeyLength) {
   }
 }
 
-TEST(CryptoEdDSA, ScalarKeySignsAndVerifies) {
+TEST(CryptoEdDSA, ScalarKeySigningIsRejected) {
   ecc_prv_key_t key;
   key.set(curve_ed25519, bn_t(7));
-  const ecc_pub_key_t pub_key = key.pub();
   const buf_t message = buf_t("ed25519 scalar signing path");
 
-  const buf_t signature = key.sign(message);
-  EXPECT_EQ(signature.size(), size_t(ed25519::signature_size()));
-  EXPECT_OK(pub_key.verify(message, signature));
-  EXPECT_ER(pub_key.verify(buf_t("different message"), signature));
+  EXPECT_THROW({ key.sign(message); }, coinbase::assertion_failed_t);
 }
 
 TEST(CryptoEdDSA, DerEncodingRoundTripsPublicMaterialAndRawPrivateSeed) {

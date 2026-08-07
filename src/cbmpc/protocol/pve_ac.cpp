@@ -4,6 +4,9 @@ using namespace coinbase::crypto;
 
 namespace coinbase::mpc {
 
+static const int pve_ac_seed_size = coinbase::bits_to_bytes(SEC_P_COM);
+static const int pve_ac_seed_pair_size = 2 * pve_ac_seed_size;
+
 static buf_t batch_to_bin(ecurve_t curve, const std::vector<bn_t>& x) {
   int batch_size = int(x.size());
   int curve_size = curve.size();
@@ -14,7 +17,7 @@ static buf_t batch_to_bin(ecurve_t curve, const std::vector<bn_t>& x) {
 
 static error_t batch_from_bin(ecurve_t curve, int batch_size, mem_t bin, std::vector<bn_t>& x) {
   int curve_size = curve.size();
-  if (bin.size != batch_size * curve_size) return coinbase::error(E_BADARG);
+  if (bin.size != batch_size * curve_size) return coinbase::error(E_CRYPTO);
   x.resize(batch_size);
   for (int j = 0; j < batch_size; j++) x[j] = bn_t::from_bin(bin.range(j * curve_size, curve_size));
   return SUCCESS;
@@ -24,6 +27,7 @@ error_t ec_pve_ac_t::encrypt_row(const pve_base_pke_i& base_pke, const ss::ac_t&
                                  ecurve_t curve, mem_t seed, mem_t plain, buf_t& c,
                                  std::vector<ciphertext_adapter_t>& quorum_c) const {
   error_t rv = UNINITIALIZED_ERROR;
+  if (seed.size != pve_ac_seed_size) return coinbase::error(E_CRYPTO);
   const mod_t& q = curve.order();
   crypto::drbg_aes_ctr_t drbg(seed);
   bn_t K = drbg.gen_bn(q);
@@ -48,6 +52,7 @@ error_t ec_pve_ac_t::encrypt_row(const pve_base_pke_i& base_pke, const ss::ac_t&
 error_t ec_pve_ac_t::encrypt_row0(const pve_base_pke_i& base_pke, const ss::ac_t& ac, const pks_t& ac_pks, mem_t L,
                                   ecurve_t curve, mem_t r0_1, mem_t r0_2, int batch_size, std::vector<bn_t>& x0,
                                   buf_t& c0, std::vector<ciphertext_adapter_t>& quorum_c0) const {
+  if (r0_1.size != pve_ac_seed_size) return coinbase::error(E_CRYPTO);
   const mod_t& q = curve.order();
   x0.resize(batch_size);
   crypto::drbg_aes_ctr_t drbg(r0_1);
@@ -173,9 +178,9 @@ error_t ec_pve_ac_t::verify(const pve_base_pke_i& base_pke, const ss::ac_t& ac, 
     } else {
       c1[i] = row.c;
       quorum_c1[i] = row.quorum_c;
-      if (row.r.size() != 32) return coinbase::error(E_CRYPTO);
-      mem_t r0_1 = row.r.take(16);
-      mem_t r0_2 = row.r.skip(16);
+      if (row.r.size() != pve_ac_seed_pair_size) return coinbase::error(E_CRYPTO);
+      mem_t r0_1 = row.r.take(pve_ac_seed_size);
+      mem_t r0_2 = row.r.skip(pve_ac_seed_size);
       if (rv = encrypt_row0(base_pke, ac, ac_pks, L, curve, r0_1, r0_2, batch_size, xb, c0[i], quorum_c0[i])) return rv;
     }
 
@@ -224,6 +229,7 @@ error_t ec_pve_ac_t::party_decrypt_row(const pve_base_pke_i& base_pke, const ss:
 
   buf_t plain;
   if (rv = base_pke.decrypt(prv_key, L, c->ct_ser, plain)) return rv;
+  if (plain.size() > Q[0].get_curve().order().get_bin_size()) return coinbase::error(E_CRYPTO);
   out_share = bn_t::from_bin(plain);
   return SUCCESS;
 }
@@ -271,11 +277,12 @@ error_t ec_pve_ac_t::aggregate_to_restore_row(const pve_base_pke_i& base_pke, co
     seed = decrypted_data;
   } else {
     x_bin = decrypted_data;
-    if (row.r.size() != 32) return coinbase::error(E_CRYPTO);
-    seed = row.r.take(16);
+    if (row.r.size() != pve_ac_seed_pair_size) return coinbase::error(E_CRYPTO);
+    seed = row.r.take(pve_ac_seed_size);
   }
 
   if (x_bin.size != batch_size * curve_size) return coinbase::error(E_CRYPTO);
+  if (seed.size != pve_ac_seed_size) return coinbase::error(E_CRYPTO);
   crypto::drbg_aes_ctr_t drbg(seed);
   x.resize(batch_size);
   for (int j = 0; j < batch_size; j++) {

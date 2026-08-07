@@ -7,6 +7,10 @@
 
 #include <cbmpc/core/buf.h>
 
+#if OPENSSL_VERSION_MAJOR != 3 || OPENSSL_VERSION_MINOR != 6 || OPENSSL_VERSION_PATCH != 3
+#error "cb-mpc copied OpenSSL BN internals require OpenSSL 3.6.3"
+#endif
+
 struct bignum_st {
   BN_ULONG* d; /* Pointer to an array of 'BN_BITS2' bit
                 * chunks. */
@@ -18,9 +22,6 @@ struct bignum_st {
 };
 
 struct bn_mont_ctx_st {
-#if OPENSSL_VERSION_NUMBER < 0x30600000L
-  int ri; /* number of bits in R */
-#endif
   BIGNUM RR;      /* used to convert to montgomery form,
                      possibly zero-padded */
   BIGNUM N;       /* The modulus */
@@ -29,6 +30,7 @@ struct bn_mont_ctx_st {
   BN_ULONG n0[2]; /* least significant word(s) of Ni; (type
                    * changed with 0.9.9, was "BN_ULONG n0;"
                    * before) */
+  int ri;         /* number of bits in R */
   int flags;
 };
 

@@ -33,6 +33,7 @@ inline cbmpc_error_t to_cpp_access_structure(const cbmpc_access_structure_t* in,
   if (!in) return E_BADARG;
   if (in->nodes_count < 0 || in->child_indices_count < 0) return E_BADARG;
   if (in->nodes_count == 0) return E_BADARG;
+  if (in->nodes_count > CBMPC_ACCESS_STRUCTURE_MAX_NODES) return E_RANGE;
   if (!in->nodes) return E_BADARG;
   if (in->child_indices_count > 0 && !in->child_indices) return E_BADARG;
   if (in->root_index < 0 || in->root_index >= in->nodes_count) return E_BADARG;
@@ -41,8 +42,9 @@ inline cbmpc_error_t to_cpp_access_structure(const cbmpc_access_structure_t* in,
   std::vector<uint8_t> state(static_cast<size_t>(in->nodes_count), 0);
 
   struct builder_t {
-    static cbmpc_error_t build(const cbmpc_access_structure_t* in, int32_t idx, bool is_root,
+    static cbmpc_error_t build(const cbmpc_access_structure_t* in, int32_t idx, size_t depth, bool is_root,
                                std::vector<uint8_t>& state, coinbase::api::access_structure_t& out) {
+      if (depth > CBMPC_ACCESS_STRUCTURE_MAX_DEPTH) return E_RANGE;
       if (idx < 0 || idx >= in->nodes_count) return E_BADARG;
 
       const auto uidx = static_cast<size_t>(idx);
@@ -93,7 +95,7 @@ inline cbmpc_error_t to_cpp_access_structure(const cbmpc_access_structure_t* in,
           for (int32_t i = 0; i < n.child_indices_count; i++) {
             const int32_t child_idx = in->child_indices[static_cast<size_t>(off + i)];
             coinbase::api::access_structure_t child;
-            const cbmpc_error_t rv = build(in, child_idx, /*is_root=*/false, state, child);
+            const cbmpc_error_t rv = build(in, child_idx, depth + 1, /*is_root=*/false, state, child);
             if (rv) return rv;
             node.children.emplace_back(std::move(child));
           }
@@ -109,7 +111,7 @@ inline cbmpc_error_t to_cpp_access_structure(const cbmpc_access_structure_t* in,
     }
   };
 
-  const cbmpc_error_t rv = builder_t::build(in, in->root_index, /*is_root=*/true, state, out);
+  const cbmpc_error_t rv = builder_t::build(in, in->root_index, /*depth=*/0, /*is_root=*/true, state, out);
   if (rv) return rv;
 
   // Reject unreachable nodes (must be a single rooted tree).

@@ -122,7 +122,7 @@ if(NOT DEFINED CBMPC_OPENSSL_ROOT)
   if(DEFINED ENV{CBMPC_OPENSSL_ROOT})
     set(CBMPC_OPENSSL_ROOT $ENV{CBMPC_OPENSSL_ROOT})
   else()
-    set(CBMPC_OPENSSL_ROOT "/usr/local/opt/openssl@3.6.1")
+    set(CBMPC_OPENSSL_ROOT "/usr/local/opt/openssl@3.6.3")
   endif()
 endif()
 

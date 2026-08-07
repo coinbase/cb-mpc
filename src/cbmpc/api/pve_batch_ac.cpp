@@ -402,9 +402,7 @@ error_t get_public_keys_compressed_ac(mem_t ciphertext, std::vector<buf_t>& out_
   if (rv = parse_ac_ciphertext(ciphertext, blob)) return rv;
 
   coinbase::mpc::ec_pve_ac_t pve_ct;  // base PKE not used for extraction
-  if (rv = parse_ac_ciphertext_body(blob.ct, blob.batch_count, coinbase::api::detail::MAX_ACCESS_STRUCTURE_NODES,
-                                    pve_ct))
-    return rv;
+  if (rv = parse_ac_ciphertext_body(blob.ct, blob.batch_count, CBMPC_ACCESS_STRUCTURE_MAX_NODES, pve_ct)) return rv;
 
   std::vector<buf_t> out_local;
   out_local.reserve(pve_ct.get_Q().size());

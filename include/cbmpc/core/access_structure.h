@@ -4,6 +4,8 @@
 #include <string_view>
 #include <vector>
 
+#include <cbmpc/core/access_structure_limits.h>
+
 namespace coinbase::api {
 
 // Access structure used by threshold protocols (e.g., threshold DKG / refresh).
