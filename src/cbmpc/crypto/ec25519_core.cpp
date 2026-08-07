@@ -1081,53 +1081,6 @@ crypto::ecp_storage_t* new_point() {
 }
 void free_point(crypto::ecp_storage_t* a) { delete a; }
 
-static bn_t from_le_mod_q(mem_t bin) { return curve_t::order().mod(bn_t::from_bin(bin.rev())); }
-
-static bn_t hash_hram(const uint8_t sig[32], mem_t message, const uint8_t public_key[32]) {
-  uint8_t hram[64];
-  unsigned int hash_len = 0;
-  EVP_MD_CTX* ctx = EVP_MD_CTX_new();
-  EVP_DigestInit(ctx, EVP_sha512());
-  EVP_DigestUpdate(ctx, sig, 32);
-  EVP_DigestUpdate(ctx, public_key, 32);
-  EVP_DigestUpdate(ctx, message.data, message.size);
-  EVP_DigestFinal(ctx, hram, &hash_len);
-  EVP_MD_CTX_free(ctx);
-  return from_le_mod_q(mem_t(hram, 64));
-}
-
-static void sign_with_nonce(uint8_t* signature, const uint8_t* message, size_t message_len,
-                            const uint8_t public_key[32], const uint8_t az[32], const uint8_t nonce[32]) {
-  bn_t nonce_bn = from_le_mod_q(mem_t(nonce, 64));
-  point_t R;
-  curve_t::mul_to_generator(nonce_bn, R);
-  to_bin(R, signature);
-
-  bn_t hram_bn = hash_hram(signature, mem_t(message, int(message_len)), public_key);
-
-  bn_t az_bn = from_le_mod_q(mem_t(az, 32));
-  const mod_t& q = curve_t::order();
-  bn_t s = q.mul(hram_bn, az_bn);
-  s = q.add(s, nonce_bn);
-
-  s.to_bin(signature + 32, 32);
-  mem_t(signature + 32, 32).reverse();
-}
-
-extern "C" int ED25519_sign_with_scalar(uint8_t* out_sig, const uint8_t* message, size_t message_len,
-                                        const uint8_t public_key[32], const uint8_t scalar_bin[32]) {
-  uint8_t nonce[64];
-  RAND_bytes(nonce, 64);
-
-  uint8_t az[32];
-  for (int i = 0; i < 32; i++) az[i] = scalar_bin[31 - i];
-
-  sign_with_nonce(out_sig, message, message_len, public_key, az, nonce);
-  OPENSSL_cleanse(nonce, sizeof(nonce));
-  OPENSSL_cleanse(az, sizeof(az));
-  return 1;
-}
-
 }  // namespace coinbase::crypto::ec25519_core
 
 #if OPENSSL_VERSION_NUMBER >= 0x30000000

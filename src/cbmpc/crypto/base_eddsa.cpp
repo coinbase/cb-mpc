@@ -218,16 +218,12 @@ error_t ecurve_ed_t::verify(const ecc_pub_key_t& P, mem_t hash, mem_t sig) const
 }
 
 buf_t ecurve_ed_t::sign(const ecc_prv_key_t& K, mem_t hash) const {
+  cb_assert(K.ed_bin.size() == ed25519::prv_bin_size() && "Ed25519 signing requires a 32-byte private seed");
   buf_t sig(ed25519::signature_size());
   ecc_point_t P = K.pub();
   buf_t pub_bin = P.to_compressed_bin();
 
-  if (K.ed_bin.empty()) {
-    buf_t scalar = K.value().to_bin(ed25519::prv_bin_size());
-    ED25519_sign_with_scalar(sig.data(), hash.data, hash.size, pub_bin.data(), scalar.data());
-  } else {
-    ED25519_sign(sig.data(), hash.data, hash.size, pub_bin.data(), K.ed_bin.data());
-  }
+  ED25519_sign(sig.data(), hash.data, hash.size, pub_bin.data(), K.ed_bin.data());
   return sig;
 }
 
