@@ -16,12 +16,10 @@
 
 namespace coinbase::api::detail {
 
-inline constexpr size_t MAX_ACCESS_STRUCTURE_DEPTH = 128;
-inline constexpr size_t MAX_ACCESS_STRUCTURE_NODES = 4096;
-
 inline error_t validate_access_structure_node_impl(const access_structure_t& n, size_t depth, size_t& nodes_seen) {
-  if (++nodes_seen > MAX_ACCESS_STRUCTURE_NODES) return coinbase::error(E_RANGE, "access_structure: too many nodes");
-  if (depth > MAX_ACCESS_STRUCTURE_DEPTH) return coinbase::error(E_RANGE, "access_structure: too deep");
+  if (++nodes_seen > CBMPC_ACCESS_STRUCTURE_MAX_NODES)
+    return coinbase::error(E_RANGE, "access_structure: too many nodes");
+  if (depth > CBMPC_ACCESS_STRUCTURE_MAX_DEPTH) return coinbase::error(E_RANGE, "access_structure: too deep");
 
   switch (n.type) {
     case access_structure_t::node_type::leaf:
@@ -79,8 +77,9 @@ inline error_t collect_leaf_names(const access_structure_t& n, std::set<std::str
     stack.pop_back();
 
     if (!frame.node) return coinbase::error(E_BADARG, "access_structure: invalid node");
-    if (++nodes_seen > MAX_ACCESS_STRUCTURE_NODES) return coinbase::error(E_RANGE, "access_structure: too many nodes");
-    if (frame.depth > MAX_ACCESS_STRUCTURE_DEPTH) return coinbase::error(E_RANGE, "access_structure: too deep");
+    if (++nodes_seen > CBMPC_ACCESS_STRUCTURE_MAX_NODES)
+      return coinbase::error(E_RANGE, "access_structure: too many nodes");
+    if (frame.depth > CBMPC_ACCESS_STRUCTURE_MAX_DEPTH) return coinbase::error(E_RANGE, "access_structure: too deep");
 
     if (frame.node->type == access_structure_t::node_type::leaf) {
       out.insert(std::string(frame.node->leaf_name));
@@ -108,7 +107,7 @@ inline error_t build_internal_ac_node(const access_structure_t& in, size_t depth
                                       std::unordered_set<std::string>& used_names, uint64_t& name_counter,
                                       coinbase::crypto::ss::node_t*& out) {
   out = nullptr;
-  if (depth > MAX_ACCESS_STRUCTURE_DEPTH) return coinbase::error(E_RANGE, "access_structure: too deep");
+  if (depth > CBMPC_ACCESS_STRUCTURE_MAX_DEPTH) return coinbase::error(E_RANGE, "access_structure: too deep");
 
   using coinbase::crypto::ss::node_e;
   using coinbase::crypto::ss::node_t;
