@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785866401014,
+  "lastUpdate": 1786133973404,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1638,6 +1638,48 @@ window.BENCHMARK_DATA = {
             "value": 15574.045555553716,
             "unit": "us/iter",
             "extra": "iterations: 45\ncpu: 15572.462311111116 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2369813b8b0507ce20febd1d81ef1708cdbb42d7",
+          "message": "chore: Harden crypto validation and protocol binding (#130)",
+          "timestamp": "2026-08-07T12:41:03-07:00",
+          "tree_id": "0361d3a3555b602da3fc72e2269b0e1166f53123",
+          "url": "https://github.com/coinbase/cb-mpc/commit/2369813b8b0507ce20febd1d81ef1708cdbb42d7"
+        },
+        "date": 1786133972435,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24589.949965518135,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24588.450068965518 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 105142.52171430728,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 105132.24657142858 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13815.031411762475,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13814.068333333338 us\nthreads: 1"
           }
         ]
       }
