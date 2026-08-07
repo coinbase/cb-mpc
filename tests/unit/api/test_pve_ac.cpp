@@ -6,7 +6,9 @@
 #include <cbmpc/api/pve_batch_ac.h>
 #include <cbmpc/core/access_structure.h>
 #include <cbmpc/core/macros.h>
+#include <cbmpc/internal/core/convert.h>
 #include <cbmpc/internal/crypto/base_ecc.h>
+#include <cbmpc/internal/crypto/ro.h>
 #include <cbmpc/internal/protocol/pve_ac.h>
 
 namespace {
@@ -41,6 +43,80 @@ class toy_base_pke_t final : public coinbase::api::pve::base_pke_i {
     return SUCCESS;
   }
 };
+
+struct pve_ac_ciphertext_blob_v1_for_test_t {
+  uint32_t version = 1;
+  uint32_t batch_count = 0;
+  buf_t ct;
+
+  void convert(coinbase::converter_t& c) { c.convert(version, batch_count, ct); }
+};
+
+struct pve_ac_ciphertext_adapter_for_test_t {
+  buf_t ct_ser;
+
+  void convert(coinbase::converter_t& c) { c.convert(ct_ser); }
+};
+
+struct pve_ac_ciphertext_row_for_test_t {
+  buf_t x_bin;
+  buf_t r;
+  buf_t c;
+  std::vector<pve_ac_ciphertext_adapter_for_test_t> quorum_c;
+
+  void convert(coinbase::converter_t& c) { c.convert(x_bin, r, this->c, quorum_c); }
+};
+
+struct pve_ac_ciphertext_for_test_t {
+  std::vector<coinbase::crypto::ecc_point_t> Q;
+  buf_t L;
+  coinbase::buf128_t b;
+  std::array<pve_ac_ciphertext_row_for_test_t, coinbase::mpc::ec_pve_ac_t::kappa> rows;
+
+  void convert(coinbase::converter_t& c) {
+    c.convert(Q, L, b);
+    for (auto& row : rows) c.convert(row);
+  }
+};
+
+template <typename Mutator>
+static buf_t mutate_ac_ciphertext(mem_t ciphertext, Mutator mutate) {
+  pve_ac_ciphertext_blob_v1_for_test_t blob;
+  EXPECT_EQ(coinbase::convert(blob, ciphertext), SUCCESS);
+
+  pve_ac_ciphertext_for_test_t inner;
+  EXPECT_EQ(coinbase::convert(inner, blob.ct), SUCCESS);
+  mutate(inner);
+
+  blob.ct = coinbase::convert(inner);
+  return coinbase::convert(blob);
+}
+
+static int first_row_with_challenge_bit(const pve_ac_ciphertext_for_test_t& inner, bool bit) {
+  for (int i = 0; i < coinbase::mpc::ec_pve_ac_t::kappa; i++) {
+    if (inner.b.get_bit(i) == bit) return i;
+  }
+  return -1;
+}
+
+static int first_row_with_challenge_bit(mem_t ciphertext, bool bit) {
+  pve_ac_ciphertext_blob_v1_for_test_t blob;
+  EXPECT_EQ(coinbase::convert(blob, ciphertext), SUCCESS);
+
+  pve_ac_ciphertext_for_test_t inner;
+  EXPECT_EQ(coinbase::convert(inner, blob.ct), SUCCESS);
+  return first_row_with_challenge_bit(inner, bit);
+}
+
+static buf_t encrypt_ac_row_plain(const coinbase::crypto::bn_t& K, mem_t L, mem_t plain) {
+  buf_t k_and_iv = coinbase::crypto::ro::hash_string(K, L).bitlen(256 + coinbase::mpc::ec_pve_ac_t::iv_bitlen);
+  mem_t k_aes = k_and_iv.take(32);
+  mem_t iv = k_and_iv.skip(32);
+
+  buf_t c;
+  coinbase::crypto::aes_gcm_t::encrypt(k_aes, iv, L, coinbase::mpc::ec_pve_ac_t::tag_size, plain, c);
+  return c;
+}
 
 static void append_u32_be(std::vector<uint8_t>& out, uint32_t value) {
   out.push_back(static_cast<uint8_t>(value >> 24));
@@ -262,6 +338,155 @@ TEST(ApiPveAc, EncVer_PartDec_Agg_CustomBasePke) {
 
   ASSERT_EQ(xs_out.size(), static_cast<size_t>(n));
   for (int i = 0; i < n; i++) EXPECT_EQ(xs_out[static_cast<size_t>(i)], buf_t(xs[static_cast<size_t>(i)]));
+}
+
+TEST(ApiPveAc, VerifyAcMalformedBit1ShortSeedReturnsCryptoError) {
+  const toy_base_pke_t base_pke;
+  const curve_id curve = curve_id::secp256k1;
+  const buf_t label = buf_t("label");
+
+  const coinbase::api::access_structure_t ac = coinbase::api::access_structure_t::Threshold(
+      2, {coinbase::api::access_structure_t::leaf("p1"), coinbase::api::access_structure_t::leaf("p2"),
+          coinbase::api::access_structure_t::leaf("p3")});
+
+  std::array<uint8_t, 32> x_bytes{};
+  for (int i = 0; i < 32; i++) x_bytes[static_cast<size_t>(i)] = static_cast<uint8_t>(0x41 + i);
+  std::vector<mem_t> xs;
+  xs.emplace_back(x_bytes.data(), static_cast<int>(x_bytes.size()));
+
+  const buf_t ek1 = buf_t("ek1");
+  const buf_t ek2 = buf_t("ek2");
+  const buf_t ek3 = buf_t("ek3");
+  coinbase::api::pve::leaf_keys_t ac_pks;
+  ac_pks.emplace("p1", mem_t(ek1.data(), ek1.size()));
+  ac_pks.emplace("p2", mem_t(ek2.data(), ek2.size()));
+  ac_pks.emplace("p3", mem_t(ek3.data(), ek3.size()));
+
+  buf_t ct;
+  ASSERT_EQ(coinbase::api::pve::encrypt_ac(base_pke, curve, ac, ac_pks, label, xs, ct), SUCCESS);
+
+  const int row_index = first_row_with_challenge_bit(ct, true);
+  ASSERT_GE(row_index, 0);
+
+  std::array<uint8_t, 8> short_seed{};
+  const buf_t tampered = mutate_ac_ciphertext(ct, [&](pve_ac_ciphertext_for_test_t& inner) {
+    inner.rows[static_cast<size_t>(row_index)].r = buf_t(short_seed.data(), static_cast<int>(short_seed.size()));
+  });
+
+  const buf_t Q = expected_Q(curve, xs[0]);
+  std::vector<mem_t> Qs;
+  Qs.emplace_back(Q.data(), Q.size());
+
+  error_t rv = SUCCESS;
+  EXPECT_NO_THROW({ rv = coinbase::api::pve::verify_ac(base_pke, curve, ac, ac_pks, tampered, Qs, label); });
+  EXPECT_EQ(rv, E_CRYPTO);
+}
+
+TEST(ApiPveAc, CombineAcMalformedBit1ShortDecryptedSeedReturnsCryptoError) {
+  const toy_base_pke_t base_pke;
+  const curve_id curve = curve_id::secp256k1;
+  const buf_t label = buf_t("label");
+
+  const coinbase::api::access_structure_t ac = coinbase::api::access_structure_t::Threshold(
+      2, {coinbase::api::access_structure_t::leaf("p1"), coinbase::api::access_structure_t::leaf("p2"),
+          coinbase::api::access_structure_t::leaf("p3")});
+
+  std::array<uint8_t, 32> x_bytes{};
+  for (int i = 0; i < 32; i++) x_bytes[static_cast<size_t>(i)] = static_cast<uint8_t>(0x52 + i);
+  std::vector<mem_t> xs;
+  xs.emplace_back(x_bytes.data(), static_cast<int>(x_bytes.size()));
+
+  const buf_t ek1 = buf_t("ek1");
+  const buf_t ek2 = buf_t("ek2");
+  const buf_t ek3 = buf_t("ek3");
+  coinbase::api::pve::leaf_keys_t ac_pks;
+  ac_pks.emplace("p1", mem_t(ek1.data(), ek1.size()));
+  ac_pks.emplace("p2", mem_t(ek2.data(), ek2.size()));
+  ac_pks.emplace("p3", mem_t(ek3.data(), ek3.size()));
+
+  buf_t ct;
+  ASSERT_EQ(coinbase::api::pve::encrypt_ac(base_pke, curve, ac, ac_pks, label, xs, ct), SUCCESS);
+
+  const int row_index = first_row_with_challenge_bit(ct, true);
+  ASSERT_GE(row_index, 0);
+
+  buf_t share_p1;
+  buf_t share_p2;
+  ASSERT_EQ(
+      coinbase::api::pve::partial_decrypt_ac_attempt(base_pke, curve, ac, ct, row_index, "p1", ek1, label, share_p1),
+      SUCCESS);
+  ASSERT_EQ(
+      coinbase::api::pve::partial_decrypt_ac_attempt(base_pke, curve, ac, ct, row_index, "p2", ek2, label, share_p2),
+      SUCCESS);
+
+  coinbase::crypto::ss::ac_owned_t internal_ac;
+  std::vector<std::string_view> party_names = {"p1", "p2", "p3"};
+  ASSERT_EQ(coinbase::api::detail::to_internal_access_structure(ac, party_names, coinbase::crypto::curve_secp256k1,
+                                                                internal_ac),
+            SUCCESS);
+
+  std::map<std::string, coinbase::crypto::bn_t> quorum_bn;
+  quorum_bn.emplace("p1", coinbase::crypto::bn_t::from_bin(share_p1));
+  quorum_bn.emplace("p2", coinbase::crypto::bn_t::from_bin(share_p2));
+
+  coinbase::crypto::bn_t K;
+  ASSERT_EQ(internal_ac.reconstruct(coinbase::crypto::curve_secp256k1.order(), quorum_bn, K), SUCCESS);
+
+  std::array<uint8_t, 3> short_seed = {1, 2, 3};
+  const buf_t tampered = mutate_ac_ciphertext(ct, [&](pve_ac_ciphertext_for_test_t& inner) {
+    inner.rows[static_cast<size_t>(row_index)].c =
+        encrypt_ac_row_plain(K, inner.L, mem_t(short_seed.data(), static_cast<int>(short_seed.size())));
+  });
+
+  coinbase::api::pve::leaf_shares_t quorum;
+  quorum.emplace("p1", mem_t(share_p1.data(), share_p1.size()));
+  quorum.emplace("p2", mem_t(share_p2.data(), share_p2.size()));
+
+  std::vector<buf_t> xs_out;
+  error_t rv = SUCCESS;
+  EXPECT_NO_THROW(
+      { rv = coinbase::api::pve::combine_ac(base_pke, curve, ac, tampered, row_index, label, quorum, xs_out); });
+  EXPECT_EQ(rv, E_CRYPTO);
+}
+
+TEST(ApiPveAc, PartialDecryptAcOversizedLeafShareReturnsCryptoError) {
+  const toy_base_pke_t base_pke;
+  const curve_id curve = curve_id::secp256k1;
+  const buf_t label = buf_t("label");
+
+  const coinbase::api::access_structure_t ac = coinbase::api::access_structure_t::Threshold(
+      2, {coinbase::api::access_structure_t::leaf("p1"), coinbase::api::access_structure_t::leaf("p2"),
+          coinbase::api::access_structure_t::leaf("p3")});
+
+  std::array<uint8_t, 32> x_bytes{};
+  for (int i = 0; i < 32; i++) x_bytes[static_cast<size_t>(i)] = static_cast<uint8_t>(0x63 + i);
+  std::vector<mem_t> xs;
+  xs.emplace_back(x_bytes.data(), static_cast<int>(x_bytes.size()));
+
+  const buf_t ek1 = buf_t("ek1");
+  const buf_t ek2 = buf_t("ek2");
+  const buf_t ek3 = buf_t("ek3");
+  coinbase::api::pve::leaf_keys_t ac_pks;
+  ac_pks.emplace("p1", mem_t(ek1.data(), ek1.size()));
+  ac_pks.emplace("p2", mem_t(ek2.data(), ek2.size()));
+  ac_pks.emplace("p3", mem_t(ek3.data(), ek3.size()));
+
+  buf_t ct;
+  ASSERT_EQ(coinbase::api::pve::encrypt_ac(base_pke, curve, ac, ac_pks, label, xs, ct), SUCCESS);
+
+  std::array<uint8_t, 33> oversized_share{};
+  oversized_share[0] = 1;
+  const buf_t tampered = mutate_ac_ciphertext(ct, [&](pve_ac_ciphertext_for_test_t& inner) {
+    ASSERT_FALSE(inner.rows[0].quorum_c.empty());
+    inner.rows[0].quorum_c[0].ct_ser = buf_t(oversized_share.data(), static_cast<int>(oversized_share.size()));
+  });
+
+  buf_t out_share;
+  error_t rv = SUCCESS;
+  EXPECT_NO_THROW({
+    rv = coinbase::api::pve::partial_decrypt_ac_attempt(base_pke, curve, ac, tampered, 0, "p1", ek1, label, out_share);
+  });
+  EXPECT_EQ(rv, E_CRYPTO);
 }
 
 // ------------ Disclaimer: All the following tests have been generated by AI ------------
@@ -1040,7 +1265,7 @@ TEST(ApiPveAcNeg, GetPublicKeysCompressedAc_GarbageCiphertext) {
 }
 
 TEST(ApiPveAcNeg, GetPublicKeysCompressedAc_RejectsQuorumCAboveAccessStructureNodeLimit) {
-  const buf_t ct = ac_ciphertext_with_first_quorum_c_count(coinbase::api::detail::MAX_ACCESS_STRUCTURE_NODES + 1);
+  const buf_t ct = ac_ciphertext_with_first_quorum_c_count(CBMPC_ACCESS_STRUCTURE_MAX_NODES + 1);
   std::vector<buf_t> Qs;
   EXPECT_NE(coinbase::api::pve::get_public_keys_compressed_ac(ct, Qs), SUCCESS);
 }
