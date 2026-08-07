@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785866396858,
+  "lastUpdate": 1786133967067,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2574,6 +2574,72 @@ window.BENCHMARK_DATA = {
             "value": 9436.42249999787,
             "unit": "us/iter",
             "extra": "iterations: 74\ncpu: 9435.120364864866 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2369813b8b0507ce20febd1d81ef1708cdbb42d7",
+          "message": "chore: Harden crypto validation and protocol binding (#130)",
+          "timestamp": "2026-08-07T12:41:03-07:00",
+          "tree_id": "0361d3a3555b602da3fc72e2269b0e1166f53123",
+          "url": "https://github.com/coinbase/cb-mpc/commit/2369813b8b0507ce20febd1d81ef1708cdbb42d7"
+        },
+        "date": 1786133965991,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 50890.159652177004,
+            "unit": "us/iter",
+            "extra": "iterations: 23\ncpu: 50887.06595652173 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4518.147503226682,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4517.997567741936 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8571.133878046745,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8570.849280487804 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4740.250986487439,
+            "unit": "us/iter",
+            "extra": "iterations: 148\ncpu: 4740.010128378379 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 11.371954177244563,
+            "unit": "us/iter",
+            "extra": "iterations: 61847\ncpu: 11.37155157081185 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 13.60935133713824,
+            "unit": "us/iter",
+            "extra": "iterations: 51341\ncpu: 13.608468027502393 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8323.287630952607,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8323.040369047623 us\nthreads: 1"
           }
         ]
       }
