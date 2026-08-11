@@ -356,6 +356,7 @@ error_t refresh_ac(const coinbase::api::job_mp_t& job, buf_t& sid, mem_t key_blo
 
 error_t sign_ac(const coinbase::api::job_mp_t& job, mem_t ac_key_blob, const access_structure_t& access_structure,
                 mem_t msg, party_idx_t sig_receiver, buf_t& sig) {
+  sig.free();
   error_t rv = validate_job_mp(job);
   if (rv) return rv;
   if (rv = coinbase::api::detail::validate_mem_arg_max_size(ac_key_blob, "ac_key_blob",
@@ -398,14 +399,13 @@ error_t sign_ac(const coinbase::api::job_mp_t& job, mem_t ac_key_blob, const acc
   if (rv) return rv;
 
   coinbase::mpc::job_mp_t mpc_job = to_internal_job(job);
-
-  sig.free();
   return coinbase::mpc::schnorrmp::sign(mpc_job, additive_key, msg, sig_receiver, sig,
                                         coinbase::mpc::schnorrmp::variant_e::BIP340);
 }
 
 error_t sign_additive(const coinbase::api::job_mp_t& job, mem_t key_blob, mem_t msg, party_idx_t sig_receiver,
                       buf_t& sig) {
+  sig.free();
   error_t rv = validate_job_mp(job);
   if (rv) return rv;
   if (rv = coinbase::api::detail::validate_mem_arg_max_size(key_blob, "key_blob",
@@ -421,8 +421,6 @@ error_t sign_additive(const coinbase::api::job_mp_t& job, mem_t key_blob, mem_t 
   if (rv) return rv;
 
   coinbase::mpc::job_mp_t mpc_job = to_internal_job(job);
-
-  sig.free();
   return coinbase::mpc::schnorrmp::sign(mpc_job, key, msg, sig_receiver, sig,
                                         coinbase::mpc::schnorrmp::variant_e::BIP340);
 }

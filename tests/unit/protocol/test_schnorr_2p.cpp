@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/protocol/eddsa.h>
 #include <cbmpc/internal/protocol/schnorr_2p.h>
 
@@ -19,6 +20,45 @@ class MPC_EC_2PC : public Network2PC {
     const auto& G = k1.curve.generator();
     EXPECT_EQ(k1.Q, k2.Q);
     EXPECT_EQ(k1.x_share * G + k2.x_share * G, k1.Q);
+  }
+
+  void check_verification_failure_clears_outputs(ecurve_t curve, schnorr2p::variant_e variant) {
+    std::vector<schnorr2p::key_t> keys(2);
+    std::vector<error_t> results(2, UNINITIALIZED_ERROR);
+    mpc_runner->run_2pc([&](job_2p_t& job) {
+      const int party_index = job.get_party_idx();
+      buf_t sid;
+      results[party_index] = eckey::key_share_2p_t::dkg(job, curve, keys[party_index], sid);
+    });
+    ASSERT_EQ(results[0], SUCCESS);
+    ASSERT_EQ(results[1], SUCCESS);
+
+    // Q is only used to construct and verify the signature. Giving P1 a
+    // different Q forces its final verification to fail.
+    keys[0].Q += curve.generator();
+    const buf_t data = crypto::gen_random(32);
+    const std::vector<mem_t> msgs = {data};
+
+    std::vector<std::vector<buf_t>> batch_sigs(2, std::vector<buf_t>{buf_t(1)});
+    mpc_runner->run_2pc([&](job_2p_t& job) {
+      const int party_index = job.get_party_idx();
+      dylog_disable_scope_t no_log_err;
+      results[party_index] = schnorr2p::sign_batch(job, keys[party_index], msgs, batch_sigs[party_index], variant);
+    });
+    EXPECT_NE(results[0], SUCCESS);
+    EXPECT_EQ(results[1], SUCCESS);
+    EXPECT_TRUE(batch_sigs[0].empty());
+
+    std::vector<buf_t> sigs(2, buf_t(1));
+    mpc_runner->run_2pc([&](job_2p_t& job) {
+      const int party_index = job.get_party_idx();
+      dylog_disable_scope_t no_log_err;
+      results[party_index] = schnorr2p::sign(job, keys[party_index], data, sigs[party_index], variant);
+    });
+    EXPECT_NE(results[0], SUCCESS);
+    EXPECT_EQ(results[1], SUCCESS);
+    EXPECT_TRUE(sigs[0].empty());
+    EXPECT_TRUE(sigs[1].empty());
   }
 };
 
@@ -103,6 +143,14 @@ TEST_F(BIP340_2PC, KeygenSignRefreshSign) {
 
   check_key_pair(keys[0], keys[1]);
   check_key_pair(new_keys[0], new_keys[1]);
+}
+
+TEST_F(EdDSA2PC, VerificationFailureClearsSignatureOutputs) {
+  check_verification_failure_clears_outputs(crypto::curve_ed25519, schnorr2p::variant_e::EdDSA);
+}
+
+TEST_F(BIP340_2PC, VerificationFailureClearsSignatureOutputs) {
+  check_verification_failure_clears_outputs(crypto::curve_secp256k1, schnorr2p::variant_e::BIP340);
 }
 
 }  // namespace

@@ -37,6 +37,7 @@ error_t refresh(job_2p_t& job, const key_t& key, key_t& new_key);
  * @notes:
  * - The input message must be the hash of the actual message.
  * - This is the variant that contains `ZK-Two-Party-ECDSA-Sign-Integer-Commit`
+ * - Signature outputs are cleared before execution and populated only after final verification succeeds.
  */
 error_t sign(job_2p_t& job, buf_t& sid, const key_t& key, const mem_t msg, buf_t& sig);
 error_t sign_batch(job_2p_t& job, buf_t& sid, const key_t& key, const std::vector<mem_t>& msgs,
@@ -49,6 +50,7 @@ error_t sign_batch(job_2p_t& job, buf_t& sid, const key_t& key, const std::vecto
  * @notes:
  * - The input message must be the hash of the actual message.
  * - Message 4 is taken from section 9 so that it is compatible with normal sign.
+ * - Signature outputs are cleared before execution and populated only after final verification succeeds.
  */
 error_t sign_with_global_abort(job_2p_t& job, buf_t& sid, const key_t& key, const mem_t msg, buf_t& sig);
 error_t sign_with_global_abort_batch(job_2p_t& job, buf_t& sid, const key_t& key, const std::vector<mem_t>& msgs,

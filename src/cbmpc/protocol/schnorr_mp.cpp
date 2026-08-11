@@ -42,6 +42,7 @@ static bn_t calc_eddsa_HRAM(const ecc_point_t& R, const ecc_point_t& Q, mem_t in
 }
 
 error_t sign(job_mp_t& job, key_t& key, const mem_t& msg, party_idx_t sig_receiver, buf_t& sig, variant_e variant) {
+  sig.free();
   error_t rv = UNINITIALIZED_ERROR;
   std::vector<mem_t> msgs(1, msg);
   std::vector<buf_t> sigs;

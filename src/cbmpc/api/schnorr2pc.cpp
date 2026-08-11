@@ -99,6 +99,7 @@ error_t refresh(const coinbase::api::job_2p_t& job, mem_t key_blob, buf_t& new_k
 }
 
 error_t sign(const coinbase::api::job_2p_t& job, mem_t key_blob, mem_t msg, buf_t& sig) {
+  sig.free();
   if (const error_t rv = validate_job_2p(job)) return rv;
   if (const error_t rv = coinbase::api::detail::validate_mem_arg_max_size(key_blob, "key_blob",
                                                                           coinbase::api::detail::MAX_OPAQUE_BLOB_SIZE))
@@ -114,8 +115,6 @@ error_t sign(const coinbase::api::job_2p_t& job, mem_t key_blob, mem_t msg, buf_
   if (key.role != self) return coinbase::error(E_BADARG, "job.self mismatch key blob role");
 
   coinbase::mpc::job_2p_t mpc_job = to_internal_job(job);
-
-  sig.free();
   return coinbase::mpc::schnorr2p::sign(mpc_job, key, msg, sig, coinbase::mpc::schnorr2p::variant_e::BIP340);
 }
 

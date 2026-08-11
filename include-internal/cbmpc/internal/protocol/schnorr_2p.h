@@ -27,6 +27,8 @@ error_t sign_batch(job_2p_t& job, key_t& key, const std::vector<mem_t>& msgs, st
 /**
  * @specs:
  * - schnorr-spec | Schnorr-2PC-Sign-2P
+ * @notes:
+ * - `sig` is cleared before execution and populated only after final verification succeeds.
  */
 error_t sign(job_2p_t& job, key_t& key, const mem_t& msg, buf_t& sig, variant_e variant);
 

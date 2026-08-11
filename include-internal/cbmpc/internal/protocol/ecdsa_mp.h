@@ -53,6 +53,7 @@ error_t refresh_ac(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::
  *   The proper more efficient way is to generate Base OTs one outside this function, then during the run of the
  *   protocol, use OT Extension to generate extra values and output them to be used as base OT for the next execution of
  *   the protocol.
+ * - `sig` is cleared before execution and populated only after final verification succeeds.
  */
 error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receiver,
              const std::vector<std::vector<int>>& ot_role_map, buf_t& sig);
@@ -67,6 +68,7 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
  *   The proper more efficient way is to generate Base OTs one outside this function, then during the run of the
  *   protocol, use OT Extension to generate extra values and output them to be used as base OT for the next execution of
  *   the protocol.
+ * - `sig` is cleared before execution and populated only after final verification succeeds.
  */
 error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receiver, buf_t& sig);
 

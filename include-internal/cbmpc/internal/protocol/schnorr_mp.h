@@ -53,6 +53,8 @@ error_t sign_batch(job_mp_t& job, key_t& key, const std::vector<mem_t>& msgs, pa
 /**
  * @specs:
  * - schnorr-spec | Schnorr-MPC-Sign-MP
+ * @notes:
+ * - `sig` is cleared before execution and populated only after final verification succeeds.
  */
 error_t sign(job_mp_t& job, key_t& key, const mem_t& msg, party_idx_t sig_receiver, buf_t& sig, variant_e variant);
 }  // namespace coinbase::mpc::schnorrmp

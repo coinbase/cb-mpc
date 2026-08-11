@@ -1,3 +1,5 @@
+#include <utility>
+
 #include <cbmpc/internal/protocol/agree_random.h>
 #include <cbmpc/internal/protocol/ec_dkg.h>
 #include <cbmpc/internal/protocol/ecdsa_2p.h>
@@ -240,13 +242,13 @@ error_t refresh(job_2p_t& job, const key_t& key, key_t& new_key) {
 
 error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::vector<mem_t>& msgs, int sign_mode_flag,
                         std::vector<buf_t>& sigs) {
+  sigs.clear();
   error_t rv = UNINITIALIZED_ERROR;
 
   bool global_abort_mode = sign_mode_flag == SIGN_MODE_GLOBAL_ABORT;
 
   auto n_sigs = msgs.size();
   if (n_sigs == 0) return coinbase::error(E_BADARG, "ecdsa_2p: empty batch");
-  sigs.resize(n_sigs);
   const ecurve_t curve = key.curve;
   const auto& G = curve.generator();
   const mod_t& q = curve.order();
@@ -266,6 +268,7 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
   std::vector<ecc_point_t> R2(n_sigs);
   coinbase::crypto::commitment_t com(sid, job.get_pid(party_t::p1));
 
+  std::vector<buf_t> candidate_sigs(n_sigs);
   if (job.is_p1()) {
     k1.resize(n_sigs);
     R1.resize(n_sigs);
@@ -398,11 +401,11 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
       if (q_minus_s < s) s = q_minus_s;
 
       crypto::ecdsa_signature_t sig(curve, r[i], s);
-      sigs[i] = sig.to_der();
+      candidate_sigs[i] = sig.to_der();
 
       // verify
       crypto::ecc_pub_key_t ecc_verification_key(key.Q);
-      if (rv = ecc_verification_key.verify(msgs[i], sigs[i]))
+      if (rv = ecc_verification_key.verify(msgs[i], candidate_sigs[i]))
         if (global_abort_mode)
           return coinbase::error(E_ECDSA_2P_BIT_LEAK, "signature verification failed");
         else
@@ -410,6 +413,7 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
     }
   }
 
+  sigs = std::move(candidate_sigs);
   return SUCCESS;
 }
 
@@ -419,6 +423,7 @@ error_t sign_batch(job_2p_t& job, buf_t& sid, const key_t& key, const std::vecto
 }
 
 error_t sign(job_2p_t& job, buf_t& sid, const key_t& key, const mem_t msg, buf_t& sig) {
+  sig.free();
   error_t rv = UNINITIALIZED_ERROR;
   std::vector<mem_t> msgs(1, msg);
   std::vector<buf_t> sigs;
@@ -433,6 +438,7 @@ error_t sign_with_global_abort_batch(job_2p_t& job, buf_t& sid, const key_t& key
 }
 
 error_t sign_with_global_abort(job_2p_t& job, buf_t& sid, const key_t& key, const mem_t msg, buf_t& sig) {
+  sig.free();
   error_t rv = UNINITIALIZED_ERROR;
   std::vector<mem_t> msgs(1, msg);
   std::vector<buf_t> sigs;
