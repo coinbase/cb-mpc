@@ -246,7 +246,9 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
 
   auto n_sigs = msgs.size();
   if (n_sigs == 0) return coinbase::error(E_BADARG, "ecdsa_2p: empty batch");
-  sigs.resize(n_sigs);
+  // Clear caller-visible output up front so a recycled buffer cannot retain
+  // stale (possibly valid) signatures from a prior call on any failure path.
+  sigs.clear();
   const ecurve_t curve = key.curve;
   const auto& G = curve.generator();
   const mod_t& q = curve.order();
@@ -366,6 +368,7 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
     // N is odd, so (N + 1) / 2 is the first integer in the upper half of [0, N).
     const bn_t N_half = (N.value() + 1) >> 1;
     const bn_t N_mod_q = q.mod(N.value());
+    std::vector<buf_t> candidate_sigs(n_sigs);
     for (int i = 0; i < n_sigs; i++) {
       r[i] = R[i].get_x() % q;
 
@@ -398,21 +401,20 @@ error_t sign_batch_impl(job_2p_t& job, buf_t& sid, const key_t& key, const std::
       if (q_minus_s < s) s = q_minus_s;
 
       crypto::ecdsa_signature_t sig(curve, r[i], s);
-      // Verify from a local buffer and only publish to the caller's output
-      // vector after verification succeeds (same candidate-then-commit
-      // pattern as schnorr_2p). Writing straight into sigs[i] would leave an
-      // unverified signature in caller-visible state on the failure path.
-      buf_t der = sig.to_der();
+      // Verify into a local candidate buffer; commit to the caller's `sigs`
+      // only after every signature in the batch verifies (same pattern as
+      // schnorr_2p). Publishing mid-loop would leave partial output on error.
+      candidate_sigs[i] = sig.to_der();
 
       crypto::ecc_pub_key_t ecc_verification_key(key.Q);
-      if (rv = ecc_verification_key.verify(msgs[i], der)) {
+      if (rv = ecc_verification_key.verify(msgs[i], candidate_sigs[i])) {
         if (global_abort_mode)
           return coinbase::error(E_ECDSA_2P_BIT_LEAK, "signature verification failed");
         else
           return coinbase::error(rv, "signature verification failed");
       }
-      sigs[i] = std::move(der);
     }
+    sigs = std::move(candidate_sigs);
   }
 
   return SUCCESS;
@@ -425,10 +427,11 @@ error_t sign_batch(job_2p_t& job, buf_t& sid, const key_t& key, const std::vecto
 
 error_t sign(job_2p_t& job, buf_t& sid, const key_t& key, const mem_t msg, buf_t& sig) {
   error_t rv = UNINITIALIZED_ERROR;
+  sig.clear();
   std::vector<mem_t> msgs(1, msg);
   std::vector<buf_t> sigs;
   if (rv = sign_batch(job, sid, key, msgs, sigs)) return rv;
-  sig = sigs[0];
+  sig = std::move(sigs[0]);
   return SUCCESS;
 }
 
@@ -439,10 +442,11 @@ error_t sign_with_global_abort_batch(job_2p_t& job, buf_t& sid, const key_t& key
 
 error_t sign_with_global_abort(job_2p_t& job, buf_t& sid, const key_t& key, const mem_t msg, buf_t& sig) {
   error_t rv = UNINITIALIZED_ERROR;
+  sig.clear();
   std::vector<mem_t> msgs(1, msg);
   std::vector<buf_t> sigs;
   if (rv = sign_with_global_abort_batch(job, sid, key, msgs, sigs)) return rv;
-  sig = sigs[0];
+  sig = std::move(sigs[0]);
   return SUCCESS;
 }
 

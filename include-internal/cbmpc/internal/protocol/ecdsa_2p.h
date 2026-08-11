@@ -37,6 +37,7 @@ error_t refresh(job_2p_t& job, const key_t& key, key_t& new_key);
  * @notes:
  * - The input message must be the hash of the actual message.
  * - This is the variant that contains `ZK-Two-Party-ECDSA-Sign-Integer-Commit`
+ * - `sigs` is cleared before execution and populated only if every signature verifies successfully.
  */
 error_t sign(job_2p_t& job, buf_t& sid, const key_t& key, const mem_t msg, buf_t& sig);
 error_t sign_batch(job_2p_t& job, buf_t& sid, const key_t& key, const std::vector<mem_t>& msgs,

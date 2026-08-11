@@ -37,6 +37,9 @@ error_t refresh_ac(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::
 error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receiver,
              const std::vector<std::vector<int>>& ot_role_map, buf_t& sig) {
   error_t rv = UNINITIALIZED_ERROR;
+  // Clear caller-visible output so a recycled buffer cannot retain a stale
+  // signature if any earlier round fails before the final publish.
+  sig.clear();
 
   int peers_count = job.get_n_parties();
   int peer_index = job.get_party_idx();
