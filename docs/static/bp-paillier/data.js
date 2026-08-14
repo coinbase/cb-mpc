@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786133967067,
+  "lastUpdate": 1786733606096,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2640,6 +2640,72 @@ window.BENCHMARK_DATA = {
             "value": 8323.287630952607,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8323.040369047623 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fdbb60346757271d5e0241f417e55dc8f289573c",
+          "message": "fix: clear signature outputs before signing and populate only after verification (#131)",
+          "timestamp": "2026-08-14T11:12:42-07:00",
+          "tree_id": "994984d41684ac11726a7126ae3c7edc5fbed74a",
+          "url": "https://github.com/coinbase/cb-mpc/commit/fdbb60346757271d5e0241f417e55dc8f289573c"
+        },
+        "date": 1786733605557,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 53008.04949999929,
+            "unit": "us/iter",
+            "extra": "iterations: 10\ncpu: 53005.4402 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 5110.466671532485,
+            "unit": "us/iter",
+            "extra": "iterations: 137\ncpu: 5110.206715328468 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 9696.740500001195,
+            "unit": "us/iter",
+            "extra": "iterations: 72\ncpu: 9695.748986111106 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 5346.949847328598,
+            "unit": "us/iter",
+            "extra": "iterations: 131\ncpu: 5346.1618244274805 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 12.456831012678737,
+            "unit": "us/iter",
+            "extra": "iterations: 56306\ncpu: 12.456785884275217 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 15.057848014779303,
+            "unit": "us/iter",
+            "extra": "iterations: 46544\ncpu: 15.057023160880032 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 9433.341391891681,
+            "unit": "us/iter",
+            "extra": "iterations: 74\ncpu: 9433.209662162168 us\nthreads: 1"
           }
         ]
       }
