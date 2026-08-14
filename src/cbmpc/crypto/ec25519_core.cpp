@@ -1004,7 +1004,13 @@ static error_t from_bin(point_t& R, mem_t bin) {
   buf_t buf = bin.rev();
   uint8_t neg = buf[0] >> 7;
   buf[0] &= 0x7f;
-  fe_t y = fe_t::to_fe(uint256_t::from_bin(buf));
+
+  // RFC 8032 5.1.3 (1): the y-coordinate must be canonical (y < p).
+  // There are 19 non-canonical values in [p, 2^255-1] that must be rejected.
+  uint256_t y_raw = uint256_t::from_bin(buf);
+  if (y_raw.to_bn() >= crypto::curve_ed25519.p()) return coinbase::error(E_CRYPTO);
+
+  fe_t y = fe_t::to_fe(y_raw);
 
   // x² = (y² - 1) / (dy² + 1)
 
@@ -1032,6 +1038,11 @@ static error_t from_bin(point_t& R, mem_t bin) {
   }
 
   uint256_t x_val = x.from_fe();
+
+  // RFC 8032 5.1.3 (4): reject the non-canonical "negative zero" encoding
+  // (x == 0 with the sign bit set).
+  if (neg && x_val.is_zero()) return coinbase::error(E_CRYPTO);
+
   if (neg != (x_val.w0 & 1)) x = -x;
 
   R.x = x;
