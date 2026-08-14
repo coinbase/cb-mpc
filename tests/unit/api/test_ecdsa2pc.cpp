@@ -967,8 +967,11 @@ TEST_F(ApiEcdsa2pcNegWithBlobs, NegSignRoleMismatch) {
   noop_transport_t t;
   auto job = make_noop_job(t, party_t::p2);
   buf_t msg_hash(32);
-  buf_t sid, sig;
+  const uint8_t stale_signature[] = {0x53, 0x49, 0x47};
+  buf_t sig(stale_signature, sizeof(stale_signature));
+  buf_t sid;
   EXPECT_NE(coinbase::api::ecdsa_2p::sign(job, blob1_, msg_hash, sid, sig), SUCCESS);
+  EXPECT_TRUE(sig.empty());
 }
 
 // ==========================================================================

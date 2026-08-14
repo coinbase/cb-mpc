@@ -1,3 +1,5 @@
+#include <utility>
+
 #include <cbmpc/internal/crypto/ro.h>
 #include <cbmpc/internal/protocol/ecdsa_mp.h>
 #include <cbmpc/internal/protocol/ot.h>
@@ -36,6 +38,7 @@ error_t refresh_ac(job_mp_t& job, ecurve_t curve, buf_t& sid, const crypto::ss::
 
 error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receiver,
              const std::vector<std::vector<int>>& ot_role_map, buf_t& sig) {
+  sig.free();
   error_t rv = UNINITIALIZED_ERROR;
 
   int peers_count = job.get_n_parties();
@@ -477,9 +480,10 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
 
     bn_t s_reduced = q - s;
     if (s_reduced < s) s = s_reduced;
-    sig = crypto::ecdsa_signature_t(curve, r, s).to_der();
+    buf_t candidate_sig = crypto::ecdsa_signature_t(curve, r, s).to_der();
     crypto::ecc_pub_key_t pub(key.Q);
-    if (rv = pub.verify(msg, sig)) return rv;
+    if (rv = pub.verify(msg, candidate_sig)) return rv;
+    sig = std::move(candidate_sig);
   }
 
   return SUCCESS;

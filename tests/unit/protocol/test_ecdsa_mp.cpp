@@ -1,10 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/crypto/commitment.h>
 #include <cbmpc/internal/crypto/lagrange.h>
 #include <cbmpc/internal/crypto/secret_sharing.h>
 #include <cbmpc/internal/protocol/ecdsa_mp.h>
 #include <cbmpc/internal/zk/zk_ec.h>
+#include <cbmpc/internal/zk/zk_elgamal_com.h>
 
 #include "utils/local_network/mpc_tester.h"
 #include "utils/test_macros.h"
@@ -81,6 +83,41 @@ std::vector<std::vector<int>> test_ot_role(int n) {
   }
   return ot_role_map;
 }
+
+class mutate_ecdsa_verification_key_job_t final : public job_mp_t {
+ public:
+  mutate_ecdsa_verification_key_job_t(party_idx_t index, const std::vector<crypto::pname_t>& pnames,
+                                      ecdsampc::key_t& key)
+      : job_mp_t(index, pnames), key_(key) {}
+
+  void arm() { armed_ = true; }
+  bool mutated() const { return mutated_; }
+
+  error_t receive_many_impl(std::vector<party_idx_t> from_set, std::vector<buf_t>& outs) override {
+    error_t rv = job_mp_t::receive_many_impl(from_set, outs);
+    if (rv || !armed_ || mutated_ || outs.empty()) return rv;
+
+    for (const auto& out : outs) {
+      bn_t rho_k;
+      zk::elgamal_com_pub_share_equ_t pi_rho_k;
+      bn_t beta;
+      zk::elgamal_com_pub_share_equ_t pi_beta;
+      dylog_disable_scope_t no_log_err;
+      if (coinbase::deser(out, rho_k, pi_rho_k, beta, pi_beta)) return SUCCESS;
+    }
+
+    // The final signing shares and proofs have been received. Changing Q now
+    // affects only the final signature verification.
+    key_.Q += key_.curve.generator();
+    mutated_ = true;
+    return SUCCESS;
+  }
+
+ private:
+  ecdsampc::key_t& key_;
+  bool armed_ = false;
+  bool mutated_ = false;
+};
 
 class ECDSAMPC : public NetworkMPC {};
 
@@ -235,6 +272,47 @@ TEST_F(ECDSA4PC, KeygenSignRefreshSign) {
 
   check_keys(keys);
   check_keys(new_keys);
+}
+
+TEST(ECDSAMPCOutput, VerificationFailureClearsSignatureOutput) {
+  constexpr int n = 2;
+  const std::vector<crypto::pname_t> pnames(mpc_runner_t::test_pnames.begin(), mpc_runner_t::test_pnames.begin() + n);
+  std::vector<ecdsampc::key_t> keys(n);
+  std::vector<std::shared_ptr<mutate_ecdsa_verification_key_job_t>> mutating_jobs;
+  std::vector<std::shared_ptr<job_mp_t>> jobs;
+  mutating_jobs.reserve(n);
+  jobs.reserve(n);
+  for (int i = 0; i < n; i++) {
+    auto job = std::make_shared<mutate_ecdsa_verification_key_job_t>(party_idx_t(i), pnames, keys[i]);
+    mutating_jobs.push_back(job);
+    jobs.push_back(job);
+  }
+  mpc_runner_t runner(jobs);
+
+  std::vector<error_t> results(n, UNINITIALIZED_ERROR);
+  runner.run_mpc([&](job_mp_t& job) {
+    const int party_index = job.get_party_idx();
+    buf_t sid;
+    results[party_index] = ecdsampc::dkg(job, crypto::curve_secp256k1, keys[party_index], sid);
+  });
+  ASSERT_EQ(results[0], SUCCESS);
+  ASSERT_EQ(results[1], SUCCESS);
+
+  constexpr party_idx_t sig_receiver = 0;
+  mutating_jobs[sig_receiver]->arm();
+  const buf_t data = crypto::gen_random(32);
+  std::vector<buf_t> sigs(n, buf_t(1));
+  runner.run_mpc([&](job_mp_t& job) {
+    const int party_index = job.get_party_idx();
+    dylog_disable_scope_t no_log_err;
+    results[party_index] = sign(job, keys[party_index], data, sig_receiver, sigs[party_index]);
+  });
+
+  EXPECT_TRUE(mutating_jobs[sig_receiver]->mutated());
+  EXPECT_NE(results[sig_receiver], SUCCESS);
+  EXPECT_EQ(results[1], SUCCESS);
+  EXPECT_TRUE(sigs[0].empty());
+  EXPECT_TRUE(sigs[1].empty());
 }
 
 TEST(ECDSAMPCThreshold, DKG) {

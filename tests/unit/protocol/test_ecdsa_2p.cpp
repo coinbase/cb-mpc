@@ -184,6 +184,57 @@ TEST_F(ECDSA2PC, Sign) {
   });
 }
 
+TEST_F(ECDSA2PC, VerificationFailureClearsSignatureOutputs) {
+  buf_t data = crypto::gen_random(32);
+  const std::vector<mem_t> msgs = {data};
+  std::vector<ecdsa2pc::key_t> keys(2);
+  const auto curve = crypto::curve_secp256k1;
+  const auto& q = curve.order();
+  const auto& G = curve.generator();
+
+  keys[0].role = party_t::p1;
+  keys[1].role = party_t::p2;
+  keys[0].curve = keys[1].curve = curve;
+  keys[0].x_share = bn_t::rand(q);
+  keys[1].x_share = bn_t::rand(q);
+  keys[0].Q = keys[1].Q = keys[0].x_share * G + keys[1].x_share * G;
+  keys[0].paillier.generate();
+  keys[1].paillier.create_pub(keys[0].paillier.get_N());
+  keys[0].c_key = keys[0].paillier.encrypt(keys[0].x_share);
+  keys[1].c_key = keys[0].c_key;
+
+  // Global-abort signing does not use Q until final signature verification.
+  // Give P1 a different verification key to force that final check to fail.
+  keys[0].Q += G;
+
+  std::vector<error_t> results(2, UNINITIALIZED_ERROR);
+  std::vector<buf_t> batch_sids(2);
+  std::vector<std::vector<buf_t>> batch_sigs(2, std::vector<buf_t>{buf_t(1)});
+  mpc_runner->run_2pc([&](job_2p_t& job) {
+    const int party_index = job.get_party_idx();
+    dylog_disable_scope_t no_log_err;
+    results[party_index] =
+        sign_with_global_abort_batch(job, batch_sids[party_index], keys[party_index], msgs, batch_sigs[party_index]);
+  });
+
+  EXPECT_EQ(results[0], E_ECDSA_2P_BIT_LEAK);
+  EXPECT_EQ(results[1], SUCCESS);
+  EXPECT_TRUE(batch_sigs[0].empty());
+
+  std::vector<buf_t> sids(2);
+  std::vector<buf_t> sigs(2, buf_t(1));
+  mpc_runner->run_2pc([&](job_2p_t& job) {
+    const int party_index = job.get_party_idx();
+    dylog_disable_scope_t no_log_err;
+    results[party_index] = sign_with_global_abort(job, sids[party_index], keys[party_index], data, sigs[party_index]);
+  });
+
+  EXPECT_EQ(results[0], E_ECDSA_2P_BIT_LEAK);
+  EXPECT_EQ(results[1], SUCCESS);
+  EXPECT_TRUE(sigs[0].empty());
+  EXPECT_TRUE(sigs[1].empty());
+}
+
 TEST_F(ECDSA2PC, KeygenSign) {
   buf_t data = coinbase::crypto::gen_random(32);
   std::vector<ecdsa2pc::key_t> keys(2);

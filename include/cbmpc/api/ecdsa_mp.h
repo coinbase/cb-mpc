@@ -64,6 +64,7 @@ error_t refresh_ac(const job_mp_t& job, buf_t& sid, mem_t key_blob, const access
 //
 // Note: the underlying protocol returns the signature only on `sig_receiver`. On
 // other parties, `sig_der` may be left empty on success.
+// On any error, `sig_der` is cleared.
 error_t sign_additive(const job_mp_t& job, mem_t key_blob, mem_t msg, party_idx_t sig_receiver, buf_t& sig_der);
 
 // Sign a message with ECDSA-MP using an access-structure key share (from
@@ -78,6 +79,7 @@ error_t sign_additive(const job_mp_t& job, mem_t key_blob, mem_t msg, party_idx_
 //   `job.party_names` to be online and participate.
 // - Output semantics match `sign_additive()`: the signature is returned only on
 //   `sig_receiver`. On other parties, `sig_der` may be left empty on success.
+// - On any error, `sig_der` is cleared.
 error_t sign_ac(const job_mp_t& job, mem_t ac_key_blob, const access_structure_t& access_structure, mem_t msg,
                 party_idx_t sig_receiver, buf_t& sig_der);
 

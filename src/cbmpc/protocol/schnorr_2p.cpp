@@ -9,6 +9,7 @@
 namespace coinbase::mpc::schnorr2p {
 
 error_t sign(job_2p_t& job, key_t& key, const mem_t& msg, buf_t& sig, variant_e variant) {
+  sig.free();
   error_t rv = UNINITIALIZED_ERROR;
   std::vector<mem_t> msgs(1, msg);
   std::vector<buf_t> sigs;

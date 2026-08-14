@@ -31,6 +31,7 @@ error_t refresh(const coinbase::api::job_2p_t& job, mem_t key_blob, buf_t& new_k
 //
 // Note: the underlying protocol returns the signature only on P1. On P2,
 // `sig_der` may be left empty on success.
+// On any error, `sig_der` is cleared.
 error_t sign(const coinbase::api::job_2p_t& job, mem_t key_blob, mem_t msg_hash, buf_t& sid, buf_t& sig_der);
 
 // Get the compressed public key from a key blob.
