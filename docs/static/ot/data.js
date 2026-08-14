@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786133973404,
+  "lastUpdate": 1786733610731,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1680,6 +1680,48 @@ window.BENCHMARK_DATA = {
             "value": 13815.031411762475,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13814.068333333338 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fdbb60346757271d5e0241f417e55dc8f289573c",
+          "message": "fix: clear signature outputs before signing and populate only after verification (#131)",
+          "timestamp": "2026-08-14T11:12:42-07:00",
+          "tree_id": "994984d41684ac11726a7126ae3c7edc5fbed74a",
+          "url": "https://github.com/coinbase/cb-mpc/commit/fdbb60346757271d5e0241f417e55dc8f289573c"
+        },
+        "date": 1786733610241,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 27518.220399997517,
+            "unit": "us/iter",
+            "extra": "iterations: 25\ncpu: 27515.178480000006 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 118554.9301666621,
+            "unit": "us/iter",
+            "extra": "iterations: 6\ncpu: 118545.4848333333 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 15571.360400008416,
+            "unit": "us/iter",
+            "extra": "iterations: 45\ncpu: 15570.074577777781 us\nthreads: 1"
           }
         ]
       }
