@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786733598376,
+  "lastUpdate": 1786806994980,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -4920,6 +4920,126 @@ window.BENCHMARK_DATA = {
             "value": 1419.8387330595401,
             "unit": "us/iter",
             "extra": "iterations: 487\ncpu: 1419.5420451745297 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "41fee609ba4c5e110c8763ec138a4d9905570b97",
+          "message": "fix: reject non-canonical Ed25519 point encodings (#132)",
+          "timestamp": "2026-08-15T07:38:54-07:00",
+          "tree_id": "e78151ff0ce1b5bbc70012c720db996ad0112b75",
+          "url": "https://github.com/coinbase/cb-mpc/commit/41fee609ba4c5e110c8763ec138a4d9905570b97"
+        },
+        "date": 1786806992596,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.08672779389616149,
+            "unit": "us/iter",
+            "extra": "iterations: 8515823\ncpu: 0.08672148869228494 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.5020740386764346,
+            "unit": "us/iter",
+            "extra": "iterations: 1391597\ncpu: 0.5020496508687514 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.08264234577849947,
+            "unit": "us/iter",
+            "extra": "iterations: 8476623\ncpu: 0.08263982213199786 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.5702645314760546,
+            "unit": "us/iter",
+            "extra": "iterations: 1225839\ncpu: 0.5702419526544636 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.17886428186208225,
+            "unit": "us/iter",
+            "extra": "iterations: 3917973\ncpu: 0.17885246631357296 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 11.16949679221345,
+            "unit": "us/iter",
+            "extra": "iterations: 62660\ncpu: 11.168736897542448 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 16.378763639329694,
+            "unit": "us/iter",
+            "extra": "iterations: 42909\ncpu: 16.377573772401924 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16545.160238094813,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16543.030214285925 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 19.726234376759017,
+            "unit": "us/iter",
+            "extra": "iterations: 35524\ncpu: 19.724232209210573 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 708.8594863223256,
+            "unit": "us/iter",
+            "extra": "iterations: 987\ncpu: 708.83913171226 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 23.961246379224917,
+            "unit": "us/iter",
+            "extra": "iterations: 30035\ncpu: 23.95921358415239 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1228.1245304347976,
+            "unit": "us/iter",
+            "extra": "iterations: 575\ncpu: 1228.0789860869352 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 23.94353017547469,
+            "unit": "us/iter",
+            "extra": "iterations: 29577\ncpu: 23.94207556547308 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1214.5934017541406,
+            "unit": "us/iter",
+            "extra": "iterations: 570\ncpu: 1214.5469929824535 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 27.168001115688813,
+            "unit": "us/iter",
+            "extra": "iterations: 25993\ncpu: 27.16530519755277 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1385.5242084168267,
+            "unit": "us/iter",
+            "extra": "iterations: 499\ncpu: 1385.4214308617134 us\nthreads: 1"
           }
         ]
       }
