@@ -283,33 +283,29 @@ TEST(CryptoEdDSA, MalformedAndNoncanonicalEncodingsNeverPassValidation) {
     EXPECT_ER(malformed_point.from_bin(curve, malformed));
   }
 
-  static const char* noncanonical_encodings[] = {
-      "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",  // p
-      "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",  // p + 1
-      "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",  // p + 1, x sign set
-      "efffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",  // p + 2
-      "f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",  // p + 3
-      "f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",  // p + 3, x sign set
-  };
-
-  int decoded_count = 0;
-  int rejected_count = 0;
-  for (const char* hex : noncanonical_encodings) {
-    buf_t encoded;
-    ASSERT_TRUE(strext::from_hex(encoded, hex));
-
+  auto expect_rejected = [&](buf_t encoded) {
     ecc_point_t point;
     dylog_disable_scope_t no_log;
-    if (point.from_bin(curve, encoded)) {
-      rejected_count++;
-      continue;
+    EXPECT_ER(point.from_bin(curve, encoded));
+  };
+
+  // RFC 8032 requires rejecting every y-coordinate in [p, 2^255-1],
+  // regardless of the encoded x-coordinate sign.
+  const bn_t p = curve.p().value();
+  for (int offset = 0; offset < 19; offset++) {
+    for (bool negative : {false, true}) {
+      buf_t encoded = (p + offset).to_bin(32).rev();
+      if (negative) encoded[31] |= 0x80;
+      expect_rejected(encoded);
     }
-    decoded_count++;
-    EXPECT_NE(curve.check(point), SUCCESS);
   }
 
-  EXPECT_GT(decoded_count, 0);
-  EXPECT_GT(rejected_count, 0);
+  // RFC 8032 also rejects x = 0 with the x-coordinate sign bit set.
+  for (const bn_t& y : {bn_t(1), p - 1}) {
+    buf_t encoded = y.to_bin(32).rev();
+    encoded[31] |= 0x80;
+    expect_rejected(encoded);
+  }
 }
 
 TEST(CryptoEdDSA, SubgroupCheckMatchesScalarMultiplicationReference) {
