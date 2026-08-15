@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786733610731,
+  "lastUpdate": 1786807009890,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1722,6 +1722,48 @@ window.BENCHMARK_DATA = {
             "value": 15571.360400008416,
             "unit": "us/iter",
             "extra": "iterations: 45\ncpu: 15570.074577777781 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "41fee609ba4c5e110c8763ec138a4d9905570b97",
+          "message": "fix: reject non-canonical Ed25519 point encodings (#132)",
+          "timestamp": "2026-08-15T07:38:54-07:00",
+          "tree_id": "e78151ff0ce1b5bbc70012c720db996ad0112b75",
+          "url": "https://github.com/coinbase/cb-mpc/commit/41fee609ba4c5e110c8763ec138a4d9905570b97"
+        },
+        "date": 1786807009030,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 24459.490379317213,
+            "unit": "us/iter",
+            "extra": "iterations: 29\ncpu: 24457.657620689653 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 105415.66942856662,
+            "unit": "us/iter",
+            "extra": "iterations: 7\ncpu: 105403.67128571428 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 13858.443784315836,
+            "unit": "us/iter",
+            "extra": "iterations: 51\ncpu: 13856.915627450979 us\nthreads: 1"
           }
         ]
       }
