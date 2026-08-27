@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786806998711,
+  "lastUpdate": 1787852017816,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -4584,6 +4584,138 @@ window.BENCHMARK_DATA = {
             "value": 32.766588065395865,
             "unit": "us/iter",
             "extra": "iterations: 21467\ncpu: 32.763659943168534 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a34e9e84197e6833ab89260e41fb26209eeaa69d",
+          "message": "fix: harden protocol and crypto validation against malformed peer input (#135)\n\n- Propagate unpack errors from multi-set group messages instead of discarding them, so a malformed inner broadcast payload fails group_message rather than being silently accepted.\n- Validate ECDSA-MP round-3 signing broadcasts before hashing them into the transcript view, so a malformed proof is rejected before it can influence the transcript.\n- Verify in TDH2 combine/combine_additive that the supplied public shares actually reconstruct to the claimed public key, and reject duplicate partial-decryption role IDs, closing a path to combine shares and decryptions from mismatched key contexts.\n- Reject malformed message lengths in the base PVW OT protocol instead of processing undersized/oversized inputs and outputs.",
+          "timestamp": "2026-08-27T09:55:13-07:00",
+          "tree_id": "0637094d0e1e4e242f1ec9c0fa321f319a6987fd",
+          "url": "https://github.com/coinbase/cb-mpc/commit/a34e9e84197e6833ab89260e41fb26209eeaa69d"
+        },
+        "date": 1787852016980,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.29737083023403527,
+            "unit": "us/iter",
+            "extra": "iterations: 2359395\ncpu: 0.29733774209066305 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.30290443964055375,
+            "unit": "us/iter",
+            "extra": "iterations: 2312507\ncpu: 0.30288441591744375 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/SelfAdd/secp256k1",
+            "value": 0.1245115336224452,
+            "unit": "us/iter",
+            "extra": "iterations: 5619310\ncpu: 0.12449143951837503 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/SelfAdd/Ed25519",
+            "value": 0.15932662323805866,
+            "unit": "us/iter",
+            "extra": "iterations: 4390499\ncpu: 0.15932516486167064 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 2.3834559963242854,
+            "unit": "us/iter",
+            "extra": "iterations: 293805\ncpu: 2.3833041541158275 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.3033570054052347,
+            "unit": "us/iter",
+            "extra": "iterations: 2305741\ncpu: 0.3033543121278582 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 34.56807623097784,
+            "unit": "us/iter",
+            "extra": "iterations: 20228\ncpu: 34.56409313822427 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 58.54002593924214,
+            "unit": "us/iter",
+            "extra": "iterations: 11951\ncpu: 58.538809304660674 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 26.32582875247928,
+            "unit": "us/iter",
+            "extra": "iterations: 26196\ncpu: 26.32510784089175 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 53.01210625094473,
+            "unit": "us/iter",
+            "extra": "iterations: 13214\ncpu: 53.006899500529755 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 14.890239394388555,
+            "unit": "us/iter",
+            "extra": "iterations: 47027\ncpu: 14.889343483530745 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 15.055397561707988,
+            "unit": "us/iter",
+            "extra": "iterations: 46672\ncpu: 15.052889826876934 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 14.938448100022338,
+            "unit": "us/iter",
+            "extra": "iterations: 46869\ncpu: 14.937759499882649 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 6.264995348418945,
+            "unit": "us/iter",
+            "extra": "iterations: 111575\ncpu: 6.264623275823443 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 52.05171315243348,
+            "unit": "us/iter",
+            "extra": "iterations: 13488\ncpu: 52.04723317022542 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 74.05615278070698,
+            "unit": "us/iter",
+            "extra": "iterations: 9458\ncpu: 74.0513744977796 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/secp256k1",
+            "value": 2.1905534388596664,
+            "unit": "us/iter",
+            "extra": "iterations: 320048\ncpu: 2.1902786894465858 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/Ed25519",
+            "value": 30.964532944372444,
+            "unit": "us/iter",
+            "extra": "iterations: 22796\ncpu: 30.962333918231327 us\nthreads: 1"
           }
         ]
       }
