@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(
   CBMPC
-  VERSION 0.1.0
+  VERSION 0.3.0
   LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -122,7 +122,7 @@ if(NOT DEFINED CBMPC_OPENSSL_ROOT)
   if(DEFINED ENV{CBMPC_OPENSSL_ROOT})
     set(CBMPC_OPENSSL_ROOT $ENV{CBMPC_OPENSSL_ROOT})
   else()
-    set(CBMPC_OPENSSL_ROOT "/usr/local/opt/openssl@3.6.3")
+    set(CBMPC_OPENSSL_ROOT "/usr/local/opt/openssl@3.6.4")
   endif()
 endif()
 

@@ -5,7 +5,9 @@
 
 #include <cbmpc/api/ecdsa_mp.h>
 #include <cbmpc/core/access_structure.h>
+#include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/crypto/base_ecc.h>
+#include <cbmpc/internal/zk/zk_elgamal_com.h>
 
 #include "test_transport_harness.h"
 
@@ -13,11 +15,13 @@ namespace {
 
 using coinbase::buf_t;
 using coinbase::error_t;
+using coinbase::mem_t;
 
 using coinbase::api::curve_id;
 using coinbase::api::job_mp_t;
 using coinbase::api::party_idx_t;
 
+using coinbase::api::data_transport_i;
 using coinbase::testutils::mpc_net_context_t;
 using coinbase::testutils::api_harness::failing_transport_t;
 using coinbase::testutils::api_harness::local_api_transport_t;
@@ -696,6 +700,117 @@ TEST(ApiEcdsaMpAc, SignAcRejectsWrongAccessStructure) {
   EXPECT_NE(coinbase::api::ecdsa_mp::sign_ac(job, key_blobs[0], wrong_ac, msg_hash, /*sig_receiver=*/0, sig_der),
             SUCCESS);
   EXPECT_TRUE(sig_der.empty());
+}
+
+namespace {
+
+static bool tamper_sign_round3_ek_l_curve_to_null(buf_t& msg) {
+  buf_t pairwise_msg;
+  buf_t broadcast_msg;
+  if (coinbase::deser(msg, pairwise_msg, broadcast_msg)) return false;
+
+  elg_com_t eK;
+  elg_com_t eRHO;
+  coinbase::zk::uc_elgamal_com_t pi_eK;
+  coinbase::zk::uc_elgamal_com_t pi_eRHO;
+  if (coinbase::deser(broadcast_msg, eK, eRHO, pi_eK, pi_eRHO)) return false;
+
+  eK.L = coinbase::crypto::ecc_point_t();
+  broadcast_msg = coinbase::ser(eK, eRHO, pi_eK, pi_eRHO);
+  msg = coinbase::ser(pairwise_msg, broadcast_msg);
+  return true;
+}
+
+class tamper_sign_round3_transport_t final : public data_transport_i {
+ public:
+  explicit tamper_sign_round3_transport_t(std::shared_ptr<mpc_net_context_t> ctx) : ctx_(std::move(ctx)) {}
+
+  error_t send(party_idx_t receiver, mem_t msg) override {
+    buf_t out(msg);
+    if (receiver == static_cast<party_idx_t>(0) && ++sends_to_victim_ == 4) {
+      if (!tamper_sign_round3_ek_l_curve_to_null(out)) return E_GENERAL;
+      tampered_ = true;
+    }
+    ctx_->send(receiver, out);
+    return SUCCESS;
+  }
+
+  error_t receive(party_idx_t sender, buf_t& msg) override { return ctx_->receive(sender, msg); }
+
+  error_t receive_all(const std::vector<party_idx_t>& senders, std::vector<buf_t>& msgs) override {
+    std::vector<coinbase::mpc::party_idx_t> s;
+    s.reserve(senders.size());
+    for (auto x : senders) s.push_back(static_cast<coinbase::mpc::party_idx_t>(x));
+    return ctx_->receive_all(s, msgs);
+  }
+
+  bool tampered() const { return tampered_; }
+
+ private:
+  std::shared_ptr<mpc_net_context_t> ctx_;
+  int sends_to_victim_ = 0;
+  bool tampered_ = false;
+};
+
+}  // namespace
+
+TEST(ApiEcdsaMpAc, SignRound3NullCurveElgComFromMaliciousPeerRejected) {
+  constexpr int n = 2;
+
+  const std::vector<std::shared_ptr<mpc_net_context_t>> dkg_peers = make_peers(n);
+  const std::vector<std::shared_ptr<local_api_transport_t>> dkg_transports = make_transports(dkg_peers);
+
+  const std::vector<std::string> names = {"p0", "p1"};
+  std::vector<std::string_view> name_views;
+  name_views.reserve(names.size());
+  for (const auto& name : names) name_views.emplace_back(name);
+
+  const coinbase::api::access_structure_t ac =
+      coinbase::api::access_structure_t::Threshold(2, {
+                                                          coinbase::api::access_structure_t::leaf(names[0]),
+                                                          coinbase::api::access_structure_t::leaf(names[1]),
+                                                      });
+  const std::vector<std::string_view> quorum_party_names = {names[0], names[1]};
+
+  std::vector<buf_t> key_blobs(n);
+  std::vector<buf_t> sids(n);
+  std::vector<error_t> rvs;
+  run_mp(
+      dkg_peers,
+      [&](int i) {
+        job_mp_t job{static_cast<party_idx_t>(i), name_views, *dkg_transports[static_cast<size_t>(i)]};
+        return coinbase::api::ecdsa_mp::dkg_ac(job, curve_id::secp256k1, sids[static_cast<size_t>(i)], ac,
+                                               quorum_party_names, key_blobs[static_cast<size_t>(i)]);
+      },
+      rvs);
+  for (auto rv : rvs) ASSERT_EQ(rv, SUCCESS);
+
+  const buf_t msg_hash = make_msg_hash32();
+
+  std::vector<std::shared_ptr<mpc_net_context_t>> sign_peers;
+  sign_peers.reserve(n);
+  for (int i = 0; i < n; i++) sign_peers.push_back(std::make_shared<mpc_net_context_t>(i));
+  for (const auto& p : sign_peers) p->init_with_peers(sign_peers);
+
+  local_api_transport_t sign_t0(sign_peers[0]);
+  tamper_sign_round3_transport_t sign_t1(sign_peers[1]);
+
+  std::vector<buf_t> sigs(n);
+  std::vector<error_t> sign_rvs;
+  run_mp(
+      sign_peers,
+      [&](int i) {
+        job_mp_t job{static_cast<party_idx_t>(i), quorum_party_names,
+                     i == 0 ? static_cast<data_transport_i&>(sign_t0) : static_cast<data_transport_i&>(sign_t1)};
+        dylog_disable_scope_t no_log_err;
+        return coinbase::api::ecdsa_mp::sign_ac(job, key_blobs[static_cast<size_t>(i)], ac, msg_hash,
+                                                /*sig_receiver=*/0, sigs[static_cast<size_t>(i)]);
+      },
+      sign_rvs);
+
+  EXPECT_TRUE(sign_t1.tampered());
+  EXPECT_EQ(sign_rvs[0], E_FORMAT);
+  EXPECT_EQ(sigs[0].size(), 0);
 }
 
 // ------------ Disclaimer: All the following tests have been generated by AI ------------

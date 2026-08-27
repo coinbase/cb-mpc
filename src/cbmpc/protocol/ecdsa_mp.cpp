@@ -228,18 +228,18 @@ error_t sign(job_mp_t& job, key_t& key, mem_t msg, const party_idx_t sig_receive
       for (int t = 0; t < 4; t++) X[l][j][t] = bn_t::from_bin(X_bin[l * 4 + t]);
   }
 
+  // Validate received round-3 broadcast payloads before hashing them into the transcript.
+  for (int j = 0; j < n; j++) {
+    if (i == j) continue;
+    if (rv = pi_eK._j.verify(E, eK_i._j, sid, n_uc_elgamal_com_proofs * j + 0)) return rv;
+    if (rv = pi_eRHO._j.verify(E, eRHO_i._j, sid, n_uc_elgamal_com_proofs * j + 1)) return rv;
+  }
+
   // Initialize the view
   crypto::sha256_t view;
   view.update(E_i, eK_i._js, eRHO_i._js, pi_eK._js, pi_eRHO._js);
 
   // Proceed with message 4 of the signing protocol
-  for (int j = 0; j < n; j++) {
-    if (i == j) continue;
-    // The check for validating eK_i and eRHO_i is done in the verify function
-    if (rv = pi_eK._j.verify(E, eK_i._j, sid, n_uc_elgamal_com_proofs * j + 0)) return rv;
-    if (rv = pi_eRHO._j.verify(E, eRHO_i._j, sid, n_uc_elgamal_com_proofs * j + 1)) return rv;
-  }
-
   auto seed = job.nonuniform_msg<buf256_t>();
   auto v_theta = job.nonuniform_msg<std::array<bn_t, 4>>();
 

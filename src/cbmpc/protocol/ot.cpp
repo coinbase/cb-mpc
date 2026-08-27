@@ -44,6 +44,11 @@ error_t base_ot_protocol_pvw_ctx_t::step2_S2R(const std::vector<buf_t>& x0, cons
   this->x0 = x0;
   this->x1 = x1;
 
+  for (int i = 0; i < m; i++) {
+    if (coinbase::bytes_to_bits(x0[i].size()) != l || coinbase::bytes_to_bits(x1[i].size()) != l)
+      return coinbase::error(E_BADARG, "base_ot_protocol_pvw_ctx_t::step2_S2R: x0/x1 size mismatch");
+  }
+
   const mod_t& q = curve.order();
   ecc_point_t G0, G1, H0, H1;
   G0 = curve.generator();
@@ -86,6 +91,8 @@ error_t base_ot_protocol_pvw_ctx_t::output_R(std::vector<buf_t>& x) {
   x.resize(m);
 
   for (int i = 0; i < m; i++) {
+    if (coinbase::bytes_to_bits(V0[i].size()) != l || coinbase::bytes_to_bits(V1[i].size()) != l)
+      return coinbase::error(E_FORMAT, "base_ot_protocol_pvw_ctx_t::output_R: V0/V1 size mismatch");
     if (rv = curve.check(U0[i])) return coinbase::error(rv, "base_ot_protocol_pvw_ctx_t::output_R: check U0[i] failed");
     if (rv = curve.check(U1[i])) return coinbase::error(rv, "base_ot_protocol_pvw_ctx_t::output_R: check U1[i] failed");
     // Optimization: if the curve backend supports constant-time point cmov, select U_b and V_b and do

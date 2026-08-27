@@ -168,7 +168,7 @@ There are three build modes available:
 
 ### OpenSSL
 
-The library depends on a **custom build of OpenSSL 3.6.3** with specific modifications (see [External Dependencies](#external-dependencies)). You must build this custom version before compiling the library.
+The library depends on a **custom build of OpenSSL 3.6.4** with specific modifications (see [External Dependencies](#external-dependencies)). You must build this custom version before compiling the library.
 
 **Quick Start:**
 ```bash
@@ -190,7 +190,7 @@ scripts/openssl/build-static-openssl-macos.sh      # for x86_64
 scripts/openssl/build-static-openssl-macos-m1.sh   # for ARM64
 ```
 
-**Note:** These scripts install OpenSSL to `/usr/local/opt/openssl@3.6.3` and may require `sudo` permission.
+**Note:** These scripts install OpenSSL to `/usr/local/opt/openssl@3.6.4` and may require `sudo` permission.
 
 **Custom Install Location:**
 If you prefer a different installation path, you can set the `CBMPC_OPENSSL_ROOT` variable:

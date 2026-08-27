@@ -32,6 +32,42 @@ TEST(OT_Base, PVW) {
   }
 }
 
+TEST(OT_Base, RejectsMalformedVLengths) {
+  const int u = 4;
+  base_ot_protocol_pvw_ctx_t ot;
+  bits_t b = crypto::gen_random_bits(u);
+  std::vector<buf_t> x0(u), x1(u), x_out;
+  for (int j = 0; j < u; ++j) {
+    x0[j] = crypto::gen_random(16);
+    x1[j] = crypto::gen_random(16);
+  }
+  ot.sid = crypto::gen_random(16);
+  EXPECT_OK(ot.step1_R2S(b));
+  EXPECT_OK(ot.step2_S2R(x0, x1));
+
+  ot.V0[0] = buf_t(8);
+  EXPECT_NE(ot.output_R(x_out), SUCCESS);
+
+  EXPECT_OK(ot.step2_S2R(x0, x1));
+  ot.V1[0] = buf_t(8);
+  EXPECT_NE(ot.output_R(x_out), SUCCESS);
+
+  EXPECT_OK(ot.step2_S2R(x0, x1));
+  ot.V0[0] = buf_t(16);
+  ot.V1[0] = buf_t(8);
+  EXPECT_NE(ot.output_R(x_out), SUCCESS);
+}
+
+TEST(OT_Base, RejectsMalformedSenderInputs) {
+  base_ot_protocol_pvw_ctx_t ot;
+  bits_t b = crypto::gen_random_bits(1);
+  std::vector<buf_t> x0 = {crypto::gen_random(16)};
+  std::vector<buf_t> x1 = {buf_t(8)};
+  ot.sid = crypto::gen_random(16);
+  EXPECT_OK(ot.step1_R2S(b));
+  EXPECT_NE(ot.step2_S2R(x0, x1), SUCCESS);
+}
+
 TEST(OT_Helpers, MatrixAccessorsAndMessageTuples) {
   const int requested_cols = 17;
   h_matrix_256rows_t h_matrix;

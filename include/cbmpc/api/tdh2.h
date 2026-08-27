@@ -53,6 +53,10 @@ error_t verify(mem_t public_key, mem_t ciphertext, mem_t label);
 error_t partial_decrypt(mem_t private_share, mem_t ciphertext, mem_t label, buf_t& partial_decryption);
 
 // Combine additive shares + partial decryptions to decrypt.
+//
+// `public_shares` must be the complete, ordered public-share output from the
+// same DKG operation as `public_key`. The function rejects a share set whose
+// sum does not equal the public key.
 error_t combine_additive(mem_t public_key, const std::vector<mem_t>& public_shares, mem_t label,
                          const std::vector<mem_t>& partial_decryptions, mem_t ciphertext, buf_t& plaintext);
 
@@ -67,6 +71,9 @@ error_t combine_additive(mem_t public_key, const std::vector<mem_t>& public_shar
 // - `party_names.size() == public_shares.size()`
 // - `partial_decryption_party_names.size() == partial_decryptions.size()`
 // - The leaf set of `access_structure` must match `party_names` exactly.
+// - `public_key`, `public_shares`, and `access_structure` must correspond to
+//   the same DKG operation. The public shares selected by the partial-
+//   decryption quorum must reconstruct to the public key.
 error_t combine_ac(const access_structure_t& access_structure, mem_t public_key,
                    const std::vector<std::string_view>& party_names, const std::vector<mem_t>& public_shares,
                    mem_t label, const std::vector<std::string_view>& partial_decryption_party_names,

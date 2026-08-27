@@ -1,15 +1,111 @@
+#include <atomic>
 #include <gtest/gtest.h>
+#include <thread>
+#include <vector>
 
 #include <cbmpc/internal/core/log.h>
+#include <cbmpc/internal/crypto/elgamal.h>
 #include <cbmpc/internal/protocol/ecdsa_mp.h>
 
 #include "utils/local_network/mpc_tester.h"
+#include "utils/local_network/network_context.h"
 
 namespace {
 
 using namespace coinbase;
 using namespace coinbase::mpc;
 using namespace coinbase::testutils;
+
+static bool tamper_inner_broadcast_elg_com_l_curve_to_null(buf_t& msg) {
+  buf_t pairwise_msg;
+  buf_t broadcast_msg;
+  if (deser(msg, pairwise_msg, broadcast_msg)) return false;
+
+  elg_com_t commitment;
+  if (deser(broadcast_msg, commitment)) return false;
+
+  commitment.L = crypto::ecc_point_t();
+  broadcast_msg = ser(commitment);
+  msg = ser(pairwise_msg, broadcast_msg);
+  return true;
+}
+
+class local_internal_transport_t final : public coinbase::api::data_transport_i {
+ public:
+  explicit local_internal_transport_t(std::shared_ptr<mpc_net_context_t> ctx) : ctx_(std::move(ctx)) {}
+
+  error_t send(coinbase::api::party_idx_t receiver, mem_t msg) override {
+    ctx_->send(receiver, msg);
+    return SUCCESS;
+  }
+
+  error_t receive(coinbase::api::party_idx_t sender, buf_t& msg) override { return ctx_->receive(sender, msg); }
+
+  error_t receive_all(const std::vector<coinbase::api::party_idx_t>& senders, std::vector<buf_t>& msgs) override {
+    std::vector<party_idx_t> internal_senders;
+    internal_senders.reserve(senders.size());
+    for (auto sender : senders) internal_senders.push_back(static_cast<party_idx_t>(sender));
+    return ctx_->receive_all(internal_senders, msgs);
+  }
+
+ private:
+  std::shared_ptr<mpc_net_context_t> ctx_;
+};
+
+class tamper_inner_elg_com_send_transport_t final : public coinbase::api::data_transport_i {
+ public:
+  tamper_inner_elg_com_send_transport_t(std::shared_ptr<mpc_net_context_t> ctx, int tamper_send_index)
+      : ctx_(std::move(ctx)), tamper_send_index_(tamper_send_index) {}
+
+  error_t send(coinbase::api::party_idx_t receiver, mem_t msg) override {
+    buf_t out(msg);
+    if (++send_count_ == tamper_send_index_) {
+      if (!tamper_inner_broadcast_elg_com_l_curve_to_null(out)) return E_GENERAL;
+      tampered_ = true;
+    }
+    ctx_->send(receiver, out);
+    return SUCCESS;
+  }
+
+  error_t receive(coinbase::api::party_idx_t sender, buf_t& msg) override { return ctx_->receive(sender, msg); }
+
+  error_t receive_all(const std::vector<coinbase::api::party_idx_t>& senders, std::vector<buf_t>& msgs) override {
+    std::vector<party_idx_t> internal_senders;
+    internal_senders.reserve(senders.size());
+    for (auto sender : senders) internal_senders.push_back(static_cast<party_idx_t>(sender));
+    return ctx_->receive_all(internal_senders, msgs);
+  }
+
+  bool tampered() const { return tampered_; }
+
+ private:
+  std::shared_ptr<mpc_net_context_t> ctx_;
+  int tamper_send_index_;
+  int send_count_ = 0;
+  bool tampered_ = false;
+};
+
+template <typename F>
+static void run_two_party_mp(const std::vector<std::shared_ptr<mpc_net_context_t>>& peers,
+                             const std::vector<std::shared_ptr<coinbase::api::data_transport_i>>& transports, F&& f,
+                             std::vector<error_t>& out_rv) {
+  for (const auto& peer : peers) peer->reset();
+
+  out_rv.assign(peers.size(), UNINITIALIZED_ERROR);
+  std::atomic<bool> aborted{false};
+  std::vector<std::thread> threads;
+  threads.reserve(peers.size());
+
+  for (size_t i = 0; i < peers.size(); i++) {
+    threads.emplace_back([&, i] {
+      out_rv[i] = f(static_cast<int>(i));
+      if (out_rv[i] && !aborted.exchange(true)) {
+        for (const auto& peer : peers) peer->abort();
+      }
+    });
+  }
+  for (auto& t : threads) t.join();
+}
 
 class noop_transport_t final : public coinbase::api::data_transport_i {
  public:
@@ -211,5 +307,48 @@ TEST_P(NetworkMPC, PairwiseAndBroadcast) {
   });
 }
 INSTANTIATE_TEST_SUITE_P(, NetworkMPC, testing::Values(2, 4, 5, 10, 32, 64));
+
+TEST(MPCJob, MultiSetGroupMessageRejectsMalformedInnerBroadcast) {
+  constexpr int n = 2;
+  constexpr int malicious = 1;
+
+  std::vector<std::shared_ptr<mpc_net_context_t>> peers;
+  peers.reserve(n);
+  for (int i = 0; i < n; i++) peers.push_back(std::make_shared<mpc_net_context_t>(i));
+  for (const auto& peer : peers) peer->init_with_peers(peers);
+
+  std::vector<std::shared_ptr<coinbase::api::data_transport_i>> transports;
+  transports.push_back(std::make_shared<local_internal_transport_t>(peers[0]));
+  transports.push_back(std::make_shared<tamper_inner_elg_com_send_transport_t>(peers[1], /*tamper_send_index=*/1));
+
+  const std::vector<crypto::pname_t> names = {"alice", "bob"};
+  const ecurve_t curve = crypto::curve_secp256k1;
+  const auto [E, _d] = crypto::ec_elgamal_commitment_t::local_keygen(curve);
+  (void)_d;
+  const elg_com_t valid_com = elg_com_t::commit(E, curve.get_random_value()).rand(curve.get_random_value());
+
+  std::vector<error_t> results(n, UNINITIALIZED_ERROR);
+  run_two_party_mp(
+      peers, transports,
+      [&](int party_index) {
+        job_mp_t job(party_index, names, *transports[static_cast<size_t>(party_index)]);
+
+        auto pairwise = job.uniform_msg<buf_t>(buf_t("pairwise"));
+        auto broadcast = job.uniform_msg<elg_com_t>(valid_com);
+
+        party_set_t receivers = party_set_t::of(1);
+        party_set_t senders = party_set_t::of(0);
+        party_set_t all_parties = party_set_t::all();
+
+        dylog_disable_scope_t no_log_err;
+        return job.group_message(std::tie(receivers, senders, pairwise), std::tie(all_parties, all_parties, broadcast));
+      },
+      results);
+
+  auto* tamper_transport = dynamic_cast<tamper_inner_elg_com_send_transport_t*>(transports[1].get());
+  ASSERT_NE(tamper_transport, nullptr);
+  EXPECT_TRUE(tamper_transport->tampered());
+  EXPECT_NE(results[0], SUCCESS);
+}
 
 }  // namespace

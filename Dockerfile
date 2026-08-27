@@ -37,9 +37,9 @@ WORKDIR /build
 COPY scripts/openssl/build-static-openssl-linux.sh .
 RUN sh build-static-openssl-linux.sh \
     && mkdir -p /usr/local/lib64 /usr/local/lib /usr/local/include \
-    && ln -sf /usr/local/opt/openssl@3.6.1/lib64/libcrypto.a /usr/local/lib64/libcrypto.a \
-    && ln -sf /usr/local/opt/openssl@3.6.1/lib64/libcrypto.a /usr/local/lib/libcrypto.a \
-    && ln -sf /usr/local/opt/openssl@3.6.1/include/openssl /usr/local/include/openssl \
+    && ln -sf /usr/local/opt/openssl@3.6.4/lib64/libcrypto.a /usr/local/lib64/libcrypto.a \
+    && ln -sf /usr/local/opt/openssl@3.6.4/lib64/libcrypto.a /usr/local/lib/libcrypto.a \
+    && ln -sf /usr/local/opt/openssl@3.6.4/include/openssl /usr/local/include/openssl \
     && rm -rf /build
 
 WORKDIR /code

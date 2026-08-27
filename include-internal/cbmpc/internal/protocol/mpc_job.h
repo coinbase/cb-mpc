@@ -144,14 +144,16 @@ class job_mp_t {
     return unpack_msgs(std::get<1>(msg_ctx), bufs, std::get<2>(msg_ctx));
   }
   template <typename Tuple1, typename Tuple2, std::size_t... Is>
-  void unpack_multi_sets_msgs_helper(Tuple1& t1, Tuple2& t2, std::index_sequence<Is...>) {
+  error_t unpack_multi_sets_msgs_helper(Tuple1& t1, Tuple2& t2, std::index_sequence<Is...>) {
+    error_t rv = UNINITIALIZED_ERROR;
     // Use the index sequence to access elements from both tuples
-    (unpack_msg_ctx(std::get<Is>(t1), std::get<Is>(t2)), ...);
+    ((rv = unpack_msg_ctx(std::get<Is>(t1), std::get<Is>(t2))) || ...);
+    return rv;
   }
   template <typename... Ts1, typename... Ts2>
-  void unpack_multi_sets_tupled_msgs(std::tuple<Ts1...>& t1, std::tuple<Ts2&...> t2) {
+  error_t unpack_multi_sets_tupled_msgs(std::tuple<Ts1...>& t1, std::tuple<Ts2&...> t2) {
     static_assert(sizeof...(Ts1) == sizeof...(Ts2), "Tuples must have the same length to unpack");
-    unpack_multi_sets_msgs_helper(t1, t2, std::index_sequence_for<Ts1...>{});
+    return unpack_multi_sets_msgs_helper(t1, t2, std::index_sequence_for<Ts1...>{});
   }
 
   /* functions to send and received serialized multi-party messages */
@@ -291,6 +293,7 @@ class job_mp_t {
   // multiple times.
   template <typename... MSG_TUPLES>
   error_t group_message(const MSG_TUPLES&... msg_tuples) {
+    static_assert(sizeof...(MSG_TUPLES) > 0, "group_message requires at least one message tuple");
     error_t rv = UNINITIALIZED_ERROR;
     auto packed_msgs_tuple = std::make_tuple(pack_multi_sets_msgs(msg_tuples)...);
     std::vector<buf_t> packed_msgs = combine_packed_msgs(packed_msgs_tuple);
@@ -299,7 +302,7 @@ class job_mp_t {
     if (rv = receive_from_parties(party_set_t::all(), packed_msgs)) return rv;
 
     if (rv = split_packed_msgs(packed_msgs, packed_msgs_tuple)) return rv;
-    unpack_multi_sets_tupled_msgs(packed_msgs_tuple, std::tie(msg_tuples...));
+    if (rv = unpack_multi_sets_tupled_msgs(packed_msgs_tuple, std::tie(msg_tuples...))) return rv;
 
     return SUCCESS;
   }

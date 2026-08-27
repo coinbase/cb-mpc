@@ -3,9 +3,9 @@
 set -e
 
 cd /tmp
-curl -L https://github.com/openssl/openssl/releases/download/openssl-3.6.3/openssl-3.6.3.tar.gz --output openssl-3.6.3.tar.gz
-expectedHash='243a86649cf6f23eeb6a2ff2456e09e5d77dd9018a54d3d96b0c6bdd6ba6c7f1'
-fileHash=$(sha256sum openssl-3.6.3.tar.gz | cut -d " " -f 1 )
+curl -L https://github.com/openssl/openssl/releases/download/openssl-3.6.4/openssl-3.6.4.tar.gz --output openssl-3.6.4.tar.gz
+expectedHash='9bffaa1ad1e07b354c21bd3324ec02fa15579f45a7d0494b3e74bc449b7333ef'
+fileHash=$(sha256sum openssl-3.6.4.tar.gz | cut -d " " -f 1 )
 
 if [ $expectedHash != $fileHash ]
 then
@@ -18,8 +18,8 @@ fi
 echo "LINUX Start"
 uname -r
 
-tar -xzf openssl-3.6.3.tar.gz
-cd openssl-3.6.3
+tar -xzf openssl-3.6.4.tar.gz
+cd openssl-3.6.4
 sed -i -e 's/^static//' crypto/ec/curve25519.c
 
 
@@ -29,7 +29,7 @@ sed -i -e 's/^static//' crypto/ec/curve25519.c
   no-gost no-http no-idea no-mdc2 no-md2 no-md4 no-module no-nextprotoneg no-ocb no-ocsp no-psk no-padlockeng no-poly1305 \
   no-quic no-rc2 no-rc4 no-rc5 no-rfc3779 no-scrypt no-sctp no-seed no-siphash no-sm2 no-sm3 no-sm4 no-sock no-srtp no-srp \
   no-ssl-trace no-ssl3 no-stdio no-tests no-tls no-ts no-unit-test no-uplink no-whirlpool no-zlib \
-  --prefix="${CBMPC_OPENSSL_ROOT:-/usr/local/opt/openssl@3.6.3}" --libdir=lib64
+  --prefix="${CBMPC_OPENSSL_ROOT:-/usr/local/opt/openssl@3.6.4}" --libdir=lib64
 
 make build_generated install_sw -j4
 
