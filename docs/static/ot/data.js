@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786807009890,
+  "lastUpdate": 1787852029407,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1764,6 +1764,48 @@ window.BENCHMARK_DATA = {
             "value": 13858.443784315836,
             "unit": "us/iter",
             "extra": "iterations: 51\ncpu: 13856.915627450979 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a34e9e84197e6833ab89260e41fb26209eeaa69d",
+          "message": "fix: harden protocol and crypto validation against malformed peer input (#135)\n\n- Propagate unpack errors from multi-set group messages instead of discarding them, so a malformed inner broadcast payload fails group_message rather than being silently accepted.\n- Validate ECDSA-MP round-3 signing broadcasts before hashing them into the transcript view, so a malformed proof is rejected before it can influence the transcript.\n- Verify in TDH2 combine/combine_additive that the supplied public shares actually reconstruct to the claimed public key, and reject duplicate partial-decryption role IDs, closing a path to combine shares and decryptions from mismatched key contexts.\n- Reject malformed message lengths in the base PVW OT protocol instead of processing undersized/oversized inputs and outputs.",
+          "timestamp": "2026-08-27T09:55:13-07:00",
+          "tree_id": "0637094d0e1e4e242f1ec9c0fa321f319a6987fd",
+          "url": "https://github.com/coinbase/cb-mpc/commit/a34e9e84197e6833ab89260e41fb26209eeaa69d"
+        },
+        "date": 1787852028548,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 27258.944076912976,
+            "unit": "us/iter",
+            "extra": "iterations: 26\ncpu: 27257.983846153846 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 116772.80499998231,
+            "unit": "us/iter",
+            "extra": "iterations: 6\ncpu: 116772.20449999999 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 15314.796130437373,
+            "unit": "us/iter",
+            "extra": "iterations: 46\ncpu: 15314.079043478267 us\nthreads: 1"
           }
         ]
       }
