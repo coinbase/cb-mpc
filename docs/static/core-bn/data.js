@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786806994980,
+  "lastUpdate": 1787852013746,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -5040,6 +5040,126 @@ window.BENCHMARK_DATA = {
             "value": 1385.5242084168267,
             "unit": "us/iter",
             "extra": "iterations: 499\ncpu: 1385.4214308617134 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a34e9e84197e6833ab89260e41fb26209eeaa69d",
+          "message": "fix: harden protocol and crypto validation against malformed peer input (#135)\n\n- Propagate unpack errors from multi-set group messages instead of discarding them, so a malformed inner broadcast payload fails group_message rather than being silently accepted.\n- Validate ECDSA-MP round-3 signing broadcasts before hashing them into the transcript view, so a malformed proof is rejected before it can influence the transcript.\n- Verify in TDH2 combine/combine_additive that the supplied public shares actually reconstruct to the claimed public key, and reject duplicate partial-decryption role IDs, closing a path to combine shares and decryptions from mismatched key contexts.\n- Reject malformed message lengths in the base PVW OT protocol instead of processing undersized/oversized inputs and outputs.",
+          "timestamp": "2026-08-27T09:55:13-07:00",
+          "tree_id": "0637094d0e1e4e242f1ec9c0fa321f319a6987fd",
+          "url": "https://github.com/coinbase/cb-mpc/commit/a34e9e84197e6833ab89260e41fb26209eeaa69d"
+        },
+        "date": 1787852010801,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.08377023817482539,
+            "unit": "us/iter",
+            "extra": "iterations: 8300835\ncpu: 0.08376332995415521 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.4353820235502944,
+            "unit": "us/iter",
+            "extra": "iterations: 1604477\ncpu: 0.4353595738673736 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.08267220936731905,
+            "unit": "us/iter",
+            "extra": "iterations: 8437343\ncpu: 0.08266600433335472 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.5091372460338012,
+            "unit": "us/iter",
+            "extra": "iterations: 1370852\ncpu: 0.5090629396900628 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.14785101923962568,
+            "unit": "us/iter",
+            "extra": "iterations: 4762521\ncpu: 0.14784771510718772 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 10.033069191552475,
+            "unit": "us/iter",
+            "extra": "iterations: 70023\ncpu: 10.03249595133045 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 13.076734977463458,
+            "unit": "us/iter",
+            "extra": "iterations: 53686\ncpu: 13.075396062287986 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 16522.89740475984,
+            "unit": "us/iter",
+            "extra": "iterations: 42\ncpu: 16521.948285714298 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 14.608151472650448,
+            "unit": "us/iter",
+            "extra": "iterations: 47771\ncpu: 14.607253542944587 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 579.707106699866,
+            "unit": "us/iter",
+            "extra": "iterations: 1209\ncpu: 579.69758229942 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 21.324774123258724,
+            "unit": "us/iter",
+            "extra": "iterations: 33961\ncpu: 21.324111009687226 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1595.4001599102658,
+            "unit": "us/iter",
+            "extra": "iterations: 444\ncpu: 1595.362216216225 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 20.746693913609544,
+            "unit": "us/iter",
+            "extra": "iterations: 33961\ncpu: 20.746577485940207 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1587.9657828052143,
+            "unit": "us/iter",
+            "extra": "iterations: 442\ncpu: 1587.9468167420728 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 23.45143972686032,
+            "unit": "us/iter",
+            "extra": "iterations: 29582\ncpu: 23.44965489148834 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1731.7283851854072,
+            "unit": "us/iter",
+            "extra": "iterations: 405\ncpu: 1731.740962962945 us\nthreads: 1"
           }
         ]
       }
