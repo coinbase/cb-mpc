@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786807004192,
+  "lastUpdate": 1787852023555,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -2772,6 +2772,72 @@ window.BENCHMARK_DATA = {
             "value": 8336.016511905307,
             "unit": "us/iter",
             "extra": "iterations: 84\ncpu: 8335.02689285715 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a34e9e84197e6833ab89260e41fb26209eeaa69d",
+          "message": "fix: harden protocol and crypto validation against malformed peer input (#135)\n\n- Propagate unpack errors from multi-set group messages instead of discarding them, so a malformed inner broadcast payload fails group_message rather than being silently accepted.\n- Validate ECDSA-MP round-3 signing broadcasts before hashing them into the transcript view, so a malformed proof is rejected before it can influence the transcript.\n- Verify in TDH2 combine/combine_additive that the supplied public shares actually reconstruct to the claimed public key, and reject duplicate partial-decryption role IDs, closing a path to combine shares and decryptions from mismatched key contexts.\n- Reject malformed message lengths in the base PVW OT protocol instead of processing undersized/oversized inputs and outputs.",
+          "timestamp": "2026-08-27T09:55:13-07:00",
+          "tree_id": "0637094d0e1e4e242f1ec9c0fa321f319a6987fd",
+          "url": "https://github.com/coinbase/cb-mpc/commit/a34e9e84197e6833ab89260e41fb26209eeaa69d"
+        },
+        "date": 1787852022668,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BP/Paillier/Gen",
+            "value": 48022.57592856611,
+            "unit": "us/iter",
+            "extra": "iterations: 14\ncpu: 48021.446214285716 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Enc",
+            "value": 4342.711869565121,
+            "unit": "us/iter",
+            "extra": "iterations: 161\ncpu: 4342.365863354038 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Pub-Enc",
+            "value": 8514.912829269168,
+            "unit": "us/iter",
+            "extra": "iterations: 82\ncpu: 8514.441670731703 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Dec",
+            "value": 4539.129135482946,
+            "unit": "us/iter",
+            "extra": "iterations: 155\ncpu: 4538.690129032262 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add",
+            "value": 10.059077785613516,
+            "unit": "us/iter",
+            "extra": "iterations: 69473\ncpu: 10.058625293279405 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Add-Scalar",
+            "value": 12.170121929105104,
+            "unit": "us/iter",
+            "extra": "iterations: 57353\ncpu: 12.169843687339808 us\nthreads: 1"
+          },
+          {
+            "name": "BP/Paillier/Mul-Scalar",
+            "value": 8315.705583332343,
+            "unit": "us/iter",
+            "extra": "iterations: 84\ncpu: 8315.008952380962 us\nthreads: 1"
           }
         ]
       }
