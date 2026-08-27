@@ -14,6 +14,19 @@ namespace {
 
 class TDH2 : public testutils::TestAC {};
 
+static void rebind_ciphertext_to_public_key(ciphertext_t& ciphertext, const public_key_t& pub_key, const bn_t& r,
+                                            const bn_t& s, mem_t label) {
+  const auto& curve = pub_key.Q.get_curve();
+  const auto& G = curve.generator();
+  const mod_t& q = curve.order();
+
+  ciphertext.R2 = r * pub_key.Gamma;
+  const ecc_point_t W1 = s * G;
+  const ecc_point_t W2 = s * pub_key.Gamma;
+  ciphertext.e = ro::hash_number(ciphertext.c, label, ciphertext.R1, W1, ciphertext.R2, W2, ciphertext.iv).mod(q);
+  MODULO(q) ciphertext.f = s + r * ciphertext.e;
+}
+
 TEST_F(TDH2, AddCompleteness) {
   int n = 10;
   std::vector<private_share_t> dec_shares;
@@ -277,6 +290,80 @@ TEST_F(TDH2, PartialDecryptionSerializationAndTamperChecks) {
   EXPECT_ER(bad_proof.check_partial_decryption_helper(pub_shares[0], ciphertext, curve_p256));
 }
 
+TEST_F(TDH2, CombineAdditiveRejectsForgedPublicShareContext) {
+  constexpr int n = 3;
+  const bn_t victim_x = curve_p256.get_random_value();
+  const public_key_t victim_key(victim_x * curve_p256.generator(), gen_random(32));
+
+  public_key_t fake_key;
+  crypto::tdh2::pub_shares_t fake_pub_shares;
+  std::vector<private_share_t> fake_dec_shares;
+  testutils::generate_additive_shares(n, fake_key, fake_pub_shares, fake_dec_shares, curve_p256);
+
+  const buf_t label = buf_t("tdh2-label");
+  const buf_t plain = buf_t("forged-plaintext");
+  const bn_t r = bn_t(17);
+  const bn_t s = bn_t(19);
+  const buf_t iv = bn_t(0xabcdef).to_bin(iv_size);
+  ciphertext_t forged_ciphertext = fake_key.encrypt(plain, label, r, s, iv);
+
+  partial_decryptions_t fake_partials(n);
+  for (int i = 0; i < n; i++) {
+    ASSERT_OK(fake_dec_shares[i].decrypt(forged_ciphertext, label, fake_partials[i]));
+  }
+
+  rebind_ciphertext_to_public_key(forged_ciphertext, victim_key, r, s, label);
+  ASSERT_OK(forged_ciphertext.verify(victim_key, label));
+
+  buf_t decrypted;
+  EXPECT_ER(combine_additive(victim_key, fake_pub_shares, label, fake_partials, forged_ciphertext, decrypted));
+}
+
+TEST_F(TDH2, CombineAdditiveRejectsDuplicateRoleInForgedPublicShareContext) {
+  const auto& G = curve_p256.generator();
+  const mod_t& q = curve_p256.order();
+  const bn_t victim_x = bn_t(101);
+  const bn_t x1 = bn_t(31);
+  const bn_t x2 = bn_t(37);
+  bn_t fake_x;
+  MODULO(q) fake_x = x1 + x2 + x2;
+
+  const public_key_t victim_key(victim_x * G, gen_random(32));
+  const public_key_t fake_key(fake_x * G, gen_random(32));
+  const ecc_point_t Q1 = x1 * G;
+  const ecc_point_t Q2 = x2 * G;
+  crypto::tdh2::pub_shares_t forged_pub_shares = {Q1, Q2, victim_key.Q - Q1 - Q2};
+  ASSERT_EQ(forged_pub_shares[0] + forged_pub_shares[1] + forged_pub_shares[2], victim_key.Q);
+
+  const buf_t label = buf_t("tdh2-label");
+  const buf_t plain = buf_t("forged-plaintext");
+  const bn_t r = bn_t(41);
+  const bn_t s = bn_t(43);
+  const buf_t iv = bn_t(0x654321).to_bin(iv_size);
+  ciphertext_t forged_ciphertext = fake_key.encrypt(plain, label, r, s, iv);
+
+  private_share_t share1;
+  share1.pub_key = fake_key;
+  share1.x = x1;
+  share1.rid = 1;
+  private_share_t share2;
+  share2.pub_key = fake_key;
+  share2.x = x2;
+  share2.rid = 2;
+
+  partial_decryptions_t forged_partials(3);
+  ASSERT_OK(share1.decrypt(forged_ciphertext, label, forged_partials[0]));
+  ASSERT_OK(share2.decrypt(forged_ciphertext, label, forged_partials[1]));
+  forged_partials[2] = forged_partials[1];
+  ASSERT_EQ(forged_partials[2].rid, 2);
+
+  rebind_ciphertext_to_public_key(forged_ciphertext, victim_key, r, s, label);
+  ASSERT_OK(forged_ciphertext.verify(victim_key, label));
+
+  buf_t decrypted;
+  EXPECT_ER(combine_additive(victim_key, forged_pub_shares, label, forged_partials, forged_ciphertext, decrypted));
+}
+
 TEST_F(TDH2, CombineAdditiveRejectsMalformedInputs) {
   const int n = 3;
   public_key_t enc_key;
@@ -338,6 +425,37 @@ TEST_F(TDH2, CombineFailsWithInsufficientQuorum) {
 
   buf_t decrypted;
   EXPECT_ER(combine(test_ac, enc_key, pub_shares, label, partial_decryptions, ciphertext, decrypted));
+}
+
+TEST_F(TDH2, CombineACRejectsForgedPublicShareContext) {
+  test_ac.curve = curve_p256;
+  const bn_t victim_x = curve_p256.get_random_value();
+  const public_key_t victim_key(victim_x * curve_p256.generator(), gen_random(32));
+
+  public_key_t fake_key;
+  ss::ac_pub_shares_t fake_pub_shares;
+  ss::party_map_t<private_share_t> fake_dec_shares;
+  testutils::generate_ac_shares(test_ac, fake_key, fake_pub_shares, fake_dec_shares, curve_p256);
+
+  const buf_t label = buf_t("tdh2-label");
+  const buf_t plain = buf_t("forged-plaintext");
+  const bn_t r = bn_t(23);
+  const bn_t s = bn_t(29);
+  const buf_t iv = bn_t(0x123456).to_bin(iv_size);
+  ciphertext_t forged_ciphertext = fake_key.encrypt(plain, label, r, s, iv);
+
+  ss::party_map_t<partial_decryption_t> fake_partials;
+  for (const auto& [name, share] : fake_dec_shares) {
+    partial_decryption_t partial;
+    ASSERT_OK(share.decrypt(forged_ciphertext, label, partial));
+    fake_partials[name] = std::move(partial);
+  }
+
+  rebind_ciphertext_to_public_key(forged_ciphertext, victim_key, r, s, label);
+  ASSERT_OK(forged_ciphertext.verify(victim_key, label));
+
+  buf_t decrypted;
+  EXPECT_ER(combine(test_ac, victim_key, fake_pub_shares, label, fake_partials, forged_ciphertext, decrypted));
 }
 
 TEST_F(TDH2, CombineACRejectsTamperedInputs) {

@@ -61,6 +61,14 @@ cbmpc_error_t cbmpc_tdh2_partial_decrypt(cmem_t private_share, cmem_t ciphertext
 
 // Combine additive shares / partial decryptions to recover the plaintext.
 //
+// Requirements:
+// - `public_shares` must be the complete, ordered public-share output from the
+//   same `cbmpc_tdh2_dkg_additive` operation as `public_key`.
+// - `partial_decryptions` must contain exactly one partial decryption for each
+//   role represented in `public_shares`.
+// - The function returns an error if the public shares do not sum to the public
+//   key or if a partial-decryption role is missing or duplicated.
+//
 // Ownership:
 // - On success, `out_plaintext->data` is allocated by the library and must be
 //   freed with `cbmpc_cmem_free(*out_plaintext)`.
@@ -78,6 +86,10 @@ cbmpc_error_t cbmpc_tdh2_combine_additive(cmem_t public_key, cmems_t public_shar
 // - `party_names_count == public_shares.count`
 // - `partial_decryption_party_names_count == partial_decryptions.count`
 // - The leaf set of `access_structure` must match `party_names` exactly.
+// - `public_key`, `public_shares`, and `access_structure` must correspond to
+//   the same `cbmpc_tdh2_dkg_ac` operation.
+// - The public shares selected by the partial-decryption quorum must
+//   reconstruct to the public key; otherwise, the function returns an error.
 //
 // Ownership: same as `cbmpc_tdh2_combine_additive`.
 cbmpc_error_t cbmpc_tdh2_combine_ac(const cbmpc_access_structure_t* access_structure, cmem_t public_key,

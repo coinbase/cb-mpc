@@ -130,19 +130,25 @@ error_t combine_additive(const public_key_t& pub_key, const pub_shares_t& Qi, me
   error_t rv = UNINITIALIZED_ERROR;
   const auto& curve = pub_key.Q.get_curve();
   int n = int(Qi.size());
+  ecc_point_t reconstructed_Q = curve.infinity();
   for (const auto& _Qi : Qi) {
     if (rv = curve.check(_Qi)) return coinbase::error(rv, "combine_additive: check Qi failed");
+    reconstructed_Q += _Qi;
   }
+  if (reconstructed_Q != pub_key.Q) return coinbase::error(E_CRYPTO, "combine_additive: public shares mismatch");
   if ((int)partial_decryptions.size() != n) return coinbase::error(E_CRYPTO);
 
   if (rv = ciphertext.verify(pub_key, label)) return rv;
 
   ecc_point_t V = curve.infinity();
+  std::vector<bool> seen_rids(n, false);
   for (int i = 0; i < n; i++) {
     const partial_decryption_t& partial_decryption = partial_decryptions[i];
 
     const int rid = partial_decryption.rid;
     if (rid < 1 || rid > n) return coinbase::error(E_CRYPTO);
+    if (seen_rids[rid - 1]) return coinbase::error(E_CRYPTO, "combine_additive: duplicate rid");
+    seen_rids[rid - 1] = true;
     if (rv = partial_decryption.check_partial_decryption_helper(Qi[rid - 1], ciphertext, curve)) return rv;
 
     V += partial_decryption.Xi;
@@ -161,9 +167,21 @@ error_t combine(const ss::ac_t& ac, const public_key_t& pub_key, ss::ac_pub_shar
 
   if (rv = ciphertext.verify(pub_key, label)) return rv;
 
+  ss::ac_pub_shares_t selected_pub_shares;
+  for (const auto& [name, partial_decryption] : partial_decryptions) {
+    const auto it = pub_shares.find(name);
+    if (it == pub_shares.end()) return coinbase::error(E_CRYPTO, "combine: missing public share");
+    selected_pub_shares[name] = it->second;
+  }
+
+  ecc_point_t reconstructed_Q;
+  if (rv = ac.reconstruct_exponent(selected_pub_shares, reconstructed_Q)) return rv;
+  if (reconstructed_Q != pub_key.Q) return coinbase::error(E_CRYPTO, "combine: public shares mismatch");
+
   ss::ac_pub_shares_t Vs;
   for (const auto& [name, partial_decryption] : partial_decryptions) {
-    if (rv = partial_decryption.check_partial_decryption_helper(pub_shares[name], ciphertext, pub_key.Q.get_curve()))
+    if (rv = partial_decryption.check_partial_decryption_helper(selected_pub_shares.at(name), ciphertext,
+                                                                pub_key.Q.get_curve()))
       return rv;
     if (rv = pub_key.Q.get_curve().check(partial_decryption.Xi)) return rv;
 
