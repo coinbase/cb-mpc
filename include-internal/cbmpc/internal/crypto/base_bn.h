@@ -7,8 +7,8 @@
 
 #include <cbmpc/core/buf.h>
 
-#if OPENSSL_VERSION_MAJOR != 3 || OPENSSL_VERSION_MINOR != 6 || OPENSSL_VERSION_PATCH != 3
-#error "cb-mpc copied OpenSSL BN internals require OpenSSL 3.6.3"
+#if OPENSSL_VERSION_MAJOR != 3 || OPENSSL_VERSION_MINOR != 6 || OPENSSL_VERSION_PATCH != 4
+#error "cb-mpc copied OpenSSL BN internals require OpenSSL 3.6.4"
 #endif
 
 struct bignum_st {
