@@ -7,6 +7,7 @@
 #include <cbmpc/core/access_structure.h>
 #include <cbmpc/internal/core/log.h>
 #include <cbmpc/internal/crypto/base_ecc.h>
+#include <cbmpc/internal/zk/zk_elgamal_com.h>
 
 #include "test_transport_harness.h"
 
@@ -703,17 +704,21 @@ TEST(ApiEcdsaMpAc, SignAcRejectsWrongAccessStructure) {
 
 namespace {
 
-static bool tamper_first_elg_com_l_curve_to_null(buf_t& msg) {
-  constexpr uint8_t kSecp256k1CurveCodeHi = 0x02;
-  constexpr uint8_t kSecp256k1CurveCodeLo = 0xca;
-  for (int i = 0; i + 1 < msg.size(); ++i) {
-    if (msg[i] == kSecp256k1CurveCodeHi && msg[i + 1] == kSecp256k1CurveCodeLo) {
-      msg[i] = 0;
-      msg[i + 1] = 0;
-      return true;
-    }
-  }
-  return false;
+static bool tamper_sign_round3_ek_l_curve_to_null(buf_t& msg) {
+  buf_t pairwise_msg;
+  buf_t broadcast_msg;
+  if (coinbase::deser(msg, pairwise_msg, broadcast_msg)) return false;
+
+  elg_com_t eK;
+  elg_com_t eRHO;
+  coinbase::zk::uc_elgamal_com_t pi_eK;
+  coinbase::zk::uc_elgamal_com_t pi_eRHO;
+  if (coinbase::deser(broadcast_msg, eK, eRHO, pi_eK, pi_eRHO)) return false;
+
+  eK.L = coinbase::crypto::ecc_point_t();
+  broadcast_msg = coinbase::ser(eK, eRHO, pi_eK, pi_eRHO);
+  msg = coinbase::ser(pairwise_msg, broadcast_msg);
+  return true;
 }
 
 class tamper_sign_round3_transport_t final : public data_transport_i {
@@ -723,7 +728,7 @@ class tamper_sign_round3_transport_t final : public data_transport_i {
   error_t send(party_idx_t receiver, mem_t msg) override {
     buf_t out(msg);
     if (receiver == static_cast<party_idx_t>(0) && ++sends_to_victim_ == 4) {
-      if (!tamper_first_elg_com_l_curve_to_null(out)) return E_GENERAL;
+      if (!tamper_sign_round3_ek_l_curve_to_null(out)) return E_GENERAL;
       tampered_ = true;
     }
     ctx_->send(receiver, out);
