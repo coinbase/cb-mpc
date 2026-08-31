@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787852017816,
+  "lastUpdate": 1788189781131,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -4716,6 +4716,138 @@ window.BENCHMARK_DATA = {
             "value": 30.964532944372444,
             "unit": "us/iter",
             "extra": "iterations: 22796\ncpu: 30.962333918231327 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2f2c4f1005729bd575b6f17bce8a47478df7ce78",
+          "message": "fix: correct response range bound in Paillier-DL ZK verification (#136)\n\nThe upper bound for the response z was computed as (q^2 + 1) * 2^SEC_P_STAT, which does not match the intended range. Use q^2 * (2^SEC_P_STAT + 1) so the check_right_open_range bound reflects the correct soundness range.\n\nRegenerate the accompanying spec/theory PDFs, which carry the following documentation updates (per each document's version history):\n- zk-proofs-spec: updated Fischlin protocols, ElGamal terminology, and verification checks; removed the dangling zk-proofs-macros.pdf dependency\n- zk-proofs-theory: corrected Batch-DL transcript hashing and updated the Valid-Paillier and PDL analyses\n- basic-primitives-spec/theory: added hybrid PKE via KEM/DEM\n- ecdsa-2pc-spec: fixed centered rounding for s' and completed the optional signing-proof flow\n- ec-dkg-spec: corrected threshold-share validation and updated dependencies\n- schnorr-spec: corrected the two-party signing figure and clarified the multiparty signing API and output receiver\n- constant-time: clarified masking and modular-inversion behavior and corrected the Secure Usage link\n\nThese updates resolve all currently open issues:\n\nFixes #7\nFixes #62\nFixes #133\nFixes #134",
+          "timestamp": "2026-08-31T07:51:11-07:00",
+          "tree_id": "7695a3705bfb47e06610897284c750eba9359536",
+          "url": "https://github.com/coinbase/cb-mpc/commit/2f2c4f1005729bd575b6f17bce8a47478df7ce78"
+        },
+        "date": 1788189780514,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/EC/Add/secp256k1",
+            "value": 0.21766968770844142,
+            "unit": "us/iter",
+            "extra": "iterations: 3211806\ncpu: 0.21764711972018239 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add/Ed25519",
+            "value": 0.24816152900870075,
+            "unit": "us/iter",
+            "extra": "iterations: 3140309\ncpu: 0.24815218661603047 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/SelfAdd/secp256k1",
+            "value": 0.10373863095065823,
+            "unit": "us/iter",
+            "extra": "iterations: 6902600\ncpu: 0.10373276388607197 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/SelfAdd/Ed25519",
+            "value": 0.12118214237445192,
+            "unit": "us/iter",
+            "extra": "iterations: 5238468\ncpu: 0.12117857969161971 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/secp256k1",
+            "value": 1.7688598601404106,
+            "unit": "us/iter",
+            "extra": "iterations: 399401\ncpu: 1.7687932053249733 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Add_CT/Ed25519",
+            "value": 0.23381120024282545,
+            "unit": "us/iter",
+            "extra": "iterations: 2898955\ncpu: 0.23379737491613353 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/secp256k1",
+            "value": 27.20121188902703,
+            "unit": "us/iter",
+            "extra": "iterations: 27538\ncpu: 27.199475887864047 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply/Ed25519",
+            "value": 45.574234930541266,
+            "unit": "us/iter",
+            "extra": "iterations: 16341\ncpu: 45.571286702160194 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/secp256k1",
+            "value": 21.35558833039871,
+            "unit": "us/iter",
+            "extra": "iterations: 34637\ncpu: 21.355070185062214 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_VT/Ed25519",
+            "value": 39.507376954774784,
+            "unit": "us/iter",
+            "extra": "iterations: 17713\ncpu: 39.505913453395785 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/secp256k1",
+            "value": 11.863189721157697,
+            "unit": "us/iter",
+            "extra": "iterations: 62186\ncpu: 11.862654536390844 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G/Ed25519",
+            "value": 9.038088458647508,
+            "unit": "us/iter",
+            "extra": "iterations: 77166\ncpu: 9.03746545110541 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/secp256k1",
+            "value": 11.308015685201665,
+            "unit": "us/iter",
+            "extra": "iterations: 62033\ncpu: 11.307655409217665 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Multiply_G_VT/Ed25519",
+            "value": 4.60177861547616,
+            "unit": "us/iter",
+            "extra": "iterations: 152269\ncpu: 4.601511371323113 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/secp256k1",
+            "value": 39.09814935708146,
+            "unit": "us/iter",
+            "extra": "iterations: 18198\ncpu: 39.095566051214426 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/MulAdd/Ed25519",
+            "value": 52.38729024023707,
+            "unit": "us/iter",
+            "extra": "iterations: 13320\ncpu: 52.383283183183195 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/secp256k1",
+            "value": 1.7239896073216003,
+            "unit": "us/iter",
+            "extra": "iterations: 436846\ncpu: 1.7239100483923389 us\nthreads: 1"
+          },
+          {
+            "name": "Core/EC/Check/Ed25519",
+            "value": 23.809692175370174,
+            "unit": "us/iter",
+            "extra": "iterations: 26161\ncpu: 23.807096135468917 us\nthreads: 1"
           }
         ]
       }
