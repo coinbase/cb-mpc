@@ -517,7 +517,8 @@ error_t pdl_t::verify(const bn_t& c_key, const crypto::paillier_t& paillier, con
 
   if (z * G != R + e * Q1) return coinbase::error(E_CRYPTO);
 
-  if (rv = coinbase::crypto::check_right_open_range(0, z, (qq + 1) << SEC_P_STAT)) return rv;
+  const bn_t response_upper_bound = (qq << SEC_P_STAT) + qq;  // q^2 * (2^SEC_P_STAT + 1)
+  if (rv = coinbase::crypto::check_right_open_range(0, z, response_upper_bound)) return rv;
 
   crypto::paillier_t::elem_t c_z = paillier.elem(c_r) + (paillier.elem(c_key) * e);
   if (paillier.encrypt(z, r_z) != c_z.to_bn()) return coinbase::error(E_CRYPTO);
