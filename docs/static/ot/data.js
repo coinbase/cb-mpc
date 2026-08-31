@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787852029407,
+  "lastUpdate": 1788189792517,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -1806,6 +1806,48 @@ window.BENCHMARK_DATA = {
             "value": 15314.796130437373,
             "unit": "us/iter",
             "extra": "iterations: 46\ncpu: 15314.079043478267 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2f2c4f1005729bd575b6f17bce8a47478df7ce78",
+          "message": "fix: correct response range bound in Paillier-DL ZK verification (#136)\n\nThe upper bound for the response z was computed as (q^2 + 1) * 2^SEC_P_STAT, which does not match the intended range. Use q^2 * (2^SEC_P_STAT + 1) so the check_right_open_range bound reflects the correct soundness range.\n\nRegenerate the accompanying spec/theory PDFs, which carry the following documentation updates (per each document's version history):\n- zk-proofs-spec: updated Fischlin protocols, ElGamal terminology, and verification checks; removed the dangling zk-proofs-macros.pdf dependency\n- zk-proofs-theory: corrected Batch-DL transcript hashing and updated the Valid-Paillier and PDL analyses\n- basic-primitives-spec/theory: added hybrid PKE via KEM/DEM\n- ecdsa-2pc-spec: fixed centered rounding for s' and completed the optional signing-proof flow\n- ec-dkg-spec: corrected threshold-share validation and updated dependencies\n- schnorr-spec: corrected the two-party signing figure and clarified the multiparty signing API and output receiver\n- constant-time: clarified masking and modular-inversion behavior and corrected the Secure Usage link\n\nThese updates resolve all currently open issues:\n\nFixes #7\nFixes #62\nFixes #133\nFixes #134",
+          "timestamp": "2026-08-31T07:51:11-07:00",
+          "tree_id": "7695a3705bfb47e06610897284c750eba9359536",
+          "url": "https://github.com/coinbase/cb-mpc/commit/2f2c4f1005729bd575b6f17bce8a47478df7ce78"
+        },
+        "date": 1788189791808,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "MPC/OT/BaseOT/Step1_R2S/256",
+            "value": 20239.966714286442,
+            "unit": "us/iter",
+            "extra": "iterations: 35\ncpu: 20238.92302857143 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/Step2_S2R/256",
+            "value": 89028.20325002381,
+            "unit": "us/iter",
+            "extra": "iterations: 8\ncpu: 89017.18687500001 us\nthreads: 1"
+          },
+          {
+            "name": "MPC/OT/BaseOT/OutputR/256",
+            "value": 11452.616500000364,
+            "unit": "us/iter",
+            "extra": "iterations: 62\ncpu: 11451.654435483868 us\nthreads: 1"
           }
         ]
       }
