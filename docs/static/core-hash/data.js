@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787852020724,
+  "lastUpdate": 1788189783839,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -7776,6 +7776,174 @@ window.BENCHMARK_DATA = {
             "value": 314.88621476512566,
             "unit": "us/iter",
             "extra": "iterations: 2235\ncpu: 314.87067337807565 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2f2c4f1005729bd575b6f17bce8a47478df7ce78",
+          "message": "fix: correct response range bound in Paillier-DL ZK verification (#136)\n\nThe upper bound for the response z was computed as (q^2 + 1) * 2^SEC_P_STAT, which does not match the intended range. Use q^2 * (2^SEC_P_STAT + 1) so the check_right_open_range bound reflects the correct soundness range.\n\nRegenerate the accompanying spec/theory PDFs, which carry the following documentation updates (per each document's version history):\n- zk-proofs-spec: updated Fischlin protocols, ElGamal terminology, and verification checks; removed the dangling zk-proofs-macros.pdf dependency\n- zk-proofs-theory: corrected Batch-DL transcript hashing and updated the Valid-Paillier and PDL analyses\n- basic-primitives-spec/theory: added hybrid PKE via KEM/DEM\n- ecdsa-2pc-spec: fixed centered rounding for s' and completed the optional signing-proof flow\n- ec-dkg-spec: corrected threshold-share validation and updated dependencies\n- schnorr-spec: corrected the two-party signing figure and clarified the multiparty signing API and output receiver\n- constant-time: clarified masking and modular-inversion behavior and corrected the Secure Usage link\n\nThese updates resolve all currently open issues:\n\nFixes #7\nFixes #62\nFixes #133\nFixes #134",
+          "timestamp": "2026-08-31T07:51:11-07:00",
+          "tree_id": "7695a3705bfb47e06610897284c750eba9359536",
+          "url": "https://github.com/coinbase/cb-mpc/commit/2f2c4f1005729bd575b6f17bce8a47478df7ce78"
+        },
+        "date": 1788189783194,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/Hash/SHA256/16",
+            "value": 0.22672868043893993,
+            "unit": "us/iter",
+            "extra": "iterations: 3088959\ncpu: 0.2267090359567738 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/64",
+            "value": 0.2469577222314376,
+            "unit": "us/iter",
+            "extra": "iterations: 2853793\ncpu: 0.24693363218705772 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/256",
+            "value": 0.3397934859971095,
+            "unit": "us/iter",
+            "extra": "iterations: 2062572\ncpu: 0.3397656241818466 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/1024",
+            "value": 0.7179692748274286,
+            "unit": "us/iter",
+            "extra": "iterations: 976333\ncpu: 0.7178959924533942 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/SHA256/4096",
+            "value": 2.2312102228585773,
+            "unit": "us/iter",
+            "extra": "iterations: 314100\ncpu: 2.2309719547914675 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/16",
+            "value": 0.7391134229808726,
+            "unit": "us/iter",
+            "extra": "iterations: 944738\ncpu: 0.7390962870129077 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/64",
+            "value": 0.7981917913870927,
+            "unit": "us/iter",
+            "extra": "iterations: 917987\ncpu: 0.7981110876297808 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/256",
+            "value": 0.8634774596009975,
+            "unit": "us/iter",
+            "extra": "iterations: 816911\ncpu: 0.8634035054002204 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/1024",
+            "value": 1.2365394673243388,
+            "unit": "us/iter",
+            "extra": "iterations: 566874\ncpu: 1.2364337859912424 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/HMAC-SHA256/4096",
+            "value": 2.7592836596414916,
+            "unit": "us/iter",
+            "extra": "iterations: 253850\ncpu: 2.7590373330707134 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/1024",
+            "value": 0.4427328614042748,
+            "unit": "us/iter",
+            "extra": "iterations: 1577638\ncpu: 0.44269576544175543 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/4096",
+            "value": 0.6311235432469482,
+            "unit": "us/iter",
+            "extra": "iterations: 1114808\ncpu: 0.6310965960057702 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/16384",
+            "value": 1.2463085434010974,
+            "unit": "us/iter",
+            "extra": "iterations: 562715\ncpu: 1.246265459424397 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/65536",
+            "value": 3.718615438554885,
+            "unit": "us/iter",
+            "extra": "iterations: 188243\ncpu: 3.7185457467209977 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/262144",
+            "value": 13.387979253908117,
+            "unit": "us/iter",
+            "extra": "iterations: 52299\ncpu: 13.387261477274922 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/1048576",
+            "value": 53.31816019492762,
+            "unit": "us/iter",
+            "extra": "iterations: 13134\ncpu: 53.313500228414824 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-128/4194304",
+            "value": 289.1721037190673,
+            "unit": "us/iter",
+            "extra": "iterations: 2420\ncpu: 289.1544119834712 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/1024",
+            "value": 0.505236320999984,
+            "unit": "us/iter",
+            "extra": "iterations: 1000000\ncpu: 0.5051909790000018 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/4096",
+            "value": 0.747873976916778,
+            "unit": "us/iter",
+            "extra": "iterations: 867476\ncpu: 0.7478495059229301 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/16384",
+            "value": 1.3932758065041095,
+            "unit": "us/iter",
+            "extra": "iterations: 462335\ncpu: 1.3931707073875015 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/65536",
+            "value": 4.229885814468182,
+            "unit": "us/iter",
+            "extra": "iterations: 165126\ncpu: 4.229590373411821 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/262144",
+            "value": 15.617918460996837,
+            "unit": "us/iter",
+            "extra": "iterations: 45328\ncpu: 15.616942353512238 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/1048576",
+            "value": 63.42777877037656,
+            "unit": "us/iter",
+            "extra": "iterations: 11418\ncpu: 63.42196172709759 us\nthreads: 1"
+          },
+          {
+            "name": "Core/Hash/AES-GCM-256/4194304",
+            "value": 288.256594262282,
+            "unit": "us/iter",
+            "extra": "iterations: 2440\ncpu: 288.2358102459016 us\nthreads: 1"
           }
         ]
       }
