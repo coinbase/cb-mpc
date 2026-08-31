@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787852013746,
+  "lastUpdate": 1788189776706,
   "repoUrl": "https://github.com/coinbase/cb-mpc",
   "entries": {
     "Benchmark": [
@@ -5160,6 +5160,126 @@ window.BENCHMARK_DATA = {
             "value": 1731.7283851854072,
             "unit": "us/iter",
             "extra": "iterations: 405\ncpu: 1731.740962962945 us\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yihsiuc@pm.me",
+            "name": "Yi-Hsiu Chen",
+            "username": "hsiuhsiu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2f2c4f1005729bd575b6f17bce8a47478df7ce78",
+          "message": "fix: correct response range bound in Paillier-DL ZK verification (#136)\n\nThe upper bound for the response z was computed as (q^2 + 1) * 2^SEC_P_STAT, which does not match the intended range. Use q^2 * (2^SEC_P_STAT + 1) so the check_right_open_range bound reflects the correct soundness range.\n\nRegenerate the accompanying spec/theory PDFs, which carry the following documentation updates (per each document's version history):\n- zk-proofs-spec: updated Fischlin protocols, ElGamal terminology, and verification checks; removed the dangling zk-proofs-macros.pdf dependency\n- zk-proofs-theory: corrected Batch-DL transcript hashing and updated the Valid-Paillier and PDL analyses\n- basic-primitives-spec/theory: added hybrid PKE via KEM/DEM\n- ecdsa-2pc-spec: fixed centered rounding for s' and completed the optional signing-proof flow\n- ec-dkg-spec: corrected threshold-share validation and updated dependencies\n- schnorr-spec: corrected the two-party signing figure and clarified the multiparty signing API and output receiver\n- constant-time: clarified masking and modular-inversion behavior and corrected the Secure Usage link\n\nThese updates resolve all currently open issues:\n\nFixes #7\nFixes #62\nFixes #133\nFixes #134",
+          "timestamp": "2026-08-31T07:51:11-07:00",
+          "tree_id": "7695a3705bfb47e06610897284c750eba9359536",
+          "url": "https://github.com/coinbase/cb-mpc/commit/2f2c4f1005729bd575b6f17bce8a47478df7ce78"
+        },
+        "date": 1788189774172,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "Core/BN/ModAdd/256",
+            "value": 0.05921160906540435,
+            "unit": "us/iter",
+            "extra": "iterations: 11954020\ncpu: 0.05920805728951433 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModAdd/4096",
+            "value": 0.35948402650887157,
+            "unit": "us/iter",
+            "extra": "iterations: 1939119\ncpu: 0.3594611738629751 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/256",
+            "value": 0.0510275331979031,
+            "unit": "us/iter",
+            "extra": "iterations: 14419284\ncpu: 0.051026155528943136 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModSubtract/4096",
+            "value": 0.4043552534925004,
+            "unit": "us/iter",
+            "extra": "iterations: 1735693\ncpu: 0.4043248656300399 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/256",
+            "value": 0.10284019904029346,
+            "unit": "us/iter",
+            "extra": "iterations: 6801436\ncpu: 0.10283445687057644 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModMultiply/4096",
+            "value": 7.671452855301788,
+            "unit": "us/iter",
+            "extra": "iterations: 91654\ncpu: 7.6707540641980225 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/256",
+            "value": 9.91360110453373,
+            "unit": "us/iter",
+            "extra": "iterations: 72791\ncpu: 9.912513621189321 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModExponentiate/4096",
+            "value": 12250.06710526207,
+            "unit": "us/iter",
+            "extra": "iterations: 57\ncpu: 12249.211964912052 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/256",
+            "value": 10.281863441573574,
+            "unit": "us/iter",
+            "extra": "iterations: 69538\ncpu: 10.281051051223823 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/ModInvert/4096",
+            "value": 516.4693440594132,
+            "unit": "us/iter",
+            "extra": "iterations: 1212\ncpu: 516.4080981848058 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/256",
+            "value": 15.693115797381772,
+            "unit": "us/iter",
+            "extra": "iterations: 46590\ncpu: 15.691821764326775 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD/4096",
+            "value": 1360.2735876686581,
+            "unit": "us/iter",
+            "extra": "iterations: 519\ncpu: 1360.1485086705038 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/256",
+            "value": 15.133058960937952,
+            "unit": "us/iter",
+            "extra": "iterations: 46234\ncpu: 15.132386750011017 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-RSA-Modulus/4096",
+            "value": 1340.5442620421823,
+            "unit": "us/iter",
+            "extra": "iterations: 519\ncpu: 1340.450223506765 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/256",
+            "value": 16.46346128891852,
+            "unit": "us/iter",
+            "extra": "iterations: 41306\ncpu: 16.46250982908043 us\nthreads: 1"
+          },
+          {
+            "name": "Core/BN/GCD-Batch(16)RSA-Modulus/4096",
+            "value": 1458.7505530148055,
+            "unit": "us/iter",
+            "extra": "iterations: 481\ncpu: 1458.6930810810986 us\nthreads: 1"
           }
         ]
       }
