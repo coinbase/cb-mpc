@@ -100,6 +100,20 @@ Important implications:
 - Prefer encrypting these blobs at rest via envelope encryption: keep the wrapping/encryption key in an HSM/secure enclave or managed KMS (outside the host) and store only AEAD-encrypted blobs on disk. Ensure crash dumps / core dumps and crash reporting cannot exfiltrate plaintext secret material.
 - When providing 'mem_t' inputs to APIs, you need to validate the inputs and ensure validity: `size` must be non-negative, and if `size > 0` then `data` must be non-null. Public (high-level) API wrappers validate these invariants and return `E_BADARG` on violations; lower-level internal mem_t code does not validate values; it is the responsibility of high-level APIs to use these safely.
 
+### ECDSA-2P P1 backup limitations
+
+PVE verifies `X mod q`, not P1's complete signing state. Restore also needs the
+matching scalar-detached blob and trusted public-share metadata. The blob retains
+the Paillier private key and `c_key`, which recover `X` without PVE. Protect it like
+the full P1 key. Encrypting this auxiliary backup does not make it publicly verifiable.
+
+After refresh, `X` may exceed `q` or PVE's input byte limit. P1 attachment checks
+both the public share point and the exact Paillier plaintext: the reduced value
+alone fails when `X != X mod q`. The matching detached blob can recover the exact
+value by decrypting `c_key`.
+
+Test that the scalar backup and auxiliary state can restore the complete key.
+
 ### Paillier
 
 When Paillier encryption is used for homomorphic operations, it is critical that the ciphertext be rerandomized after the homomorphic operations are carried out. This ensures that the private-key owner cannot learn anything about the operations that we carried out, and can only learn the final result. By default, this rerandomization is carried out internally after each homomorphic operation. However, since rerandomization is costly, if multiple homomorphic operations are to be carried out, it is best to rerandomize only once at the end.
@@ -130,13 +144,46 @@ We stress that the zero-knowledge flags are declarative only, and are there to a
 
 Note that within a single protocol flow, flags can be passed from one proof to another to ensure correct usage. However, if a proof is run in a different (e.g., later) protocol execution, then the flags must be manually set based on knowledge that the appropriate property has been verified in the past.
 
+### Refresh coordination
+
+Coordinate switching to refreshed shares so that signing parties use compatible
+share versions, and keep backups consistent with those versions. A successful
+local refresh call does not confirm that every party has switched.
+
+### PVE-AC recovery partial decryptions and recipient protection
+
+PVE-AC partial decryptions are sensitive: anyone who collects partial decryptions
+from a quorum can use them to recover the backed-up values. If they pass through
+an intermediary, such as a coordinator, that must not see those values, encrypt
+them to the authorized recipient before forwarding.
+
+The existing software and HSM APIs return raw partial decryptions; the application
+must provide recipient encryption. Verify the backup using the expected access structure,
+public keys, public values, and label from trusted application state before
+partial decryption, and decrypt/combine partial decryptions only at the authorized recipient.
+Do not log or persist plaintext partial decryptions.
+
+Use fresh randomness and authenticated context when encrypting partial decryptions. See the
+[PVE demo](demo-api/pve/README.md) and
+[PVE specification §6.3.3](docs/spec/publicly-verifiable-encryption-spec.pdf).
+
+### TDH2 partial decryptions
+
+TDH2 partial decryptions are also sensitive: anyone who collects partial decryptions
+from a quorum can use them to recover the plaintext. The API returns raw partial
+decryptions; protect their delivery to the authorized recipient. If they pass
+through an intermediary, such as a coordinator, that must not see the plaintext,
+encrypt them to the recipient.
+
 ### Ciphertext verification vs. decryption (PVE)
 
 The PVE APIs provide explicit verification functions (e.g., `verify`, `verify_batch`, `verify_ac`) and decryption / reconstruction functions (e.g., `decrypt`, `decrypt_batch`, `combine_ac`).
 
-The decryption / reconstruction functions intentionally do **not** verify ciphertexts internally. Invalid ciphertexts may cause decryption / reconstruction to fail, but are designed to not leak secret information.
+The decryption / reconstruction functions intentionally do **not** verify ciphertexts internally. Invalid ciphertexts may cause reconstruction to fail.
 
-If your application needs ciphertext validation on untrusted inputs, call the appropriate `verify*` function before decrypting / reconstructing.
+When handling untrusted inputs, call the appropriate `verify*` function with the expected public keys, public values, label, and (where applicable) access structure from trusted application state before decrypting / reconstructing. Recipient-delivery encryption does not replace backup verification.
+
+Whether to retry a failed recovery, and how many attempts to allow, is an application decision.
 
 ### PVE callback contracts (custom base PKE / HSM)
 

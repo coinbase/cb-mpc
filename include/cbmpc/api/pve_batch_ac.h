@@ -18,9 +18,11 @@ namespace coinbase::api::pve {
 //
 // This API encrypts a *batch* of scalars {x_i} under a leaf-keyed access structure.
 //
-// Decryption is multi-party in principle:
-// - Each party decrypts its own leaf ciphertext to produce a share (step function).
-// - An application collects enough shares to satisfy the access structure and aggregates them to recover {x_i}.
+// Partial decryptions are sensitive: anyone who collects partial decryptions from a quorum
+// can use them to recover the backed-up values.
+// Encrypt them to the authorized recipient before forwarding through an intermediary.
+// These APIs, including HSM variants, do not provide recipient encryption.
+// See SECURE_USAGE.md#pve-ac-recovery-partial-decryptions-and-recipient-protection and demo-api/pve.
 
 // Leaf-key maps (leaf name -> base-PKE key blob).
 //
@@ -51,7 +53,10 @@ error_t verify_ac(const base_pke_i& base_pke, curve_id curve, const access_struc
 error_t verify_ac(curve_id curve, const access_structure_t& ac, const leaf_keys_t& ac_pks, mem_t ciphertext,
                   const std::vector<mem_t>& Qs_compressed, mem_t label);
 
-// Step 1: each party decrypts its share for a specific attempt.
+// Step 1: decrypt a single leaf share for a specific attempt.
+// First call verify_ac() with the expected access structure, public keys,
+// public values, and label from trusted application state.
+// Encrypt the returned partial decryption to the authorized recipient before forwarding.
 //
 // Output:
 // - `out_share` is a fixed-length big-endian scalar encoding with length equal
@@ -66,6 +71,8 @@ error_t partial_decrypt_ac_attempt(curve_id curve, const access_structure_t& ac,
 
 // Step 1 (HSM): decrypt a single leaf share for a specific attempt using an HSM-backed
 // RSA-OAEP private key (KEM decapsulation callback).
+// Verify the backup before partial decryption, then encrypt the returned partial decryption
+// to the authorized recipient before forwarding.
 //
 // - `dk_handle` is an opaque handle (or identifier) understood by the HSM callback.
 // - `ek` is the leaf's built-in base PKE public key blob (used to validate key type).
@@ -76,6 +83,8 @@ error_t partial_decrypt_ac_attempt_rsa_oaep_hsm(curve_id curve, const access_str
 
 // Step 1 (HSM): decrypt a single leaf share for a specific attempt using an HSM-backed
 // ECIES(P-256) private key (ECDH callback only).
+// Verify the backup before partial decryption, then encrypt the returned partial decryption
+// to the authorized recipient before forwarding.
 //
 // - `dk_handle` is an opaque handle (or identifier) understood by the HSM callback.
 // - `ek` is the leaf's built-in base PKE public key blob (used to validate key type
@@ -85,17 +94,13 @@ error_t partial_decrypt_ac_attempt_ecies_p256_hsm(curve_id curve, const access_s
                                                   mem_t ek, mem_t label, const ecies_p256_hsm_ecdh_cb_t& cb,
                                                   buf_t& out_share);
 
-// Step 2: Aggregate enough decrypted shares to recover {x_i} for a specific attempt.
-//         If combine fails, then increase the attempt_index and gather another set of
-//         partial decryptions and call combine again.
+// Step 2: combine partial decryptions at the authorized recipient to recover {x_i} for one attempt.
+// If another attempt is needed, collect new partial decryptions for that attempt.
 //
 // - `quorum_shares` must satisfy the access structure `ac`.
 //
 // Notes:
-// - This function intentionally does not verify `ciphertext` before reconstruction.
-//   Invalid ciphertexts may cause reconstruction to fail, but are designed to not
-//   leak secret information.
-// - If you need ciphertext validation, call `verify_ac(...)` first.
+// - Call verify_ac() first; this function does not verify the ciphertext.
 //
 // Output:
 // - `out_xs[i]` is a fixed-length big-endian encoding of x_i with length equal

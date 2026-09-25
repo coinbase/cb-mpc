@@ -32,14 +32,22 @@ elseif(EXISTS "${CBMPC_SOURCE_DIR}/lib/Debug/libcbmpc.a")
   set(CBMPC_LIB_DIR "${CBMPC_SOURCE_DIR}/lib/Debug")
 endif()
 
+# Optional explicit artifacts for testing against a local build or released headers.
+set(CBMPC_INCLUDE_DIR "${CBMPC_SOURCE_DIR}/include" CACHE PATH "Public header directory")
+set(CBMPC_LIBRARY "" CACHE FILEPATH "Explicit libcbmpc.a (optional)")
+
 add_executable(mpc-demo-api-pve main.cpp)
 
-link_openssl(mpc-demo-api-pve)
-target_include_directories(mpc-demo-api-pve PRIVATE ${CBMPC_SOURCE_DIR}/include)
-target_link_directories(mpc-demo-api-pve PRIVATE ${CBMPC_LIB_DIR})
-target_link_libraries(mpc-demo-api-pve PRIVATE cbmpc)
-
-if(IS_LINUX)
-  link_openssl(mpc-demo-api-pve)
+target_include_directories(mpc-demo-api-pve PRIVATE ${CBMPC_INCLUDE_DIR})
+if(CBMPC_LIBRARY)
+  target_link_libraries(mpc-demo-api-pve PRIVATE "${CBMPC_LIBRARY}")
+else()
+  target_link_directories(mpc-demo-api-pve PRIVATE ${CBMPC_LIB_DIR})
+  target_link_libraries(mpc-demo-api-pve PRIVATE cbmpc)
 endif()
+link_openssl(mpc-demo-api-pve)
+
+enable_testing()
+add_test(NAME pve-ac-recipient-protection COMMAND mpc-demo-api-pve --ac-only)
+set_tests_properties(pve-ac-recipient-protection PROPERTIES TIMEOUT 120)
 
