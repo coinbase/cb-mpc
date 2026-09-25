@@ -1,6 +1,5 @@
 #pragma once
 
-// Demo-local application code, NOT a new library API or production recovery service.
 #include <array>
 #include <iostream>
 #include <memory>
@@ -17,8 +16,7 @@ namespace pve_demo {
 using namespace coinbase;
 namespace pve = coinbase::api::pve;
 
-// Optional convenience helper. Applications may instead use their approved
-// authenticated recipient-encryption SDK. Never reuse proof randomness for delivery.
+// Encrypt a partial for delivery, independently of PVE proof randomness.
 // Inputs and output must not alias. Publish ciphertext only on success.
 inline error_t seal_for_recipient(mem_t ek, mem_t context, mem_t plain, buf_t& out) {
   out.free();
@@ -47,8 +45,8 @@ inline void append_field(buf_t& out, mem_t field) {
   out += field;
 }
 
-// Application-owned per-attempt context, not the spec 6.3.3 full-vector wire format.
-// Both endpoints build this from the same approved request, not relay-supplied claims.
+// Bind a delivery to its recovery attempt using the approved request details.
+// This encoding differs from the specification's "vdecrypt" || B label.
 inline buf_t delivery_context(mem_t backup, mem_t label, mem_t request, mem_t holder, int attempt) {
   cb_assert(attempt >= 0);
   buf_t out(mem_t("cbmpc-demo/pve-ac-per-attempt/secp256k1"));
@@ -59,8 +57,8 @@ inline buf_t delivery_context(mem_t backup, mem_t label, mem_t request, mem_t ho
   return out;
 }
 
-// Only a holder's private key is passed here. The raw partial never leaves this
-// function; buf_t cleanses it at destruction. Authorize the recipient key BEFORE calling.
+// Decrypt a holder's partial and encrypt it to an already authorized recipient.
+// The plaintext stays local; buf_t clears it when the buffer is destroyed.
 inline error_t make_holder_message(const pve::base_pke_i& backup_pke, const api::access_structure_t& ac,
                                    const pve::leaf_keys_t& pks, mem_t backup, const std::vector<mem_t>& trusted_Qs,
                                    mem_t label, mem_t request, const std::string& holder, int attempt, mem_t holder_dk,
@@ -76,7 +74,7 @@ inline error_t make_holder_message(const pve::base_pke_i& backup_pke, const api:
   return seal_for_recipient(recipient_ek, context, partial, message);
 }
 
-// The conceptual coordinator has only ciphertexts; no private keys or partials.
+// Simulate forwarding: the relay receives no private keys or plaintext partials.
 inline std::array<buf_t, 2> relay_messages(const std::array<buf_t, 2>& messages) { return messages; }
 
 // Only the recipient opens messages and assembles plaintext quorum shares.
@@ -105,8 +103,7 @@ inline error_t recover_at_recipient(const pve::base_pke_i& backup_pke, const api
   return SUCCESS;
 }
 
-// Fixture setup only: derive expected public values from locally owned synthetic
-// scalars, NOT from an incoming backup. Production obtains these from trusted state.
+// Compute expected public points from the demo's input scalars, not the ciphertext.
 inline std::vector<buf_t> fixture_public_values(const std::vector<mem_t>& xs) {
   std::unique_ptr<EC_GROUP, decltype(&EC_GROUP_free)> group(EC_GROUP_new_by_curve_name(NID_secp256k1), EC_GROUP_free);
   cb_assert(group);
@@ -132,7 +129,7 @@ inline void demonstrate_protected_recovery(const pve::base_pke_i& backup_pke, co
   const auto public_values = fixture_public_values(xs);
   std::vector<mem_t> trusted_Qs;
   for (const auto& q : public_values) trusted_Qs.emplace_back(q);
-  // Honest fixture: attempt 0 succeeds. No unbounded retry loop; see README.
+  // The valid test backups recover successfully on attempt 0.
   constexpr int attempt = 0;
   for (bool rsa_recipient : {false, true}) {
     const auto keygen = rsa_recipient ? pve::generate_base_pke_rsa_keypair : pve::generate_base_pke_ecies_p256_keypair;
@@ -140,8 +137,8 @@ inline void demonstrate_protected_recovery(const pve::base_pke_i& backup_pke, co
     cb_assert(keygen(recipient_ek, recipient_dk) == SUCCESS);
     cb_assert(keygen(wrong_ek, wrong_dk) == SUCCESS);
     cb_assert(RAND_bytes(request.data(), request.size()) == 1);
-    // These in-process fixtures stand in for an approved request/recipient and
-    // authenticated holder identities. Randomness alone does NOT authorize a request.
+    // Assume the request, recipient key, and holder identities were approved.
+    // Generating a request ID does not perform authorization.
     std::array<buf_t, 2> messages;
     for (size_t i = 0; i < holders.size(); ++i) {
       cb_assert(make_holder_message(backup_pke, ac, pks, backup, trusted_Qs, label, request, holders[i], attempt,

@@ -50,6 +50,8 @@ error_t encrypt(mem_t public_key, mem_t plaintext, mem_t label, buf_t& ciphertex
 error_t verify(mem_t public_key, mem_t ciphertext, mem_t label);
 
 // Locally compute a partial decryption from a private share.
+// Anyone with the ciphertext and partial decryptions from a quorum can recover its plaintext.
+// Protect delivery to the authorized recipient; see SECURE_USAGE.md#tdh2-partial-decryptions.
 error_t partial_decrypt(mem_t private_share, mem_t ciphertext, mem_t label, buf_t& partial_decryption);
 
 // Combine additive shares + partial decryptions to decrypt.

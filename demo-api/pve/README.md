@@ -1,44 +1,46 @@
 # PVE public-API demo
 
-This is the existing demo for single-value PVE, batched PVE, and access-structure
-(PVE-AC) recovery. Run it without arguments for all examples, or with `--ac-only`
-for recipient-protected recovery and its negative checks.
+Demonstrates single-value PVE, batched PVE, and access-structure (PVE-AC) recovery.
+Run without arguments for all examples, or with `--ac-only` for PVE-AC recovery
+and tests that invalid inputs are rejected.
 
 ## PVE-AC: protect partials before forwarding
 
-All RSA, ECIES, and application-adapter AC examples use `recovery_example.h`:
+The RSA, ECIES, and custom-backend AC examples use `recovery_example.h`:
 
-1. Holders verify the backup against trusted expectations, decrypt locally, and
-   encrypt their partials to the approved recipient before forwarding.
+1. Each holder verifies the backup using the expected access structure, public keys,
+   public values, and label, then decrypts its partial and encrypts it to the recipient.
 2. The relay receives only ciphertext. The recipient verifies the backup, decrypts
-   the messages, and combines partials locally. Failed operations clear outputs.
+   the messages, and combines the partials. Failed recovery leaves no output.
 
-The optional demo-local encryption helper uses fresh randomness and the built-in
-primitive; applications may use their own approved recipient encryption instead.
-The backup adapter delegates to real ECIES and remains deterministic given `rho`.
-It does not implement an external KMS/HSM. No library API or wire format is added.
+Backup keys and recipient keys serve different purposes: holders use backup keys
+to decrypt their partials; the recipient uses a separate key to open the forwarded
+messages. Each AC example runs with both RSA and ECIES recipient keys.
+The custom backup adapter delegates to built-in ECIES, not an external KMS or HSM.
 
 ## Assumptions and limits
 
-- Roles run in one process with synthetic scalars and honest backups, using attempt
-  0. Expected public values come from those fixtures, not the incoming backup.
-- Applications must authorize recipient keys and requests, authenticate holders,
-  and enforce expiry, replay handling, input limits, and bounded recovery attempts.
-  Encryption or a random request ID alone does not provide those controls.
-- Context binds the exact backup, label, request, holder, attempt, and secp256k1
-  domain with length-prefixed fields. It is not the specification's full-vector
-  `"vdecrypt" || B` wire mapping. Helpers require valid, non-aliasing input/output views.
-- This is not full ECDSA-2P P1 recovery: its scalar-detached state independently
-  recovers the scalar and needs full-key protection. See
+- All roles run in one process using test scalars and valid backups. Recovery uses
+  attempt 0. Expected public values are computed from the input scalars, not read
+  from the backup.
+- Applications must authorize recipient keys and recovery requests, authenticate
+  holders, reject expired or replayed requests, and limit input sizes.
+  Encryption or a random request ID alone does not provide these controls.
+- The encryption context identifies the backup, label, request, holder, attempt, and
+  curve. This demo's per-attempt encoding differs from the specification's
+  `"vdecrypt" || B` encoding.
+- The demo helpers require valid input buffers that do not overlap output buffers.
+- PVE scalar recovery alone does not restore a complete ECDSA-2P P1 key. See
   [P1 backup limitations](../../SECURE_USAGE.md#ecdsa-2p-p1-backup-limitations).
 
 See [recipient-protection requirements](../../SECURE_USAGE.md#pve-ac-recovery-partials-and-recipient-protection)
-before adapting these examples; this is not a deployable recovery service.
+for application responsibilities.
 
 ## Build and test
 
-Against an installed library, use the normal `CBMPC_SOURCE_DIR` prefix and matching
-custom OpenSSL. To select explicit local artifacts, from the repository root:
+For an installed library, pass `-DCBMPC_SOURCE_DIR=/path/to/install` to CMake
+instead of the explicit include and library paths below.
+For a local build, first build cb-mpc, then run these commands from the repository root:
 
 ```sh
 cmake -S demo-api/pve -B build/pve-demo \
@@ -50,7 +52,7 @@ ctest --test-dir build/pve-demo --output-on-failure
 build/pve-demo/mpc-demo-api-pve
 ```
 
-Adjust paths for your platform. CTest covers all six backup/recipient combinations,
-fresh randomness, invalid/wrong keys, context mismatch, tampering with either
-message, unknown/duplicate holders, incorrect expected public values, and clearing
-stale output on failure. Expected rejection cases may emit crypto error logs.
+Adjust paths for your build. CTest covers all six backup/recipient combinations,
+fresh encryption randomness, invalid or wrong keys, mismatched context, tampered
+messages, unknown or duplicate holders, incorrect expected public values, and
+clearing output on failure. Expected rejection cases may emit crypto error logs.

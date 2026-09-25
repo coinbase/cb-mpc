@@ -19,16 +19,14 @@
 #include <cbmpc/api/pve_batch_single_recipient.h>
 #include <cbmpc/core/buf.h>
 
-// Recipient-protection helpers stay local to this demo; library APIs are unchanged.
 #include "recovery_example.h"
 
 using namespace coinbase;
 
 namespace {
 
-// Example application-owned backup adapter. Delegate to real built-in crypto,
-// preserving deterministic encryption given rho. Replace with an approved backend
-// if needed; do not use a toy cipher or draw fresh randomness inside this callback.
+// Custom-backend example: delegate to built-in encryption.
+// PVE requires deterministic encryption given rho; do not sample new randomness here.
 class application_base_pke_t final : public coinbase::api::pve::base_pke_i {
  public:
   error_t encrypt(mem_t ek, mem_t label, mem_t plain, mem_t rho, buf_t& out) const override {
@@ -409,7 +407,7 @@ void demo_ac_custom_base_pke() {
   xs.reserve(n);
   for (int i = 0; i < n; i++) xs.emplace_back(xs_bytes[static_cast<size_t>(i)].data(), 32);
 
-  // The application adapter uses real ECIES keys, separate from delivery keys.
+  // Holder keys decrypt backup partials; separate recipient keys protect their delivery.
   std::array<buf_t, 3> eks, dks;
   for (size_t i = 0; i < eks.size(); ++i) {
     cb_assert(coinbase::api::pve::generate_base_pke_ecies_p256_keypair(eks[i], dks[i]) == SUCCESS);

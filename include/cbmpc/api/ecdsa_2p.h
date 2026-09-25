@@ -67,9 +67,7 @@ error_t get_public_share_compressed(mem_t key_blob, buf_t& out_public_share_comp
 // - Unlike ECDSA-MP, this scalar encoding is NOT fixed-length. ECDSA-2PC keeps
 //   the share as a Paillier-compatible integer representative and it may grow
 //   after refresh.
-// - PVE verifies only the scalar modulo the curve order, not the auxiliary state.
-//   Keep a protected backup of the matching detached blob as well. See
-//   SECURE_USAGE.md#ecdsa-2p-p1-backup-limitations in the source repository.
+// - For PVE backup limitations, see SECURE_USAGE.md#ecdsa-2p-p1-backup-limitations.
 error_t detach_private_scalar(mem_t key_blob, buf_t& out_scalar_detached_key_blob, buf_t& out_private_scalar);
 
 // Restore a full key blob by attaching a big-endian private scalar share x into a
@@ -77,10 +75,8 @@ error_t detach_private_scalar(mem_t key_blob, buf_t& out_scalar_detached_key_blo
 //
 // This validates that x matches the expected share point by checking:
 // (x mod q)*G == public_share_compressed.
-// For P1, x must also equal the plaintext of the retained Paillier `c_key`.
-// A PVE-recovered x mod q is insufficient when it differs from that integer.
-// Use matching scalar, detached state, and trusted public-share metadata from
-// the same committed epoch; attachment does not perform epoch coordination.
+// For P1, x must equal the plaintext of the retained Paillier `c_key`, not
+// merely match it modulo the curve order.
 //
 // Input:
 // - `private_scalar` is a big-endian scalar encoding (variable-length).

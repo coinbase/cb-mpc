@@ -69,9 +69,7 @@ cbmpc_error_t cbmpc_ecdsa_2p_get_public_share_compressed(cmem_t key_blob, cmem_t
 // - The scalar-detached blob is not public-only material. For P1, it retains the
 //   Paillier private key and `c_key`, whose decryption recovers the private scalar.
 //   Protect it exactly like the full P1 key blob.
-// - PVE verifies only the scalar modulo the curve order, not the auxiliary state.
-//   Keep a protected backup of the matching detached blob as well. See
-//   SECURE_USAGE.md#ecdsa-2p-p1-backup-limitations in the source repository.
+// - For PVE backup limitations, see SECURE_USAGE.md#ecdsa-2p-p1-backup-limitations.
 //
 // Ownership:
 // - On success, `out_scalar_detached_key_blob->data` and `out_private_scalar->data` are
@@ -82,10 +80,8 @@ cbmpc_error_t cbmpc_ecdsa_2p_detach_private_scalar(cmem_t key_blob, cmem_t* out_
 
 // Attach a variable-length private scalar into a scalar-detached key blob,
 // validating it against the expected public share point.
-// For P1, the scalar must also equal the plaintext of the retained Paillier
-// `c_key`; a reduced PVE result is insufficient when the integer differs.
-// Use matching scalar, detached state, and trusted public-share metadata from
-// the same committed epoch; attachment does not perform epoch coordination.
+// For P1, the scalar must equal the plaintext of the retained Paillier `c_key`,
+// not merely match it modulo the curve order.
 //
 // Ownership:
 // - On success, `out_key_blob->data` is allocated by the library and must be

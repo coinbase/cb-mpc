@@ -17,19 +17,10 @@ extern "C" {
 //
 // This API encrypts a *batch* of scalars {x_i} under a leaf-keyed access structure.
 //
-// Decryption is stepwise:
-// - Each party verifies the backup, then calls `cbmpc_pve_ac_partial_decrypt_attempt` locally.
-// - Encrypt the secret partial to the authorized recipient before forwarding it.
-// - Only the recipient decrypts messages and calls `cbmpc_pve_ac_combine` on a local quorum.
-//
-// SECURITY: partial outputs are secret bearer material, not public protocol messages.
-// A quorum plus the backup reveals the backed-up scalars. Collect/combine only at the
-// authorized recipient; encrypt each partial end-to-end to that recipient before it
-// passes through a coordinator. TLS terminating at the coordinator does not suffice.
-// Verify the backup against trusted policy, keys, public values, and label before
-// private decryption or combination. Applications authorize recipient keys, authenticate
-// holders, and enforce expiry/replay policy. These C functions (including HSM variants)
-// do not implement recipient encryption. See SECURE_USAGE.md and demo-api/pve.
+// Anyone with the backup and partial decryptions from a quorum can recover the batch.
+// Encrypt them to the authorized recipient before forwarding through a coordinator.
+// These APIs, including HSM variants, do not provide recipient encryption.
+// See SECURE_USAGE.md#pve-ac-recovery-partials-and-recipient-protection and demo-api/pve.
 //
 // Notes:
 // - Leaf keys are passed as a mapping (parallel arrays) from leaf name to key blob.
@@ -46,6 +37,9 @@ cbmpc_error_t cbmpc_pve_ac_verify(const cbmpc_pve_base_pke_t* base_pke, cbmpc_cu
                                   cmem_t label);
 
 // Step 1: decrypt a single leaf share for `attempt_index`.
+// First call cbmpc_pve_ac_verify() with the expected access structure, public keys,
+// public values, and label from trusted application state.
+// Encrypt the returned partial to the authorized recipient before forwarding.
 //
 // Ownership: same as `cbmpc_pve_encrypt`.
 cbmpc_error_t cbmpc_pve_ac_partial_decrypt_attempt(const cbmpc_pve_base_pke_t* base_pke, cbmpc_curve_id_t curve,
@@ -55,6 +49,8 @@ cbmpc_error_t cbmpc_pve_ac_partial_decrypt_attempt(const cbmpc_pve_base_pke_t* b
 
 // Step 1 (HSM): decrypt a single leaf share for `attempt_index` using an HSM-backed
 // RSA-OAEP private key (KEM decapsulation callback).
+// Verify the backup before partial decryption, then encrypt the returned partial
+// to the authorized recipient before forwarding.
 //
 // - `dk_handle` is an opaque handle understood by the callback.
 // - `ek` is the leaf's built-in base PKE public key blob (used to validate key type).
@@ -69,6 +65,8 @@ cbmpc_error_t cbmpc_pve_ac_partial_decrypt_attempt_rsa_oaep_hsm(cbmpc_curve_id_t
 
 // Step 1 (HSM): decrypt a single leaf share for `attempt_index` using an HSM-backed
 // ECIES(P-256) private key (ECDH callback only).
+// Verify the backup before partial decryption, then encrypt the returned partial
+// to the authorized recipient before forwarding.
 //
 // - `dk_handle` is an opaque handle understood by the callback.
 // - `ek` is the leaf's built-in base PKE public key blob (used to validate key type
@@ -82,17 +80,13 @@ cbmpc_error_t cbmpc_pve_ac_partial_decrypt_attempt_ecies_p256_hsm(cbmpc_curve_id
                                                                   const cbmpc_pve_ecies_p256_hsm_ecdh_t* cb,
                                                                   cmem_t* out_share);
 
-// Step 2: aggregate enough leaf shares to recover {x_i} for `attempt_index`.
-//         If combine fails, then increase the attempt_index and gather another set of
-//         partial decryptions and call combine again.
+// Step 2: combine decrypted partials at the authorized recipient to recover {x_i} for one attempt.
+// If another attempt is needed, collect new partials for that attempt.
 //
 // - `quorum_leaf_names[i]` corresponds to `quorum_shares[i]`.
 //
 // Notes:
-// - This function intentionally does not verify `ciphertext` before reconstruction.
-//   Invalid ciphertexts may cause reconstruction to fail, but are designed to not
-//   leak secret information.
-// - If you need ciphertext validation, call `cbmpc_pve_ac_verify(...)` first.
+// - Call cbmpc_pve_ac_verify() first; this function does not verify the ciphertext.
 //
 // Ownership: same as `cbmpc_pve_batch_decrypt`.
 cbmpc_error_t cbmpc_pve_ac_combine(const cbmpc_pve_base_pke_t* base_pke, cbmpc_curve_id_t curve,

@@ -112,9 +112,7 @@ both the public share point and the exact Paillier plaintext: the reduced value
 alone fails when `X != X mod q`. The matching detached blob can recover the exact
 value by decrypting `c_key`.
 
-Bind backups to the same wallet, role, curve, and epoch, and test full restoration
-with matching peer state. PVE verification alone does not establish full recovery;
-neither PVE nor Paillier decryption repairs an epoch mismatch.
+Test that the scalar backup and auxiliary state can restore the complete key.
 
 ### Paillier
 
@@ -146,39 +144,35 @@ We stress that the zero-knowledge flags are declarative only, and are there to a
 
 Note that within a single protocol flow, flags can be passed from one proof to another to ensure correct usage. However, if a proof is run in a different (e.g., later) protocol execution, then the flags must be manually set based on knowledge that the appropriate property has been verified in the past.
 
-### Refresh staging and activation
+### Refresh coordination
 
-`refresh*` returning `SUCCESS` means this party finished, not that every party did
-or future signing will work. The unchanged public key does not detect mixed share
-versions. A malicious party can later alter, discard, or withhold its share; even
-a test signature proves only that its quorum worked at that time.
-
-Stage new shares separately; do not discard old shares on local success alone.
-Before switching, check that each required party says it is ready and that the
-reply really came from that party. Agree on which share version to use and save
-that choice for signing, backups, and restarts. A "ready" reply alone does not mean
-everyone has switched.
-
-Old shares help only when enough compatible shares remain available and policy
-permits recovery. In 2-of-2, your old share cannot replace the counterparty's
-cooperation. Define when old shares may be used or erased: indefinite retention or
-unrestricted rollback can undermine refresh's protection against prior compromise.
+Coordinate switching to refreshed shares so that signing parties use compatible
+share versions, and keep backups consistent with those versions. A successful
+local refresh call does not confirm that every party has switched.
 
 ### PVE-AC recovery partials and recipient protection
 
-PVE-AC partials are secret: a quorum plus the backup can recover the backed-up
-values. Encrypt each partial to the authorized recipient **before forwarding**
-through a coordinator. TLS terminating at the coordinator is not sufficient.
+PVE-AC partials are sensitive: anyone with the backup and partial decryptions from
+a quorum can recover the backed-up values. Encrypt each partial to the authorized
+recipient **before forwarding** through a coordinator. TLS terminating at the
+coordinator is not sufficient.
 
 The existing software and HSM APIs return raw partials; the application must
-provide recipient encryption. Verify the backup against trusted expectations before
+provide recipient encryption. Verify the backup using the expected access structure,
+public keys, public values, and label from trusted application state before
 partial decryption, and decrypt/combine partials only at the authorized recipient.
 Do not log or persist plaintext partials.
 
-Use built-in or approved application-managed recipient encryption with fresh
-randomness and authenticated context. See the [PVE demo](demo-api/pve/README.md)
-for integration details and the [PVE specification](docs/spec/publicly-verifiable-encryption-spec.pdf)
-§6.3.3 for protocol requirements.
+Use fresh randomness and authenticated context when encrypting partials. See the
+[PVE demo](demo-api/pve/README.md) and
+[PVE specification §6.3.3](docs/spec/publicly-verifiable-encryption-spec.pdf).
+
+### TDH2 partial decryptions
+
+TDH2 partial decryptions are also sensitive: anyone with the ciphertext and partial
+decryptions from a quorum can recover its plaintext. The API returns raw partial
+decryptions; protect their delivery to the authorized recipient. If they pass
+through a coordinator that must not see the plaintext, encrypt them to the recipient.
 
 ### Ciphertext verification vs. decryption (PVE)
 
@@ -186,7 +180,9 @@ The PVE APIs provide explicit verification functions (e.g., `verify`, `verify_ba
 
 The decryption / reconstruction functions intentionally do **not** verify ciphertexts internally. Invalid ciphertexts may cause reconstruction to fail.
 
-When handling untrusted inputs, call the appropriate `verify*` function against trusted expectations before decrypting / reconstructing. Recipient-delivery encryption does not replace backup verification.
+When handling untrusted inputs, call the appropriate `verify*` function with the expected public keys, public values, label, and (where applicable) access structure from trusted application state before decrypting / reconstructing. Recipient-delivery encryption does not replace backup verification.
+
+Whether to retry a failed recovery, and how many attempts to allow, is an application decision.
 
 ### PVE callback contracts (custom base PKE / HSM)
 
