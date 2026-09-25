@@ -100,6 +100,22 @@ Important implications:
 - Prefer encrypting these blobs at rest via envelope encryption: keep the wrapping/encryption key in an HSM/secure enclave or managed KMS (outside the host) and store only AEAD-encrypted blobs on disk. Ensure crash dumps / core dumps and crash reporting cannot exfiltrate plaintext secret material.
 - When providing 'mem_t' inputs to APIs, you need to validate the inputs and ensure validity: `size` must be non-negative, and if `size > 0` then `data` must be non-null. Public (high-level) API wrappers validate these invariants and return `E_BADARG` on violations; lower-level internal mem_t code does not validate values; it is the responsibility of high-level APIs to use these safely.
 
+### ECDSA-2P P1 backup limitations
+
+PVE verifies `X mod q`, not P1's complete signing state. Restore also needs the
+matching scalar-detached blob and trusted public-share metadata. The blob retains
+the Paillier private key and `c_key`, which recover `X` without PVE. Protect it like
+the full P1 key. Encrypting this auxiliary backup does not make it publicly verifiable.
+
+After refresh, `X` may exceed `q` or PVE's input byte limit. P1 attachment checks
+both the public share point and the exact Paillier plaintext: the reduced value
+alone fails when `X != X mod q`. The matching detached blob can recover the exact
+value by decrypting `c_key`.
+
+Bind backups to the same wallet, role, curve, and epoch, and test full restoration
+with matching peer state. PVE verification alone does not establish full recovery;
+neither PVE nor Paillier decryption repairs an epoch mismatch.
+
 ### Paillier
 
 When Paillier encryption is used for homomorphic operations, it is critical that the ciphertext be rerandomized after the homomorphic operations are carried out. This ensures that the private-key owner cannot learn anything about the operations that we carried out, and can only learn the final result. By default, this rerandomization is carried out internally after each homomorphic operation. However, since rerandomization is costly, if multiple homomorphic operations are to be carried out, it is best to rerandomize only once at the end.
@@ -130,13 +146,47 @@ We stress that the zero-knowledge flags are declarative only, and are there to a
 
 Note that within a single protocol flow, flags can be passed from one proof to another to ensure correct usage. However, if a proof is run in a different (e.g., later) protocol execution, then the flags must be manually set based on knowledge that the appropriate property has been verified in the past.
 
+### Refresh staging and activation
+
+`refresh*` returning `SUCCESS` means this party finished, not that every party did
+or future signing will work. The unchanged public key does not detect mixed share
+versions. A malicious party can later alter, discard, or withhold its share; even
+a test signature proves only that its quorum worked at that time.
+
+Stage new shares separately; do not discard old shares on local success alone.
+Before switching, check that each required party says it is ready and that the
+reply really came from that party. Agree on which share version to use and save
+that choice for signing, backups, and restarts. A "ready" reply alone does not mean
+everyone has switched.
+
+Old shares help only when enough compatible shares remain available and policy
+permits recovery. In 2-of-2, your old share cannot replace the counterparty's
+cooperation. Define when old shares may be used or erased: indefinite retention or
+unrestricted rollback can undermine refresh's protection against prior compromise.
+
+### PVE-AC recovery partials and recipient protection
+
+PVE-AC partials are secret: a quorum plus the backup can recover the backed-up
+values. Encrypt each partial to the authorized recipient **before forwarding**
+through a coordinator. TLS terminating at the coordinator is not sufficient.
+
+The existing software and HSM APIs return raw partials; the application must
+provide recipient encryption. Verify the backup against trusted expectations before
+partial decryption, and decrypt/combine partials only at the authorized recipient.
+Do not log or persist plaintext partials.
+
+Use built-in or approved application-managed recipient encryption with fresh
+randomness and authenticated context. See the [PVE demo](demo-api/pve/README.md)
+for integration details and the [PVE specification](docs/spec/publicly-verifiable-encryption-spec.pdf)
+§6.3.3 for protocol requirements.
+
 ### Ciphertext verification vs. decryption (PVE)
 
 The PVE APIs provide explicit verification functions (e.g., `verify`, `verify_batch`, `verify_ac`) and decryption / reconstruction functions (e.g., `decrypt`, `decrypt_batch`, `combine_ac`).
 
-The decryption / reconstruction functions intentionally do **not** verify ciphertexts internally. Invalid ciphertexts may cause decryption / reconstruction to fail, but are designed to not leak secret information.
+The decryption / reconstruction functions intentionally do **not** verify ciphertexts internally. Invalid ciphertexts may cause reconstruction to fail.
 
-If your application needs ciphertext validation on untrusted inputs, call the appropriate `verify*` function before decrypting / reconstructing.
+When handling untrusted inputs, call the appropriate `verify*` function against trusted expectations before decrypting / reconstructing. Recipient-delivery encryption does not replace backup verification.
 
 ### PVE callback contracts (custom base PKE / HSM)
 

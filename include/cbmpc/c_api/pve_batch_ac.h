@@ -18,8 +18,18 @@ extern "C" {
 // This API encrypts a *batch* of scalars {x_i} under a leaf-keyed access structure.
 //
 // Decryption is stepwise:
-// - Each party calls `cbmpc_pve_ac_partial_decrypt_attempt` to produce a leaf share for a specific attempt.
-// - The application collects enough shares and calls `cbmpc_pve_ac_combine` to recover {x_i}.
+// - Each party verifies the backup, then calls `cbmpc_pve_ac_partial_decrypt_attempt` locally.
+// - Encrypt the secret partial to the authorized recipient before forwarding it.
+// - Only the recipient decrypts messages and calls `cbmpc_pve_ac_combine` on a local quorum.
+//
+// SECURITY: partial outputs are secret bearer material, not public protocol messages.
+// A quorum plus the backup reveals the backed-up scalars. Collect/combine only at the
+// authorized recipient; encrypt each partial end-to-end to that recipient before it
+// passes through a coordinator. TLS terminating at the coordinator does not suffice.
+// Verify the backup against trusted policy, keys, public values, and label before
+// private decryption or combination. Applications authorize recipient keys, authenticate
+// holders, and enforce expiry/replay policy. These C functions (including HSM variants)
+// do not implement recipient encryption. See SECURE_USAGE.md and demo-api/pve.
 //
 // Notes:
 // - Leaf keys are passed as a mapping (parallel arrays) from leaf name to key blob.

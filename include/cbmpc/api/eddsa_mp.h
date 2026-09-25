@@ -41,12 +41,16 @@ error_t dkg_ac(const job_mp_t& job, curve_id curve, buf_t& sid, const access_str
                const std::vector<std::string_view>& quorum_party_names, buf_t& key_blob);
 
 // Refresh an existing key share set, producing a new key share.
+// SUCCESS is local completion, not activation or future signing availability.
+// Stage candidates; see SECURE_USAGE.md#refresh-staging-and-activation.
 //
 // `sid` is an in/out session id used by the refresh protocol. Callers may pass
 // an empty buffer to let the protocol derive one.
 error_t refresh_additive(const job_mp_t& job, buf_t& sid, mem_t key_blob, buf_t& new_key_blob);
 
 // Refresh an existing key share set using the access-structure refresh protocol.
+// SUCCESS is local completion only; other parties may abort or later withhold shares.
+// Stage candidates; see SECURE_USAGE.md#refresh-staging-and-activation.
 //
 // Notes:
 // - See `dkg_ac` for protocol participation semantics.

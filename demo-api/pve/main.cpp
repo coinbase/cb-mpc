@@ -19,76 +19,23 @@
 #include <cbmpc/api/pve_batch_single_recipient.h>
 #include <cbmpc/core/buf.h>
 
+// Recipient-protection helpers stay local to this demo; library APIs are unchanged.
+#include "recovery_example.h"
+
 using namespace coinbase;
 
 namespace {
 
-// Minimal, demo-only "base PKE" that satisfies the PVE interface contract:
-// deterministic encryption given `rho`, reversible decryption.
-//
-// - Key format: `ek` and `dk` are the same 32-byte key.
-// - Ciphertext format: `ct = rho32 || (plain XOR SHA256(key || label || rho32 || ctr)...)`.
-class toy_base_pke_t : public coinbase::api::pve::base_pke_i {
+// Example application-owned backup adapter. Delegate to real built-in crypto,
+// preserving deterministic encryption given rho. Replace with an approved backend
+// if needed; do not use a toy cipher or draw fresh randomness inside this callback.
+class application_base_pke_t final : public coinbase::api::pve::base_pke_i {
  public:
-  error_t encrypt(mem_t ek, mem_t label, mem_t plain, mem_t rho, buf_t& out_ct) const override {
-    if (ek.size != 32) return coinbase::error(E_BADARG, "toy_base_pke: expected 32-byte key");
-    if (rho.size != 32) return coinbase::error(E_BADARG, "toy_base_pke: expected 32-byte rho");
-
-    out_ct = buf_t(rho.size + plain.size);
-    std::memmove(out_ct.data(), rho.data, static_cast<size_t>(rho.size));
-
-    xor_keystream(ek, label, rho, /*in_out=*/mem_t(out_ct.data() + rho.size, plain.size), plain);
-    return SUCCESS;
+  error_t encrypt(mem_t ek, mem_t label, mem_t plain, mem_t rho, buf_t& out) const override {
+    return coinbase::api::pve::base_pke_default().encrypt(ek, label, plain, rho, out);
   }
-
-  error_t decrypt(mem_t dk, mem_t label, mem_t ct, buf_t& out_plain) const override {
-    if (dk.size != 32) return coinbase::error(E_BADARG, "toy_base_pke: expected 32-byte key");
-    if (ct.size < 32) return coinbase::error(E_FORMAT, "toy_base_pke: ciphertext too small");
-
-    const mem_t rho(ct.data, 32);
-    const mem_t cipher(ct.data + 32, ct.size - 32);
-
-    out_plain = buf_t(cipher.size);
-    std::memmove(out_plain.data(), cipher.data, static_cast<size_t>(cipher.size));
-    xor_keystream(dk, label, rho, /*in_out=*/mem_t(out_plain.data(), out_plain.size()), /*plain=*/mem_t());
-    return SUCCESS;
-  }
-
- private:
-  static void xor_keystream(mem_t key, mem_t label, mem_t rho, mem_t in_out, mem_t plain) {
-    // If `plain` is provided, XOR it into `in_out` while generating keystream.
-    // Otherwise, `in_out` is already the ciphertext and we XOR keystream in-place to decrypt.
-    cb_assert(key.size == 32);
-    cb_assert(rho.size == 32);
-    cb_assert(in_out.size >= 0);
-    cb_assert(plain.size == 0 || plain.size == in_out.size);
-
-    uint8_t digest[32];
-    EVP_MD_CTX* md = EVP_MD_CTX_new();
-    cb_assert(md);
-    int out_off = 0;
-    uint32_t ctr = 0;
-    while (out_off < in_out.size) {
-      cb_assert(EVP_DigestInit_ex(md, EVP_sha256(), nullptr) == 1);
-      cb_assert(EVP_DigestUpdate(md, key.data, static_cast<size_t>(key.size)) == 1);
-      cb_assert(EVP_DigestUpdate(md, label.data, static_cast<size_t>(label.size)) == 1);
-      cb_assert(EVP_DigestUpdate(md, rho.data, static_cast<size_t>(rho.size)) == 1);
-      cb_assert(EVP_DigestUpdate(md, &ctr, sizeof(ctr)) == 1);
-      unsigned int digest_len = 0;
-      cb_assert(EVP_DigestFinal_ex(md, digest, &digest_len) == 1);
-      cb_assert(digest_len == sizeof(digest));
-
-      const int n = std::min<int>(static_cast<int>(sizeof(digest)), in_out.size - out_off);
-      for (int i = 0; i < n; i++) {
-        const uint8_t ks = digest[i];
-        const uint8_t src = (plain.size == 0) ? in_out[out_off + i] : plain[out_off + i];
-        in_out[out_off + i] = static_cast<uint8_t>(src ^ ks);
-      }
-      out_off += n;
-      ctr++;
-    }
-    EVP_MD_CTX_free(md);
-    secure_bzero(digest, static_cast<int>(sizeof(digest)));
+  error_t decrypt(mem_t dk, mem_t label, mem_t ct, buf_t& out) const override {
+    return coinbase::api::pve::base_pke_default().decrypt(dk, label, ct, out);
   }
 };
 
@@ -351,28 +298,25 @@ void demo_custom_base_pke() {
   for (int i = 0; i < 32; i++) x_bytes[static_cast<size_t>(i)] = static_cast<uint8_t>(0x66 + i);
   const mem_t x(x_bytes.data(), static_cast<int>(x_bytes.size()));
 
-  // Symmetric "key" used as both ek and dk in this toy base PKE.
-  std::array<uint8_t, 32> key{};
-  for (int i = 0; i < 32; i++) key[static_cast<size_t>(i)] = static_cast<uint8_t>(i);
-  const mem_t ek(key.data(), 32);
-  const mem_t dk(key.data(), 32);
+  buf_t ek, dk;
+  cb_assert(coinbase::api::pve::generate_base_pke_ecies_p256_keypair(ek, dk) == SUCCESS);
 
-  toy_base_pke_t toy;
+  application_base_pke_t backend;
 
   buf_t ct;
-  cb_assert(coinbase::api::pve::encrypt(toy, curve, ek, label, x, ct) == SUCCESS);
+  cb_assert(coinbase::api::pve::encrypt(backend, curve, ek, label, x, ct) == SUCCESS);
 
   buf_t Q;
   cb_assert(coinbase::api::pve::get_public_key_compressed(ct, Q) == SUCCESS);
-  cb_assert(coinbase::api::pve::verify(toy, curve, ek, ct, Q, label) == SUCCESS);
+  cb_assert(coinbase::api::pve::verify(backend, curve, ek, ct, Q, label) == SUCCESS);
 
   buf_t x_out;
-  cb_assert(coinbase::api::pve::decrypt(toy, curve, dk, ek, ct, label, x_out) == SUCCESS);
+  cb_assert(coinbase::api::pve::decrypt(backend, curve, dk, ek, ct, label, x_out) == SUCCESS);
   std::cout << "decrypt ok? " << (x_out == buf_t(x)) << "\n";
 }
 
 void demo_ac_default_base_pke_rsa() {
-  std::cout << "\n=== PVE-AC (api) + built-in RSA key blobs (stepwise decrypt) ===\n";
+  std::cout << "\n=== PVE-AC (api) + RSA backup keys + recipient-protected recovery ===\n";
   const coinbase::api::curve_id curve = coinbase::api::curve_id::secp256k1;
   const mem_t label("pve-ac-demo-label");
 
@@ -407,35 +351,12 @@ void demo_ac_default_base_pke_rsa() {
   cb_assert(coinbase::api::pve::get_ac_batch_count(ct, batch_count) == SUCCESS);
   std::cout << "batch_count: " << batch_count << "\n";
 
-  std::vector<buf_t> Qs;
-  cb_assert(coinbase::api::pve::get_public_keys_compressed_ac(ct, Qs) == SUCCESS);
-  std::vector<mem_t> Qs_mem;
-  Qs_mem.reserve(Qs.size());
-  for (const auto& q : Qs) Qs_mem.emplace_back(q.data(), q.size());
-  cb_assert(coinbase::api::pve::verify_ac(curve, ac, ac_pks, ct, Qs_mem, label) == SUCCESS);
-
-  const int attempt_index = 0;
-  buf_t share_p1;
-  buf_t share_p2;
-  cb_assert(coinbase::api::pve::partial_decrypt_ac_attempt(curve, ac, ct, attempt_index, "p1",
-                                                           mem_t(dks[0].data(), dks[0].size()), label, share_p1) == SUCCESS);
-  cb_assert(coinbase::api::pve::partial_decrypt_ac_attempt(curve, ac, ct, attempt_index, "p2",
-                                                           mem_t(dks[1].data(), dks[1].size()), label, share_p2) == SUCCESS);
-
-  coinbase::api::pve::leaf_shares_t quorum;
-  cb_assert(quorum.emplace("p1", mem_t(share_p1.data(), share_p1.size())).second);
-  cb_assert(quorum.emplace("p2", mem_t(share_p2.data(), share_p2.size())).second);
-
-  std::vector<buf_t> xs_out;
-  cb_assert(coinbase::api::pve::combine_ac(curve, ac, ct, attempt_index, label, quorum, xs_out) == SUCCESS);
-
-  bool ok = (xs_out.size() == xs.size());
-  for (int i = 0; ok && i < n; i++) ok = (xs_out[static_cast<size_t>(i)] == buf_t(xs[static_cast<size_t>(i)]));
-  std::cout << "recover ok? " << ok << "\n";
+  pve_demo::demonstrate_protected_recovery(coinbase::api::pve::base_pke_default(), ac, ac_pks, ct, label, xs,
+                                         {"p1", "p2"}, {mem_t(dks[0]), mem_t(dks[1])});
 }
 
 void demo_ac_default_base_pke_ecies() {
-  std::cout << "\n=== PVE-AC (api) + built-in ECIES(P-256) key blobs (stepwise decrypt) ===\n";
+  std::cout << "\n=== PVE-AC (api) + ECIES backup keys + recipient-protected recovery ===\n";
   const coinbase::api::curve_id curve = coinbase::api::curve_id::secp256k1;
   const mem_t label("pve-ac-demo-label");
 
@@ -466,35 +387,12 @@ void demo_ac_default_base_pke_ecies() {
   buf_t ct;
   cb_assert(coinbase::api::pve::encrypt_ac(curve, ac, ac_pks, label, xs, ct) == SUCCESS);
 
-  std::vector<buf_t> Qs;
-  cb_assert(coinbase::api::pve::get_public_keys_compressed_ac(ct, Qs) == SUCCESS);
-  std::vector<mem_t> Qs_mem;
-  Qs_mem.reserve(Qs.size());
-  for (const auto& q : Qs) Qs_mem.emplace_back(q.data(), q.size());
-  cb_assert(coinbase::api::pve::verify_ac(curve, ac, ac_pks, ct, Qs_mem, label) == SUCCESS);
-
-  const int attempt_index = 0;
-  buf_t share_p2;
-  buf_t share_p3;
-  cb_assert(coinbase::api::pve::partial_decrypt_ac_attempt(curve, ac, ct, attempt_index, "p2",
-                                                           mem_t(dks[1].data(), dks[1].size()), label, share_p2) == SUCCESS);
-  cb_assert(coinbase::api::pve::partial_decrypt_ac_attempt(curve, ac, ct, attempt_index, "p3",
-                                                           mem_t(dks[2].data(), dks[2].size()), label, share_p3) == SUCCESS);
-
-  coinbase::api::pve::leaf_shares_t quorum;
-  cb_assert(quorum.emplace("p2", mem_t(share_p2.data(), share_p2.size())).second);
-  cb_assert(quorum.emplace("p3", mem_t(share_p3.data(), share_p3.size())).second);
-
-  std::vector<buf_t> xs_out;
-  cb_assert(coinbase::api::pve::combine_ac(curve, ac, ct, attempt_index, label, quorum, xs_out) == SUCCESS);
-
-  bool ok = (xs_out.size() == xs.size());
-  for (int i = 0; ok && i < n; i++) ok = (xs_out[static_cast<size_t>(i)] == buf_t(xs[static_cast<size_t>(i)]));
-  std::cout << "recover ok? " << ok << "\n";
+  pve_demo::demonstrate_protected_recovery(coinbase::api::pve::base_pke_default(), ac, ac_pks, ct, label, xs,
+                                         {"p2", "p3"}, {mem_t(dks[1]), mem_t(dks[2])});
 }
 
 void demo_ac_custom_base_pke() {
-  std::cout << "\n=== PVE-AC (api) + custom base PKE (stepwise decrypt) ===\n";
+  std::cout << "\n=== PVE-AC (api) + application backup adapter + recipient-protected recovery ===\n";
   const coinbase::api::curve_id curve = coinbase::api::curve_id::secp256k1;
   const mem_t label("pve-ac-demo-label");
 
@@ -511,47 +409,24 @@ void demo_ac_custom_base_pke() {
   xs.reserve(n);
   for (int i = 0; i < n; i++) xs.emplace_back(xs_bytes[static_cast<size_t>(i)].data(), 32);
 
-  // Per-leaf toy keys (ek == dk).
-  std::array<std::array<uint8_t, 32>, 3> keys{};
-  for (int p = 0; p < 3; p++) {
-    for (int i = 0; i < 32; i++) keys[static_cast<size_t>(p)][static_cast<size_t>(i)] = static_cast<uint8_t>(p * 0x11 + i);
+  // The application adapter uses real ECIES keys, separate from delivery keys.
+  std::array<buf_t, 3> eks, dks;
+  for (size_t i = 0; i < eks.size(); ++i) {
+    cb_assert(coinbase::api::pve::generate_base_pke_ecies_p256_keypair(eks[i], dks[i]) == SUCCESS);
   }
 
   coinbase::api::pve::leaf_keys_t ac_pks;
-  cb_assert(ac_pks.emplace("p1", mem_t(keys[0].data(), 32)).second);
-  cb_assert(ac_pks.emplace("p2", mem_t(keys[1].data(), 32)).second);
-  cb_assert(ac_pks.emplace("p3", mem_t(keys[2].data(), 32)).second);
+  cb_assert(ac_pks.emplace("p1", mem_t(eks[0])).second);
+  cb_assert(ac_pks.emplace("p2", mem_t(eks[1])).second);
+  cb_assert(ac_pks.emplace("p3", mem_t(eks[2])).second);
 
-  toy_base_pke_t toy;
+  application_base_pke_t backend;
 
   buf_t ct;
-  cb_assert(coinbase::api::pve::encrypt_ac(toy, curve, ac, ac_pks, label, xs, ct) == SUCCESS);
+  cb_assert(coinbase::api::pve::encrypt_ac(backend, curve, ac, ac_pks, label, xs, ct) == SUCCESS);
 
-  std::vector<buf_t> Qs;
-  cb_assert(coinbase::api::pve::get_public_keys_compressed_ac(ct, Qs) == SUCCESS);
-  std::vector<mem_t> Qs_mem;
-  Qs_mem.reserve(Qs.size());
-  for (const auto& q : Qs) Qs_mem.emplace_back(q.data(), q.size());
-  cb_assert(coinbase::api::pve::verify_ac(toy, curve, ac, ac_pks, ct, Qs_mem, label) == SUCCESS);
-
-  const int attempt_index = 0;
-  buf_t share_p1;
-  buf_t share_p3;
-  cb_assert(coinbase::api::pve::partial_decrypt_ac_attempt(toy, curve, ac, ct, attempt_index, "p1",
-                                                           mem_t(keys[0].data(), 32), label, share_p1) == SUCCESS);
-  cb_assert(coinbase::api::pve::partial_decrypt_ac_attempt(toy, curve, ac, ct, attempt_index, "p3",
-                                                           mem_t(keys[2].data(), 32), label, share_p3) == SUCCESS);
-
-  coinbase::api::pve::leaf_shares_t quorum;
-  cb_assert(quorum.emplace("p1", mem_t(share_p1.data(), share_p1.size())).second);
-  cb_assert(quorum.emplace("p3", mem_t(share_p3.data(), share_p3.size())).second);
-
-  std::vector<buf_t> xs_out;
-  cb_assert(coinbase::api::pve::combine_ac(toy, curve, ac, ct, attempt_index, label, quorum, xs_out) == SUCCESS);
-
-  bool ok = (xs_out.size() == xs.size());
-  for (int i = 0; ok && i < n; i++) ok = (xs_out[static_cast<size_t>(i)] == buf_t(xs[static_cast<size_t>(i)]));
-  std::cout << "recover ok? " << ok << "\n";
+  pve_demo::demonstrate_protected_recovery(backend, ac, ac_pks, ct, label, xs,
+                                         {"p1", "p3"}, {mem_t(dks[0]), mem_t(dks[2])});
 }
 
 void demo_batch_default_base_pke_rsa() {
@@ -696,15 +571,13 @@ void demo_batch_custom_base_pke() {
   xs.reserve(n);
   for (int i = 0; i < n; i++) xs.emplace_back(xs_bytes[static_cast<size_t>(i)].data(), 32);
 
-  std::array<uint8_t, 32> key{};
-  for (int i = 0; i < 32; i++) key[static_cast<size_t>(i)] = static_cast<uint8_t>(i);
-  const mem_t ek(key.data(), 32);
-  const mem_t dk(key.data(), 32);
+  buf_t ek, dk;
+  cb_assert(coinbase::api::pve::generate_base_pke_ecies_p256_keypair(ek, dk) == SUCCESS);
 
-  toy_base_pke_t toy;
+  application_base_pke_t backend;
 
   buf_t ct;
-  cb_assert(coinbase::api::pve::encrypt_batch(toy, curve, ek, label, xs, ct) == SUCCESS);
+  cb_assert(coinbase::api::pve::encrypt_batch(backend, curve, ek, label, xs, ct) == SUCCESS);
 
   std::vector<buf_t> Qs;
   cb_assert(coinbase::api::pve::get_public_keys_compressed_batch(ct, Qs) == SUCCESS);
@@ -712,10 +585,10 @@ void demo_batch_custom_base_pke() {
   Qs_mem.reserve(Qs.size());
   for (const auto& q : Qs) Qs_mem.emplace_back(q.data(), q.size());
 
-  cb_assert(coinbase::api::pve::verify_batch(toy, curve, ek, ct, Qs_mem, label) == SUCCESS);
+  cb_assert(coinbase::api::pve::verify_batch(backend, curve, ek, ct, Qs_mem, label) == SUCCESS);
 
   std::vector<buf_t> xs_out;
-  cb_assert(coinbase::api::pve::decrypt_batch(toy, curve, dk, ek, ct, label, xs_out) == SUCCESS);
+  cb_assert(coinbase::api::pve::decrypt_batch(backend, curve, dk, ek, ct, label, xs_out) == SUCCESS);
 
   bool ok = (xs_out.size() == xs.size());
   for (int i = 0; ok && i < n; i++) ok = (xs_out[static_cast<size_t>(i)] == buf_t(xs[static_cast<size_t>(i)]));
@@ -724,9 +597,16 @@ void demo_batch_custom_base_pke() {
 
 }  // namespace
 
-int main(int /*argc*/, const char* /*argv*/[]) {
+int main(int argc, const char* argv[]) {
   std::cout << std::boolalpha;
   std::cout << "================ PVE Demo (api-only) ================\n";
+
+  if (argc == 2 && std::string(argv[1]) == "--ac-only") {
+    demo_ac_default_base_pke_rsa();
+    demo_ac_default_base_pke_ecies();
+    demo_ac_custom_base_pke();
+    return 0;
+  }
 
   demo_default_base_pke_rsa();
   demo_default_base_pke_ecies();
