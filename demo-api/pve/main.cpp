@@ -407,7 +407,7 @@ void demo_ac_custom_base_pke() {
   xs.reserve(n);
   for (int i = 0; i < n; i++) xs.emplace_back(xs_bytes[static_cast<size_t>(i)].data(), 32);
 
-  // Holder keys decrypt backup partials; separate recipient keys protect their delivery.
+  // Holder keys produce partial decryptions; separate recipient keys protect their delivery.
   std::array<buf_t, 3> eks, dks;
   for (size_t i = 0; i < eks.size(); ++i) {
     cb_assert(coinbase::api::pve::generate_base_pke_ecies_p256_keypair(eks[i], dks[i]) == SUCCESS);

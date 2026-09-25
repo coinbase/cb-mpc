@@ -51,7 +51,8 @@ cbmpc_error_t cbmpc_tdh2_encrypt(cmem_t public_key, cmem_t plaintext, cmem_t lab
 cbmpc_error_t cbmpc_tdh2_verify(cmem_t public_key, cmem_t ciphertext, cmem_t label);
 
 // Compute a partial decryption share.
-// Anyone with the ciphertext and partial decryptions from a quorum can recover its plaintext.
+// Partial decryptions are sensitive: anyone who collects partial decryptions from a quorum
+// can use them to recover the plaintext.
 // Protect delivery to the authorized recipient; see SECURE_USAGE.md#tdh2-partial-decryptions.
 //
 // Ownership:

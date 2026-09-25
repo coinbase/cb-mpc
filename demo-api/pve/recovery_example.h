@@ -16,7 +16,7 @@ namespace pve_demo {
 using namespace coinbase;
 namespace pve = coinbase::api::pve;
 
-// Encrypt a partial for delivery, independently of PVE proof randomness.
+// Encrypt a partial decryption for delivery, independently of PVE proof randomness.
 // Inputs and output must not alias. Publish ciphertext only on success.
 inline error_t seal_for_recipient(mem_t ek, mem_t context, mem_t plain, buf_t& out) {
   out.free();
@@ -57,7 +57,7 @@ inline buf_t delivery_context(mem_t backup, mem_t label, mem_t request, mem_t ho
   return out;
 }
 
-// Decrypt a holder's partial and encrypt it to an already authorized recipient.
+// Compute a holder's partial decryption and encrypt it to an already authorized recipient.
 // The plaintext stays local; buf_t clears it when the buffer is destroyed.
 inline error_t make_holder_message(const pve::base_pke_i& backup_pke, const api::access_structure_t& ac,
                                    const pve::leaf_keys_t& pks, mem_t backup, const std::vector<mem_t>& trusted_Qs,
@@ -74,7 +74,7 @@ inline error_t make_holder_message(const pve::base_pke_i& backup_pke, const api:
   return seal_for_recipient(recipient_ek, context, partial, message);
 }
 
-// Simulate forwarding: the relay receives no private keys or plaintext partials.
+// Simulate forwarding: the relay receives no private keys or plaintext partial decryptions.
 inline std::array<buf_t, 2> relay_messages(const std::array<buf_t, 2>& messages) { return messages; }
 
 // Only the recipient opens messages and assembles plaintext quorum shares.
@@ -190,7 +190,7 @@ inline void demonstrate_protected_recovery(const pve::base_pke_i& backup_pke, co
     cb_assert(recover_at_recipient(backup_pke, ac, pks, backup, wrong_Qs, label, request, holders, attempt,
                                    recipient_dk, delivered, recovered) != SUCCESS);
     cb_assert(recovered.empty());
-    // Fail on each message in turn, including after a valid partial was opened.
+    // Fail on each message in turn, including after a valid partial decryption was opened.
     for (size_t i = 0; i < delivered.size(); ++i) {
       auto tampered = delivered;
       tampered[i][tampered[i].size() - 1] ^= 1;

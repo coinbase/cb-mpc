@@ -128,7 +128,7 @@ The integrating application is responsible for:
 - Passing the original message to EdDSA APIs, and for ECDSA or BIP340 Schnorr signing APIs, constructing the correct transaction or message preimage and applying the right hashing/domain-separation rules.
 - Coordinating backup, restore, refresh/rotation, and revocation/deletion of shares in the application's own storage and workflow layer.
   See [refresh coordination](SECURE_USAGE.md#refresh-coordination).
-- Authorizing PVE-AC recovery and encrypting recovery partials to the authorized recipient before forwarding. These partials are sensitive: anyone with the backup and partial decryptions from a quorum can recover the backed-up values. See [recipient-protected recovery](SECURE_USAGE.md#pve-ac-recovery-partials-and-recipient-protection) and the [PVE demo](demo-api/pve/README.md). The same protection is needed for [TDH2 partial decryptions](SECURE_USAGE.md#tdh2-partial-decryptions).
+- Authorizing PVE-AC recovery and encrypting recovery partial decryptions to the authorized recipient before forwarding. These partial decryptions are sensitive: anyone who collects partial decryptions from a quorum can use them to recover the backed-up values. See [recipient-protected recovery](SECURE_USAGE.md#pve-ac-recovery-partial-decryptions-and-recipient-protection) and the [PVE demo](demo-api/pve/README.md). The same protection is needed for [TDH2 partial decryptions](SECURE_USAGE.md#tdh2-partial-decryptions).
 - Enforcing audit, approval, replay-protection, and incident-response controls appropriate for the deployment.
 
 A few practical tips:

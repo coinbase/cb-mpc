@@ -150,29 +150,30 @@ Coordinate switching to refreshed shares so that signing parties use compatible
 share versions, and keep backups consistent with those versions. A successful
 local refresh call does not confirm that every party has switched.
 
-### PVE-AC recovery partials and recipient protection
+### PVE-AC recovery partial decryptions and recipient protection
 
-PVE-AC partials are sensitive: anyone with the backup and partial decryptions from
-a quorum can recover the backed-up values. Encrypt each partial to the authorized
-recipient **before forwarding** through a coordinator. TLS terminating at the
-coordinator is not sufficient.
+PVE-AC partial decryptions are sensitive: anyone who collects partial decryptions
+from a quorum can use them to recover the backed-up values. If they pass through
+an intermediary, such as a coordinator, that must not see those values, encrypt
+them to the authorized recipient before forwarding.
 
-The existing software and HSM APIs return raw partials; the application must
-provide recipient encryption. Verify the backup using the expected access structure,
+The existing software and HSM APIs return raw partial decryptions; the application
+must provide recipient encryption. Verify the backup using the expected access structure,
 public keys, public values, and label from trusted application state before
-partial decryption, and decrypt/combine partials only at the authorized recipient.
-Do not log or persist plaintext partials.
+partial decryption, and decrypt/combine partial decryptions only at the authorized recipient.
+Do not log or persist plaintext partial decryptions.
 
-Use fresh randomness and authenticated context when encrypting partials. See the
+Use fresh randomness and authenticated context when encrypting partial decryptions. See the
 [PVE demo](demo-api/pve/README.md) and
 [PVE specification §6.3.3](docs/spec/publicly-verifiable-encryption-spec.pdf).
 
 ### TDH2 partial decryptions
 
-TDH2 partial decryptions are also sensitive: anyone with the ciphertext and partial
-decryptions from a quorum can recover its plaintext. The API returns raw partial
+TDH2 partial decryptions are also sensitive: anyone who collects partial decryptions
+from a quorum can use them to recover the plaintext. The API returns raw partial
 decryptions; protect their delivery to the authorized recipient. If they pass
-through a coordinator that must not see the plaintext, encrypt them to the recipient.
+through an intermediary, such as a coordinator, that must not see the plaintext,
+encrypt them to the recipient.
 
 ### Ciphertext verification vs. decryption (PVE)
 

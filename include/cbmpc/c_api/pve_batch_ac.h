@@ -17,10 +17,11 @@ extern "C" {
 //
 // This API encrypts a *batch* of scalars {x_i} under a leaf-keyed access structure.
 //
-// Anyone with the backup and partial decryptions from a quorum can recover the batch.
-// Encrypt them to the authorized recipient before forwarding through a coordinator.
+// Partial decryptions are sensitive: anyone who collects partial decryptions from a quorum
+// can use them to recover the backed-up values.
+// Encrypt them to the authorized recipient before forwarding through an intermediary.
 // These APIs, including HSM variants, do not provide recipient encryption.
-// See SECURE_USAGE.md#pve-ac-recovery-partials-and-recipient-protection and demo-api/pve.
+// See SECURE_USAGE.md#pve-ac-recovery-partial-decryptions-and-recipient-protection and demo-api/pve.
 //
 // Notes:
 // - Leaf keys are passed as a mapping (parallel arrays) from leaf name to key blob.
@@ -39,7 +40,7 @@ cbmpc_error_t cbmpc_pve_ac_verify(const cbmpc_pve_base_pke_t* base_pke, cbmpc_cu
 // Step 1: decrypt a single leaf share for `attempt_index`.
 // First call cbmpc_pve_ac_verify() with the expected access structure, public keys,
 // public values, and label from trusted application state.
-// Encrypt the returned partial to the authorized recipient before forwarding.
+// Encrypt the returned partial decryption to the authorized recipient before forwarding.
 //
 // Ownership: same as `cbmpc_pve_encrypt`.
 cbmpc_error_t cbmpc_pve_ac_partial_decrypt_attempt(const cbmpc_pve_base_pke_t* base_pke, cbmpc_curve_id_t curve,
@@ -49,7 +50,7 @@ cbmpc_error_t cbmpc_pve_ac_partial_decrypt_attempt(const cbmpc_pve_base_pke_t* b
 
 // Step 1 (HSM): decrypt a single leaf share for `attempt_index` using an HSM-backed
 // RSA-OAEP private key (KEM decapsulation callback).
-// Verify the backup before partial decryption, then encrypt the returned partial
+// Verify the backup before partial decryption, then encrypt the returned partial decryption
 // to the authorized recipient before forwarding.
 //
 // - `dk_handle` is an opaque handle understood by the callback.
@@ -65,7 +66,7 @@ cbmpc_error_t cbmpc_pve_ac_partial_decrypt_attempt_rsa_oaep_hsm(cbmpc_curve_id_t
 
 // Step 1 (HSM): decrypt a single leaf share for `attempt_index` using an HSM-backed
 // ECIES(P-256) private key (ECDH callback only).
-// Verify the backup before partial decryption, then encrypt the returned partial
+// Verify the backup before partial decryption, then encrypt the returned partial decryption
 // to the authorized recipient before forwarding.
 //
 // - `dk_handle` is an opaque handle understood by the callback.
@@ -80,8 +81,8 @@ cbmpc_error_t cbmpc_pve_ac_partial_decrypt_attempt_ecies_p256_hsm(cbmpc_curve_id
                                                                   const cbmpc_pve_ecies_p256_hsm_ecdh_t* cb,
                                                                   cmem_t* out_share);
 
-// Step 2: combine decrypted partials at the authorized recipient to recover {x_i} for one attempt.
-// If another attempt is needed, collect new partials for that attempt.
+// Step 2: combine partial decryptions at the authorized recipient to recover {x_i} for one attempt.
+// If another attempt is needed, collect new partial decryptions for that attempt.
 //
 // - `quorum_leaf_names[i]` corresponds to `quorum_shares[i]`.
 //

@@ -18,10 +18,11 @@ namespace coinbase::api::pve {
 //
 // This API encrypts a *batch* of scalars {x_i} under a leaf-keyed access structure.
 //
-// Anyone with the backup and partial decryptions from a quorum can recover the batch.
-// Encrypt them to the authorized recipient before forwarding through a coordinator.
+// Partial decryptions are sensitive: anyone who collects partial decryptions from a quorum
+// can use them to recover the backed-up values.
+// Encrypt them to the authorized recipient before forwarding through an intermediary.
 // These APIs, including HSM variants, do not provide recipient encryption.
-// See SECURE_USAGE.md#pve-ac-recovery-partials-and-recipient-protection and demo-api/pve.
+// See SECURE_USAGE.md#pve-ac-recovery-partial-decryptions-and-recipient-protection and demo-api/pve.
 
 // Leaf-key maps (leaf name -> base-PKE key blob).
 //
@@ -55,7 +56,7 @@ error_t verify_ac(curve_id curve, const access_structure_t& ac, const leaf_keys_
 // Step 1: decrypt a single leaf share for a specific attempt.
 // First call verify_ac() with the expected access structure, public keys,
 // public values, and label from trusted application state.
-// Encrypt the returned partial to the authorized recipient before forwarding.
+// Encrypt the returned partial decryption to the authorized recipient before forwarding.
 //
 // Output:
 // - `out_share` is a fixed-length big-endian scalar encoding with length equal
@@ -70,7 +71,7 @@ error_t partial_decrypt_ac_attempt(curve_id curve, const access_structure_t& ac,
 
 // Step 1 (HSM): decrypt a single leaf share for a specific attempt using an HSM-backed
 // RSA-OAEP private key (KEM decapsulation callback).
-// Verify the backup before partial decryption, then encrypt the returned partial
+// Verify the backup before partial decryption, then encrypt the returned partial decryption
 // to the authorized recipient before forwarding.
 //
 // - `dk_handle` is an opaque handle (or identifier) understood by the HSM callback.
@@ -82,7 +83,7 @@ error_t partial_decrypt_ac_attempt_rsa_oaep_hsm(curve_id curve, const access_str
 
 // Step 1 (HSM): decrypt a single leaf share for a specific attempt using an HSM-backed
 // ECIES(P-256) private key (ECDH callback only).
-// Verify the backup before partial decryption, then encrypt the returned partial
+// Verify the backup before partial decryption, then encrypt the returned partial decryption
 // to the authorized recipient before forwarding.
 //
 // - `dk_handle` is an opaque handle (or identifier) understood by the HSM callback.
@@ -93,8 +94,8 @@ error_t partial_decrypt_ac_attempt_ecies_p256_hsm(curve_id curve, const access_s
                                                   mem_t ek, mem_t label, const ecies_p256_hsm_ecdh_cb_t& cb,
                                                   buf_t& out_share);
 
-// Step 2: combine decrypted partials at the authorized recipient to recover {x_i} for one attempt.
-// If another attempt is needed, collect new partials for that attempt.
+// Step 2: combine partial decryptions at the authorized recipient to recover {x_i} for one attempt.
+// If another attempt is needed, collect new partial decryptions for that attempt.
 //
 // - `quorum_shares` must satisfy the access structure `ac`.
 //

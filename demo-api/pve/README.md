@@ -4,18 +4,19 @@ Demonstrates single-value PVE, batched PVE, and access-structure (PVE-AC) recove
 Run without arguments for all examples, or with `--ac-only` for PVE-AC recovery
 and tests that invalid inputs are rejected.
 
-## PVE-AC: protect partials before forwarding
+## PVE-AC: protect partial decryptions before forwarding
 
 The RSA, ECIES, and custom-backend AC examples use `recovery_example.h`:
 
 1. Each holder verifies the backup using the expected access structure, public keys,
-   public values, and label, then decrypts its partial and encrypts it to the recipient.
+   public values, and label, then computes its partial decryption and encrypts it
+   to the recipient.
 2. The relay receives only ciphertext. The recipient verifies the backup, decrypts
-   the messages, and combines the partials. Failed recovery leaves no output.
+   the messages, and combines the partial decryptions. Failed recovery leaves no output.
 
 Backup keys and recipient keys serve different purposes: holders use backup keys
-to decrypt their partials; the recipient uses a separate key to open the forwarded
-messages. Each AC example runs with both RSA and ECIES recipient keys.
+to compute their partial decryptions; the recipient uses a separate key to open
+the forwarded messages. Each AC example runs with both RSA and ECIES recipient keys.
 The custom backup adapter delegates to built-in ECIES, not an external KMS or HSM.
 
 ## Assumptions and limits
@@ -33,7 +34,7 @@ The custom backup adapter delegates to built-in ECIES, not an external KMS or HS
 - PVE scalar recovery alone does not restore a complete ECDSA-2P P1 key. See
   [P1 backup limitations](../../SECURE_USAGE.md#ecdsa-2p-p1-backup-limitations).
 
-See [recipient-protection requirements](../../SECURE_USAGE.md#pve-ac-recovery-partials-and-recipient-protection)
+See [recipient-protection requirements](../../SECURE_USAGE.md#pve-ac-recovery-partial-decryptions-and-recipient-protection)
 for application responsibilities.
 
 ## Build and test
