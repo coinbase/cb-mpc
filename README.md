@@ -127,12 +127,16 @@ The integrating application is responsible for:
 - Authenticating and authorizing signing requests before invoking the library.
 - Passing the original message to EdDSA APIs, and for ECDSA or BIP340 Schnorr signing APIs, constructing the correct transaction or message preimage and applying the right hashing/domain-separation rules.
 - Coordinating backup, restore, refresh/rotation, and revocation/deletion of shares in the application's own storage and workflow layer.
+  See [refresh coordination](SECURE_USAGE.md#refresh-coordination).
+- Authorizing PVE-AC recovery and encrypting recovery partial decryptions to the authorized recipient before forwarding. These partial decryptions are sensitive: anyone who collects partial decryptions from a quorum can use them to recover the backed-up values. See [recipient-protected recovery](SECURE_USAGE.md#pve-ac-recovery-partial-decryptions-and-recipient-protection) and the [PVE demo](demo-api/pve/README.md). The same protection is needed for [TDH2 partial decryptions](SECURE_USAGE.md#tdh2-partial-decryptions).
 - Enforcing audit, approval, replay-protection, and incident-response controls appropriate for the deployment.
 
 A few practical tips:
 
 - If a party loses its only local `key_blob` / `keyset_blob` and no protected backup exists, recovery may depend on the protocol and access structure; do not assume `cb-mpc` can recreate that party-local secret material for you.
-- If recovery is a requirement, the application should maintain encrypted backups of each party's local secret material. For supported signing key types, the relevant public API exposes `detach_private_scalar`, `get_public_share_compressed`, and `attach_private_scalar` helpers for application-managed backup and restore flows, including verifiable backup schemes such as publicly verifiable encryption (PVE). Follow each protocol's API guidance for the detached output: in particular, an ECDSA-2P P1 scalar-detached blob retains sensitive Paillier material and must be protected like the full key blob.
+- Maintain tested, encrypted backups and a recovery plan for lost, corrupted, or withheld shares. For supported signing key types, the relevant public API exposes `detach_private_scalar`, `get_public_share_compressed`, and `attach_private_scalar` helpers for application-managed backup and restore flows, including verifiable backup schemes such as publicly verifiable encryption (PVE). Follow each protocol's API guidance for the detached output: in particular, an ECDSA-2P P1 scalar-detached blob retains sensitive Paillier material and must be protected like the full key blob.
+  PVE scalar verification alone does not establish complete P1 recoverability; see
+  [ECDSA-2P P1 backup limitations](SECURE_USAGE.md#ecdsa-2p-p1-backup-limitations).
 - Use the corresponding `refresh*` APIs when you want fresh shares for the same (combined) key; if your operational policy requires replacing the key entirely, run a new `dkg*` flow and migrate in the application layer.
 - If compromise is suspected, stop signing with the affected material until the application's incident process decides whether to refresh the shares under controlled conditions or retire the key entirely.
 
